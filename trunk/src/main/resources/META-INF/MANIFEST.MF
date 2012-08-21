@@ -1,3 +1,0 @@
-Specification-Title: XEP-0060
-Specification-Vendor: XMPP Standards Foundation
-Specification-Version: 1.11
