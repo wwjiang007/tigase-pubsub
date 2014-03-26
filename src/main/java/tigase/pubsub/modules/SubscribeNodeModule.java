@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tigase.component2.PacketWriter;
+import tigase.component2.eventbus.Event;
+import tigase.component2.eventbus.EventHandler;
+import tigase.component2.eventbus.EventType;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.pubsub.AbstractNodeConfig;
@@ -53,6 +56,46 @@ import tigase.xmpp.JID;
  * 
  */
 public class SubscribeNodeModule extends AbstractPubSubModule {
+	public interface NodeSubscribedHandler extends EventHandler {
+
+		public static class NodeSubscribedEvent extends Event<NodeSubscribedHandler> {
+
+			public static final EventType<NodeSubscribedHandler> TYPE = new EventType<NodeSubscribedHandler>();
+
+			private Affiliation affiliation;
+
+			private BareJID jid;
+
+			private final String nodeName;
+
+			private final Packet packet;
+
+			private String subId;
+
+			private Subscription subscription;
+
+			public NodeSubscribedEvent(Packet packet, String nodeName, BareJID jid, String subid,
+					Subscription nodeSubscriptions, Affiliation nodeAffiliations) {
+				super(TYPE);
+				this.packet = packet;
+				this.nodeName = nodeName;
+				this.jid = jid;
+				this.subId = subid;
+				this.subscription = nodeSubscriptions;
+				this.affiliation = nodeAffiliations;
+			}
+
+			@Override
+			protected void dispatch(NodeSubscribedHandler handler) {
+				handler.onNodeSubscribed(packet, nodeName, jid, subId, subscription, affiliation);
+			}
+
+		}
+
+		void onNodeSubscribed(Packet packet, final String nodeName, BareJID jid, String subId, Subscription subscription,
+				Affiliation affiliation);
+	}
+
 	private static final Criteria CRIT_SUBSCRIBE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("subscribe"));
 
@@ -270,6 +313,9 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 
 			results.add(result);
 
+			getEventBus().fire(
+					new NodeSubscribedHandler.NodeSubscribedEvent(packet, nodeName, jid, subid, newSubscription, affiliation));
+
 			packetWriter.write(results);
 
 			if (sendLastPublishedItem) {
@@ -283,4 +329,5 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 			throw new RuntimeException(e);
 		}
 	}
+
 }
