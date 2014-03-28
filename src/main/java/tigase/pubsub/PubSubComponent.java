@@ -76,6 +76,7 @@ import tigase.pubsub.modules.commands.RebuildDatabaseCommand;
 import tigase.pubsub.modules.commands.RetrieveItemsCommand;
 import tigase.pubsub.modules.ext.presence.PresenceNodeSubscriptions;
 import tigase.pubsub.modules.ext.presence.PresenceNotifierModule;
+import tigase.pubsub.modules.ext.usernode.PushToUsernode;
 import tigase.pubsub.modules.ext.usernode.UserNodeCreator;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.ISubscriptions;
@@ -457,9 +458,12 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		// this.eventBus.reset();
 		if (!isRegistered(PresenceCollectorModule.class))
 			this.presenceCollectorModule = registerModule(new PresenceCollectorModule(componentConfig, writer));
-		if (!isRegistered(PublishItemModule.class))
+		if (!isRegistered(PublishItemModule.class)) {
 			this.publishNodeModule = registerModule(new PublishItemModule(componentConfig, writer, this.xslTransformer,
 					this.presenceCollectorModule));
+			new UserNodeCreator(componentConfig, getEventBus(), defaultNodeConfig);
+			new PushToUsernode(componentConfig, getEventBus(), publishNodeModule);
+		}
 		if (!isRegistered(RetractItemModule.class))
 			registerModule(new RetractItemModule(componentConfig, writer, this.publishNodeModule));
 		if (!isRegistered(PendingSubscriptionModule.class))
@@ -504,7 +508,6 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 
 		this.pubsubRepository.init();
 
-		new UserNodeCreator(componentConfig, getEventBus(), defaultNodeConfig);
 	}
 
 	/**
