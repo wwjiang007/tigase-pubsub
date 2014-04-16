@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import tigase.component2.eventbus.EventBus;
+import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.LeafNodeConfig;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.modules.PublishItemModule;
@@ -30,8 +31,12 @@ public class PushToUsernode {
 
 	private final PublishItemModule publishItemModule;
 
-	public PushToUsernode(PubSubConfig config, EventBus eventBus, PublishItemModule publishItemModule) {
+	private final UserNodeCreator userNodeCreator;
+
+	public PushToUsernode(PubSubConfig config, EventBus eventBus, UserNodeCreator userNodeCreator,
+			PublishItemModule publishItemModule) {
 		this.publishItemModule = publishItemModule;
+		this.userNodeCreator = userNodeCreator;
 		this.config = config;
 		eventBus.addHandler(PublishItemModule.ItemPublishedHandler.ItemPublishedEvent.TYPE,
 				new PublishItemModule.ItemPublishedHandler() {
@@ -64,8 +69,19 @@ public class PushToUsernode {
 
 			for (UsersSubscription subscription : nodeSubscriptions.getSubscriptions()) {
 				final String destNodeName = "users/" + subscription.getJid();
-				final LeafNodeConfig destNodeConfig = (LeafNodeConfig) config.getPubSubRepository().getNodeConfig(serviceJID,
+				LeafNodeConfig destNodeConfig = (LeafNodeConfig) config.getPubSubRepository().getNodeConfig(serviceJID,
 						destNodeName);
+
+				if (destNodeConfig == null) {
+					AbstractNodeConfig x = userNodeCreator.createUserNodeIfRequired(serviceJID, subscription.getJid());
+					if (x instanceof LeafNodeConfig) {
+						destNodeConfig = (LeafNodeConfig) x;
+					} else {
+						log.fine("Node " + destNodeName + " isn't created ot has wrong type.");
+						continue;
+					}
+				}
+
 				final IAffiliations destNodeAffiliations = config.getPubSubRepository().getNodeAffiliations(serviceJID,
 						nodeName);
 				final ISubscriptions destNodeSubscriptions = config.getPubSubRepository().getNodeSubscriptions(serviceJID,

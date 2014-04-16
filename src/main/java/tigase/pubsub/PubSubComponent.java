@@ -461,8 +461,8 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		if (!isRegistered(PublishItemModule.class)) {
 			this.publishNodeModule = registerModule(new PublishItemModule(componentConfig, writer, this.xslTransformer,
 					this.presenceCollectorModule));
-			new UserNodeCreator(componentConfig, getEventBus(), defaultNodeConfig);
-			new PushToUsernode(componentConfig, getEventBus(), publishNodeModule);
+			UserNodeCreator unc = new UserNodeCreator(componentConfig, getEventBus(), defaultNodeConfig);
+			new PushToUsernode(componentConfig, getEventBus(), unc, publishNodeModule);
 		}
 		if (!isRegistered(RetractItemModule.class))
 			registerModule(new RetractItemModule(componentConfig, writer, this.publishNodeModule));

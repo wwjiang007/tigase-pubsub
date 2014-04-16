@@ -35,21 +35,19 @@ public class UserNodeCreator {
 					@Override
 					public void onNodeSubscribed(Packet packet, String nodeName, BareJID jid, String subId,
 							Subscription subscription, Affiliation affiliation) {
-						handleNodeSubscribed(packet, nodeName, jid, subId, subscription, affiliation);
+						createUserNodeIfRequired(packet.getStanzaTo().getBareJID(), jid);
 					}
 				});
 	}
 
-	protected void handleNodeSubscribed(Packet packet, String createdNodeName, BareJID jid, String subId,
-			Subscription subscription, Affiliation affiliation) {
+	public AbstractNodeConfig createUserNodeIfRequired(final BareJID serviceJID, final BareJID subscriberJID) {
 		try {
-			final BareJID serviceJID = packet.getStanzaTo().getBareJID();
-			final String userNodeName = "users/" + jid;
+			final String userNodeName = "users/" + subscriberJID;
 			AbstractNodeConfig cfg = config.getPubSubRepository().getNodeConfig(serviceJID, userNodeName);
 			if (cfg != null) {
 				if (log.isLoggable(Level.FINER))
 					log.finer("User node exists. Creation skipped.");
-				return;
+				return cfg;
 			}
 
 			LeafNodeConfig nodeConfig = new LeafNodeConfig(userNodeName, defaultNodeConfig);
@@ -62,19 +60,22 @@ public class UserNodeCreator {
 				c.setValues(new String[] { AccessModel.authorize.name() });
 			}
 
-			config.getPubSubRepository().createNode(serviceJID, userNodeName, jid, nodeConfig, NodeType.leaf, "");
+			config.getPubSubRepository().createNode(serviceJID, userNodeName, subscriberJID, nodeConfig, NodeType.leaf, "");
 			ISubscriptions nodeSubscriptions = config.getPubSubRepository().getNodeSubscriptions(serviceJID, userNodeName);
 			IAffiliations nodeaAffiliations = config.getPubSubRepository().getNodeAffiliations(serviceJID, userNodeName);
 
-			nodeSubscriptions.addSubscriberJid(jid, Subscription.subscribed);
-			nodeaAffiliations.addAffiliation(jid, Affiliation.owner);
+			nodeSubscriptions.addSubscriberJid(subscriberJID, Subscription.subscribed);
+			nodeaAffiliations.addAffiliation(subscriberJID, Affiliation.owner);
 			config.getPubSubRepository().update(serviceJID, userNodeName, nodeaAffiliations);
 			config.getPubSubRepository().update(serviceJID, userNodeName, nodeSubscriptions);
 			config.getPubSubRepository().addToRootCollection(serviceJID, userNodeName);
 
+			return nodeConfig;
 		} catch (Exception e) {
 			log.log(Level.WARNING, "Problem on create user node.", e);
+			return null;
 		}
 
 	}
+
 }
