@@ -49,14 +49,17 @@ public class PushToUsernode {
 				});
 	}
 
-	protected void onItemsPublish(BareJID serviceJID, String nodeName, Collection<Element> items) {
+	protected void onItemsPublish( BareJID serviceJID, String nodeName, Collection<Element> items ) {
 		try {
-			final ISubscriptions nodeSubscriptions = config.getPubSubRepository().getNodeSubscriptions(serviceJID, nodeName);
+			if ( nodeName.startsWith( "users/" ) ){
+				return;
+			}
+			final ISubscriptions nodeSubscriptions = config.getPubSubRepository().getNodeSubscriptions( serviceJID, nodeName );
 
 			final List<Element> itemsToSend = new ArrayList<Element>();
-			for (Element element : items) {
-				Element it = new Element("item");
-				it.setAttribute("id", UUID.randomUUID().toString());
+			for ( Element element : items ) {
+				Element it = new Element( "item" );
+				it.setAttribute( "id", UUID.randomUUID().toString() );
 
 				Element unread = new Element("unread");
 				unread.setAttribute("node", nodeName);
@@ -83,9 +86,9 @@ public class PushToUsernode {
 				}
 
 				final IAffiliations destNodeAffiliations = config.getPubSubRepository().getNodeAffiliations(serviceJID,
-						nodeName);
+						destNodeName);
 				final ISubscriptions destNodeSubscriptions = config.getPubSubRepository().getNodeSubscriptions(serviceJID,
-						nodeName);
+						destNodeName);
 
 				publishItemModule.doPublishItems(serviceJID, destNodeName, destNodeConfig, destNodeAffiliations,
 						destNodeSubscriptions, nodeName, itemsToSend);
