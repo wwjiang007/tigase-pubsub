@@ -337,7 +337,7 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 				m = rsmGet.getChild("before");
 				if (m != null)
 					beforeId = m.getCData();
-				m = rsmGet.getChild("adter");
+				m = rsmGet.getChild("after");
 				if (m != null)
 					afterId = m.getCData();
 				m = rsmGet.getChild("dt_after", "http://tigase.org/pubsub");
