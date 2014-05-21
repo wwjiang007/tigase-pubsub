@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.Subscription;
@@ -29,6 +28,7 @@ import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.pubsub.utils.FragmentedMap;
 import tigase.stats.StatisticsList;
 import tigase.xmpp.BareJID;
+import tigase.xmpp.impl.roster.RosterElement;
 
 /**
  * Class description
@@ -455,7 +455,6 @@ public class CachedPubSubRepository implements IPubSubRepository {
 	protected Node getNode(BareJID serviceJid, String nodeName) throws RepositoryException {
 		String key = createKey(serviceJid, nodeName);
 		Node node = this.nodes.get(key);
-
 		if (node == null) {
 			long nodeId = this.dao.getNodeId(serviceJid, nodeName);
 			String cfgData = this.dao.getNodeConfig(serviceJid, nodeId);
@@ -631,10 +630,15 @@ public class CachedPubSubRepository implements IPubSubRepository {
 	 * @throws RepositoryException
 	 */
 	@Override
-	public BareJID[] getUserRoster(BareJID owner) throws RepositoryException {
+	public Map<BareJID,RosterElement> getUserRoster(BareJID owner) throws RepositoryException {
 		return this.dao.getUserRoster(owner);
 	}
 
+	@Override
+	public Map<String,UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID userJid) throws RepositoryException {
+		return this.dao.getUserSubscriptions(serviceJid, userJid);
+	}
+	
 	/**
 	 * Method description
 	 * 

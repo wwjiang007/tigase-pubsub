@@ -24,29 +24,28 @@ package tigase.pubsub;
 
 //~--- non-JDK imports --------------------------------------------------------
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Queue;
-//~--- JDK imports ------------------------------------------------------------
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import javax.script.Bindings;
+import tigase.db.RepositoryFactory;
+import tigase.db.TigaseDBException;
+import tigase.db.UserNotFoundException;
+import tigase.db.UserRepository;
+
+import tigase.server.Command;
+import tigase.server.DisableDisco;
+import tigase.server.Packet;
+
+import tigase.xmpp.Authorization;
+import tigase.xmpp.BareJID;
+import tigase.xmpp.JID;
+import tigase.xmpp.PacketErrorTypeException;
 
 import tigase.adhoc.AdHocScriptCommandManager;
 import tigase.component2.AbstractComponent;
 import tigase.component2.PacketWriter;
 import tigase.conf.Configurable;
-import tigase.db.RepositoryFactory;
-import tigase.db.TigaseDBException;
-import tigase.db.UserNotFoundException;
-import tigase.db.UserRepository;
+import tigase.conf.ConfigurationException;
 import tigase.pubsub.modules.AdHocConfigCommandModule;
+import tigase.pubsub.modules.CapsModule;
 import tigase.pubsub.modules.DefaultConfigModule;
 import tigase.pubsub.modules.DiscoverInfoModule;
 import tigase.pubsub.modules.DiscoverItemsModule;
@@ -86,12 +85,20 @@ import tigase.pubsub.repository.PubSubDAOPool;
 import tigase.pubsub.repository.PubSubRepositoryWrapper;
 import tigase.pubsub.repository.RepositoryException;
 import tigase.pubsub.repository.cached.CachedPubSubRepository;
-import tigase.server.Command;
-import tigase.server.DisableDisco;
-import tigase.server.Packet;
 import tigase.xml.Element;
-import tigase.xmpp.BareJID;
-import tigase.xmpp.JID;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.script.Bindings;
 
 /**
  * Class description
@@ -216,20 +223,26 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		return result;
 	}
 
-	private AdHocConfigCommandModule adHocCommandsModule;
 
 	/** Field description */
 	protected LeafNodeConfig defaultNodeConfig;
-	private PubSubDAO directPubSubRepository;
 	/** Field description */
 	protected Integer maxRepositoryCacheSize;
-	private PendingSubscriptionModule pendingSubscriptionModule;
-	private PresenceCollectorModule presenceCollectorModule;
-	private PresenceNotifierModule presenceNotifierModule;
-	private PublishItemModule publishNodeModule;
 
 	/** Field description */
 	protected IPubSubRepository pubsubRepository;
+
+	/** Field description */
+	private AdHocConfigCommandModule  adHocCommandsModule;
+	private CapsModule                capsModule;
+	private PubSubDAO                 directPubSubRepository;
+
+	/* modules */
+	protected PendingSubscriptionModule pendingSubscriptionModule;
+	protected PresenceCollectorModule   presenceCollectorModule;
+	protected PresenceNotifierModule    presenceNotifierModule;
+	protected PublishItemModule         publishNodeModule;
+
 	// ~--- constructors
 	// ---------------------------------------------------------
 	private AdHocScriptCommandManager scriptCommandManager;
@@ -456,14 +469,15 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		this.xslTransformer = new XsltTool();
 		// this.modulesManager.reset();
 		// this.eventBus.reset();
+		if (!isRegistered(CapsModule.class))
+			this.capsModule = registerModule(new CapsModule(componentConfig, writer));
 		if (!isRegistered(PresenceCollectorModule.class))
-			this.presenceCollectorModule = registerModule(new PresenceCollectorModule(componentConfig, writer));
-		if (!isRegistered(PublishItemModule.class)) {
+			this.presenceCollectorModule = registerModule(new PresenceCollectorModule(componentConfig, writer, capsModule));
+		if (!isRegistered(PublishItemModule.class))
 			this.publishNodeModule = registerModule(new PublishItemModule(componentConfig, writer, this.xslTransformer,
 					this.presenceCollectorModule));
 			UserNodeCreator unc = new UserNodeCreator(componentConfig, getEventBus(), defaultNodeConfig);
 			new PushToUsernode(componentConfig, getEventBus(), unc, publishNodeModule);
-		}
 		if (!isRegistered(RetractItemModule.class))
 			registerModule(new RetractItemModule(componentConfig, writer, this.publishNodeModule));
 		if (!isRegistered(PendingSubscriptionModule.class))
@@ -579,6 +593,11 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 				this.userRepository));
 	}
 
+	@Override
+	public boolean isDiscoNonAdmin() {
+		return true;
+	}
+	
 	/**
 	 * Method description
 	 * 
@@ -637,9 +656,24 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 	public int processingOutThreads() {
 		return Runtime.getRuntime().availableProcessors() * 4;
 	}
-
-	// ~--- inner classes
-	// --------------------------------------------------------
+	
+	@Override
+	public void processPacket(Packet packet) {
+		// if stanza is addressed to getName()@domain then we need to return SERVICE_UNAVAILABLE error
+		if (packet.getStanzaTo() != null && getName().equals(packet.getStanzaTo().getLocalpart())) {
+			try {
+				Packet result = Authorization.SERVICE_UNAVAILABLE.getResponseMessage(packet, null, true);
+				addOutPacket(result);
+			} catch (PacketErrorTypeException ex) {
+				log.log(Level.FINE, "Packet already of type=error, while preparing error response", ex);
+			}
+			return;
+		}
+			
+		super.processPacket(packet);
+	}
+		
+	//~--- set methods ----------------------------------------------------------
 
 	/**
 	 * Method description
@@ -648,8 +682,8 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 	 * @param props
 	 */
 	@Override
-	public void setProperties(Map<String, Object> props) {
-		super.setProperties(props);
+	public void setProperties(Map<String, Object> props) throws ConfigurationException {
+			super.setProperties(props);
 		if (props.size() == 1) {
 
 			// If props.size() == 1, it means this is a single property update

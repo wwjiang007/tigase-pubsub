@@ -32,11 +32,13 @@ import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.form.Form;
 import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.AccessModel;
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.CollectionNodeConfig;
 import tigase.pubsub.LeafNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubConfig;
+import tigase.pubsub.SendLastPublishedItem;
 import tigase.pubsub.Subscription;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.modules.NodeCreateModule.NodeCreateHandler.NodeCreateEvent;
@@ -85,6 +87,8 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 
 	private final PublishItemModule publishModule;
 
+	private final LeafNodeConfig defaultPepNodeConfig;
+	
 	/**
 	 * Constructs ...
 	 * 
@@ -98,6 +102,11 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 			PublishItemModule publishItemModule) {
 		super(config, defaultNodeConfig, packetWriter);
 		this.publishModule = publishItemModule;
+		// creating default config for autocreate PEP nodes
+		this.defaultPepNodeConfig = new LeafNodeConfig("default-pep");
+		defaultPepNodeConfig.setValue("pubsub#access_model", AccessModel.presence.name());
+		defaultPepNodeConfig.setValue("pubsub#presence_based_delivery", true);
+		defaultPepNodeConfig.setValue("pubsub#send_last_published_item", "on_sub_and_presence");
 	}
 
 	/**
@@ -165,9 +174,14 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 			if (getRepository().getNodeConfig(toJid, nodeName) != null) {
 				throw new PubSubException(element, Authorization.CONFLICT);
 			}
+			if (toJid.getLocalpart() != null && !toJid.equals(packet.getStanzaFrom().getBareJID()))
+				throw new PubSubException(Authorization.FORBIDDEN);
 
 			NodeType nodeType = NodeType.leaf;
 			String collection = null;
+			AbstractNodeConfig defaultNodeConfig = this.defaultNodeConfig;
+			if (toJid.getLocalpart() != null) defaultNodeConfig = this.defaultPepNodeConfig;
+			
 			AbstractNodeConfig nodeConfig = new LeafNodeConfig(nodeName, defaultNodeConfig);
 
 			if (configure != null) {
@@ -187,6 +201,13 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 								nodeType = (val == null) ? NodeType.leaf : NodeType.valueOf(val);
 							} else if ("pubsub#collection".equals(var)) {
 								collection = val;
+							}
+							if (val != null) {
+								if (!config.isSendLastPublishedItemOnPresence() && "pubsub#send_last_published_item".equals(var)){
+									if (SendLastPublishedItem.on_sub_and_presence.name().equals(val)) {
+										throw new PubSubException(Authorization.NOT_ACCEPTABLE, "Requested on_sub_and_presence mode for sending last published item is disabled.");
+									}
+								}								
 							}
 							nodeConfig.setValue(var, val);
 						}

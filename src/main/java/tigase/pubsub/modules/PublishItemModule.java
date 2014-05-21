@@ -23,7 +23,7 @@
 package tigase.pubsub.modules;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
-
+import java.util.logging.Logger;
 import tigase.component2.PacketWriter;
 import tigase.component2.eventbus.Event;
 import tigase.component2.eventbus.EventHandler;
@@ -44,26 +44,36 @@ import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
+import tigase.pubsub.AccessModel;
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.LeafNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.PublisherModel;
+import tigase.pubsub.SendLastPublishedItem;
 import tigase.pubsub.Subscription;
 import tigase.pubsub.Utils;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
+import tigase.pubsub.modules.PresenceCollectorModule.CapsChangeHandler;
+import tigase.pubsub.modules.PresenceCollectorModule.CapsChangeHandler.CapsChangeEvent;
+import tigase.pubsub.modules.PresenceCollectorModule.PresenceChangeHandler;
+import tigase.pubsub.modules.PresenceCollectorModule.PresenceChangeHandler.PresenceChangeEvent;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.RepositoryException;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Message;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
+import tigase.xmpp.StanzaType;
+import tigase.xmpp.impl.roster.RosterAbstract.SubscriptionType;
+import tigase.xmpp.impl.roster.RosterElement;
 
 /**
  * Class description
@@ -134,13 +144,78 @@ public class PublishItemModule extends AbstractPubSubModule {
 	/** Field description */
 	public final static String[] SUPPORTED_PEP_XMLNS = { "http://jabber.org/protocol/mood",
 			"http://jabber.org/protocol/geoloc", "http://jabber.org/protocol/activity", "http://jabber.org/protocol/tune" };
-	private long idCounter = 0;
+	
+	private final CapsChangeHandler capsChangeHandler = new CapsChangeHandler() {
+
+			@Override
+			public void onCapsChange(BareJID serviceJid, JID buddyJid, String[] newCaps, String[] oldCaps, Set<String> newFeatures) {
+				if (newFeatures == null || newFeatures.isEmpty() || !config.isSendLastPublishedItemOnPresence())
+					return;
+				
+				// if we have new features we need to check if there are nodes for which 
+				// we need to send notifications due to +notify feature
+				for (String feature : newFeatures) {
+					if (!feature.endsWith("+notify"))
+						continue;
+					String nodeName = feature.substring(0, feature.length() - "+notify".length());
+					
+					try {
+						AbstractNodeConfig nodeConfig = config.getPubSubRepository().getNodeConfig(serviceJid, nodeName);
+						if (nodeConfig != null && nodeConfig.getSendLastPublishedItem() == SendLastPublishedItem.on_sub_and_presence) {
+							publishLastItem(serviceJid, nodeConfig, buddyJid);
+						}
+					}
+					catch (RepositoryException ex) {
+						log.log(Level.WARNING, "Exception while sending last published item on on_sub_and_presence with CAPS filtering");
+					}
+				}
+			}
+			
+		};
+	
+	private long idCounter = 0;	
 	private final Set<String> pepNodes = new HashSet<String>();
 
+	private final PresenceChangeHandler presenceChangeHandler = new PresenceChangeHandler() {
+		
+		@Override
+		public void onPresenceChange(Packet packet) {
+			// PEP services are using CapsChangeEvent - but we should process this here as well
+			// as on PEP service we can have some nodes which have there types of subscription
+			if (packet.getStanzaTo() == null) // || packet.getStanzaTo().getLocalpart() != null)
+				return;
+			if (!config.isSendLastPublishedItemOnPresence())
+				return;
+			if (packet.getType() == null || packet.getType() == StanzaType.available) {
+				BareJID serviceJid = packet.getStanzaTo().getBareJID();
+				JID userJid = packet.getStanzaFrom();
+				try {
+					// sending last published items for subscribed nodes
+					Map<String,UsersSubscription> subscrs = config.getPubSubRepository().getUserSubscriptions(serviceJid, userJid.getBareJID());
+					for (Map.Entry<String,UsersSubscription> e : subscrs.entrySet()) {
+						if (e.getValue().getSubscription() != Subscription.subscribed)
+							continue;
+						String nodeName = e.getKey();
+						AbstractNodeConfig nodeConfig = config.getPubSubRepository().getNodeConfig(serviceJid, nodeName);
+						if (nodeConfig.getSendLastPublishedItem() != SendLastPublishedItem.on_sub_and_presence)
+							continue;
+						publishLastItem(serviceJid, nodeConfig, userJid);
+					}
+				} catch (RepositoryException ex) {
+					Logger.getLogger(PublishItemModule.class.getName()).log(Level.SEVERE, null, ex);
+				}
+				
+			}				
+		}
+		
+	};
+	
 	private final PresenceCollectorModule presenceCollector;
 
 	private final XsltTool xslTransformer;
 
+	private final LeafNodeConfig defaultPepNodeConfig;
+	
 	/**
 	 * Constructs ...
 	 * 
@@ -158,6 +233,14 @@ public class PublishItemModule extends AbstractPubSubModule {
 		for (String xmlns : SUPPORTED_PEP_XMLNS) {
 			pepNodes.add(xmlns);
 		}
+		// creating default config for autocreate PEP nodes
+		this.defaultPepNodeConfig = new LeafNodeConfig("default-pep");
+		defaultPepNodeConfig.setValue("pubsub#access_model", AccessModel.presence.name());
+		defaultPepNodeConfig.setValue("pubsub#presence_based_delivery", true);
+		defaultPepNodeConfig.setValue("pubsub#send_last_published_item", "on_sub_and_presence");
+		
+		this.config.getEventBus().addHandler(CapsChangeEvent.TYPE, capsChangeHandler);
+		this.config.getEventBus().addHandler(PresenceChangeEvent.TYPE, presenceChangeHandler);
 	}
 
 	/**
@@ -257,7 +340,6 @@ public class PublishItemModule extends AbstractPubSubModule {
 
 			cn = nc.getCollection();
 		}
-		;
 
 		return result;
 	}
@@ -274,14 +356,14 @@ public class PublishItemModule extends AbstractPubSubModule {
 	 */
 	protected JID[] getValidBuddies(BareJID id) throws RepositoryException {
 		ArrayList<JID> result = new ArrayList<JID>();
-		BareJID[] rosterJids = this.getRepository().getUserRoster(id);
+		Map<BareJID,RosterElement> rosterJids = this.getRepository().getUserRoster(id);
 
 		if (rosterJids != null) {
-			for (BareJID j : rosterJids) {
-				String sub = this.getRepository().getBuddySubscription(id, j);
+			for (Entry<BareJID,RosterElement> e : rosterJids.entrySet()) {
+				SubscriptionType sub = e.getValue().getSubscription();
 
-				if ((sub != null) && (sub.equals("both") || sub.equals("from"))) {
-					result.add(JID.jidInstance(j));
+				if (sub == SubscriptionType.both || sub == SubscriptionType.from || sub == SubscriptionType.from_pending_out) {
+					result.add(JID.jidInstance(e.getKey()));
 				}
 			}
 		}
@@ -298,6 +380,9 @@ public class PublishItemModule extends AbstractPubSubModule {
 	 * @return
 	 */
 	public boolean isPEPNodeName(String nodeName) {
+		if (config.isPepPeristent())
+			return false;
+		
 		return this.pepNodes.contains(nodeName);
 	}
 
@@ -493,7 +578,7 @@ public class PublishItemModule extends AbstractPubSubModule {
 
 			while (it.hasNext()) {
 				final JID jid = it.next();
-				boolean available = this.presenceCollector.isJidAvailable(jid.getBareJID());
+				boolean available = this.presenceCollector.isJidAvailable(jidFrom.getBareJID(), jid.getBareJID());
 				final UsersAffiliation afi = nodeAffiliations.getSubscriberAffiliation(jid.getBareJID());
 
 				if ((afi == null) || (!available && (afi.getAffiliation() == Affiliation.member))) {
@@ -516,8 +601,43 @@ public class PublishItemModule extends AbstractPubSubModule {
 			HashSet<JID> s = new HashSet<JID>();
 
 			for (JID jid : subscribers) {
-				for (JID subjid : this.presenceCollector.getAllAvailableResources(jid.getBareJID())) {
-					s.add(subjid);
+				s.addAll(this.presenceCollector.getAllAvailableResources(jidFrom.getBareJID(), jid.getBareJID()));
+			}
+
+			// for pubsub service for user accounts we need dynamic subscriptions based on presence
+			if (jidFrom.getLocalpart() != null) {
+				switch (nodeConfig.getNodeAccessModel()) {
+					case open:
+					case presence:
+						s.addAll(this.presenceCollector.getAllAvailableJidsWithFeature(jidFrom.getBareJID(), nodeConfig.getNodeName() + "+notify"));
+						break;
+					case roster:
+						String[] allowedGroups = nodeConfig.getRosterGroupsAllowed();
+						Arrays.sort(allowedGroups);
+						List<JID> jids = this.presenceCollector.getAllAvailableJidsWithFeature(jidFrom.getBareJID(), nodeConfig.getNodeName() + "+notify");
+						if (!jids.isEmpty() && (allowedGroups != null && allowedGroups.length > 0)) {
+							Map<BareJID, RosterElement> roster = this.getRepository().getUserRoster(jidFrom.getBareJID());
+							Iterator<JID> it = jids.iterator();
+							for (JID jid : jids) {
+								RosterElement re = roster.get(jid.getBareJID());
+								if (re == null) {
+									it.remove();
+									continue;
+								}
+								boolean notInGroups = true;
+								String[] groups = re.getGroups();
+								if (groups != null) {
+									for (String group : groups) {
+										notInGroups &= Arrays.binarySearch(allowedGroups, group) < 0;
+									}
+								}
+								if (notInGroups)
+									it.remove();
+							}
+						}
+						break;
+					default:
+						break;
 				}
 			}
 			subscribers = s.toArray(new JID[] {});
