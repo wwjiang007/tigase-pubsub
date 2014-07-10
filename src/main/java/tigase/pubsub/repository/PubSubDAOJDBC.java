@@ -207,8 +207,12 @@ public class PubSubDAOJDBC extends PubSubDAO {
 		} catch ( SQLIntegrityConstraintViolationException e ) {
 			throw new RepositoryException( "Error while adding node to repository, already exists?", e );
 		} catch ( SQLException e ) {
-			e.printStackTrace();
-			throw new RepositoryException( "Problem accessing repository.", e );
+			throw new RepositoryException( "Problem accessing repository while adding"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeName: " + nodeName
+																		 + " / nodeType: " + nodeType
+																		 + " / ownerJid: " + ownerJid
+					, e );
 		} finally {
 			release( null, rs );
 		}
@@ -226,7 +230,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				delete_item_sp.execute();
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Item removing error", e );
+			throw new RepositoryException( "Item removing error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+
+					, e );
 		}
 	}
 
@@ -239,7 +247,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				remove_node_sp.execute();
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node deleting error", e );
+			throw new RepositoryException( "Node deleting error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+					, e );
 		}
 	}
 
@@ -270,7 +281,9 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return names.toArray(new String[0]);
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Nodes list getting error", e );
+			throw new RepositoryException( "Nodes list getting error"
+																		 + " serviceJid: " + serviceJid
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -296,7 +309,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return null;
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Item field " + field + " reading error", e );
+			throw new RepositoryException( "Item field " + field + " reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+																		 + " / id: " + id
+, e );
 //		} catch ( ParseException e ) {
 //			throw new RepositoryException( "Item field " + field + " parsing error", e );
 		} finally {
@@ -335,7 +352,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return ids.toArray( new String[ ids.size() ] );
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Items list reading error", e );
+			throw new RepositoryException( "Items list reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -358,7 +378,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return ids.toArray( new String[ ids.size() ] );
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Items list reading error", e );
+			throw new RepositoryException( "Items list reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -382,7 +405,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return results;
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Items list reading error", e );
+			throw new RepositoryException( "Items list reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+																		 + " / nodeName: " + nodeName
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -408,7 +435,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return 0;
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Retrieving node id error", e );
+			throw new RepositoryException( "Retrieving node id error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeName: " + nodeName
+, e );
 		}
 		finally {
 			release( null, rs );
@@ -432,7 +462,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return NodeAffiliations.create(data);
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node subscribers reading error", e );
+			throw new RepositoryException( "Node subscribers reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -472,7 +505,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				}
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Nodes list getting error", e );
+			throw new RepositoryException( "Nodes list getting error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeName: " + nodeName
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -498,7 +534,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return ns;
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node subscribers reading error", e );
+			throw new RepositoryException( "Node subscribers reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -527,7 +566,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return null;
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Item field " + field + " reading error", e );
+			throw new RepositoryException( "Item field " + field + " reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+																		 + " / id: " + id
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -550,7 +593,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 			}
 			return result;
 		} catch (SQLException e) {
-			throw new RepositoryException("User affiliations reading error", e);
+			throw new RepositoryException("User affiliations reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / jid: " + jid
+, e);
 		} finally {
 			release(null, rs);
 		}
@@ -574,7 +620,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 			}
 			return result;
 		} catch (SQLException e) {
-			throw new RepositoryException("User affiliations reading error", e);
+			throw new RepositoryException("User affiliations reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / jid: " + jid
+, e);
 		} finally {
 			release(null, rs);
 		}
@@ -775,7 +824,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				return null;
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node subscribers reading error", e );
+			throw new RepositoryException( "Node subscribers reading error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -806,7 +858,9 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				delete_all_nodes_sp.execute();
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Removing root collection error", e );
+			throw new RepositoryException( "Removing root collection error"
+																		 + " serviceJid: " + serviceJid
+, e );
 		}
 	}
 
@@ -826,7 +880,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				delete_node_subscriptions_sp.execute();
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node subscribers fragment removing error", e );
+			throw new RepositoryException( "Node subscribers fragment removing error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+, e );
 		}
 	}
 
@@ -850,7 +907,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				}
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node subscribers writing error", e );
+			throw new RepositoryException( "Node subscribers writing error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+																		 + " / affiliation: " + affiliation
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -882,7 +943,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				}
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node configuration writing error", e );
+			throw new RepositoryException( "Node configuration writing error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+																		 + " / serializeData: " + serializedData
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -910,7 +975,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				}
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node subscribers writing error", e );
+			throw new RepositoryException( "Node subscribers writing error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+																		 + " / subscr: " + subscription
+, e );
 		} finally {
 			release( null, rs );
 		} // end of catch
@@ -938,7 +1007,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				}
 			}
 		} catch ( SQLException e ) {
-			throw new RepositoryException( "Item writing error", e );
+			throw new RepositoryException( "Item writing error"
+																		 + " serviceJid: " + serviceJid
+																		 + " / nodeId: " + nodeId
+, e );
 		} finally {
 			release( null, rs );
 		}
