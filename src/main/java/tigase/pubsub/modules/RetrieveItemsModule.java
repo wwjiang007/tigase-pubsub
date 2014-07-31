@@ -23,7 +23,6 @@
 package tigase.pubsub.modules;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,9 +48,11 @@ import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
+import tigase.pubsub.repository.IPubSubDAO;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.RepositoryException;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Packet;
 import tigase.util.DateTimeFormatter;
 import tigase.xml.Element;
@@ -65,6 +66,23 @@ import tigase.xmpp.JID;
  * 
  */
 public class RetrieveItemsModule extends AbstractPubSubModule {
+	private class NodeItem {
+		public final String cacheString;
+
+		public final String id;
+
+		public final String node;
+		public final Date timestamp;
+
+		public NodeItem(String nodeName, String id, Date timestamp) {
+			this.node = nodeName;
+			this.id = id;
+			this.timestamp = timestamp;
+			this.cacheString = String.format("%020d:%s:%s", timestamp.getTime(), nodeName, id);
+		}
+
+	}
+
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("items"));
 
@@ -76,6 +94,11 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 		}
 
 	};
+
+	public static void main(String[] args) {
+		System.out.println();
+		System.out.println(System.currentTimeMillis());
+	}
 
 	private final DateTimeFormatter dtf = new DateTimeFormatter();
 
@@ -138,14 +161,17 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 		}
 	}
 
-	private List<String> extractItemsIds(final Element items) throws PubSubException {
-		List<Element> il = items.getChildren();
+	private List<NodeItem> extractItemsIds(final BareJID service, final String nodeName, final Element itemsElement)
+			throws PubSubException, RepositoryException {
+		IItems nodeItems = this.getRepository().getNodeItems(service, nodeName);
+
+		List<Element> il = itemsElement.getChildren();
 
 		if ((il == null) || (il.size() == 0)) {
 			return null;
 		}
 
-		final List<String> result = new ArrayList<String>();
+		final List<NodeItem> result = new ArrayList<NodeItem>();
 
 		for (Element i : il) {
 			final String id = i.getAttributeStaticStr("id");
@@ -153,7 +179,10 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 			if (!"item".equals(i.getName()) || (id == null)) {
 				throw new PubSubException(Authorization.BAD_REQUEST);
 			}
-			result.add(id);
+
+			Date timestamp = nodeItems.getItemCreationDate(id);
+
+			result.add(new NodeItem(nodeName, id, timestamp));
 		}
 
 		return result;
@@ -199,10 +228,25 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 			final String nodeName = items.getAttributeStaticStr("node");
 			final JID senderJid = packet.getStanzaFrom();
 
-			if (nodeName == null) {
-				throw new PubSubException(Authorization.BAD_REQUEST, PubSubErrorCondition.NODEID_REQUIRED);
-			}
+			// if (nodeName == null) {
+			// throw new PubSubException(Authorization.BAD_REQUEST,
+			// PubSubErrorCondition.NODEID_REQUIRED);
+			// }
+			processNode(packet, senderJid, toJid, pubsub, items, nodeName);
 
+		} catch (PubSubException e1) {
+			throw e1;
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected void processNode(final Packet packet, final JID senderJid, final BareJID toJid, final Element pubsub,
+			final Element items, final String nodeName) throws RepositoryException, PubSubException {
+
+		if (nodeName != null) {
 			// XXX CHECK RIGHTS AUTH ETC
 			AbstractNodeConfig nodeConfig = this.getRepository().getNodeConfig(toJid, nodeName);
 			checkPermission(senderJid, toJid, nodeName, nodeConfig);
@@ -302,7 +346,11 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 
 					rpubsub.addChild(rsmResponse);
 				} else {
-					rpubsub.addChild(new Element("items", new String[] { "node" }, new String[] { nodeName }));
+					Element z = new Element("items");
+					if (nodeName != null) {
+						z.setAttribute("node", nodeName);
+					}
+					rpubsub.addChild(z);
 				}
 
 				packetWriter.write(iq);
@@ -311,115 +359,145 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED, new PubSubErrorCondition("unsupported",
 						"persistent-items"));
 			}
+		}
+		// final IItems nodeItems = this.getRepository().getNodeItems(toJid,
+		// nodeName);
 
-			List<String> requestedId = extractItemsIds(items);
-			final Element rpubsub = new Element("pubsub", new String[] { "xmlns" },
-					new String[] { "http://jabber.org/protocol/pubsub" });
-			final Element ritems = new Element("items", new String[] { "node" }, new String[] { nodeName });
-			final Packet iq = packet.okResult(rpubsub, 0);
+		final Element rpubsub = new Element("pubsub", new String[] { "xmlns" },
+				new String[] { "http://jabber.org/protocol/pubsub" });
+		final Element ritems = new Element("items");
 
-			rpubsub.addChild(ritems);
-
-			Integer maxItems = asInteger(items.getAttributeStaticStr("max_items"));
-			Integer offset = 0;
-			Calendar dtAfter = null;
-			String afterId = null;
-			String beforeId = null;
-
-			final Element rsmGet = pubsub.getChild("set", "http://jabber.org/protocol/rsm");
-			if (rsmGet != null) {
-				Element m = rsmGet.getChild("max");
-				if (m != null)
-					maxItems = asInteger(m.getCData());
-				m = rsmGet.getChild("index");
-				if (m != null)
-					offset = asInteger(m.getCData());
-				m = rsmGet.getChild("before");
-				if (m != null)
-					beforeId = m.getCData();
-				m = rsmGet.getChild("after");
-				if (m != null)
-					afterId = m.getCData();
-				m = rsmGet.getChild("dt_after", "http://tigase.org/pubsub");
-				if (m != null)
-					dtAfter = dtf.parseDateTime(m.getCData());
-			}
-
-			IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
-
+		List<NodeItem> requestedId;
+		if (nodeName != null) {
+			ritems.setAttribute("node", nodeName);
+			requestedId = extractItemsIds(toJid, nodeName, items);
 			if (requestedId == null) {
+				IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
 				String[] ids = nodeItems.getItemsIds();
 
 				if (ids != null) {
-					requestedId = Arrays.asList(ids);
-					requestedId = new ArrayList<String>(requestedId);
+					requestedId = new ArrayList<NodeItem>();
+					for (String id : ids) {
+						Date cd = nodeItems.getItemCreationDate(id);
+						requestedId.add(new NodeItem(nodeName, id, cd));
+					}
 					Collections.reverse(requestedId);
 				}
 			}
-
-			final Element rsmResponse = new Element("set", new String[] { "xmlns" },
-					new String[] { "http://jabber.org/protocol/rsm" });
-
-			if (requestedId != null) {
-				if (maxItems == null)
-					maxItems = requestedId.size();
-
-				List<Element> ritemsList = new ArrayList<Element>();
-
-				rsmResponse.addChild(new Element("count", "" + requestedId.size()));
-
-				String lastId = null;
-				int c = 0;
-				boolean allow = false;
-				for (int i = 0; i < requestedId.size(); i++) {
-					if (i + offset >= requestedId.size())
-						continue;
-
-					if (c >= maxItems)
-						break;
-					String id = requestedId.get(i + offset);
-
-					Date cd = nodeItems.getItemCreationDate(id);
-					if (dtAfter != null && !cd.after(dtAfter.getTime()))
-						continue;
-
-					if (afterId != null && !allow && afterId.equals(id)) {
-						allow = true;
-						continue;
-					} else if (afterId != null && !allow)
-						continue;
-
-					if (beforeId != null && beforeId.equals(id))
-						break;
-
-					if (c == 0) {
-						rsmResponse.addChild(new Element("first", id, new String[] { "index" }, new String[] { ""
-								+ (i + offset) }));
+		} else {
+			requestedId = new ArrayList<NodeItem>();
+			IPubSubDAO directRepo = this.getRepository().getPubSubDAO();
+			Map<String, UsersSubscription> usersSubscriptions = directRepo.getUserSubscriptions(toJid, senderJid.getBareJID());
+			for (Map.Entry<String, UsersSubscription> entry : usersSubscriptions.entrySet()) {
+				final UsersSubscription subscription = entry.getValue();
+				final String node = entry.getKey();
+				if (subscription.getSubscription() == Subscription.subscribed) {
+					IItems nodeItems = this.getRepository().getNodeItems(toJid, node);
+					String[] ids = nodeItems.getItemsIds();
+					for (String id : ids) {
+						Date cd = nodeItems.getItemCreationDate(id);
+						requestedId.add(new NodeItem(node, id, cd));
 					}
-					Element item = nodeItems.getItem(id);
-
-					lastId = id;
-					ritemsList.add(item);
-					++c;
 				}
-				if (lastId != null)
-					rsmResponse.addChild(new Element("last", lastId));
-
-				Collections.reverse(ritemsList);
-				ritems.addChildren(ritemsList);
-
-				if (maxItems != requestedId.size())
-					rpubsub.addChild(rsmResponse);
-
 			}
+			Collections.sort(requestedId, new Comparator<NodeItem>() {
 
-			packetWriter.write(iq);
-		} catch (PubSubException e1) {
-			throw e1;
-		} catch (Exception e) {
-			e.printStackTrace();
-
-			throw new RuntimeException(e);
+				@Override
+				public int compare(NodeItem o1, NodeItem o2) {
+					return o2.cacheString.compareTo(o1.cacheString);
+				}
+			});
 		}
+
+		final Packet iq = packet.okResult(rpubsub, 0);
+
+		rpubsub.addChild(ritems);
+
+		Integer maxItems = asInteger(items.getAttributeStaticStr("max_items"));
+		Integer offset = 0;
+		Calendar dtAfter = null;
+		String afterId = null;
+		String beforeId = null;
+
+		final Element rsmGet = pubsub.getChild("set", "http://jabber.org/protocol/rsm");
+		if (rsmGet != null) {
+			Element m = rsmGet.getChild("max");
+			if (m != null)
+				maxItems = asInteger(m.getCData());
+			m = rsmGet.getChild("index");
+			if (m != null)
+				offset = asInteger(m.getCData());
+			m = rsmGet.getChild("before");
+			if (m != null)
+				beforeId = m.getCData();
+			m = rsmGet.getChild("after");
+			if (m != null)
+				afterId = m.getCData();
+			m = rsmGet.getChild("dt_after", "http://tigase.org/pubsub");
+			if (m != null)
+				dtAfter = dtf.parseDateTime(m.getCData());
+		}
+
+		final Element rsmResponse = new Element("set", new String[] { "xmlns" },
+				new String[] { "http://jabber.org/protocol/rsm" });
+
+		if (requestedId != null) {
+			if (maxItems == null)
+				maxItems = requestedId.size();
+
+			List<Element> ritemsList = new ArrayList<Element>();
+
+			rsmResponse.addChild(new Element("count", "" + requestedId.size()));
+
+			String lastId = null;
+			int c = 0;
+			boolean allow = false;
+			for (int i = 0; i < requestedId.size(); i++) {
+				if (i + offset >= requestedId.size())
+					continue;
+
+				if (c >= maxItems)
+					break;
+				NodeItem item = requestedId.get(i + offset);
+				Date cd = item.timestamp;
+				if (dtAfter != null && !cd.after(dtAfter.getTime()))
+					continue;
+
+				if (afterId != null && !allow && afterId.equals(item)) {
+					allow = true;
+					continue;
+				} else if (afterId != null && !allow)
+					continue;
+
+				if (beforeId != null && beforeId.equals(item))
+					break;
+
+				if (c == 0) {
+					rsmResponse.addChild(new Element("first", item.id, new String[] { "index" }, new String[] { ""
+							+ (i + offset) }));
+				}
+
+				IItems nodeItems = this.getRepository().getNodeItems(toJid, item.node);
+				Element nodeItem = nodeItems.getItem(item.id);
+				if (nodeName == null) {
+					nodeItem.setAttribute("node", item.node);
+				}
+
+				lastId = item.id;
+				ritemsList.add(nodeItem);
+				++c;
+			}
+			if (lastId != null)
+				rsmResponse.addChild(new Element("last", lastId));
+
+			Collections.reverse(ritemsList);
+			ritems.addChildren(ritemsList);
+
+			if (maxItems != requestedId.size())
+				rpubsub.addChild(rsmResponse);
+
+		}
+
+		packetWriter.write(iq);
 	}
 }
