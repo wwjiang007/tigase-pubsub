@@ -391,6 +391,8 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 			for (Map.Entry<String, UsersSubscription> entry : usersSubscriptions.entrySet()) {
 				final UsersSubscription subscription = entry.getValue();
 				final String node = entry.getKey();
+				if (node.startsWith("users/"))
+					continue;
 				if (subscription.getSubscription() == Subscription.subscribed) {
 					IItems nodeItems = this.getRepository().getNodeItems(toJid, node);
 					String[] ids = nodeItems.getItemsIds();
