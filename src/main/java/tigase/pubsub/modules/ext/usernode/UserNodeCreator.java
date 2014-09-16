@@ -59,6 +59,10 @@ public class UserNodeCreator {
 			if (c != null) {
 				c.setValues(new String[] { AccessModel.authorize.name() });
 			}
+			c = nodeConfig.getForm().get("pubsub#max_items");
+			if (c != null) {
+				c.setValues(new String[] { String.valueOf( Integer.MAX_VALUE) });
+			}
 
 			config.getPubSubRepository().createNode(serviceJID, userNodeName, subscriberJID, nodeConfig, NodeType.leaf, "");
 			ISubscriptions nodeSubscriptions = config.getPubSubRepository().getNodeSubscriptions(serviceJID, userNodeName);
