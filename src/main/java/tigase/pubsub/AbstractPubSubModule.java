@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import tigase.component2.PacketWriter;
 import tigase.component2.eventbus.EventBus;
@@ -41,6 +42,7 @@ import tigase.pubsub.repository.RepositoryException;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Packet;
+import tigase.stats.StatisticHolderImpl;
 import tigase.util.JIDUtils;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
@@ -55,7 +57,7 @@ import tigase.xmpp.impl.roster.RosterElement;
  * @version 5.0.0, 2010.03.27 at 05:24:03 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-public abstract class AbstractPubSubModule implements Module {
+public abstract class AbstractPubSubModule extends StatisticHolderImpl implements Module {
 
 	/**
 	 * Method description
@@ -233,7 +235,7 @@ public abstract class AbstractPubSubModule implements Module {
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
 	protected final PacketWriter packetWriter;
-
+	
 	/**
 	 * Constructs ...
 	 * 
@@ -246,6 +248,7 @@ public abstract class AbstractPubSubModule implements Module {
 	public AbstractPubSubModule(final PubSubConfig config, PacketWriter packetWriter) {
 		this.config = config;
 		this.packetWriter = packetWriter;
+		this.setStatisticsPrefix(getClass().getSimpleName());
 	}
 
 	protected EventBus getEventBus() {
@@ -255,7 +258,7 @@ public abstract class AbstractPubSubModule implements Module {
 	protected IPubSubRepository getRepository() {
 		return config.getPubSubRepository();
 	}
-
+	
 	/**
 	 * Method description
 	 * 

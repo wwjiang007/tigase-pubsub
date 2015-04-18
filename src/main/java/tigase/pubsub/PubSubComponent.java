@@ -99,6 +99,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.script.Bindings;
+import tigase.stats.StatisticsList;
 
 /**
  * Class description

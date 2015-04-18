@@ -37,6 +37,7 @@ import tigase.conf.ConfigurationException;
 import tigase.disco.XMPPService;
 import tigase.server.AbstractMessageReceiver;
 import tigase.server.Packet;
+import tigase.stats.StatisticsList;
 import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -116,6 +117,24 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 	 */
 	protected abstract T createComponentConfigInstance(AbstractComponent<?> abstractComponent);
 
+	@Override
+	public synchronized void everyHour() {
+		super.everyHour();
+		modulesManager.everyHour();
+	}
+	
+	@Override
+	public synchronized void everyMinute() {
+		super.everyMinute();
+		modulesManager.everyMinute();
+	}
+	
+	@Override
+	public synchronized void everySecond() {
+		super.everySecond();
+		modulesManager.everySecond();
+	}	
+	
 	/**
 	 * Method description
 	 * 
@@ -151,7 +170,15 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 	protected PacketWriter getWriter() {
 		return writer;
 	}
-
+	
+	@Override
+	@SuppressWarnings("unchecked")
+	public void getStatistics(StatisticsList list) {
+		super.getStatistics(list);
+		
+		this.modulesManager.getStatistics(getName(), list);
+	}
+	
 	/**
 	 * Is this component discoverable by disco#items for domain by non admin users
 	 * 
