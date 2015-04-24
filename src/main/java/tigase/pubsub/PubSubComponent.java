@@ -306,9 +306,10 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 			int dao_pool_size;
 
 			try {
-				dao_pool_size = Integer.parseInt((String) (poolSizes.containsKey(domain) ? poolSizes.get(domain)
-						: poolSizes.get(null)));
+				dao_pool_size = (Integer) (poolSizes.containsKey(domain) ? poolSizes.get(domain)
+						: poolSizes.get(null));
 			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Error parsing pool data", ex);
 				// we should set it at least to 10 to improve performace,
 				// as previous value (1) was really not enought
 				dao_pool_size = 10;
