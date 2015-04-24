@@ -314,8 +314,8 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 				// as previous value (1) was really not enought
 				dao_pool_size = 10;
 			}
-			if (log.isLoggable(Level.FINER)) {
-				log.finer("Creating DAO for domain=" + domain + "; class=" + className + "; uri=" + resUri + "; poolSize="
+			if (log.isLoggable(Level.CONFIG)) {
+				log.config("Creating DAO for domain=" + domain + "; class=" + className + "; uri=" + resUri + "; poolSize="
 						+ dao_pool_size);
 			}
 
@@ -595,11 +595,6 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		this.componentConfig.setAdmins(admins);
 
 		// this.componentConfig.setServiceName("tigase-pubsub");
-
-		// XXX remove ASAP
-		if (pubSubDAO != null) {
-			pubSubDAO.init();
-		}
 
 		// create pubsub user if it doesn't exist
 		if (!(userRepository.getUserUID(componentConfig.getServiceBareJID()) > 0)) {
