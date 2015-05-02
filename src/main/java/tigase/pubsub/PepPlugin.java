@@ -36,6 +36,7 @@ import tigase.server.Packet;
 import tigase.server.Presence;
 import tigase.util.DNSResolver;
 import tigase.xml.Element;
+import tigase.xmpp.Authorization;
 import tigase.xmpp.JID;
 import tigase.xmpp.NoConnectionIdException;
 import tigase.xmpp.NotAuthorizedException;
@@ -55,13 +56,13 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 
 	private static final Logger log = Logger.getLogger(PepPlugin.class.getCanonicalName());
 	
-	private static final String DISCO_INFO_XMLNS = "http://jabber.org/protocol/disco#info";
-	private static final String DISCO_ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
-	private static final String PUBSUB_XMLNS = "http://jabber.org/protocol/pubsub";
+	protected static final String DISCO_INFO_XMLNS = "http://jabber.org/protocol/disco#info";
+	protected static final String DISCO_ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
+	protected static final String PUBSUB_XMLNS = "http://jabber.org/protocol/pubsub";
 	
-	private static final String ID = "pep-experimental";
+	private static final String ID = "pep";
 	
-	private static final Element[] DISCO_FEATURES = { new Element("feature", new String[] {
+	protected static final Element[] DISCO_FEATURES = { new Element("feature", new String[] {
 			"var" }, new String[] { PUBSUB_XMLNS }),
 			new Element("feature", new String[] { "var" }, new String[] { PUBSUB_XMLNS + "#owner" }),
 			new Element("feature", new String[] { "var" }, new String[] { PUBSUB_XMLNS +
@@ -70,14 +71,14 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 					"pubsub",
 					"pep" }), };	
 	
-	private static final String[][] ELEMENTS = { Iq.IQ_PUBSUB_PATH, new String[] { Presence.ELEM_NAME }, Iq.IQ_QUERY_PATH, Iq.IQ_QUERY_PATH };
+	protected static final String[][] ELEMENTS = { Iq.IQ_PUBSUB_PATH, new String[] { Presence.ELEM_NAME }, Iq.IQ_QUERY_PATH, Iq.IQ_QUERY_PATH };
 	
-	private static final String[] XMLNSS = { PUBSUB_XMLNS, Presence.CLIENT_XMLNS, DISCO_ITEMS_XMLNS, DISCO_INFO_XMLNS };
+	protected static final String[] XMLNSS = { PUBSUB_XMLNS, Presence.CLIENT_XMLNS, DISCO_ITEMS_XMLNS, DISCO_INFO_XMLNS };
 	
-	private JID pubsubJid = null;
+	protected JID pubsubJid = null;
 	
-	private boolean simplePepEnabled = false;
-	private final Set<String> simpleNodes = new HashSet<String>();
+	protected boolean simplePepEnabled = false;
+	protected final Set<String> simpleNodes = new HashSet<String>();
 	
 	@Override
 	public void init(Map<String, Object> settings) throws TigaseDBException {
@@ -128,7 +129,7 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 		return XMLNSS;
 	}
 
-	private void processIq(Packet packet, XMPPResourceConnection session, Queue<Packet> results) throws NotAuthorizedException {
+	protected void processIq(Packet packet, XMPPResourceConnection session, Queue<Packet> results) throws XMPPException {
 		if (session != null && session.isServerSession()) {
 			return;
 		}
@@ -151,15 +152,28 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 		// forwarding packet to particular resource
 		if (packet.getStanzaTo() != null && packet.getStanzaTo().getResource() != null) {	
 			if (pubsubEl != null && pubsubEl.getXMLNS() == PUBSUB_XMLNS) {
-				Packet result = packet.copyElementOnly();
+				Packet result = null;
 				if (session != null) {
 					XMPPResourceConnection con = session.getParentSession().getResourceForResource(
 							packet.getStanzaTo().getResource());
-					try {
+					
+					if (con != null) {
+						result = packet.copyElementOnly();
 						result.setPacketTo(con.getConnectionId());
-					} catch (NoConnectionIdException ex) {
-						return;
+						
+						// In most cases this might be skept, however if there is a
+						// problem during packet delivery an error might be sent back						
+						result.setPacketFrom(packet.getTo());
 					}
+				}
+				// if result was not generated yet, this means that session is null or
+				// connection is null, so recipient is unavailable
+				// in theory we could skip generation of error for performance reason
+				// as sending iq/error for iq/result will make no difference for component
+				// but for now let's send response to be compatible with specification
+				if (result == null) {
+					result = Authorization.RECIPIENT_UNAVAILABLE.getResponseMessage(packet, 
+								"The recipient is no longer available.", true);
 				}
 				results.offer(result);
 			}
@@ -197,7 +211,7 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 		results.offer(result);
 	}
 	
-	private void processPresence(Packet packet, XMPPResourceConnection session, Queue<Packet> results) throws NotAuthorizedException {
+	protected void processPresence(Packet packet, XMPPResourceConnection session, Queue<Packet> results) throws NotAuthorizedException {
 		// is there a point in forwarding <presence/> of type error? we should forward only online/offline
 		if (packet.getType() != null && packet.getType() != StanzaType.available && packet.getType() != StanzaType.unavailable) 
 			return;

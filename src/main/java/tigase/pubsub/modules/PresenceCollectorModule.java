@@ -285,7 +285,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 		if (presenceByUser != null) {
 			for (Entry<BareJID, Map<String,String[]>> entry : presenceByUser.entrySet()) {
 				for (String reource : entry.getValue().keySet()) {
-					result.add(JID.jidInstanceNS(entry.getKey(), reource));
+					JID jid = JID.jidInstanceNS(entry.getKey(), reource);
+					if (isAvailableLocally(jid))
+						result.add(jid);
 				}
 			}			
 		}
@@ -311,7 +313,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 
 		if (jid_resources != null) {
 			for (String reource : jid_resources.keySet()) {
-				result.add(JID.jidInstanceNS(bareJid, reource));
+				JID jid = JID.jidInstanceNS(bareJid, reource);
+				if (isAvailableLocally(jid))
+					result.add(jid);
 			}
 		}
 
@@ -346,7 +350,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 							match |= nodesWithFeature.contains(node);
 						}
 						if (match) {
-							result.add(JID.jidInstanceNS(pe.getKey(), e.getKey()));
+							JID jid = JID.jidInstanceNS(pe.getKey(), e.getKey());
+							if (isAvailableLocally(jid))
+								result.add(jid);
 						}
 					}
 				}
@@ -378,6 +384,10 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 		return CRIT;
 	}
 
+	protected boolean isAvailableLocally(JID jid) {
+		return true;
+	}
+	
 	/**
 	 * Method description
 	 * 
@@ -401,13 +411,12 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 
 		if ( from != null && to != null && !((from.getBareJID()).equals( to.getBareJID())) ){
 			JID jid = from.copyWithoutResource();
-			Element p = new Element( "presence", new String[] { "to", "from" },
-															 new String[] { jid.toString(), to.toString() } );
+			Element p = new Element( "presence", new String[] { "to", "from", Packet.XMLNS_ATT },
+															 new String[] { jid.toString(), to.toString(), Packet.CLIENT_XMLNS } );
 
 			if ( type != null ){
 				p.setAttribute("type", type.toString());
 			}
-			p.setXMLNS( "jabber:client" );
 
 			return new Presence(p, to, from);
 		}
@@ -436,8 +445,8 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 			boolean added = addJid( toJid.getBareJID(), jid, caps );
 			firePresenceChangeEvent( packet );
 			if ( added && packet.getStanzaTo().getLocalpart() == null ){
-				Packet p = new Presence( new Element( "presence", new String[] { "to", "from" },
-																							new String[] { jid.toString(), toJid.toString() } ),
+				Packet p = new Presence( new Element( "presence", new String[] { "to", "from", Packet.XMLNS_ATT },
+																							new String[] { jid.toString(), toJid.toString(), Packet.CLIENT_XMLNS } ),
 																 toJid, jid );
 
 				packetWriter.write( p );
@@ -446,8 +455,8 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 			removeJid( toJid.getBareJID(), jid );
 			firePresenceChangeEvent( packet );
 			if (packet.getStanzaTo().getLocalpart() == null) {
-				Packet p = new Presence( new Element( "presence", new String[] { "to", "from", "type" }, new String[] {
-					jid.toString(), toJid.toString(), StanzaType.unavailable.toString() } ), toJid, jid );
+				Packet p = new Presence( new Element( "presence", new String[] { "to", "from", "type", Packet.XMLNS_ATT }, new String[] {
+					jid.toString(), toJid.toString(), StanzaType.unavailable.toString(), Packet.CLIENT_XMLNS } ), toJid, jid );
 
 				packetWriter.write( p );
 			}

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import tigase.component2.eventbus.DefaultEventBus;
 import tigase.component2.eventbus.EventBus;
 import tigase.component2.exceptions.ComponentException;
@@ -45,10 +46,10 @@ import tigase.xmpp.StanzaType;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  * @param <T>
- * 
+ *
  */
 public abstract class AbstractComponent<T extends ComponentConfig> extends AbstractMessageReceiver implements XMPPService {
 
@@ -70,6 +71,18 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 		@Override
 		public void write(Packet packet) {
 			if (log.isLoggable(Level.FINER)) {
+				if (log.isLoggable(Level.FINEST)) {
+					// in case of most detail logging level add check for missing XMLNS in packets
+					// this is only on lowest level as it is expensive as we need stacktrace to
+					// make it easy to find source of this packet
+					if (packet.getXMLNS() == null) {
+						try {
+							throw new Exception("Missing XMLNS");
+						} catch (Exception ex) {
+							log.log(Level.WARNING, "sending packet with not XMLNS set, should not occur, packet = " + packet.toString(), ex);
+						}
+					}
+				}
 				log.finer("Sent: " + packet.getElement());
 			}
 			addOutPacket(packet);
@@ -89,7 +102,7 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 
 	/**
 	 * Constructs ...
-	 * 
+	 *
 	 */
 	public AbstractComponent() {
 		this(null);
@@ -97,8 +110,8 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param writer
 	 */
 	public AbstractComponent(PacketWriter writer) {
@@ -108,20 +121,20 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param abstractComponent
-	 * 
+	 *
 	 * @return
 	 */
 	protected abstract T createComponentConfigInstance(AbstractComponent<?> abstractComponent);
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param params
-	 * 
+	 *
 	 * @return
 	 */
 	@Override
@@ -144,8 +157,8 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	protected PacketWriter getWriter() {
@@ -153,12 +166,13 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 	}
 
 	/**
-	 * Is this component discoverable by disco#items for domain by non admin users
-	 * 
+	 * Is this component discoverable by disco#items for domain by non admin
+	 * users
+	 *
 	 * @return true - if yes
-	 */	
+	 */
 	public abstract boolean isDiscoNonAdmin();
-	
+
 	public boolean isRegistered(final Class<? extends Module> moduleClass) {
 		return this.modulesManager.isRegistered(moduleClass);
 	}
@@ -183,23 +197,23 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 */
 	@Override
 	public void processPacket(Packet packet) {
-		if (packet.isCommand()) {
-			processCommandPacket(packet);
-		} else {
-			processStanzaPacket(packet);
-		}
+		// if (packet.isCommand()) {
+		// processCommandPacket(packet);
+		// } else {
+		processStanzaPacket(packet);
+		// }
 	}
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 */
 	protected void processStanzaPacket(final Packet packet) {
@@ -220,19 +234,19 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 			}
 		} catch (TigaseStringprepException e) {
 			if (log.isLoggable(Level.FINEST)) {
-				log.log(Level.FINEST, e.getMessage() + " when processing " + packet.toString());
+				log.log(Level.FINEST, e.getMessage() + " when processing " + packet.toString(), e);
 			}
 			sendException(packet, new ComponentException(Authorization.JID_MALFORMED));
 		} catch (ComponentException e) {
 			if (log.isLoggable(Level.FINEST)) {
-				log.log(Level.FINEST, e.getMessageWithPosition() + " when processing " + packet.toString());
+				log.log(Level.FINEST, e.getMessageWithPosition() + " when processing " + packet.toString(), e);
 			}
 			sendException(packet, e);
 		} catch (Exception e) {
 			if (log.isLoggable(Level.SEVERE)) {
 				log.log(Level.SEVERE, e.getMessage() + " when processing " + packet.toString(), e);
 			}
-			sendException(packet, new ComponentException(Authorization.INTERNAL_SERVER_ERROR));			
+			sendException(packet, new ComponentException(Authorization.INTERNAL_SERVER_ERROR));
 		}
 	}
 
@@ -246,8 +260,8 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 * @param e
 	 */
@@ -266,6 +280,7 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 			Packet result = e.makeElement(packet, true);
 			Element el = result.getElement();
 
+			el.setXMLNS( Packet.CLIENT_XMLNS);
 			el.setAttribute("from", BareJID.bareJIDInstance(el.getAttributeStaticStr(Packet.FROM_ATT)).toString());
 			if (log.isLoggable(Level.FINEST)) {
 				log.log(Level.FINEST, "Sending back: " + result.toString());
@@ -280,8 +295,8 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param props
 	 * @throws tigase.conf.ConfigurationException
 	 */
@@ -290,7 +305,7 @@ public abstract class AbstractComponent<T extends ComponentConfig> extends Abstr
 		super.setProperties(props);
 		componentConfig.setProperties(props);
 	}
-	
+
 	@Override
 	public void updateServiceEntity() {
 		super.updateServiceEntity();

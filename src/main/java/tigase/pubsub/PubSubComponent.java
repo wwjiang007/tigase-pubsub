@@ -25,6 +25,7 @@ package tigase.pubsub;
 //~--- non-JDK imports --------------------------------------------------------
 
 
+import tigase.db.DBInitException;
 import tigase.db.RepositoryFactory;
 import tigase.db.TigaseDBException;
 import tigase.db.UserNotFoundException;
@@ -38,12 +39,14 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.PacketErrorTypeException;
+import tigase.xmpp.StanzaType;
 
 import tigase.adhoc.AdHocScriptCommandManager;
 import tigase.component2.AbstractComponent;
 import tigase.component2.PacketWriter;
 import tigase.conf.Configurable;
 import tigase.conf.ConfigurationException;
+import tigase.osgi.ModulesManagerImpl;
 import tigase.pubsub.modules.AdHocConfigCommandModule;
 import tigase.pubsub.modules.CapsModule;
 import tigase.pubsub.modules.DefaultConfigModule;
@@ -70,6 +73,7 @@ import tigase.pubsub.modules.XsltTool;
 import tigase.pubsub.modules.commands.DefaultConfigCommand;
 import tigase.pubsub.modules.commands.DefaultConfigCommand.DefaultNodeConfigurationChangedHandler;
 import tigase.pubsub.modules.commands.DeleteAllNodesCommand;
+import tigase.pubsub.modules.commands.LoadTestCommand;
 import tigase.pubsub.modules.commands.ReadAllNodesCommand;
 import tigase.pubsub.modules.commands.RebuildDatabaseCommand;
 import tigase.pubsub.modules.commands.RetrieveItemsCommand;
@@ -77,10 +81,10 @@ import tigase.pubsub.modules.ext.presence.PresenceNodeSubscriptions;
 import tigase.pubsub.modules.ext.presence.PresenceNotifierModule;
 import tigase.pubsub.modules.ext.usernode.PushToUsernode;
 import tigase.pubsub.modules.ext.usernode.UserNodeCreator;
+import tigase.pubsub.repository.IPubSubDAO;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.PubSubDAO;
-import tigase.pubsub.repository.PubSubDAOJDBC;
 import tigase.pubsub.repository.PubSubDAOPool;
 import tigase.pubsub.repository.PubSubRepositoryWrapper;
 import tigase.pubsub.repository.RepositoryException;
@@ -111,50 +115,15 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 	private class AdHocScriptCommandManagerImpl implements AdHocScriptCommandManager {
 		private final PubSubComponent component;
 
-		// ~--- constructors
-		// -------------------------------------------------------
-
-		/**
-		 * Constructs ...
-		 * 
-		 * 
-		 * @param component
-		 */
 		public AdHocScriptCommandManagerImpl(PubSubComponent component) {
 			this.component = component;
 		}
 
-		// ~--- methods
-		// ------------------------------------------------------------
-
-		/**
-		 * Method description
-		 * 
-		 * 
-		 * @param senderJid
-		 *            is a <code>JID</code>
-		 * @param toJid
-		 *            is a <code>JID</code>
-		 * 
-		 * @return a value of <code>List<Element></code>
-		 */
 		@Override
 		public List<Element> getCommandListItems(JID senderJid, JID toJid) {
 			return component.getScriptItems(Command.XMLNS, toJid, senderJid);
 		}
 
-		// ~--- get methods
-		// --------------------------------------------------------
-
-		/**
-		 * Method description
-		 * 
-		 * 
-		 * @param packet
-		 *            is a <code>Packet</code>
-		 * 
-		 * @return a value of <code>List<Packet></code>
-		 */
 		@Override
 		public List<Packet> process(Packet packet) {
 			Queue<Packet> results = new ArrayDeque<Packet>();
@@ -164,6 +133,11 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 			}
 
 			return null;
+		}
+
+		@Override
+		public boolean canCallCommand( JID jid, String commandId ) {
+			return component.canCallCommand( jid, commandId );
 		}
 	}
 
@@ -223,26 +197,23 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		return result;
 	}
 
+	private AdHocConfigCommandModule adHocCommandsModule;
 
+	protected CapsModule capsModule;
 	/** Field description */
 	protected LeafNodeConfig defaultNodeConfig;
+	private PubSubDAO directPubSubRepository;
 	/** Field description */
 	protected Integer maxRepositoryCacheSize;
 
-	/** Field description */
-	protected IPubSubRepository pubsubRepository;
-
-	/** Field description */
-	private AdHocConfigCommandModule  adHocCommandsModule;
-	private CapsModule                capsModule;
-	private PubSubDAO                 directPubSubRepository;
-
 	/* modules */
 	protected PendingSubscriptionModule pendingSubscriptionModule;
-	protected PresenceCollectorModule   presenceCollectorModule;
-	protected PresenceNotifierModule    presenceNotifierModule;
-	protected PublishItemModule         publishNodeModule;
+	protected PresenceCollectorModule presenceCollectorModule;
+	protected PresenceNotifierModule presenceNotifierModule;
+	protected PublishItemModule publishNodeModule;
 
+	/** Field description */
+	protected IPubSubRepository pubsubRepository;
 	// ~--- constructors
 	// ---------------------------------------------------------
 	private AdHocScriptCommandManager scriptCommandManager;
@@ -294,31 +265,59 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		final Map<String, Object> poolSizes = getProperties(PUBSUB_REPO_POOL_SIZE_PROP_KEY, props);
 		final String default_cls_name = (String) classNames.get(null);
 
-		// if (resUris.size() > 1) {
-		PubSubDAOPool dao_pool = new PubSubDAOPool(userRepository);
+		PubSubDAOPool dao_pool = new PubSubDAOPool();
+		dao_pool.init(null, null, userRepository);
 
 		for (Entry<String, Object> e : resUris.entrySet()) {
 			String domain = e.getKey();
 			String resUri = (String) e.getValue();
-			String className = classNames.containsKey(domain) ? (String) classNames.get(domain) : default_cls_name;
+			String className = classNames.containsKey(domain) ? (String) classNames.get(domain) : null;
+			Class<? extends IPubSubDAO> repoClass = null;
+			if (className == null) {
+				try {
+					repoClass = RepositoryFactory.getRepoClass(IPubSubDAO.class, resUri);
+				} catch (DBInitException ex) {
+					log.log(Level.FINE, "could not autodetect PubSubDAO implementation for domain = {0} for uri = {1}",
+							new Object[] { (domain == null ? "default" : domain), resUri });
+				}
+			}
+			if (repoClass == null) {
+				if (className == null)
+					className = default_cls_name;
+				try {
+					repoClass = (Class<? extends IPubSubDAO>) ModulesManagerImpl.getInstance().forName(className);
+				} catch (ClassNotFoundException ex) {
+					throw new RepositoryException("could not find class " + className + " to use as PubSubDAO"
+							+ " implementation for domain " + (domain == null ? "default" : domain), ex);
+				}
+			}
 			int dao_pool_size;
+			Map<String, String> repoParams = new HashMap<String, String>();
 
 			try {
-				dao_pool_size = (Integer) (poolSizes.containsKey(domain) ? poolSizes.get(domain)
-						: poolSizes.get(null));
+				Object value = (poolSizes.containsKey(domain) ? poolSizes.get(domain) : poolSizes.get(null));
+				dao_pool_size = (value instanceof Integer) ? ((Integer) value) : Integer.parseInt((String) value);
 			} catch (Exception ex) {
-				log.log(Level.SEVERE, "Error parsing pool data", ex);
 				// we should set it at least to 10 to improve performace,
 				// as previous value (1) was really not enought
 				dao_pool_size = 10;
 			}
-			if (log.isLoggable(Level.CONFIG)) {
-				log.config("Creating DAO for domain=" + domain + "; class=" + className + "; uri=" + resUri + "; poolSize="
+			if (log.isLoggable(Level.FINER)) {
+				log.finer("Creating DAO for domain=" + domain + "; class="
+						+ (repoClass == null ? className : repoClass.getCanonicalName()) + "; uri=" + resUri + "; poolSize="
 						+ dao_pool_size);
 			}
 
 			for (int i = 0; i < dao_pool_size; i++) {
-				dao_pool.addDao(null, new PubSubDAOJDBC(userRepository, this.componentConfig, resUri));
+				try {
+					IPubSubDAO dao = repoClass.newInstance();
+					dao.init(resUri, repoParams, userRepository);
+					dao_pool.addDao(domain == null ? null : BareJID.bareJIDInstanceNS(domain), dao);
+				} catch (InstantiationException ex) {
+					throw new RepositoryException("Cound not create instance of " + repoClass.getCanonicalName(), ex);
+				} catch (IllegalAccessException ex) {
+					throw new RepositoryException("Cound not create instance of " + repoClass.getCanonicalName(), ex);
+				}
 			}
 
 			if (log.isLoggable(Level.CONFIG)) {
@@ -327,44 +326,7 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 			}
 		}
 
-		dao_pool.init();
-
 		return dao_pool;
-		// } else {
-		// String domain = null;
-		// String resUri = (String) resUris.get(null);
-		// String className = default_cls_name;
-		// int dao_pool_size;
-		//
-		// try {
-		// dao_pool_size = Integer.parseInt((String)
-		// (poolSizes.containsKey(domain)
-		// ? poolSizes.get(domain)
-		// : poolSizes.get(null)));
-		// } catch (Exception ex) {
-		// // we should set it at least to 10 to improve performace,
-		// // as previous value (1) was really not enought
-		// dao_pool_size = 10;
-		// }
-		//
-		// PubSubDAO dao;
-		//
-		// if (dao_pool_size > 1) {
-		// PubSubDAOPool dao_pool = new PubSubDAOPool(userRepository);
-		//
-		// for (int i = 0; i < dao_pool_size; i++) {
-		// dao_pool.addDao(null, new PubSubDAOJDBC(userRepository,
-		// this.componentConfig,
-		// resUri));
-		// }
-		// dao = dao_pool;
-		// } else {
-		// dao = new PubSubDAOJDBC(userRepository, this.componentConfig,
-		// resUri);
-		// }
-		//
-		// return dao;
-		// }
 	}
 
 	// ~--- get methods
@@ -400,32 +362,13 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		Map<String, Object> props = super.getDefaults(params);
 
 		// By default use the same repository as all other components:
-		String repo_class = RepositoryFactory.DERBY_REPO_CLASS_PROP_VAL;
-		String repo_uri = RepositoryFactory.DERBY_REPO_URL_PROP_VAL;
-		String conf_db = null;
+		String repo_uri = null;
 
-		if (params.get(RepositoryFactory.GEN_USER_DB) != null) {
-			conf_db = (String) params.get(RepositoryFactory.GEN_USER_DB);
-		} // end of if (params.get(GEN_USER_DB) != null)
-		if (conf_db != null) {
-			if (conf_db.equals("mysql")) {
-				repo_class = RepositoryFactory.MYSQL_REPO_CLASS_PROP_VAL;
-				repo_uri = RepositoryFactory.MYSQL_REPO_URL_PROP_VAL;
-			}
-			if (conf_db.equals("pgsql")) {
-				repo_class = RepositoryFactory.PGSQL_REPO_CLASS_PROP_VAL;
-				repo_uri = RepositoryFactory.PGSQL_REPO_URL_PROP_VAL;
-			}
-			if (conf_db.equals("sqlserver")) {
-				repo_class = RepositoryFactory.SQLSERVER_REPO_CLASS_PROP_VAL;
-				repo_uri = RepositoryFactory.SQLSERVER_REPO_URL_PROP_VAL;
-			}
-		} // end of if (conf_db != null)
 		if (params.get(RepositoryFactory.GEN_USER_DB_URI) != null) {
 			repo_uri = (String) params.get(RepositoryFactory.GEN_USER_DB_URI);
 		} // end of if (params.get(GEN_USER_DB_URI) != null)
-		props.put(PUBSUB_REPO_CLASS_PROP_KEY, repo_class);
 		props.put(PUBSUB_REPO_URL_PROP_KEY, repo_uri);
+		props.put(PUBSUB_REPO_POOL_SIZE_PROP_KEY, 10);
 		props.put(MAX_CACHE_SIZE, "2000");
 
 		String[] admins;
@@ -447,17 +390,8 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 
 	@Override
 	public int hashCodeForPacket(Packet packet) {
-		int hash = 1;
-		if ((packet.getStanzaFrom() != null) && (packet.getPacketFrom() != null)
-				&& !getComponentId().equals(packet.getPacketFrom())
-				// this should detect if packet is addressed from pubsub.example.com
-				&& (packet.getPacketFrom().getLocalpart() != null || !packet.getPacketFrom().getDomain().startsWith(getName()))) {
-			hash = packet.getStanzaFrom().hashCode();
-		}
-		else if (packet.getStanzaTo() != null) {
-			hash = packet.getStanzaTo().hashCode();
-		}
-
+		int hash = packet.hashCode();
+		
 		return hash;
 	}
 
@@ -529,8 +463,8 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param binds
 	 *            is a <code>Bindings</code>
 	 */
@@ -544,13 +478,13 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param admins
 	 * @param pubSubDAO
 	 * @param createPubSubRepository
 	 * @param defaultNodeConfig
-	 * 
+	 *
 	 * @throws RepositoryException
 	 * @throws TigaseDBException
 	 * @throws UserNotFoundException
@@ -562,7 +496,7 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		// this.componentConfig.setServiceName("tigase-pubsub");
 
 		// create pubsub user if it doesn't exist
-		if (!(userRepository.getUserUID(componentConfig.getServiceBareJID()) > 0)) {
+		if (!userRepository.userExists(componentConfig.getServiceBareJID())) {
 			userRepository.addUser(componentConfig.getServiceBareJID());
 		}
 		this.directPubSubRepository = pubSubDAO;
@@ -585,6 +519,7 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		this.adHocCommandsModule.register(configCommand);
 		this.adHocCommandsModule.register(new DeleteAllNodesCommand(this.componentConfig, this.directPubSubRepository,
 				this.userRepository));
+		this.adHocCommandsModule.register(new LoadTestCommand(this.componentConfig, this.pubsubRepository, this));
 		this.adHocCommandsModule.register(new ReadAllNodesCommand(this.componentConfig, this.directPubSubRepository,
 				this.pubsubRepository));
 		this.adHocCommandsModule.register(new RetrieveItemsCommand(this.componentConfig, this.pubsubRepository,
@@ -595,7 +530,7 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 	public boolean isDiscoNonAdmin() {
 		return true;
 	}
-	
+
 	/**
 	 * Method description
 	 * 
@@ -607,12 +542,9 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		return true;
 	}
 
-	// ~--- set methods
-	// ----------------------------------------------------------
-
 	/**
 	 * Method description
-	 * 
+	 *
 	 */
 	public void onChangeDefaultNodeConfig() {
 		try {
@@ -623,8 +555,8 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		}
 	}
 
-	// ~--- methods
-	// --------------------------------------------------------------
+	// ~--- set methods
+	// ----------------------------------------------------------
 
 	/**
 	 * Method description
@@ -639,8 +571,8 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		return Runtime.getRuntime().availableProcessors() * 4;
 	}
 
-	// ~--- set methods
-	// ----------------------------------------------------------
+	// ~--- methods
+	// --------------------------------------------------------------
 
 	/**
 	 * Method description
@@ -654,11 +586,15 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 	public int processingOutThreads() {
 		return Runtime.getRuntime().availableProcessors() * 4;
 	}
-	
+
+	// ~--- set methods
+	// ----------------------------------------------------------
+
 	@Override
 	public void processPacket(Packet packet) {
-		// if stanza is addressed to getName()@domain then we need to return SERVICE_UNAVAILABLE error
-		if (packet.getStanzaTo() != null && getName().equals(packet.getStanzaTo().getLocalpart())) {
+		// if stanza is addressed to getName()@domain then we need to return
+		// SERVICE_UNAVAILABLE error
+		if (packet.getStanzaTo() != null && getName().equals(packet.getStanzaTo().getLocalpart()) && packet.getType() != StanzaType.result) {
 			try {
 				Packet result = Authorization.SERVICE_UNAVAILABLE.getResponseMessage(packet, null, true);
 				addOutPacket(result);
@@ -667,11 +603,12 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 			}
 			return;
 		}
-			
+
 		super.processPacket(packet);
 	}
-		
-	//~--- set methods ----------------------------------------------------------
+
+	// ~--- inner classes
+	// --------------------------------------------------------
 
 	/**
 	 * Method description
@@ -681,7 +618,7 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 	 */
 	@Override
 	public void setProperties(Map<String, Object> props) throws ConfigurationException {
-			super.setProperties(props);
+		super.setProperties(props);
 		if (props.size() == 1) {
 
 			// If props.size() == 1, it means this is a single property update
@@ -721,23 +658,29 @@ public class PubSubComponent extends AbstractComponent<PubSubConfig> implements 
 		}
 
 		// Is there a shared user repository pool? If so I want to use it:
-		userRepository = (UserRepository) props.get(SHARED_USER_REPO_PROP_KEY);
-		if (userRepository == null) {
+		userRepository = (UserRepository) props.get(RepositoryFactory.SHARED_USER_REPO_PROP_KEY);
 
-			// Is there shared user repository instance? If so I want to use it:
-			userRepository = (UserRepository) props.get(SHARED_USER_REPO_PROP_KEY);
-		}
 		try {
-			PubSubDAO dao;
-			String cls_name = (String) props.get(PUBSUB_REPO_CLASS_PROP_KEY);
-			String res_uri = (String) props.get(PUBSUB_REPO_URL_PROP_KEY);
-
-			if (userRepository == null) {
-				userRepository = RepositoryFactory.getUserRepository(cls_name, res_uri, null);
-				userRepository.initRepository(res_uri, null);
-				log.config("Initialized " + cls_name + " as pubsub repository: " + res_uri);
-			}
-			dao = createDAO(props);
+			// I suppose that this code is useless as ConfiguratorAbstract will
+			// pass proper instance
+			// in props map under RepositoryFactory.SHARED_USER_REPO_PROP_KEY
+			// key which is checked
+			// already above. Moreover we should not relay on creation of
+			// UserRepository here using
+			// PubSub repository class property and PubSub repository URI - this
+			// is wrong!!
+			// String cls_name = (String) props.get(PUBSUB_REPO_CLASS_PROP_KEY);
+			// String res_uri = (String) props.get(PUBSUB_REPO_URL_PROP_KEY);
+			//
+			// if (userRepository == null) {
+			// userRepository = RepositoryFactory.getUserRepository(cls_name,
+			// res_uri, null);
+			// userRepository.initRepository(res_uri, null);
+			// log.log(Level.CONFIG,
+			// "Initialized {0} as pubsub repository: {1}", new
+			// Object[]{cls_name, res_uri});
+			// }
+			PubSubDAO dao = createDAO(props);
 			initialize((String[]) props.get(ADMINS_KEY), dao, null, new LeafNodeConfig("default"));
 		} catch (Exception e) {
 			log.severe("Can't initialize pubsub repository: " + e);

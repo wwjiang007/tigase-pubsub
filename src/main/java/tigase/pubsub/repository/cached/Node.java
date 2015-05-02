@@ -1,9 +1,15 @@
 package tigase.pubsub.repository.cached;
 
 import tigase.pubsub.AbstractNodeConfig;
+
 import tigase.xmpp.BareJID;
 
-public class Node {
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class Node<T> {
+
+	private static final Logger log = Logger.getLogger(Node.class.getName());
 
 	//private boolean affNeedsWriting = false;
 	private boolean conNeedsWriting = false;
@@ -11,7 +17,7 @@ public class Node {
 
 	private boolean deleted = false;
 	private String name;
-	private long nodeId;
+	private T nodeId;
 
 	// private Long nodeAffiliationsChangeTimestamp;
 
@@ -26,8 +32,13 @@ public class Node {
 
 	// private Long nodeSubscriptionsChangeTimestamp;
 
-	public Node(long nodeId, BareJID serviceJid, AbstractNodeConfig nodeConfig, NodeAffiliations nodeAffiliations,
+	public Node(T nodeId, BareJID serviceJid, AbstractNodeConfig nodeConfig, NodeAffiliations nodeAffiliations,
 			NodeSubscriptions nodeSubscriptions) {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Constructing Node, serviceJid: {0}, nodeConfig: {1}, nodeId: {2}, nodeAffiliations: {3}",
+							 new Object[] { serviceJid, nodeConfig, nodeId, nodeAffiliations } );
+		}
+
 		this.nodeId = nodeId;
 		this.serviceJid = serviceJid;
 		this.nodeConfig = nodeConfig;
@@ -36,7 +47,7 @@ public class Node {
 		this.name = nodeConfig.getNodeName();
 	}
 	
-	public long getNodeId() {
+	public T getNodeId() {
 		return nodeId;
 	}
 

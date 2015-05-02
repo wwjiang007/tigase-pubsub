@@ -7,19 +7,29 @@ import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.pubsub.repository.RepositoryException;
 import tigase.xml.Element;
+
 import tigase.xmpp.BareJID;
 
-class Items implements IItems {
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-	private final IPubSubDAO dao;
+class Items<T> implements IItems {
 
-	private final long nodeId;
+	private static final Logger log = Logger.getLogger(Items.class.getName());
+
+	private final IPubSubDAO<T> dao;
+
+	private final T nodeId;
 	
 	private final String nodeName;
 
 	private final BareJID serviceJid;
 
-	public Items(long nodeId, BareJID serviceJid, String nodeName, IPubSubDAO dao) {
+	public Items(T nodeId, BareJID serviceJid, String nodeName, IPubSubDAO dao) {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Constructing Items, serviceJid: {0}, nodeName: {1}, nodeId: {2}, dao: {3}",
+							 new Object[] { serviceJid, nodeName, nodeId, dao } );
+		}
 		this.nodeId = nodeId;
 		this.dao = dao;
 		this.nodeName = nodeName;

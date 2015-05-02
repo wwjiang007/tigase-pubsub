@@ -21,6 +21,22 @@
  */
 package tigase.pubsub.repository;
 
+import tigase.db.DBInitException;
+import tigase.db.DataRepository;
+import tigase.db.Repository;
+
+import tigase.server.XMPPServer;
+
+import tigase.xmpp.BareJID;
+
+import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.Affiliation;
+import tigase.pubsub.NodeType;
+import tigase.pubsub.Subscription;
+import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.repository.stateless.UsersSubscription;
+import tigase.xml.Element;
+
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -30,8 +46,6 @@ import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,27 +53,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-import tigase.db.DataRepository;
-import static tigase.db.DataRepository.dbTypes.derby;
-import static tigase.db.DataRepository.dbTypes.jtds;
-import static tigase.db.DataRepository.dbTypes.mysql;
-import static tigase.db.DataRepository.dbTypes.postgresql;
-import static tigase.db.DataRepository.dbTypes.sqlserver;
 
-import tigase.db.UserRepository;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubConfig;
-import tigase.pubsub.Subscription;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
-import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.server.XMPPServer;
-import tigase.xml.Element;
-import tigase.xmpp.BareJID;
+import static tigase.db.DataRepository.dbTypes.*;
 
-public class PubSubDAOJDBC extends PubSubDAO {
+@Repository.Meta( supportedUris = { "jdbc:[^:]+:.*" } )
+public class PubSubDAOJDBC extends PubSubDAO<Long> {
 
 	/**
 	 * Database active connection.
@@ -108,23 +106,9 @@ public class PubSubDAOJDBC extends PubSubDAO {
 
 	private boolean schemaOk = false;
 	
-	public PubSubDAOJDBC( UserRepository repository, PubSubConfig pubSubConfig, final String connection_str ) {
-		super( repository );
-		this.db_conn = connection_str;
-
-		if (db_conn.startsWith("jdbc:postgresql")) {
-			database = DataRepository.dbTypes.postgresql;
-		} else if (db_conn.startsWith("jdbc:mysql")) {
-			database = DataRepository.dbTypes.mysql;
-		} else if (db_conn.startsWith("jdbc:derby")) {
-			database = DataRepository.dbTypes.derby;
-		} else if (db_conn.startsWith("jdbc:jtds:sqlserver")) {
-			database = DataRepository.dbTypes.jtds;
-		} else if (db_conn.startsWith("jdbc:sqlserver")) {
-			database = DataRepository.dbTypes.sqlserver;
-		}
+	public PubSubDAOJDBC() {
 	}
-
+	
 	@Override
 	public void addToRootCollection( BareJID serviceJid, String nodeName ) throws RepositoryException {
 		// TODO
@@ -164,9 +148,9 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	@Override
-	public long createNode( BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
+	public Long createNode( BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
 													NodeType nodeType, Long collectionId ) throws RepositoryException {
-		long nodeId = 0;
+		Long nodeId = null;
 		ResultSet rs = null;
 		try {
 			String serializedNodeConfig = null;
@@ -221,7 +205,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	@Override
-	public void deleteItem( BareJID serviceJid, long nodeId, String id ) throws RepositoryException {
+	public void deleteItem( BareJID serviceJid, Long nodeId, String id ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "deleting Item: serviceJid: {0}, nodeId: {1}, id: {2}",
+							 new Object[] { serviceJid, nodeId, id } );
+		}
 		try {
 			checkConnection();
 			synchronized ( delete_item_sp ) {
@@ -239,7 +227,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	@Override
-	public void deleteNode( BareJID serviceJid, long nodeId ) throws RepositoryException {
+	public void deleteNode( BareJID serviceJid, Long nodeId ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "deleting Node: serviceJid: {0}, nodeId: {1}",
+							 new Object[] { serviceJid, nodeId } );
+		}
 		try {
 			checkConnection();
 			synchronized ( remove_node_sp ) {
@@ -257,6 +249,9 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	@Override
 	public void destroy() {
 		try {
+			if (log.isLoggable(Level.FINEST)) {
+				log.log(Level.FINEST, "closing JDBC connection: {0} - {1}", new Object[] {conn.getClass().getCanonicalName(), conn});
+			}			
 			if ( !conn.isClosed() ) {
 				conn.close();
 			}
@@ -268,6 +263,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 
 	@Override
 	public String[] getAllNodesList( BareJID serviceJid) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "get all nodes list: serviceJid: {0}",
+							 new Object[] { serviceJid } );
+		}
 		ResultSet rs = null;
 		try {
 			checkConnection();
@@ -290,6 +289,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 	
 	protected Date getDateFromItem( BareJID serviceJid, long nodeId, String id, int field ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "getting date from item: serviceJid: {0}, nodeId: {1}, id: {2}, field: {3}",
+							 new Object[] { serviceJid, nodeId, id, field } );
+		}
 		ResultSet rs = null;
 		try {
 			checkConnection();
@@ -322,12 +325,12 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	@Override
-	public Element getItem( BareJID serviceJid, long nodeId, String id ) throws RepositoryException {
+	public Element getItem( BareJID serviceJid, Long nodeId, String id ) throws RepositoryException {
 		return itemDataToElement( getStringFromItem( serviceJid, nodeId, id, 1 ).toCharArray() );
 	}
 
 	@Override
-	public Date getItemCreationDate( final BareJID serviceJid, final long nodeId, final String id )
+	public Date getItemCreationDate( final BareJID serviceJid, final Long nodeId, final String id )
 			throws RepositoryException {
 		return getDateFromItem( serviceJid, nodeId, id, 3 );
 	}
@@ -338,31 +341,42 @@ public class PubSubDAOJDBC extends PubSubDAO {
 //	}
 
 	@Override
-	public String[] getItemsIds( BareJID serviceJid, long nodeId ) throws RepositoryException {
-		ResultSet rs = null;
-		try {
-			checkConnection();
-			synchronized ( get_node_items_ids_sp ) {
-				get_node_items_ids_sp.setLong( 1, nodeId );
-				rs = get_node_items_ids_sp.executeQuery();
-				List<String> ids = new ArrayList<String>();
-				while ( rs.next() ) {
-					ids.add( rs.getString( 1 ) );
-				}
-				return ids.toArray( new String[ ids.size() ] );
+	public String[] getItemsIds( BareJID serviceJid, Long nodeId ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "getting items IDs: serviceJid: {0}, nodeId: {1}",
+							 new Object[] { serviceJid, nodeId } );
+		}
+		if ( null != nodeId ){
+			ResultSet rs = null;
+			try {
+				checkConnection();
+				synchronized ( get_node_items_ids_sp ) {
+					get_node_items_ids_sp.setLong( 1, nodeId );
+					rs = get_node_items_ids_sp.executeQuery();
+					List<String> ids = new ArrayList<String>();
+					while ( rs.next() ) {
+						ids.add( rs.getString( 1 ) );
+					}
+					return ids.toArray( new String[ ids.size() ] );
 			}
-		} catch ( SQLException e ) {
-			throw new RepositoryException( "Items list reading error"
-																		 + " serviceJid: " + serviceJid
-																		 + " / nodeId: " + nodeId
-, e );
-		} finally {
-			release( null, rs );
-		} // end of catch
+			} catch ( SQLException e ) {
+				throw new RepositoryException( "Items list reading error"
+																			 + " serviceJid: " + serviceJid
+																			 + " / nodeId: " + nodeId, e );
+			} finally {
+				release( null, rs );
+			} // end of catch
+		} else {
+			return null;
+		}
 	}
 
 	@Override
-	public String[] getItemsIdsSince( BareJID serviceJid, long nodeId, Date since ) throws RepositoryException {
+	public String[] getItemsIdsSince( BareJID serviceJid, Long nodeId, Date since ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting items since: serviceJid: {0}, nodeId: {1}, since: {2}",
+							 new Object[] { serviceJid, nodeId, since } );
+		}
 		ResultSet rs = null;
 		try {
 			Timestamp sinceTs = new Timestamp(since.getTime());
@@ -388,8 +402,12 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 	
 	@Override
-	public List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, long nodeId, String nodeName) 
+	public List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, Long nodeId, String nodeName) 
 			throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting items meta: serviceJid: {0}, nodeId: {1}, nodeName: {2}",
+							 new Object[] { serviceJid, nodeId, nodeName } );
+		}
 		ResultSet rs = null;
 		try {
 			checkConnection();
@@ -400,7 +418,8 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				while ( rs.next() ) {
 					String id = rs.getString(1);
 					Date creationDate = rs.getTimestamp(2);
-					results.add(new IItems.ItemMeta(nodeName, id, creationDate));
+					Date updateDate = rs.getTimestamp(3);
+					results.add(new IItems.ItemMeta(nodeName, id, creationDate, updateDate));
 				}
 				return results;
 			}
@@ -416,12 +435,16 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 	
 	@Override
-	public Date getItemUpdateDate( BareJID serviceJid, long nodeId, String id ) throws RepositoryException {
+	public Date getItemUpdateDate( BareJID serviceJid, Long nodeId, String id ) throws RepositoryException {
 		return getDateFromItem( serviceJid, nodeId, id, 4 );
 	}
 
 	@Override
-	public long getNodeId( BareJID serviceJid, String nodeName ) throws RepositoryException {
+	public Long getNodeId( BareJID serviceJid, String nodeName ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}",
+							 new Object[] { serviceJid, nodeName } );
+		}
 		ResultSet rs = null;
 		try {
 			checkConnection();
@@ -432,7 +455,7 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				if ( rs.next() ) {
 					return rs.getLong(1);
 				}				
-				return 0;
+				return null;
 			}
 		} catch ( SQLException e ) {
 			throw new RepositoryException( "Retrieving node id error"
@@ -446,7 +469,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 	
 	@Override
-	public NodeAffiliations getNodeAffiliations( BareJID serviceJid, long nodeId ) throws RepositoryException {
+	public NodeAffiliations getNodeAffiliations( BareJID serviceJid, Long nodeId ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting node affiliation: serviceJid: {0}, nodeId: {1}",
+							 new Object[] { serviceJid, nodeId } );
+		}
 		ResultSet rs = null;
 		try {
 			checkConnection();
@@ -472,12 +499,16 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	@Override
-	public String getNodeConfig(BareJID serviceJid, long nodeId) throws RepositoryException {
+	public String getNodeConfig(BareJID serviceJid, Long nodeId) throws RepositoryException {
 		return readNodeConfigFormData(serviceJid, nodeId);
 	}
 	
 	@Override
 	public String[] getNodesList( BareJID serviceJid, String nodeName ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting nodes list: serviceJid: {0}, nodeName: {1}",
+							 new Object[] { serviceJid, nodeName } );
+		}
 		ResultSet rs = null;
 		try {
 			checkConnection();
@@ -515,7 +546,11 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	@Override
-	public NodeSubscriptions getNodeSubscriptions( BareJID serviceJid, long nodeId ) throws RepositoryException {
+	public NodeSubscriptions getNodeSubscriptions( BareJID serviceJid, Long nodeId ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting node subscriptions: serviceJid: {0}, nodeId: {1}",
+							 new Object[] { serviceJid, nodeId } );
+		}
 		ResultSet rs = null;
 		try {
 			final NodeSubscriptions ns = NodeSubscriptions.create();
@@ -553,6 +588,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	protected String getStringFromItem( BareJID serviceJid, long nodeId, String id, int field ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting string from item: serviceJid: {0}, nodeId: {1}",
+							 new Object[] { serviceJid, nodeId } );
+		}
 		ResultSet rs = null;
 		try {
 			checkConnection();
@@ -578,6 +617,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	
 	@Override
 	public Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting user affiliation: serviceJid: {0}, jid: {1}",
+							 new Object[] { serviceJid, jid } );
+		}
 		ResultSet rs = null;
 		try {
 			Map<String, UsersAffiliation> result = new HashMap<String, UsersAffiliation>();
@@ -604,6 +647,10 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	
 	@Override
 	public Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID jid) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting user subs: serviceJid: {0}, jid: {1}",
+							 new Object[] { serviceJid, jid } );
+		}
 		ResultSet rs = null;
 		try {
 			Map<String, UsersSubscription> result = new HashMap<String, UsersSubscription>();
@@ -670,18 +717,32 @@ public class PubSubDAOJDBC extends PubSubDAO {
 			System.exit(1);
 		}		
 	}
-	
+
 	@Override
-	public void init() throws RepositoryException {
+	public void initRepository(String resource_uri, Map<String, String> params) throws DBInitException {
+		this.db_conn = resource_uri;
+
+		if (db_conn.startsWith("jdbc:postgresql")) {
+			database = DataRepository.dbTypes.postgresql;
+		} else if (db_conn.startsWith("jdbc:mysql")) {
+			database = DataRepository.dbTypes.mysql;
+		} else if (db_conn.startsWith("jdbc:derby")) {
+			database = DataRepository.dbTypes.derby;
+		} else if (db_conn.startsWith("jdbc:jtds:sqlserver")) {
+			database = DataRepository.dbTypes.jtds;
+		} else if (db_conn.startsWith("jdbc:sqlserver")) {
+			database = DataRepository.dbTypes.sqlserver;
+		}	
+		
 		try {
 			initRepo();
 		} catch ( SQLException e ) {
 			conn = null;
-			throw new RepositoryException( "Problem initializing jdbc connection: " + db_conn, e );
-		}
-		super.init();
+			throw new DBInitException( "Problem initializing jdbc connection: " + db_conn, e );
+		}		
 	}
 
+	
 	/**
 	 * <code>initPreparedStatements</code> method initializes internal database
 	 * connection variables such as prepared statements.
@@ -777,6 +838,18 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	 */
 	private void initRepo() throws SQLException {
 		synchronized ( db_conn ) {
+			if (conn != null) {
+				try {
+					if (!conn.isClosed()) {
+						if (log.isLoggable(Level.FINEST)) {
+							log.log(Level.FINEST, "closing JDBC connection: {0}", conn);
+						}
+						conn.close();
+					}
+				} catch (Exception ex) {
+					log.log(Level.WARNING, "Exception occured while closing old DB connection for reinitialization", ex);
+				}
+			}
 			String driverClass = null;
 			switch (database) {
 				case postgresql:
@@ -806,12 +879,19 @@ public class PubSubDAOJDBC extends PubSubDAO {
 			}		
 			
 			conn = DriverManager.getConnection( db_conn );
+			if (log.isLoggable(Level.FINEST)) {
+				log.log(Level.FINEST, "establishing JDBC connection: {0} for {1}", new Object[]{conn, db_conn});
+			}
 			checkSchema();			
 			initPreparedStatements();
 		}
 	}
 
 	protected String readNodeConfigFormData( final BareJID serviceJid, final long nodeId ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "reding node config: serviceJid: {0}, nodeId: {1}",
+							 new Object[] { serviceJid, nodeId } );
+		}
 		ResultSet rs = null;
 		try {
 			checkConnection();
@@ -865,13 +945,13 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	@Override
-	public void removeFromRootCollection( BareJID serviceJid, long nodeId ) throws RepositoryException {
+	public void removeFromRootCollection( BareJID serviceJid, Long nodeId ) throws RepositoryException {
 		// TODO check it
 		deleteNode( serviceJid, nodeId );
 	}
 
 	@Override
-	public void removeNodeSubscription( BareJID serviceJid, long nodeId, BareJID jid ) throws RepositoryException {
+	public void removeNodeSubscription( BareJID serviceJid, Long nodeId, BareJID jid ) throws RepositoryException {
 		try {
 			checkConnection();
 			synchronized ( delete_node_subscriptions_sp ) {
@@ -888,22 +968,32 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	@Override
-	public void updateNodeAffiliation( BareJID serviceJid, long nodeId, UsersAffiliation affiliation ) throws RepositoryException {
+	public void updateNodeAffiliation( BareJID serviceJid, Long nodeId, String nodeName, UsersAffiliation affiliation ) throws RepositoryException {
 		ResultSet rs = null;
+		if (log.isLoggable(Level.FINEST)) {
+			log.finest("Updating node affiliation[1]: " + nodeName + " / " + affiliation);
+		}
+
 		try {
 			checkConnection();
 			synchronized ( set_node_affiliations_sp ) {
 				set_node_affiliations_sp.setLong( 1, nodeId );
 				set_node_affiliations_sp.setString( 2, affiliation.getJid().toString() );
 				set_node_affiliations_sp.setString( 3, affiliation.getAffiliation().name() );
-				if ( db_conn != null ){
+				switch (database) {
+//				if ( db_conn != null ){
 //					if ( db_conn.contains( "mysql" ) ){
+					case mysql:
+						rs = set_node_affiliations_sp.executeQuery();
+						break;
 //						rs = set_node_affiliations_sp.executeQuery();
 //					}
 //					if ( db_conn.contains( "sqlserver" ) ){
 //						set_node_affiliations_sp.executeUpdate();
 //					}
-					set_node_affiliations_sp.execute();
+					default:
+						set_node_affiliations_sp.execute();
+						break;
 				}
 			}
 		} catch ( SQLException e ) {
@@ -915,10 +1005,14 @@ public class PubSubDAOJDBC extends PubSubDAO {
 		} finally {
 			release( null, rs );
 		} // end of catch
+		if (log.isLoggable(Level.FINEST)) {
+			log.finest("Updating node affiliation[2]");
+		}
+
 	}
 
 	@Override
-	public void updateNodeConfig(final BareJID serviceJid, final long nodeId, final String serializedData,
+	public void updateNodeConfig(final BareJID serviceJid, final Long nodeId, final String serializedData,
 			final Long collectionId)
 			throws RepositoryException {
 		ResultSet rs = null;
@@ -932,14 +1026,20 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				} else {
 					set_node_configuration_sp.setLong( 3, collectionId );
 				}
-				if ( db_conn != null ){
+				switch (database) {
+//				if ( db_conn != null ){
 //					if ( db_conn.contains( "mysql" ) ){
+					case mysql:
+						rs = set_node_configuration_sp.executeQuery();
+						break;
 //						rs = set_node_configuration_sp.executeQuery();
 //					}
 //					if ( db_conn.contains( "sqlserver" ) ){
 //						set_node_configuration_sp.executeUpdate();
 //					}
-					set_node_configuration_sp.execute();
+					default:
+						set_node_configuration_sp.execute();
+						break;
 				}
 			}
 		} catch ( SQLException e ) {
@@ -954,8 +1054,12 @@ public class PubSubDAOJDBC extends PubSubDAO {
 	}
 
 	@Override
-	public void updateNodeSubscription( BareJID serviceJid, long nodeId, UsersSubscription subscription )
+	public void updateNodeSubscription( BareJID serviceJid, Long nodeId, String nodeName, UsersSubscription subscription )
 			throws RepositoryException {
+		if (log.isLoggable(Level.FINEST)) {
+			log.finest("Updating node subscriptions[1]: " + nodeName + " / " + subscription);
+		}
+
 		ResultSet rs = null;
 		try {
 			checkConnection();
@@ -964,14 +1068,19 @@ public class PubSubDAOJDBC extends PubSubDAO {
 				set_node_subscriptions_sp.setString( 2, subscription.getJid().toString() );
 				set_node_subscriptions_sp.setString( 3, subscription.getSubscription().name() );
 				set_node_subscriptions_sp.setString( 4, subscription.getSubid());
-				if ( db_conn != null ){
+				switch (database) {
+//				if ( db_conn != null ){
 //					if ( db_conn.contains( "mysql" ) ){
-//						rs = set_node_subscriptions_sp.executeQuery();
+					case mysql:
+						rs = set_node_subscriptions_sp.executeQuery();
+						break;
 //					}
 //					if ( db_conn.contains( "sqlserver" ) ){
 //						set_node_subscriptions_sp.executeUpdate();
 //					}
-					set_node_subscriptions_sp.execute();
+					default:
+						set_node_subscriptions_sp.execute();
+						break;
 				}
 			}
 		} catch ( SQLException e ) {
@@ -983,10 +1092,14 @@ public class PubSubDAOJDBC extends PubSubDAO {
 		} finally {
 			release( null, rs );
 		} // end of catch
+		if (log.isLoggable(Level.FINEST)) {
+			log.finest("Updating node subscriptions[2]");
+		}
+
 	}
 
 	@Override
-	public void writeItem( final BareJID serviceJid, final long nodeId, long timeInMilis, final String id,
+	public void writeItem( final BareJID serviceJid, final Long nodeId, long timeInMilis, final String id,
 												 final String publisher, final Element item ) throws RepositoryException {
 		ResultSet rs = null;
 		try {

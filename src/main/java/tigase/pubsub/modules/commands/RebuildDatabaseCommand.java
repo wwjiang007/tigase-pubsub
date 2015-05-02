@@ -34,10 +34,6 @@ public class RebuildDatabaseCommand implements AdHocCommand {
 	@Override
 	public void execute(AdhHocRequest request, AdHocResponse response) throws AdHocCommandException {
 		try {
-			if (!config.isAdmin(request.getSender())) {
-				throw new AdHocCommandException(Authorization.FORBIDDEN);
-			}
-
 			final Element data = request.getCommand().getChild("x", "jabber:x:data");
 			if (request.getAction() != null && "cancel".equals(request.getAction())) {
 				response.cancelSession();
@@ -66,8 +62,6 @@ public class RebuildDatabaseCommand implements AdHocCommand {
 				response.completeSession();
 			}
 
-		} catch (AdHocCommandException e) {
-			throw e;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new AdHocCommandException(Authorization.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -89,7 +83,7 @@ public class RebuildDatabaseCommand implements AdHocCommand {
 		final Set<String> rootCollection = new HashSet<String>();
 		final Map<String, AbstractNodeConfig> nodeConfigs = new HashMap<String, AbstractNodeConfig>();
 		for (String nodeName : allNodesId) {
-			long nodeId = dao.getNodeId(serviceJid, nodeName);
+			Object nodeId = dao.getNodeId(serviceJid, nodeName);
 			String nodeConfigData = dao.getNodeConfig(serviceJid, nodeId);
 			AbstractNodeConfig nodeConfig = dao.parseConfig(nodeName, nodeConfigData);
 			nodeConfigs.put(nodeName, nodeConfig);
@@ -122,10 +116,10 @@ public class RebuildDatabaseCommand implements AdHocCommand {
 		for (Entry<String, AbstractNodeConfig> entry : nodeConfigs.entrySet()) {
 			final AbstractNodeConfig nodeConfig = entry.getValue();
 			final String nodeName = entry.getKey();
-			long nodeId = dao.getNodeId(serviceJid, nodeName);
-			long collectionId = dao.getNodeId(serviceJid, nodeConfig.getCollection());
+			Object nodeId = dao.getNodeId(serviceJid, nodeName);
+			Object collectionId = dao.getNodeId(serviceJid, nodeConfig.getCollection());
 			dao.updateNodeConfig(serviceJid, nodeId, nodeConfig.getFormElement().toString(),
-					collectionId == 0 ? null : collectionId);
+					collectionId);
 		}
 
 		dao.removeAllFromRootCollection(serviceJid);

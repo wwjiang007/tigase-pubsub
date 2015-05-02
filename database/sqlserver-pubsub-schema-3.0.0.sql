@@ -716,7 +716,7 @@ create procedure dbo.TigPubSubGetNodeItemsMeta
 	@_node_id bigint
 AS
 begin
-	select id, creation_date from tig_pubsub_items where node_id = @_node_id order by creation_date;	
+	select id, creation_date, update_date from tig_pubsub_items where node_id = @_node_id order by creation_date;	
 end
 -- QUERY END:
 GO

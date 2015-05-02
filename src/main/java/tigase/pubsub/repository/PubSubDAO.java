@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.logging.Logger;
+import tigase.db.DBInitException;
 import tigase.db.UserRepository;
 import tigase.form.Form;
 import tigase.pubsub.AbstractNodeConfig;
@@ -27,15 +28,14 @@ import tigase.xmpp.impl.roster.RosterFlat;
  *
  * @author andrzej
  */
-public abstract class PubSubDAO implements IPubSubDAO {
+public abstract class PubSubDAO<T> implements IPubSubDAO<T> {
 
 	protected static final Logger log = Logger.getLogger(PubSubDAO.class.getCanonicalName());
 	
 	private final SimpleParser parser = SingletonFactory.getParserInstance();	
-	private final UserRepository repository;
+	private UserRepository repository;
 	
-	protected PubSubDAO(UserRepository userRepository) {
-		this.repository = userRepository;
+	protected PubSubDAO() {
 	}
 
 	@Override
@@ -98,16 +98,12 @@ public abstract class PubSubDAO implements IPubSubDAO {
 		try {
 			String tmp = this.repository.getData(owner, "roster");
 			Map<BareJID,RosterElement> roster = new HashMap<BareJID,RosterElement>();
-			RosterFlat.parseRosterUtil(tmp, roster, null);
+			if (tmp != null)
+				RosterFlat.parseRosterUtil(tmp, roster, null);
 			return roster;
 		} catch (Exception e) {
 			throw new RepositoryException("Getting user roster error", e);
 		}
-	}
-	
-	@Override
-	public void init() throws RepositoryException {
-		
 	}
 	
 	protected Element itemDataToElement(char[] data) {
@@ -180,5 +176,15 @@ public abstract class PubSubDAO implements IPubSubDAO {
 		} catch (Exception e) {
 			throw new RepositoryException("Node configuration reading error", e);
 		}
+	}
+	
+	@Override
+	public void init(String resource_uri, Map<String, String> params, UserRepository userRepository) throws RepositoryException {
+		try {
+			initRepository(resource_uri, params);
+		} catch (DBInitException ex) {
+			throw new RepositoryException(ex);
+		}
+		this.repository = userRepository;
 	}
 }

@@ -22,8 +22,13 @@
 
 package tigase.pubsub.modules;
 
-import java.util.List;
-import java.util.regex.Pattern;
+import tigase.server.Message;
+import tigase.server.Packet;
+
+import tigase.xmpp.Authorization;
+import tigase.xmpp.BareJID;
+import tigase.xmpp.JID;
+import tigase.xmpp.StanzaType;
 
 import tigase.component2.PacketWriter;
 import tigase.criteria.Criteria;
@@ -41,13 +46,14 @@ import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.RepositoryException;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.server.Message;
-import tigase.server.Packet;
 import tigase.xml.Element;
-import tigase.xmpp.Authorization;
-import tigase.xmpp.BareJID;
-import tigase.xmpp.JID;
-import tigase.xmpp.StanzaType;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class description
@@ -57,6 +63,9 @@ import tigase.xmpp.StanzaType;
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
 public class ManageSubscriptionModule extends AbstractPubSubModule {
+
+	private Logger log = Logger.getLogger(this.getClass().getName());
+
 	private class SubscriptionFilter {
 
 		private String jidContains;
@@ -198,10 +207,6 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 			} else
 				throw new PubSubException(Authorization.BAD_REQUEST);
 
-			if (nodeSubscriptions.isChanged()) {
-				getRepository().update(toJid, nodeName, nodeSubscriptions);
-			}
-
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
@@ -229,6 +234,10 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 
 		UsersSubscription[] subscribers = nodeSubscriptions.getSubscriptions();
 
+		if (log.isLoggable(Level.FINEST)) {
+			log.finest("Node subscriptions: " + nodeName + " / " + Arrays.toString( subscribers ));
+		}
+
 		if (subscribers != null) {
 			for (UsersSubscription usersSubscription : subscribers) {
 				if (usersSubscription.getSubscription() == Subscription.none) {
@@ -245,6 +254,11 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 				afr.addChild(subscription);
 			}
 		}
+
+		if (nodeSubscriptions.isChanged()) {
+			getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeSubscriptions);
+		}
+	
 		packetWriter.write(iq);
 	}
 
@@ -257,6 +271,9 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 				throw new PubSubException(Authorization.BAD_REQUEST);
 			}
 		}
+		
+		Map<JID,Subscription> changedSubscriptions = new HashMap<JID,Subscription>();
+		
 		for (Element af : subss) {
 			String strSubscription = af.getAttributeStaticStr("subscription");
 			String jidStr = af.getAttributeStaticStr("jid");
@@ -272,16 +289,23 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 			oldSubscription = (oldSubscription == null) ? Subscription.none : oldSubscription;
 			if ((oldSubscription == Subscription.none) && (newSubscription != Subscription.none)) {
 				nodeSubscriptions.addSubscriberJid(jid.getBareJID(), newSubscription);
-				if (nodeConfig.isTigaseNotifyChangeSubscriptionAffiliationState()) {
-					packetWriter.write(createSubscriptionNotification(packet.getStanzaTo(), jid, nodeName, newSubscription));
-				}
+				changedSubscriptions.put(jid, newSubscription);
 			} else {
 				nodeSubscriptions.changeSubscription(jid.getBareJID(), newSubscription);
-				if (nodeConfig.isTigaseNotifyChangeSubscriptionAffiliationState()) {
-					packetWriter.write(createSubscriptionNotification(packet.getStanzaTo(), jid, nodeName, newSubscription));
-				}
+				changedSubscriptions.put(jid, newSubscription);
 			}
 		}
+
+		if (nodeSubscriptions.isChanged()) {
+			getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeSubscriptions);
+		}
+		
+		for (Map.Entry<JID,Subscription> entry : changedSubscriptions.entrySet()) {
+			if (nodeConfig.isTigaseNotifyChangeSubscriptionAffiliationState()) {
+				packetWriter.write(createSubscriptionNotification(packet.getStanzaTo(), entry.getKey(), nodeName, entry.getValue()));
+			}			
+		}
+			
 		Packet iq = packet.okResult((Element) null, 0);
 		packetWriter.write(iq);
 	}

@@ -94,10 +94,10 @@ public class Converter {
 					new Object[] { oldRepo.getClass().getCanonicalName(), oldRepoUri });
 			oldRepo.init();
 			
-			newRepo = new PubSubNewDAOJDBC(newRepoUri);
+			newRepo = new PubSubNewDAOJDBC();
 			log.log(Level.INFO, "initializing destination repository {0} for uri {1}",
 					new Object[] { newRepo.getClass().getCanonicalName(), newRepoUri });
-			newRepo.init();
+			newRepo.init(newRepoUri, null, null);
 		} catch (Exception ex) {
 			throw new RepositoryException("could not initialize converter", ex);
 		}
@@ -215,7 +215,7 @@ public class Converter {
 			long nodeId = newRepo.getNodeId(serviceJid, nodeName);
 			UsersAffiliation[] affiliations = oldRepo.getNodeAffiliations(serviceJid, nodeName);
 			for (UsersAffiliation aff : affiliations) {
-				newRepo.updateNodeAffiliation(serviceJid, nodeId, aff);
+				newRepo.updateNodeAffiliation(serviceJid, nodeId, nodeName, aff);
 			}
 		}
 	}
@@ -226,7 +226,7 @@ public class Converter {
 			long nodeId = newRepo.getNodeId(serviceJid, nodeName);
 			UsersSubscription[] subscription = oldRepo.getNodeSubscriptions(serviceJid, nodeName);
 			for (UsersSubscription subscr : subscription) {
-				newRepo.updateNodeSubscription(serviceJid, nodeId, subscr);
+				newRepo.updateNodeSubscription(serviceJid, nodeId, nodeName, subscr);
 			}
 		}		
 	}
