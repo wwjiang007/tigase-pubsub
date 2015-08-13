@@ -1,38 +1,41 @@
 package tigase.pubsub.modules.commands;
 
-import tigase.adhoc.AdHocCommand;
-import tigase.adhoc.AdHocCommandException;
-import tigase.adhoc.AdHocResponse;
-import tigase.adhoc.AdhHocRequest;
+import java.util.Arrays;
+
+import tigase.component.adhoc.AdHocCommand;
+import tigase.component.adhoc.AdHocCommandException;
+import tigase.component.adhoc.AdHocResponse;
+import tigase.component.adhoc.AdhHocRequest;
+import tigase.component.exceptions.RepositoryException;
 import tigase.db.TigaseDBException;
 import tigase.db.UserNotFoundException;
 import tigase.form.Field;
 import tigase.form.Form;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IPubSubRepository;
-import tigase.pubsub.repository.RepositoryException;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.server.AbstractMessageReceiver;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
+import tigase.xmpp.JID;
 
+@Bean(name = "loadTestCommand")
 public class LoadTestCommand implements AdHocCommand {
 
-	private final AbstractMessageReceiver component;
+	@Inject
+	private AbstractMessageReceiver component;
 
-	private final PubSubConfig config;
+	@Inject
+	private PubSubConfig config;
 
-	private final IPubSubRepository repository;
-
-	public LoadTestCommand(PubSubConfig config, IPubSubRepository repo, AbstractMessageReceiver component) {
-		this.config = config;
-		this.component = component;
-		this.repository = repo;
-	}
+	@Inject
+	private IPubSubRepository repository;
 
 	@Override
 	public void execute(AdhHocRequest request, AdHocResponse response) throws AdHocCommandException {
@@ -124,6 +127,11 @@ public class LoadTestCommand implements AdHocCommand {
 	@Override
 	public String getNode() {
 		return "load-test";
+	}
+
+	@Override
+	public boolean isAllowedFor(JID jid) {
+		return Arrays.asList(config.getAdmins()).contains(jid.toString());
 	}
 
 	private void startLoadTest(BareJID serviceJid, String nodeName, BareJID publisher, Long time, Long frequency,

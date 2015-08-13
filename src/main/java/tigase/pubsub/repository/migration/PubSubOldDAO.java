@@ -23,13 +23,13 @@
 package tigase.pubsub.repository.migration;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import tigase.component.exceptions.RepositoryException;
 import tigase.db.TigaseDBException;
 import tigase.db.UserNotFoundException;
 import tigase.db.UserRepository;
@@ -38,9 +38,6 @@ import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.CollectionNodeConfig;
 import tigase.pubsub.LeafNodeConfig;
 import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubConfig;
-import tigase.pubsub.repository.RepositoryException;
-import tigase.pubsub.repository.cached.NodeAffiliations;
 import tigase.pubsub.repository.cached.NodeSubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
@@ -52,8 +49,8 @@ import tigase.xmpp.BareJID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  * @version 5.0.0, 2010.03.27 at 05:19:00 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
@@ -73,8 +70,8 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param repository
 	 * @param pubSubConfig
 	 */
@@ -84,13 +81,13 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
 	 * @param id
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	@Override
@@ -116,7 +113,7 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * tigase.pubsub.repository.PubSubRepository#getItemCreationDate(java.lang
 	 * .String, java.lang.String)
@@ -124,13 +121,13 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
 	 * @param id
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	public Date getItemCreationDate(BareJID serviceJid, final String nodeName, final String id) throws RepositoryException {
@@ -154,13 +151,13 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
 	 * @param id
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	public String getItemPublisher(BareJID serviceJid, String nodeName, String id) throws RepositoryException {
@@ -173,12 +170,12 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	@Override
@@ -199,13 +196,13 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
 	 * @param id
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	public Date getItemUpdateDate(BareJID serviceJid, String nodeName, String id) throws RepositoryException {
@@ -229,19 +226,19 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	@Override
 	public UsersAffiliation[] getNodeAffiliations(BareJID serviceJid, String nodeName) throws RepositoryException {
 		try {
 			String cnfData = repository.getData(serviceJid, NODES_KEY + nodeName, "affiliations");
-			return NodeAffiliations.create(cnfData).getAffiliations();
+			return tigase.pubsub.repository.NodeAffiliations.create(cnfData).getAffiliations();
 		} catch (UserNotFoundException e1) {
 			log.log(Level.WARNING, "missing user for service jid = {0}", serviceJid);
 			return null;
@@ -252,12 +249,12 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	@Override
@@ -302,15 +299,15 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeConfigClass
 	 * @param nodeName
 	 * @param configForm
 	 * @param <T>
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	public <T extends AbstractNodeConfig> T getNodeConfig(final Class<T> nodeConfigClass, final String nodeName,
@@ -318,7 +315,7 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 		try {
 			Constructor<T> constructor = nodeConfigClass.getConstructor(String.class);
 			T nodeConfig = constructor.newInstance(nodeName);
-			
+
 			nodeConfig.copyFromForm(configForm);
 
 			return nodeConfig;
@@ -329,12 +326,12 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	@Override
@@ -354,17 +351,17 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	@Override
 	public BareJID getNodeCreator(BareJID serviceJid, String nodeName) throws RepositoryException {
-		// let's use service jid as node creator as this store 
+		// let's use service jid as node creator as this store
 		// does not contain any information about creator
 		return serviceJid;
 	}
-	
+
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	@Override
@@ -372,7 +369,7 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 		try {
 			String[] nodes;
 
-			//log.finer("Getting nodes list directly from DB");
+			// log.finer("Getting nodes list directly from DB");
 			nodes = repository.getSubnodes(serviceJid, NODES_KEY);
 
 			return nodes;
@@ -388,24 +385,24 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see tigase.pubsub.repository.PubSubRepository#getNodesList()
 	 */
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	@Override
 	public UsersSubscription[] getNodeSubscriptions(BareJID serviceJid, String nodeName) throws RepositoryException {
 		try {
-			final NodeSubscriptions ns = NodeSubscriptions.create();
+			final NodeSubscriptions ns = tigase.pubsub.repository.NodeSubscriptions.create();
 			int index = 0;
 
 			while (true) {
@@ -428,29 +425,40 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
-//	public String[] getRootNodes(BareJID serviceJid) throws RepositoryException {
-//		try {
-//			String[] ids = repository.getKeys(serviceJid, ROOT_COLLECTION_KEY);
-//
-//			return ids;
-//		} catch (UserNotFoundException e1) {
-//			log.log(Level.WARNING, "missing user for service jid = {0}", serviceJid);
-//			return null;
-//		} catch (Exception e) {
-//			throw new RepositoryException("Getting root collection error", e);
-//		}
-//	}
+	// public String[] getRootNodes(BareJID serviceJid) throws
+	// RepositoryException {
+	// try {
+	// String[] ids = repository.getKeys(serviceJid, ROOT_COLLECTION_KEY);
+	//
+	// return ids;
+	// } catch (UserNotFoundException e1) {
+	// log.log(Level.WARNING, "missing user for service jid = {0}", serviceJid);
+	// return null;
+	// } catch (Exception e) {
+	// throw new RepositoryException("Getting root collection error", e);
+	// }
+	// }
+
+	@Override
+	public BareJID[] getServiceJids() throws RepositoryException {
+		try {
+			List<BareJID> users = repository.getUsers();
+			return users.toArray(new BareJID[users.size()]);
+		} catch (TigaseDBException ex) {
+			throw new RepositoryException("Exception reading service jids", ex);
+		}
+	}
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @throws RepositoryException
 	 */
 	@Override
@@ -468,8 +476,8 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 		return q.element();
 	}
 
-	private Form readNodeConfigForm(final BareJID serviceJid, final String nodeName) throws UserNotFoundException,
-			TigaseDBException {
+	private Form readNodeConfigForm(final BareJID serviceJid, final String nodeName)
+			throws UserNotFoundException, TigaseDBException {
 		String cnfData = readNodeConfigFormData(serviceJid, nodeName);
 
 		if (cnfData == null) {
@@ -492,25 +500,15 @@ public class PubSubOldDAO implements IPubSubOldDAO {
 		return null;
 	}
 
-	protected String readNodeConfigFormData(final BareJID serviceJid, final String nodeName) throws TigaseDBException {
-		return repository.getData(serviceJid, NODES_KEY + nodeName, "configuration");
-	}
-
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see tigase.pubsub.repository.PubSubRepository#update(java.lang.String,
 	 * tigase.pubsub.LeafNodeConfig)
 	 */
 
-	@Override
-	public BareJID[] getServiceJids() throws RepositoryException {
-		try {
-			List<BareJID> users = repository.getUsers();
-			return users.toArray(new BareJID[users.size()]);
-		} catch (TigaseDBException ex) {
-			throw new RepositoryException("Exception reading service jids", ex);
-		}
+	protected String readNodeConfigFormData(final BareJID serviceJid, final String nodeName) throws TigaseDBException {
+		return repository.getData(serviceJid, NODES_KEY + nodeName, "configuration");
 	}
 
 }

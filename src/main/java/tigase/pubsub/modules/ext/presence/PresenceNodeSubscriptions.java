@@ -96,7 +96,7 @@ public class PresenceNodeSubscriptions implements ISubscriptions {
 	public UsersSubscription[] getSubscriptionsForPublish() {
 		return getSubscriptions();
 	}
-	
+
 	@Override
 	public boolean isChanged() {
 		return subscriptions.isChanged();
@@ -109,7 +109,8 @@ public class PresenceNodeSubscriptions implements ISubscriptions {
 
 	@Override
 	public String toString() {
-		return "PresenceNodeSubscriptions{" + "extension=" + extension + ", nodeName=" + nodeName + ", serviceJID=" + serviceJID + ", subscriptions=" + subscriptions + '}';
+		return "PresenceNodeSubscriptions{" + "extension=" + extension + ", nodeName=" + nodeName + ", serviceJID=" + serviceJID
+				+ ", subscriptions=" + subscriptions + '}';
 	}
 
 }

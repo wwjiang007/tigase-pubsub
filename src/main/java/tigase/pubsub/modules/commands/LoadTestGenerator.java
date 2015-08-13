@@ -20,7 +20,7 @@ public class LoadTestGenerator implements Runnable {
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
 	private String nodeName;
-	
+
 	private JID packetFromJid;
 
 	private Element payload;

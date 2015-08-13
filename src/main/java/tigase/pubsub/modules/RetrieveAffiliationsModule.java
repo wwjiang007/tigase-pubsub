@@ -23,57 +23,47 @@
 package tigase.pubsub.modules;
 
 import java.util.Map;
-import tigase.component2.PacketWriter;
+
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.kernel.beans.Bean;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.Affiliation;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
-import tigase.xmpp.JID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  */
+@Bean(name = "retrieveAffiliationsModule")
 public class RetrieveAffiliationsModule extends AbstractPubSubModule {
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("affiliations"));
 
 	/**
-	 * Constructs ...
-	 * 
-	 * 
-	 * @param config
-	 * @param pubsubRepository
-	 */
-	public RetrieveAffiliationsModule(PubSubConfig config, PacketWriter packetWriter) {
-		super(config, packetWriter);
-	}
-
-	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[] { "http://jabber.org/protocol/pubsub#retrieve-affiliations",
 				"http://jabber.org/protocol/pubsub#publisher-affiliation",
-				"http://jabber.org/protocol/pubsub#outcast-affiliation", "http://jabber.org/protocol/pubsub#member-affiliation" };
+				"http://jabber.org/protocol/pubsub#outcast-affiliation",
+				"http://jabber.org/protocol/pubsub#member-affiliation" };
 	}
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -83,11 +73,11 @@ public class RetrieveAffiliationsModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 * @return
-	 * 
+	 *
 	 * @throws PubSubException
 	 */
 	@Override
@@ -110,8 +100,8 @@ public class RetrieveAffiliationsModule extends AbstractPubSubModule {
 			Map<String, UsersAffiliation> userAffiliations = directRepo.getUserAffiliations(serviceJid, senderBareJid);
 			for (Map.Entry<String, UsersAffiliation> entry : userAffiliations.entrySet()) {
 				Affiliation affiliation = entry.getValue().getAffiliation();
-				Element a = new Element("affiliation", new String[]{"node", "affiliation"}, new String[]{
-					entry.getKey(), affiliation.name()});
+				Element a = new Element("affiliation", new String[] { "node", "affiliation" },
+						new String[] { entry.getKey(), affiliation.name() });
 
 				affiliationsResult.addChild(a);
 			}

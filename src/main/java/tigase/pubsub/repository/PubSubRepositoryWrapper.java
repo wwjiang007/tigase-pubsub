@@ -1,6 +1,8 @@
 package tigase.pubsub.repository;
 
 import java.util.Map;
+
+import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.repository.stateless.UsersSubscription;

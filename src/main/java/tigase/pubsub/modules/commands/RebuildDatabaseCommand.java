@@ -1,34 +1,40 @@
 package tigase.pubsub.modules.commands;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import tigase.adhoc.AdHocCommand;
-import tigase.adhoc.AdHocCommandException;
-import tigase.adhoc.AdHocResponse;
-import tigase.adhoc.AdhHocRequest;
+import tigase.component.adhoc.AdHocCommand;
+import tigase.component.adhoc.AdHocCommandException;
+import tigase.component.adhoc.AdHocResponse;
+import tigase.component.adhoc.AdhHocRequest;
+import tigase.component.exceptions.RepositoryException;
 import tigase.form.Field;
 import tigase.form.Form;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.CollectionNodeConfig;
 import tigase.pubsub.PubSubConfig;
-import tigase.pubsub.repository.PubSubDAO;
-import tigase.pubsub.repository.RepositoryException;
+import tigase.pubsub.repository.IPubSubDAO;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
+import tigase.xmpp.JID;
 
+@Bean(name = "rebuildDatabaseCommand")
 public class RebuildDatabaseCommand implements AdHocCommand {
 
-	private final PubSubConfig config;
-	private final PubSubDAO dao;
+	@Inject
+	private PubSubConfig config;
 
-	public RebuildDatabaseCommand(PubSubConfig config, PubSubDAO directPubSubRepository) {
-		this.dao = directPubSubRepository;
-		this.config = config;
+	@Inject
+	private IPubSubDAO dao;
+
+	public RebuildDatabaseCommand() {
 	}
 
 	@Override
@@ -78,6 +84,11 @@ public class RebuildDatabaseCommand implements AdHocCommand {
 		return "rebuild-db";
 	}
 
+	@Override
+	public boolean isAllowedFor(JID jid) {
+		return Arrays.asList(config.getAdmins()).contains(jid.toString());
+	}
+
 	private void startRebuild(BareJID serviceJid) throws RepositoryException {
 		final String[] allNodesId = dao.getAllNodesList(serviceJid);
 		final Set<String> rootCollection = new HashSet<String>();
@@ -118,8 +129,7 @@ public class RebuildDatabaseCommand implements AdHocCommand {
 			final String nodeName = entry.getKey();
 			Object nodeId = dao.getNodeId(serviceJid, nodeName);
 			Object collectionId = dao.getNodeId(serviceJid, nodeConfig.getCollection());
-			dao.updateNodeConfig(serviceJid, nodeId, nodeConfig.getFormElement().toString(),
-					collectionId);
+			dao.updateNodeConfig(serviceJid, nodeId, nodeConfig.getFormElement().toString(), collectionId);
 		}
 
 		dao.removeAllFromRootCollection(serviceJid);

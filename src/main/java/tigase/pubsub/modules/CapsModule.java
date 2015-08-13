@@ -9,13 +9,13 @@ package tigase.pubsub.modules;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Queue;
-import tigase.component2.PacketWriter;
-import tigase.component2.exceptions.ComponentException;
+
+import tigase.component.exceptions.ComponentException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.criteria.Or;
+import tigase.kernel.beans.Bean;
 import tigase.pubsub.AbstractPubSubModule;
-import tigase.pubsub.PubSubConfig;
 import tigase.server.Packet;
 import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
@@ -26,17 +26,18 @@ import tigase.xmpp.impl.PresenceCapabilitiesManager;
  *
  * @author andrzej
  */
+@Bean(name = "capsModule")
 public class CapsModule extends AbstractPubSubModule {
-	
+
 	private static final Criteria CRIT = new Or(
-			ElementCriteria.nameType("iq", "result").add(ElementCriteria.name("query", "http://jabber.org/protocol/disco#info")),
-			ElementCriteria.nameType("iq", "error").add(ElementCriteria.name("query", "http://jabber.org/protocol/disco#info"))
-		);
-	
+			ElementCriteria.nameType("iq", "result").add(
+					ElementCriteria.name("query", "http://jabber.org/protocol/disco#info")),
+			ElementCriteria.nameType("iq", "error").add(
+					ElementCriteria.name("query", "http://jabber.org/protocol/disco#info")));
+
 	private static String[] FEATURES = {};
-	
-	public CapsModule(PubSubConfig config, PacketWriter packetWriter) {
-		super(config, packetWriter);
+
+	public CapsModule() {
 	}
 
 	@Override
@@ -53,12 +54,12 @@ public class CapsModule extends AbstractPubSubModule {
 	public void process(Packet packet) throws ComponentException, TigaseStringprepException {
 		PresenceCapabilitiesManager.processCapsQueryResponse(packet);
 	}
-	
+
 	/**
 	 * Processes presence packet and send disco#info queries when needed
-	 * 
+	 *
 	 * @param packet
-	 * @return 
+	 * @return
 	 */
 	public String[] processPresence(Packet packet) {
 		String[] caps = null;
@@ -75,5 +76,5 @@ public class CapsModule extends AbstractPubSubModule {
 		}
 		return caps;
 	}
-	
+
 }

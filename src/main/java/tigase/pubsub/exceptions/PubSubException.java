@@ -22,16 +22,16 @@
 
 package tigase.pubsub.exceptions;
 
-import tigase.component2.exceptions.ComponentException;
+import tigase.component.exceptions.ComponentException;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 
 /**
- * 
+ *
  * <p>
  * Created: 2007-05-25 11:55:48
  * </p>
- * 
+ *
  * @author bmalkow
  * @version $Rev$
  */
@@ -46,8 +46,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param errorCondition
 	 */
 	public PubSubException(final Authorization errorCondition) {
@@ -56,8 +56,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param errorCondition
 	 * @param pubSubErrorConditions
 	 */
@@ -67,8 +67,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param errorCondition
 	 * @param pubSubErrorConditions
 	 * @param message
@@ -80,8 +80,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param errorCondition
 	 * @param message
 	 */
@@ -91,8 +91,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param errorCondition
 	 * @param message
 	 */
@@ -102,8 +102,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param item
 	 * @param errorCondition
 	 */
@@ -113,8 +113,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param item
 	 * @param errorCondition
 	 * @param pubSubErrorConditions
@@ -126,8 +126,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param item
 	 * @param errorCondition
 	 * @param message
@@ -153,8 +153,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -171,8 +171,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -198,8 +198,8 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public Element makeElement() {
@@ -208,10 +208,10 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param insertOriginal
-	 * 
+	 *
 	 * @return
 	 */
 	public Element makeElement(boolean insertOriginal) {
@@ -237,10 +237,10 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param sourceElement
-	 * 
+	 *
 	 * @return
 	 */
 	public Element makeElement(Element sourceElement) {

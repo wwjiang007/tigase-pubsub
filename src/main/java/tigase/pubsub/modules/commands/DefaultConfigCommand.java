@@ -21,67 +21,41 @@
  */
 package tigase.pubsub.modules.commands;
 
+import java.util.Arrays;
 import java.util.logging.Logger;
 
-import tigase.adhoc.AdHocCommand;
-import tigase.adhoc.AdHocCommandException;
-import tigase.adhoc.AdHocResponse;
-import tigase.adhoc.AdhHocRequest;
-import tigase.component2.eventbus.Event;
-import tigase.component2.eventbus.EventHandler;
-import tigase.component2.eventbus.EventType;
+import tigase.component.adhoc.AdHocCommand;
+import tigase.component.adhoc.AdHocCommandException;
+import tigase.component.adhoc.AdHocResponse;
+import tigase.component.adhoc.AdhHocRequest;
 import tigase.db.UserRepository;
+import tigase.disteventbus.EventBus;
 import tigase.form.Form;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.LeafNodeConfig;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.modules.NodeConfigModule;
-import tigase.pubsub.modules.commands.DefaultConfigCommand.DefaultNodeConfigurationChangedHandler.DefaultNodeConfigurationChangedEvent;
-import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
+import tigase.xmpp.JID;
 
+@Bean(name = "default-config-adhoc")
 public class DefaultConfigCommand implements AdHocCommand {
 
-	public interface DefaultNodeConfigurationChangedHandler extends EventHandler {
+	@Inject
+	private PubSubConfig config;
 
-		public static class DefaultNodeConfigurationChangedEvent extends Event<DefaultNodeConfigurationChangedHandler> {
-
-			public static final EventType<DefaultNodeConfigurationChangedHandler> TYPE = new EventType<DefaultNodeConfigurationChangedHandler>();
-
-			private PubSubConfig config;
-
-			private final Packet packet;
-
-			public DefaultNodeConfigurationChangedEvent(Packet packet, PubSubConfig config) {
-				super(TYPE);
-				this.packet = packet;
-				this.config = config;
-			}
-
-			@Override
-			protected void dispatch(DefaultNodeConfigurationChangedHandler handler) {
-				handler.onDefaultConfigurationChanged(packet, config);
-			}
-
-		}
-
-		void onDefaultConfigurationChanged(Packet packet, final PubSubConfig config);
-	}
-
-	private final PubSubConfig config;
+	@Inject
+	private EventBus eventbus;
 
 	protected Logger log = Logger.getLogger(this.getClass().getName());
 
-	private final UserRepository userRepository;
+	@Inject
+	private UserRepository userRepository;
 
-	public DefaultConfigCommand(PubSubConfig config, UserRepository userRepository) {
-		this.config = config;
-		this.userRepository = userRepository;
-	}
-
-	public void addDefaultNodeConfigurationChangedHandler(DefaultNodeConfigurationChangedHandler handler) {
-		config.getEventBus().addHandler(DefaultNodeConfigurationChangedEvent.TYPE, handler);
+	public DefaultConfigCommand() {
 	}
 
 	@Override
@@ -105,9 +79,10 @@ public class DefaultConfigCommand implements AdHocCommand {
 					NodeConfigModule.parseConf(nodeConfig, request.getCommand(), config);
 
 					nodeConfig.write(userRepository, config, PubSubComponent.DEFAULT_LEAF_NODE_CONFIG_KEY);
-					DefaultNodeConfigurationChangedEvent event = new DefaultNodeConfigurationChangedEvent(request.getIq(),
-							config);
-					config.getEventBus().fire(event);
+
+					Element event = new Element("DefaultNodeConfigurationChanged", new String[] { "xmlns" },
+							new String[] { PubSubComponent.EVENT_XMLNS });
+					eventbus.fire(event);
 
 					Form f = new Form("result", "Info", "Default config saved.");
 
@@ -133,7 +108,9 @@ public class DefaultConfigCommand implements AdHocCommand {
 		return "default-config";
 	}
 
-	public void removeDefaultNodeConfigurationChangedHandler(DefaultNodeConfigurationChangedHandler handler) {
-		config.getEventBus().remove(DefaultNodeConfigurationChangedEvent.TYPE, handler);
+	@Override
+	public boolean isAllowedFor(JID jid) {
+		return Arrays.asList(config.getAdmins()).contains(jid.toString());
 	}
+
 }

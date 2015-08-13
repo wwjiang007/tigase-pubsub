@@ -22,13 +22,12 @@
 
 package tigase.pubsub.modules;
 
-import tigase.component2.PacketWriter;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.kernel.beans.Bean;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.Affiliation;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.Subscription;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
@@ -43,28 +42,18 @@ import tigase.xmpp.JID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  */
+@Bean(name = "unsubscribeNodeModule")
 public class UnsubscribeNodeModule extends AbstractPubSubModule {
 	private static final Criteria CRIT_UNSUBSCRIBE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("unsubscribe"));
 
 	/**
-	 * Constructs ...
-	 * 
-	 * 
-	 * @param config
-	 * @param pubsubRepository
-	 */
-	public UnsubscribeNodeModule(PubSubConfig config, PacketWriter packetWriter) {
-		super(config, packetWriter);
-	}
-
-	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -74,8 +63,8 @@ public class UnsubscribeNodeModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -85,11 +74,11 @@ public class UnsubscribeNodeModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 * @return
-	 * 
+	 *
 	 * @throws PubSubException
 	 */
 	@Override

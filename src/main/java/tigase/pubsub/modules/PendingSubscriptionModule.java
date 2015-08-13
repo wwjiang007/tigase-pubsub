@@ -25,22 +25,21 @@ package tigase.pubsub.modules;
 import java.util.ArrayList;
 import java.util.List;
 
-import tigase.component2.PacketWriter;
+import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.form.Field;
 import tigase.form.Form;
+import tigase.kernel.beans.Bean;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.Affiliation;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.Subscription;
 import tigase.pubsub.Utils;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
-import tigase.pubsub.repository.RepositoryException;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.server.Message;
 import tigase.server.Packet;
@@ -51,30 +50,22 @@ import tigase.xmpp.JID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  */
+@Bean(name = "pendingSubscriptionModule")
 public class PendingSubscriptionModule extends AbstractPubSubModule {
+
 	private static final Criteria CRIT = ElementCriteria.name("message").add(
 			ElementCriteria.name("x", new String[] { "xmlns", "type" }, new String[] { "jabber:x:data", "submit" })).add(
-			ElementCriteria.name("field", new String[] { "var" }, new String[] { "FORM_TYPE" })).add(
-			ElementCriteria.name("value", "http://jabber.org/protocol/pubsub#subscribe_authorization", null, null));
-
-	/**
-	 * Constructs ...
-	 * 
-	 * 
-	 * @param config
-	 * @param pubsubRepository
-	 */
-	public PendingSubscriptionModule(PubSubConfig config, PacketWriter packetWriter) {
-		super(config, packetWriter);
-	}
+					ElementCriteria.name("field", new String[] { "var" }, new String[] { "FORM_TYPE" })).add(
+							ElementCriteria.name("value", "http://jabber.org/protocol/pubsub#subscribe_authorization", null,
+									null));
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -84,8 +75,8 @@ public class PendingSubscriptionModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -95,12 +86,12 @@ public class PendingSubscriptionModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
+	 *
 	 * @param message
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws PubSubException
 	 */
 	@Override
@@ -183,16 +174,16 @@ public class PendingSubscriptionModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
 	 * @param fromJid
 	 * @param subID
 	 * @param subscriberJid
 	 * @param nodeAffiliations
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	public List<Packet> sendAuthorizationRequest(final String nodeName, final JID fromJid, final String subID,

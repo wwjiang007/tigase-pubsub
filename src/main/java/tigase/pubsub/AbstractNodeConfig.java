@@ -32,8 +32,8 @@ import tigase.xml.Element;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  * @version 5.0.0, 2010.03.27 at 05:11:05 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
@@ -53,8 +53,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
 	 */
 	public AbstractNodeConfig(final String nodeName) {
@@ -64,8 +64,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
 	 * @param config
 	 */
@@ -77,17 +77,12 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param f
 	 */
 	public void add(Field f) {
 		form.addField(f);
-	}
-
-	@Override
-	public String toString() {
-		return "AbstractNodeConfig{" + "form=" + form + ", nodeName=" + nodeName + '}';
 	}
 
 	protected String[] asStrinTable(Enum<?>[] values) {
@@ -103,10 +98,10 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws CloneNotSupportedException
 	 */
 	@Override
@@ -120,8 +115,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param c
 	 */
 	public void copyFrom(AbstractNodeConfig c) {
@@ -130,8 +125,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param f
 	 */
 	public void copyFromForm(Form f) {
@@ -140,8 +135,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String getBodyXslt() {
@@ -150,8 +145,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String getBodyXsltEmbedded() {
@@ -172,8 +167,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String[] getChildren() {
@@ -182,8 +177,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String getCollection() {
@@ -191,7 +186,6 @@ public abstract class AbstractNodeConfig {
 
 		return (d == null) ? "" : d;
 	}
-
 
 	public CollectionItemsOrdering getCollectionItemsOrdering() {
 		String tmp = form.getAsString(TIGASE + "collection_items_odering");
@@ -209,8 +203,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String[] getDomains() {
@@ -221,8 +215,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public Form getForm() {
@@ -231,8 +225,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public Element getFormElement() {
@@ -243,8 +237,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public AccessModel getNodeAccessModel() {
@@ -259,8 +253,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String getNodeName() {
@@ -269,8 +263,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public NodeType getNodeType() {
@@ -299,8 +293,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String[] getRosterGroupsAllowed() {
@@ -318,8 +312,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String getTitle() {
@@ -328,16 +322,17 @@ public abstract class AbstractNodeConfig {
 
 	protected void init() {
 		form.addField(Field.fieldHidden("FORM_TYPE", "http://jabber.org/protocol/pubsub#node_config"));
-		form.addField(Field.fieldListSingle(PUBSUB + "node_type", null, null, null, new String[] { NodeType.leaf.name(),
-				NodeType.collection.name() }));
+		form.addField(Field.fieldListSingle(PUBSUB + "node_type", null, null, null,
+				new String[] { NodeType.leaf.name(), NodeType.collection.name() }));
 		form.addField(Field.fieldTextSingle(PUBSUB + "title", "", "A friendly name for the node"));
-		form.addField(Field.fieldBoolean(PUBSUB + "deliver_payloads", true,
-				"Whether to deliver payloads with event notifications"));
+		form.addField(
+				Field.fieldBoolean(PUBSUB + "deliver_payloads", true, "Whether to deliver payloads with event notifications"));
 
-		form.addField(Field.fieldBoolean(PUBSUB + "notify_config", false,
-				"Notify subscribers when the node configuration changes"));
-		// form.addField(Field.fieldBoolean(PUBSUB + "notify_delete", false,
-		// "Notify subscribers when the node is deleted"));
+		form.addField(
+				Field.fieldBoolean(PUBSUB + "notify_config", false, "Notify subscribers when the node configuration changes"));
+				// form.addField(Field.fieldBoolean(PUBSUB + "notify_delete",
+				// false,
+				// "Notify subscribers when the node is deleted"));
 
 		// form.addField(Field.fieldBoolean(PUBSUB + "notify_retract", false,
 		// "Notify subscribers when items are removed from the node"));
@@ -364,16 +359,15 @@ public abstract class AbstractNodeConfig {
 		form.addField(Field.fieldTextSingle(PUBSUB + "body_xslt", "",
 				"The URL of an XSL transformation which can be applied to payloads in order to "
 						+ "generate an appropriate message body element."));
-		form.addField(Field.fieldTextMulti(PUBSUB + "roster_groups_allowed", new String[] {},
-				"Roster groups allowed to subscribe"));
+		form.addField(
+				Field.fieldTextMulti(PUBSUB + "roster_groups_allowed", new String[] {}, "Roster groups allowed to subscribe"));
 		form.addField(Field.fieldBoolean(PUBSUB + "notify_sub_aff_state", true,
 				"Notify subscribers when owner change their subscription or affiliation state"));
 		form.addField(Field.fieldBoolean(TIGASE + "allow_view_subscribers", false,
 				"Allows get list of subscribers for each sybscriber"));
-		form.addField( Field.fieldListSingle( TIGASE + "collection_items_odering",
-																					CollectionItemsOrdering.byUpdateDate.name(),
-				"Whether to sort collection items by creation date or update time",
-				null, asStrinTable( CollectionItemsOrdering.values() ) ) );
+		form.addField(Field.fieldListSingle(TIGASE + "collection_items_odering", CollectionItemsOrdering.byUpdateDate.name(),
+				"Whether to sort collection items by creation date or update time", null,
+				asStrinTable(CollectionItemsOrdering.values())));
 
 	}
 
@@ -383,8 +377,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public boolean isCollectionSet() {
@@ -393,8 +387,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public boolean isDeliver_payloads() {
@@ -403,8 +397,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public boolean isDeliverPresenceBased() {
@@ -413,8 +407,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public boolean isNotify_config() {
@@ -423,8 +417,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public boolean isPresenceExpired() {
@@ -435,8 +429,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public boolean isTigaseNotifyChangeSubscriptionAffiliationState() {
@@ -445,12 +439,12 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param repository
 	 * @param config
 	 * @param subnode
-	 * 
+	 *
 	 * @throws TigaseDBException
 	 * @throws UserNotFoundException
 	 */
@@ -473,7 +467,7 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
+	 *
 	 */
 	public void reset() {
 		form.clear();
@@ -482,8 +476,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param xslt
 	 */
 	public void setBodyXsltEmbedded(String xslt) {
@@ -492,8 +486,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param collectionNew
 	 */
 	public void setCollection(String collectionNew) {
@@ -502,8 +496,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param domains
 	 */
 	public void setDomains(String... domains) {
@@ -512,8 +506,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeType
 	 */
 	public void setNodeType(NodeType nodeType) {
@@ -522,8 +516,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param var
 	 * @param data
 	 */
@@ -533,8 +527,8 @@ public abstract class AbstractNodeConfig {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param var
 	 * @param data
 	 */
@@ -589,19 +583,24 @@ public abstract class AbstractNodeConfig {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return "AbstractNodeConfig{" + "form=" + form + ", nodeName=" + nodeName + '}';
+	}
+
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param repo
 	 * @param config
 	 * @param subnode
-	 * 
+	 *
 	 * @throws TigaseDBException
 	 * @throws UserNotFoundException
 	 */
-	public void write(final UserRepository repo, final PubSubConfig config, final String subnode) throws UserNotFoundException,
-			TigaseDBException {
+	public void write(final UserRepository repo, final PubSubConfig config, final String subnode)
+			throws UserNotFoundException, TigaseDBException {
 		if (repo == null) {
 			return;
 		}

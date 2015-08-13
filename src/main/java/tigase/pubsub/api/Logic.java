@@ -7,7 +7,7 @@ package tigase.pubsub.api;
 import java.util.List;
 import java.util.Map;
 
-import tigase.pubsub.repository.RepositoryException;
+import tigase.component.exceptions.RepositoryException;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
@@ -15,26 +15,26 @@ import tigase.xmpp.JID;
 /**
  * Class responsible for pubsub logic. We should have at least two of them by
  * default: PubSubDefaultLogic, PepDefaultLogic
- * 
+ *
  * It should be possible to add new implementations. It should be possible to
  * stack logic in similar way to UserRepository is stacked, so that for each
  * service jid and maybe for each node we should be able to pick other logic.
- * 
+ *
  * If any additional data is need, ie. user roster, instance of class should be
  * passed to classes implementing this interface - maybe new setter methods
  * should be addded to interface
- * 
+ *
  * Maybe we should added possibility to add events before/after calling logic
  * methods in classes which call methods? Or maybe implementation of this class
  * should fire this events if thay were added?
- * 
+ *
  * @author andrzej
  */
 public interface Logic {
 
 	/**
 	 * Configures node of service
-	 * 
+	 *
 	 * @param from
 	 * @param service
 	 * @param node
@@ -44,7 +44,7 @@ public interface Logic {
 
 	/**
 	 * Creates node for service
-	 * 
+	 *
 	 * @param from
 	 * @param service
 	 * @param node
@@ -55,7 +55,7 @@ public interface Logic {
 
 	/**
 	 * Method returns elements containing info about subnodes to passed node
-	 * 
+	 *
 	 * @param from
 	 * @param service
 	 * @param node
@@ -68,7 +68,7 @@ public interface Logic {
 	 * Method should return true if this node can be handled by this logic
 	 * instance ie. PEP could have multiple logic instances handling diffrent
 	 * nodes?
-	 * 
+	 *
 	 * @param from
 	 * @param service
 	 * @param node
@@ -78,10 +78,10 @@ public interface Logic {
 
 	/**
 	 * Method adds item to store using logic specific for this service and node
-	 * 
+	 *
 	 * but how to send notifications to about publish if item should exists in
 	 * more than one node?
-	 * 
+	 *
 	 * @param from
 	 *            - source jid of stanza
 	 * @param service
@@ -94,7 +94,7 @@ public interface Logic {
 	/**
 	 * Method removes item from store using logic specific for this service and
 	 * node
-	 * 
+	 *
 	 * @param from
 	 *            - source jid of stanza
 	 * @param service
@@ -106,7 +106,7 @@ public interface Logic {
 	/**
 	 * Method retrieves list of items for node starting with offset and no more
 	 * than limit
-	 * 
+	 *
 	 * @param from
 	 *            - source jid of stanza
 	 * @param service
@@ -122,7 +122,7 @@ public interface Logic {
 	/**
 	 * Method retrieves item with supplied id from store using specific logic
 	 * for this service and node
-	 * 
+	 *
 	 * @param from
 	 *            - source jid of stanza
 	 * @param service
@@ -134,7 +134,7 @@ public interface Logic {
 
 	/**
 	 * Method sets configuration
-	 * 
+	 *
 	 * @param props
 	 */
 	void setProperties(Map<String, Object> props);

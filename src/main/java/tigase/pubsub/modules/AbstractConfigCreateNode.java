@@ -21,18 +21,16 @@
  */
 package tigase.pubsub.modules;
 
-import tigase.component2.PacketWriter;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.LeafNodeConfig;
-import tigase.pubsub.PubSubConfig;
 
 public abstract class AbstractConfigCreateNode extends AbstractPubSubModule {
 
-	protected final LeafNodeConfig defaultNodeConfig;
+	@Inject(bean = "defaultNodeConfig")
+	protected LeafNodeConfig defaultNodeConfig;
 
-	public AbstractConfigCreateNode(final PubSubConfig config, final LeafNodeConfig defaultNodeConfig, PacketWriter packetWriter) {
-		super(config, packetWriter);
-		this.defaultNodeConfig = defaultNodeConfig;
+	public AbstractConfigCreateNode() {
 	}
 
 }

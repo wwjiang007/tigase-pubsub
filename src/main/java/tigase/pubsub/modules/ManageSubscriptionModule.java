@@ -22,32 +22,6 @@
 
 package tigase.pubsub.modules;
 
-import tigase.server.Message;
-import tigase.server.Packet;
-
-import tigase.xmpp.Authorization;
-import tigase.xmpp.BareJID;
-import tigase.xmpp.JID;
-import tigase.xmpp.StanzaType;
-
-import tigase.component2.PacketWriter;
-import tigase.criteria.Criteria;
-import tigase.criteria.ElementCriteria;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.AbstractPubSubModule;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.PubSubConfig;
-import tigase.pubsub.Subscription;
-import tigase.pubsub.exceptions.PubSubErrorCondition;
-import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension;
-import tigase.pubsub.repository.IAffiliations;
-import tigase.pubsub.repository.ISubscriptions;
-import tigase.pubsub.repository.RepositoryException;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
-import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.xml.Element;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -55,16 +29,39 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import tigase.component.PacketWriter;
+import tigase.component.exceptions.RepositoryException;
+import tigase.criteria.Criteria;
+import tigase.criteria.ElementCriteria;
+import tigase.kernel.beans.Bean;
+import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.AbstractPubSubModule;
+import tigase.pubsub.Affiliation;
+import tigase.pubsub.Subscription;
+import tigase.pubsub.exceptions.PubSubErrorCondition;
+import tigase.pubsub.exceptions.PubSubException;
+import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension;
+import tigase.pubsub.repository.IAffiliations;
+import tigase.pubsub.repository.ISubscriptions;
+import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.repository.stateless.UsersSubscription;
+import tigase.server.Message;
+import tigase.server.Packet;
+import tigase.xml.Element;
+import tigase.xmpp.Authorization;
+import tigase.xmpp.BareJID;
+import tigase.xmpp.JID;
+import tigase.xmpp.StanzaType;
+
 /**
  * Class description
- * 
- * 
+ *
+ *
  * @version 5.0.0, 2010.03.27 at 05:25:49 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
+@Bean(name = "manageSubscriptionModule")
 public class ManageSubscriptionModule extends AbstractPubSubModule {
-
-	private Logger log = Logger.getLogger(this.getClass().getName());
 
 	private class SubscriptionFilter {
 
@@ -92,7 +89,7 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 
 	private static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(
-			ElementCriteria.name("subscriptions"));
+					ElementCriteria.name("subscriptions"));
 
 	private static Packet createSubscriptionNotification(JID fromJid, JID toJid, String nodeName, Subscription subscription) {
 		Packet message = Message.getMessage(fromJid, toJid, null, null, null, null, null);
@@ -103,22 +100,13 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 		Element affilations = new Element("subscriptions", new String[] { "node" }, new String[] { nodeName });
 
 		pubsub.addChild(affilations);
-		affilations.addChild(new Element("subscription", new String[] { "jid", "subscription" }, new String[] {
-				toJid.toString(), subscription.name() }));
+		affilations.addChild(new Element("subscription", new String[] { "jid", "subscription" },
+				new String[] { toJid.toString(), subscription.name() }));
 
 		return message;
 	}
 
-	/**
-	 * Constructs ...
-	 * 
-	 * 
-	 * @param config
-	 * @param pubsubRepository
-	 */
-	public ManageSubscriptionModule(PubSubConfig config, PacketWriter packetWriter) {
-		super(config, packetWriter);
-	}
+	private Logger log = Logger.getLogger(this.getClass().getName());
 
 	private void checkPrivileges(StanzaType type, Element element, JID senderJid, AbstractNodeConfig nodeConfig,
 			IAffiliations nodeAffiliations, ISubscriptions nodeSubscriptions) throws PubSubException {
@@ -145,8 +133,8 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -156,8 +144,8 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -167,11 +155,11 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 * @return
-	 * 
+	 *
 	 * @throws PubSubException
 	 */
 	@Override
@@ -218,7 +206,8 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 
 	private void processGet(Packet packet, Element subscriptions, String nodeName, final ISubscriptions nodeSubscriptions,
 			PacketWriter packetWriter) throws RepositoryException, PubSubException {
-		Element ps = new Element("pubsub", new String[] { "xmlns" }, new String[] { "http://jabber.org/protocol/pubsub#owner" });
+		Element ps = new Element("pubsub", new String[] { "xmlns" },
+				new String[] { "http://jabber.org/protocol/pubsub#owner" });
 
 		Packet iq = packet.okResult(ps, 0);
 
@@ -235,7 +224,7 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 		UsersSubscription[] subscribers = nodeSubscriptions.getSubscriptions();
 
 		if (log.isLoggable(Level.FINEST)) {
-			log.finest("Node subscriptions: " + nodeName + " / " + Arrays.toString( subscribers ));
+			log.finest("Node subscriptions: " + nodeName + " / " + Arrays.toString(subscribers));
 		}
 
 		if (subscribers != null) {
@@ -248,8 +237,8 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 					continue;
 				}
 
-				Element subscription = new Element("subscription", new String[] { "jid", "subscription" }, new String[] {
-						usersSubscription.getJid().toString(), usersSubscription.getSubscription().name() });
+				Element subscription = new Element("subscription", new String[] { "jid", "subscription" },
+						new String[] { usersSubscription.getJid().toString(), usersSubscription.getSubscription().name() });
 
 				afr.addChild(subscription);
 			}
@@ -258,7 +247,7 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 		if (nodeSubscriptions.isChanged()) {
 			getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeSubscriptions);
 		}
-	
+
 		packetWriter.write(iq);
 	}
 
@@ -271,9 +260,9 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 				throw new PubSubException(Authorization.BAD_REQUEST);
 			}
 		}
-		
-		Map<JID,Subscription> changedSubscriptions = new HashMap<JID,Subscription>();
-		
+
+		Map<JID, Subscription> changedSubscriptions = new HashMap<JID, Subscription>();
+
 		for (Element af : subss) {
 			String strSubscription = af.getAttributeStaticStr("subscription");
 			String jidStr = af.getAttributeStaticStr("jid");
@@ -299,13 +288,14 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 		if (nodeSubscriptions.isChanged()) {
 			getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeSubscriptions);
 		}
-		
-		for (Map.Entry<JID,Subscription> entry : changedSubscriptions.entrySet()) {
+
+		for (Map.Entry<JID, Subscription> entry : changedSubscriptions.entrySet()) {
 			if (nodeConfig.isTigaseNotifyChangeSubscriptionAffiliationState()) {
-				packetWriter.write(createSubscriptionNotification(packet.getStanzaTo(), entry.getKey(), nodeName, entry.getValue()));
-			}			
+				packetWriter.write(
+						createSubscriptionNotification(packet.getStanzaTo(), entry.getKey(), nodeName, entry.getValue()));
+			}
 		}
-			
+
 		Packet iq = packet.okResult((Element) null, 0);
 		packetWriter.write(iq);
 	}

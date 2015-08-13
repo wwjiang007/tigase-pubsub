@@ -22,134 +22,96 @@
 
 package tigase.pubsub;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import tigase.component2.AbstractComponent;
-import tigase.component2.ComponentConfig;
-import tigase.pubsub.repository.IPubSubRepository;
+import tigase.component.PropertiesBeanConfigurator;
+import tigase.conf.Configurable;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Initializable;
+import tigase.kernel.beans.Inject;
 import tigase.sys.TigaseRuntime;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  * @version 5.0.0, 2010.03.27 at 05:10:54 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-public class PubSubConfig extends ComponentConfig {
+@Bean(name = "pubsubConfig")
+public class PubSubConfig implements Initializable {
 
+	public static final String ADMINS_KEY = "admin";
+
+	private static final String MAX_CACHE_SIZE = "pubsub-repository-cache-size";
 	private static final String PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY = "pubsub-high-memory-usage-level";
 	private static final String PUBSUB_LOW_MEMORY_DELAY_KEY = "pubsub-low-memory-delay";
-	private static final String PUBSUB_PERSISTENT_PEP_KEY = "persistent-pep";
 	private static final String PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_KEY = "pep-remove-empty-geoloc";
+	private static final String PUBSUB_PERSISTENT_PEP_KEY = "persistent-pep";
+
 	private static final String PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY = "send-last-published-item-on-presence";
-	
-	private static final int DEF_PUBSUB_HIGH_MEMORY_USAGE_LEVEL_VAL = 90;
-	private static final long DEF_PUBSUB_LOW_MEMORY_DELAY_VAL = 1000;
-	private static final boolean DEF_PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_VAL = false;
-	
+
 	protected String[] admins;
 
-	protected IPubSubRepository pubSubRepository;
+	@Inject
+	private PubSubComponent component;
+
+	@Inject
+	private PropertiesBeanConfigurator configurator;
+	private float highMemoryUsageLevel = 90;
+	private long lowMemoryDelay = 1000;
+	private Integer maxCacheSize = 2000;
+
+	private boolean pepRemoveEmptyGeoloc = false;
+
+	private boolean persistentPep = false;
+
+	private boolean sendLastPublishedItemOnPresence = false;
 
 	protected BareJID serviceBareJID = BareJID.bareJIDInstanceNS("tigase-pubsub");
 
-	private long lowMemoryDelay = DEF_PUBSUB_LOW_MEMORY_DELAY_VAL;
-	private float highMemoryUsageLevel = DEF_PUBSUB_HIGH_MEMORY_USAGE_LEVEL_VAL;
-	private boolean persistentPep = false;
-	private boolean pepRemoveEmptyGeoloc = false;
-	private boolean sendLastPublishedItemOnPresence = false;
-	
-	public PubSubConfig(AbstractComponent<?> component) {
-		super(component);		
-	}
-
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String[] getAdmins() {
 		return admins;
 	}
 
-	@Override
-	public Map<String, Object> getDefaults(Map<String, Object> params) {
-		final HashMap<String, Object> props = new HashMap<String, Object>();
-		props.put(PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY, DEF_PUBSUB_HIGH_MEMORY_USAGE_LEVEL_VAL);
-		props.put(PUBSUB_LOW_MEMORY_DELAY_KEY, DEF_PUBSUB_LOW_MEMORY_DELAY_VAL);
-		props.put(PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_KEY, DEF_PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_VAL);
-		return props;
+	public JID getComponentJID() {
+		return this.component.getComponentId();
 	}
 
 	public long getDelayOnLowMemory() {
 		if (isHighMemoryUsage()) {
 			return lowMemoryDelay;
 		}
-		
+
 		return 0;
 	}
-	
-	public IPubSubRepository getPubSubRepository() {
-		return pubSubRepository;
+
+	public Integer getMaxCacheSize() {
+		return maxCacheSize;
 	}
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public BareJID getServiceBareJID() {
 		return serviceBareJID;
 	}
 
-	public JID getComponentJID() {
-		return this.component.getComponentId();
-	}
-	
-	/**
-	 * Method description
-	 * 
-	 * 
-	 * @param jid
-	 * 
-	 * @return
-	 */
-	public boolean isAdmin(final BareJID jid) {
-		if ((jid == null) || (this.admins == null)) {
-			return false;
-		}
-
-		for (String adj : this.admins) {
-			if (jid.toString().equals(adj)) {
-				return true;
-			}
-		}
-
-		return super.component.isTrusted(jid.toString());
-	}
-
-	public boolean isAdmin(final JID jid) {
-		return isAdmin(jid.getBareJID());
-	}
-
-	/**
-	 * Method description
-	 * 
-	 * 
-	 * @param strings
-	 */
-	public void setAdmins(String[] strings) {
-		this.admins = strings;
-	}
-
 	@Override
-	public void setProperties(Map<String, Object> props) {
+	public void initialize() {
+		final Map<String, Object> props = configurator.getProperties();
+
 		if (props.containsKey(PUBSUB_LOW_MEMORY_DELAY_KEY)) {
 			this.lowMemoryDelay = (Long) props.get(PUBSUB_LOW_MEMORY_DELAY_KEY);
 		}
@@ -165,16 +127,50 @@ public class PubSubConfig extends ComponentConfig {
 		if (props.containsKey(PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY)) {
 			this.sendLastPublishedItemOnPresence = (Boolean) props.get(PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY);
 		}
+
+		if (props.containsKey(MAX_CACHE_SIZE)) {
+			this.maxCacheSize = (Integer) props.get(MAX_CACHE_SIZE);
+		}
+
+		if (props.containsKey(ADMINS_KEY)) {
+			admins = (String[]) props.get(ADMINS_KEY);
+		} else if (props.get(Configurable.GEN_ADMINS) != null) {
+			admins = ((String) props.get(Configurable.GEN_ADMINS)).split(",");
+		} else {
+			admins = new String[] { "admin@" + component.getDefHostName() };
+		}
 	}
 
-	void setPubSubRepository(IPubSubRepository pubSubRepository) {
-		this.pubSubRepository = pubSubRepository;
+	/**
+	 * Method description
+	 *
+	 *
+	 * @param jid
+	 *
+	 * @return
+	 */
+	public boolean isAdmin(final BareJID jid) {
+		if ((jid == null) || (this.admins == null)) {
+			return false;
+		}
+
+		for (String adj : this.admins) {
+			if (jid.toString().equals(adj)) {
+				return true;
+			}
+		}
+
+		return component.isTrusted(jid.toString());
 	}
-	
+
+	public boolean isAdmin(final JID jid) {
+		return isAdmin(jid.getBareJID());
+	}
+
 	private boolean isHighMemoryUsage() {
 		return TigaseRuntime.getTigaseRuntime().getHeapMemUsage() > highMemoryUsageLevel;
-	}	
-	
+	}
+
 	public boolean isPepPeristent() {
 		return persistentPep;
 	}
@@ -186,4 +182,15 @@ public class PubSubConfig extends ComponentConfig {
 	public boolean isSendLastPublishedItemOnPresence() {
 		return sendLastPublishedItemOnPresence;
 	}
+
+	/**
+	 * Method description
+	 *
+	 *
+	 * @param strings
+	 */
+	public void setAdmins(String[] strings) {
+		this.admins = strings;
+	}
+
 }

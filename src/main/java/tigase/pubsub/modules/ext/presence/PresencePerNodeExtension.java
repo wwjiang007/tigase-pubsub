@@ -9,169 +9,26 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.component2.PacketWriter;
-import tigase.component2.eventbus.Event;
-import tigase.component2.eventbus.EventHandler;
-import tigase.component2.eventbus.EventType;
+import tigase.disteventbus.EventBus;
+import tigase.disteventbus.EventHandler;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Initializable;
+import tigase.kernel.beans.Inject;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
-import tigase.pubsub.modules.PresenceCollectorModule;
-import tigase.pubsub.modules.PresenceCollectorModule.PresenceChangeHandler;
-import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension.LoginToNodeHandler.LoginToNodeEvent;
-import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension.LogoffFromNodeHandler.LogoffFromNodeEvent;
-import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension.UpdatePresenceHandler.UpdatePresenceEvent;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.StanzaType;
 
-public class PresencePerNodeExtension {
-
-	public interface LoginToNodeHandler extends EventHandler {
-
-		public static class LoginToNodeEvent extends Event<LoginToNodeHandler> {
-
-			public static final EventType<LoginToNodeHandler> TYPE = new EventType<LoginToNodeHandler>();
-
-			private final String node;
-
-			private final JID occupantJID;
-
-			private final Packet presenceStanza;
-
-			private final BareJID serviceJID;
-
-			public LoginToNodeEvent(BareJID serviceJID, String node, Packet presenceStanza) {
-				super(TYPE);
-				this.occupantJID = presenceStanza.getStanzaFrom();
-				this.node = node;
-				this.presenceStanza = presenceStanza;
-				this.serviceJID = serviceJID;
-			}
-
-			@Override
-			protected void dispatch(LoginToNodeHandler handler) {
-				handler.onLoginToNode(serviceJID, node, occupantJID, presenceStanza);
-			}
-
-			public String getNode() {
-				return node;
-			}
-
-			public JID getOccupantJID() {
-				return occupantJID;
-			}
-
-			public Packet getPresenceStanza() {
-				return presenceStanza;
-			}
-
-			public BareJID getServiceJID() {
-				return serviceJID;
-			}
-
-		}
-
-		void onLoginToNode(BareJID serviceJID, String node, JID occupantJID, Packet presenceStanza);
-	}
-
-	public interface LogoffFromNodeHandler extends EventHandler {
-
-		public static class LogoffFromNodeEvent extends Event<LogoffFromNodeHandler> {
-
-			public static final EventType<LogoffFromNodeHandler> TYPE = new EventType<LogoffFromNodeHandler>();
-
-			private final String node;
-
-			private final JID occupantJID;
-
-			private final Packet presenceStanza;
-
-			private final BareJID serviceJID;
-
-			public LogoffFromNodeEvent(BareJID serviceJID, String node, JID occupandJID, Packet presenceStanza) {
-				super(TYPE);
-				this.occupantJID = occupandJID;
-				this.node = node;
-				this.presenceStanza = presenceStanza;
-				this.serviceJID = serviceJID;
-			}
-
-			@Override
-			protected void dispatch(LogoffFromNodeHandler handler) {
-				handler.onLogoffFromNode(serviceJID, node, occupantJID, presenceStanza);
-			}
-
-			public String getNode() {
-				return node;
-			}
-
-			public JID getOccupantJID() {
-				return occupantJID;
-			}
-
-			public Packet getPresenceStanza() {
-				return presenceStanza;
-			}
-
-			public BareJID getServiceJID() {
-				return serviceJID;
-			}
-
-		}
-
-		void onLogoffFromNode(BareJID serviceJID, String node, JID occupantJID, Packet presenceStanza);
-	}
-
-	public interface UpdatePresenceHandler extends EventHandler {
-
-		public static class UpdatePresenceEvent extends Event<UpdatePresenceHandler> {
-
-			public static final EventType<UpdatePresenceHandler> TYPE = new EventType<UpdatePresenceHandler>();
-
-			private final String node;
-
-			private final JID occupantJID;
-
-			private final Packet presenceStanza;
-
-			private final BareJID serviceJID;
-
-			public UpdatePresenceEvent(BareJID serviceJID, String node, Packet presenceStanza) {
-				super(TYPE);
-				this.occupantJID = presenceStanza.getStanzaFrom();
-				this.node = node;
-				this.presenceStanza = presenceStanza;
-				this.serviceJID = serviceJID;
-			}
-
-			@Override
-			protected void dispatch(UpdatePresenceHandler handler) {
-				handler.onPresenceUpdate(serviceJID, node, occupantJID, presenceStanza);
-			}
-
-			public String getNode() {
-				return node;
-			}
-
-			public JID getOccupantJID() {
-				return occupantJID;
-			}
-
-			public Packet getPresenceStanza() {
-				return presenceStanza;
-			}
-
-			public BareJID getServiceJID() {
-				return serviceJID;
-			}
-
-		}
-
-		void onPresenceUpdate(BareJID serviceJID, String node, JID occupantJID, Packet presenceStanza);
-	}
+@Bean(name = "presencePerNodeExtension")
+public class PresencePerNodeExtension implements Initializable {
 
 	public static final String XMLNS_EXTENSION = "tigase:pubsub:1";
+
+	@Inject
+	private EventBus eventBus;
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
@@ -180,11 +37,15 @@ public class PresencePerNodeExtension {
 	 */
 	private final Map<BareJID, Map<String, Set<JID>>> occupants = new ConcurrentHashMap<BareJID, Map<String, Set<JID>>>();
 
-	private final PresenceChangeHandler presenceChangeHandler = new PresenceChangeHandler() {
+	private final EventHandler presenceChangeHandler = new EventHandler() {
 
 		@Override
-		public void onPresenceChange(Packet packet) {
-			process(packet);
+		public void onEvent(String name, String xmlns, Element event) {
+			try {
+				process(Packet.packetInstance(event.getChild("presence")));
+			} catch (Exception e) {
+				log.throwing(PresencePerNodeExtension.class.getName(), "process", e);
+			}
 		}
 	};
 
@@ -194,14 +55,8 @@ public class PresencePerNodeExtension {
 	 */
 	private final Map<BareJID, Map<String, Map<BareJID, Map<String, Packet>>>> presences = new ConcurrentHashMap<BareJID, Map<String, Map<BareJID, Map<String, Packet>>>>();
 
+	@Inject
 	private PubSubConfig pubsubContext;
-
-	public PresencePerNodeExtension(PubSubConfig config, PacketWriter packetWriter) {
-		this.pubsubContext = config;
-
-		this.pubsubContext.getEventBus().addHandler(PresenceCollectorModule.PresenceChangeHandler.PresenceChangeEvent.TYPE,
-				presenceChangeHandler);
-	}
 
 	void addJidToOccupants(BareJID serviceJID, String nodeName, JID jid) {
 		Map<String, Set<JID>> services = occupants.get(serviceJID);
@@ -215,14 +70,6 @@ public class PresencePerNodeExtension {
 			services.put(nodeName, occs);
 		}
 		occs.add(jid);
-	}
-
-	public void addLoginToNodeHandler(LoginToNodeHandler handler) {
-		pubsubContext.getEventBus().addHandler(LoginToNodeEvent.TYPE, handler);
-	}
-
-	public void addLogoffFromNodeHandler(LogoffFromNodeHandler handler) {
-		pubsubContext.getEventBus().addHandler(LogoffFromNodeEvent.TYPE, handler);
 	}
 
 	void addPresence(BareJID serviceJID, String nodeName, Packet packet) {
@@ -250,13 +97,17 @@ public class PresencePerNodeExtension {
 		nodesPresence.put(nodeName, packet);
 		addJidToOccupants(serviceJID, nodeName, sender);
 
-		Event<?> event = isUpdate ? new UpdatePresenceEvent(serviceJID, nodeName, packet) : new LoginToNodeEvent(serviceJID,
-				nodeName, packet);
-		pubsubContext.getEventBus().fire(event, PresencePerNodeExtension.this);
+		Element event = new Element(isUpdate ? "UpdatePresence" : "LoginToNode", new String[] { "xmlns" },
+				new String[] { PubSubComponent.EVENT_XMLNS });
+		event.addChild(new Element("service", serviceJID.toString()));
+		event.addChild(new Element("node", nodeName));
+		event.addChild(packet.getElement());
+
+		eventBus.fire(event);
 	}
 
-	public void addUpdatePresenceHandler(UpdatePresenceHandler handler) {
-		pubsubContext.getEventBus().addHandler(UpdatePresenceEvent.TYPE, handler);
+	public EventBus getEventBus() {
+		return eventBus;
 	}
 
 	public Collection<JID> getNodeOccupants(BareJID serviceJID, String nodeName) {
@@ -314,14 +165,24 @@ public class PresencePerNodeExtension {
 		return nodes.get(nodeName);
 	}
 
+	@Override
+	public void initialize() {
+		eventBus.addHandler("PresenceChange", PubSubComponent.EVENT_XMLNS, presenceChangeHandler);
+	}
+
 	private void intProcessLogoffFrom(BareJID serviceJID, JID sender, Map<String, Packet> nodes, Packet presenceStanza) {
 		if (nodes == null)
 			return;
 		for (String node : nodes.keySet()) {
 			removeJidFromOccupants(serviceJID, node, sender);
 
-			LogoffFromNodeEvent event = new LogoffFromNodeEvent(serviceJID, node, sender, presenceStanza);
-			pubsubContext.getEventBus().fire(event, PresencePerNodeExtension.this);
+			Element event = new Element("LogoffFromNode", new String[] { "xmlns" },
+					new String[] { PubSubComponent.EVENT_XMLNS });
+			event.addChild(new Element("service", serviceJID.toString()));
+			event.addChild(new Element("node", node));
+			event.addChild(new Element("sender", sender.toString()));
+			event.addChild(presenceStanza.getElement());
+			eventBus.fire(event);
 		}
 	}
 
@@ -361,14 +222,6 @@ public class PresencePerNodeExtension {
 		}
 	}
 
-	public void removeLoginToNodeHandler(LoginToNodeHandler handler) {
-		pubsubContext.getEventBus().remove(LoginToNodeEvent.TYPE, handler);
-	}
-
-	public void removeLogoffFromNodeHandler(LogoffFromNodeHandler handler) {
-		pubsubContext.getEventBus().remove(LogoffFromNodeEvent.TYPE, handler);
-	}
-
 	void removePresence(BareJID serviceJID, String nodeName, JID sender, Packet presenceStanza) {
 		if (sender.getResource() == null) {
 			if (log.isLoggable(Level.WARNING))
@@ -385,8 +238,13 @@ public class PresencePerNodeExtension {
 						nodes.remove(nodeName);
 						removeJidFromOccupants(serviceJID, nodeName, sender);
 
-						LogoffFromNodeEvent event = new LogoffFromNodeEvent(serviceJID, nodeName, sender, presenceStanza);
-						pubsubContext.getEventBus().fire(event, PresencePerNodeExtension.this);
+						Element event = new Element("LogoffFromNode", new String[] { "xmlns" },
+								new String[] { PubSubComponent.EVENT_XMLNS });
+						event.addChild(new Element("service", serviceJID.toString()));
+						event.addChild(new Element("node", nodeName));
+						event.addChild(new Element("sender", sender.toString()));
+						event.addChild(presenceStanza.getElement());
+						eventBus.fire(event);
 
 						if (nodes.isEmpty())
 							services.remove(serviceJID);
@@ -405,12 +263,8 @@ public class PresencePerNodeExtension {
 		}
 	}
 
-	public void removeUpdatePresenceHandler(UpdatePresenceHandler handler) {
-		pubsubContext.getEventBus().remove(UpdatePresenceEvent.TYPE, handler);
+	public void setEventBus(EventBus eventBus) {
+		this.eventBus = eventBus;
 	}
-
-	/*
-	 * <pubsub xmlns='tigase:pubsub:1' node='nazwa node'/>
-	 */
 
 }

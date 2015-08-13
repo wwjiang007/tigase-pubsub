@@ -1,43 +1,42 @@
 package tigase.pubsub.repository.cached;
 
-import tigase.pubsub.AbstractNodeConfig;
-
-import tigase.xmpp.BareJID;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import tigase.pubsub.AbstractNodeConfig;
+import tigase.xmpp.BareJID;
 
 public class Node<T> {
 
 	private static final Logger log = Logger.getLogger(Node.class.getName());
 
-	//private boolean affNeedsWriting = false;
+	// private boolean affNeedsWriting = false;
 	private boolean conNeedsWriting = false;
 	private long creationTime = System.currentTimeMillis();
 
 	private boolean deleted = false;
 	private String name;
-	private T nodeId;
+	private NodeAffiliations nodeAffiliations;
 
 	// private Long nodeAffiliationsChangeTimestamp;
 
-	private NodeAffiliations nodeAffiliations;
 	private AbstractNodeConfig nodeConfig;
+	private T nodeId;
 	private NodeSubscriptions nodeSubscriptions;
 
 	// private Long nodeConfigChangeTimestamp;
 
 	private BareJID serviceJid;
-	//private boolean subNeedsWriting = false;
+	// private boolean subNeedsWriting = false;
 
 	// private Long nodeSubscriptionsChangeTimestamp;
 
 	public Node(T nodeId, BareJID serviceJid, AbstractNodeConfig nodeConfig, NodeAffiliations nodeAffiliations,
 			NodeSubscriptions nodeSubscriptions) {
-		if ( log.isLoggable( Level.FINEST ) ){
-			log.log( Level.FINEST,
-							 "Constructing Node, serviceJid: {0}, nodeConfig: {1}, nodeId: {2}, nodeAffiliations: {3}, nodeSubscriptions: {4}",
-							 new Object[] { serviceJid, nodeConfig, nodeId, nodeAffiliations, nodeSubscriptions } );
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST,
+					"Constructing Node, serviceJid: {0}, nodeConfig: {1}, nodeId: {2}, nodeAffiliations: {3}, nodeSubscriptions: {4}",
+					new Object[] { serviceJid, nodeConfig, nodeId, nodeAffiliations, nodeSubscriptions });
 		}
 
 		this.nodeId = nodeId;
@@ -46,10 +45,6 @@ public class Node<T> {
 		this.nodeAffiliations = nodeAffiliations;
 		this.nodeSubscriptions = nodeSubscriptions;
 		this.name = nodeConfig.getNodeName();
-	}
-	
-	public T getNodeId() {
-		return nodeId;
 	}
 
 	public void affiliationsMerge() {
@@ -61,7 +56,7 @@ public class Node<T> {
 	}
 
 	public void affiliationsSaved() {
-	//	affNeedsWriting = false;
+		// affNeedsWriting = false;
 		affiliationsMerge();
 	}
 
@@ -80,13 +75,13 @@ public class Node<T> {
 		conNeedsWriting = false;
 	}
 
-	// public Long getNodeAffiliationsChangeTimestamp() {
-	// return nodeAffiliationsChangeTimestamp;
-	// }
-
 	public long getCreationTime() {
 		return creationTime;
 	}
+
+	// public Long getNodeAffiliationsChangeTimestamp() {
+	// return nodeAffiliationsChangeTimestamp;
+	// }
 
 	public String getName() {
 		return name;
@@ -98,6 +93,10 @@ public class Node<T> {
 
 	public AbstractNodeConfig getNodeConfig() {
 		return nodeConfig;
+	}
+
+	public T getNodeId() {
+		return nodeId;
 	}
 
 	// public Long getNodeConfigChangeTimestamp() {
@@ -120,16 +119,17 @@ public class Node<T> {
 		return affiliationsNeedsWriting() || subscriptionsNeedsWriting() || conNeedsWriting;
 	}
 
-	public void setDeleted(boolean deleted) {
-		this.deleted = deleted;
+	public void resetChanges() {
+		nodeAffiliations.resetChangedFlag();
+		nodeSubscriptions.resetChangedFlag();
 	}
 
 	// public Long getNodeSubscriptionsChangeTimestamp() {
 	// return nodeSubscriptionsChangeTimestamp;
 	// }
 
-	public void subscriptionsMerge() {
-		nodeSubscriptions.merge();
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 
 	// public void resetNodeAffiliationsChangeTimestamp() {
@@ -144,13 +144,12 @@ public class Node<T> {
 	// this.nodeSubscriptionsChangeTimestamp = null;
 	// }
 
-	public boolean subscriptionsNeedsWriting() {
-		return nodeSubscriptions.isChanged();
+	public void subscriptionsMerge() {
+		nodeSubscriptions.merge();
 	}
 
-	public void subscriptionsSaved() {
-		//subNeedsWriting = false;
-		this.subscriptionsMerge();
+	public boolean subscriptionsNeedsWriting() {
+		return nodeSubscriptions.isChanged();
 	}
 
 	// public void setNodeAffiliationsChangeTimestamp() {
@@ -168,15 +167,15 @@ public class Node<T> {
 	// nodeSubscriptionsChangeTimestamp = System.currentTimeMillis();
 	// }
 
-	public void resetChanges() {
-		nodeAffiliations.resetChangedFlag();
-		nodeSubscriptions.resetChangedFlag();
+	public void subscriptionsSaved() {
+		// subNeedsWriting = false;
+		this.subscriptionsMerge();
 	}
 
 	@Override
 	public String toString() {
 		return "Node{" + "creationTime=" + creationTime + ", deleted=" + deleted + ", name=" + name + ", nodeId=" + nodeId
-					 + ", nodeAffiliations=" + nodeAffiliations + ", nodeSubscriptions=" + nodeSubscriptions
-					 + ", serviceJid=" + serviceJid + '}';
+				+ ", nodeAffiliations=" + nodeAffiliations + ", nodeSubscriptions=" + nodeSubscriptions + ", serviceJid="
+				+ serviceJid + '}';
 	}
 }

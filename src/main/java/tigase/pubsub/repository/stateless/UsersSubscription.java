@@ -22,14 +22,13 @@
 
 package tigase.pubsub.repository.stateless;
 
-import tigase.xmpp.BareJID;
-
 import tigase.pubsub.Subscription;
+import tigase.xmpp.BareJID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  * @version 5.0.0, 2010.03.27 at 05:23:47 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
@@ -40,8 +39,8 @@ public class UsersSubscription implements Cloneable {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param jid
 	 * @param subid
 	 * @param subscriptionType
@@ -55,10 +54,10 @@ public class UsersSubscription implements Cloneable {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws CloneNotSupportedException
 	 */
 	@Override
@@ -70,8 +69,8 @@ public class UsersSubscription implements Cloneable {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public BareJID getJid() {
@@ -80,8 +79,8 @@ public class UsersSubscription implements Cloneable {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public String getSubid() {
@@ -90,8 +89,8 @@ public class UsersSubscription implements Cloneable {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	public Subscription getSubscription() {
@@ -100,8 +99,8 @@ public class UsersSubscription implements Cloneable {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param subscriptionType
 	 */
 	public void setSubscription(Subscription subscriptionType) {
@@ -112,5 +111,5 @@ public class UsersSubscription implements Cloneable {
 	public String toString() {
 		return "{" + jid + "/" + subscription + '}';
 	}
-	
+
 }

@@ -3,9 +3,9 @@ package tigase.pubsub.repository.stateless;
 import java.util.Date;
 import java.util.List;
 
+import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubDAO;
-import tigase.pubsub.repository.RepositoryException;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 
@@ -14,7 +14,7 @@ class Items implements IItems {
 	private final IPubSubDAO dao;
 
 	private final long nodeId;
-	
+
 	private final String nodeName;
 
 	private final BareJID serviceJid;
@@ -55,7 +55,7 @@ class Items implements IItems {
 	public List<ItemMeta> getItemsMeta() throws RepositoryException {
 		return this.dao.getItemsMeta(serviceJid, nodeId, nodeName);
 	}
-	
+
 	@Override
 	public Date getItemUpdateDate(String id) throws RepositoryException {
 		return this.dao.getItemUpdateDate(serviceJid, nodeId, id);

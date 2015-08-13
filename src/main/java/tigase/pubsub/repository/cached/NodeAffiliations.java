@@ -40,6 +40,17 @@ public class NodeAffiliations extends tigase.pubsub.repository.NodeAffiliations 
 		}
 	}
 
+	private Map<BareJID, UsersAffiliation> changedAffs() {
+		Map<BareJID, UsersAffiliation> changedAffs = this.changedAffs.get();
+
+		if (changedAffs == null) {
+			changedAffs = new HashMap<BareJID, UsersAffiliation>();
+			this.changedAffs.set(changedAffs);
+		}
+
+		return changedAffs;
+	}
+
 	@Override
 	public NodeAffiliations clone() throws CloneNotSupportedException {
 		NodeAffiliations clone = new NodeAffiliations();
@@ -79,17 +90,17 @@ public class NodeAffiliations extends tigase.pubsub.repository.NodeAffiliations 
 		return result.toArray(new UsersAffiliation[] {});
 	}
 
-	public Map<BareJID,UsersAffiliation> getChanged() {
+	public Map<BareJID, UsersAffiliation> getChanged() {
 		return changedAffs();
 	}
-	
+
 	public void init(Queue<UsersAffiliation> data) {
 		UsersAffiliation a = null;
 		while ((a = data.poll()) != null) {
 			affs.put(a.getJid(), a);
-		}		
+		}
 	}
-	
+
 	@Override
 	public boolean isChanged() {
 		return changedAffs().size() > 0;
@@ -112,15 +123,4 @@ public class NodeAffiliations extends tigase.pubsub.repository.NodeAffiliations 
 	public void resetChangedFlag() {
 		changedAffs().clear();
 	}
-
-	private Map<BareJID, UsersAffiliation> changedAffs() {
-		Map<BareJID, UsersAffiliation> changedAffs = this.changedAffs.get();
-		
-		if (changedAffs == null) {
-			changedAffs = new HashMap<BareJID, UsersAffiliation>();
-			this.changedAffs.set(changedAffs);
-		}
-		
-		return changedAffs;
-	}	
 }

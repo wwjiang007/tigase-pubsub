@@ -23,12 +23,11 @@
 package tigase.pubsub.modules;
 
 import java.util.Map;
-import tigase.component2.PacketWriter;
+
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.kernel.beans.Bean;
 import tigase.pubsub.AbstractPubSubModule;
-import tigase.pubsub.PubSubConfig;
-import tigase.pubsub.Subscription;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.pubsub.repository.ISubscriptions;
@@ -39,30 +38,20 @@ import tigase.xmpp.BareJID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  * @version 5.0.0, 2010.03.27 at 05:27:10 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
+@Bean(name = "retrieveSubscriptionsModule")
 public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("subscriptions"));
 
 	/**
-	 * Constructs ...
-	 * 
-	 * 
-	 * @param config
-	 * @param pubsubRepository
-	 */
-	public RetrieveSubscriptionsModule(PubSubConfig config, PacketWriter packetWriter) {
-		super(config, packetWriter);
-	}
-
-	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -72,8 +61,8 @@ public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -83,11 +72,11 @@ public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 * @return
-	 * 
+	 *
 	 * @throws PubSubException
 	 */
 	@Override
@@ -113,9 +102,9 @@ public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
 				for (Map.Entry<String, UsersSubscription> entry : usersSubscriptions.entrySet()) {
 					UsersSubscription subscription = entry.getValue();
 					Element a = new Element("subscription", new String[] { "node", "jid", "subscription" },
-						new String[] { entry.getKey(), senderBareJid.toString(), subscription.getSubscription().name() });
+							new String[] { entry.getKey(), senderBareJid.toString(), subscription.getSubscription().name() });
 
-					subscriptionsResult.addChild(a);					
+					subscriptionsResult.addChild(a);
 				}
 			} else {
 				ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(serviceJid, nodeName);
@@ -125,9 +114,9 @@ public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
 				UsersSubscription[] subscribers = nodeSubscriptions.getSubscriptions();
 
 				for (final UsersSubscription usersSubscription : subscribers) {
-					Element s = new Element("subscription", new String[] { "jid", "subscription", "subid" }, new String[] {
-							usersSubscription.getJid().toString(), usersSubscription.getSubscription().name(),
-							usersSubscription.getSubid() });
+					Element s = new Element("subscription", new String[] { "jid", "subscription", "subid" },
+							new String[] { usersSubscription.getJid().toString(), usersSubscription.getSubscription().name(),
+									usersSubscription.getSubid() });
 
 					subscriptionsResult.addChild(s);
 				}

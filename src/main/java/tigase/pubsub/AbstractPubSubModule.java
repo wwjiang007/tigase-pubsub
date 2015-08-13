@@ -22,7 +22,7 @@
 
 package tigase.pubsub;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -32,47 +32,47 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tigase.component2.PacketWriter;
-import tigase.component2.eventbus.EventBus;
-import tigase.component2.modules.Module;
+
+import tigase.component.PacketWriter;
+import tigase.component.exceptions.RepositoryException;
+import tigase.component.modules.Module;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.ISubscriptions;
-import tigase.pubsub.repository.RepositoryException;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.server.Iq;
 import tigase.server.Packet;
 import tigase.stats.StatisticHolderImpl;
 import tigase.util.JIDUtils;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
-import tigase.xmpp.impl.roster.RosterAbstract;
 import tigase.xmpp.impl.roster.RosterAbstract.SubscriptionType;
 import tigase.xmpp.impl.roster.RosterElement;
 
-import java.util.Arrays;
-
 /**
  * Class description
- * 
- * 
+ *
+ *
  * @version 5.0.0, 2010.03.27 at 05:24:03 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
 public abstract class AbstractPubSubModule extends StatisticHolderImpl implements Module {
 
+	/** Field description */
+	protected final static Logger log = Logger.getLogger(AbstractPubSubModule.class.getName());
+
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param iq
-	 * 
+	 *
 	 * @return
 	 */
 	public static Element createResultIQ(Element iq) {
 		Element e = new Element("iq");
-		e.setXMLNS(Iq.CLIENT_XMLNS);
+		e.setXMLNS(Packet.CLIENT_XMLNS);
 		String id = iq.getAttributeStaticStr("id");
 		String from = iq.getAttributeStaticStr("from");
 		String to = iq.getAttributeStaticStr("to");
@@ -93,10 +93,10 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param iq
-	 * 
+	 *
 	 * @return
 	 */
 	public static List<Element> createResultIQArray(Element iq) {
@@ -105,11 +105,11 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param allSubscribers
 	 * @param jid
-	 * 
+	 *
 	 * @return
 	 */
 	@Deprecated
@@ -132,13 +132,13 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeConfig
 	 * @param jids
 	 * @param affiliations
 	 * @param subscriptions
-	 * 
+	 *
 	 * @return
 	 */
 	public static Collection<BareJID> getActiveSubscribers(final AbstractNodeConfig nodeConfig, final BareJID[] jids,
@@ -146,12 +146,10 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 		Set<BareJID> result = new HashSet<BareJID>();
 		final boolean presenceExpired = nodeConfig.isPresenceExpired();
 
-		if ( logAbstract.isLoggable( Level.FINEST ) ){
-			logAbstract.log( Level.FINEST,
-										 "getActiveSubscribers[2,1] subscriptions: {0}, jids: {1}, presenceExpired: {2}",
-										 new Object[] { subscriptions, Arrays.asList( jids ), presenceExpired } );
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "getActiveSubscribers[2,1] subscriptions: {0}, jids: {1}, presenceExpired: {2}",
+					new Object[] { subscriptions, Arrays.asList(jids), presenceExpired });
 		}
-
 
 		if (jids != null) {
 			for (BareJID jid : jids) {
@@ -160,19 +158,17 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 				UsersAffiliation affiliation = affiliations.getSubscriberAffiliation(jid);
 
-				if ( logAbstract.isLoggable( Level.FINEST ) ){
-					logAbstract.log( Level.FINEST,
-												 "getActiveSubscribers[2,2] jid: {0}, affiliation: {1}",
-												 new Object[] { jid, affiliation } );
+				if (log.isLoggable(Level.FINEST)) {
+					log.log(Level.FINEST, "getActiveSubscribers[2,2] jid: {0}, affiliation: {1}",
+							new Object[] { jid, affiliation });
 				}
 
 				// /* && affiliation.getAffiliation() != Affiliation.none */
 				if (affiliation.getAffiliation() != Affiliation.outcast) {
 					Subscription subscription = subscriptions.getSubscription(jid);
-					if ( logAbstract.isLoggable( Level.FINEST ) ){
-						logAbstract.log( Level.FINEST,
-														 "getActiveSubscribers[2,2] jid: {0}, subscription: {1}}",
-														 new Object[] { jid, subscription } );
+					if (log.isLoggable(Level.FINEST)) {
+						log.log(Level.FINEST, "getActiveSubscribers[2,2] jid: {0}, subscription: {1}}",
+								new Object[] { jid, subscription });
 					}
 
 					if (subscription == Subscription.subscribed) {
@@ -187,24 +183,23 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeConfig
 	 * @param affiliations
 	 * @param subscriptions
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	public static Collection<BareJID> getActiveSubscribers(final AbstractNodeConfig nodeConfig,
 			final IAffiliations affiliations, final ISubscriptions subscriptions) throws RepositoryException {
 		UsersSubscription[] subscribers = subscriptions.getSubscriptionsForPublish();
 
-		if ( logAbstract.isLoggable( Level.FINEST ) ){
-			logAbstract.log( Level.FINEST,
-											 "getActiveSubscribers[1] subscriptions: {0}, subscribers: {1}",
-											 new Object[] { subscriptions, Arrays.asList( subscribers ) } );
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "getActiveSubscribers[1] subscriptions: {0}, subscribers: {1}",
+					new Object[] { subscriptions, Arrays.asList(subscribers) });
 		}
 
 		if (subscribers == null) {
@@ -222,10 +217,10 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param elements
-	 * 
+	 *
 	 * @return
 	 */
 	public static List<Element> makeArray(Element... elements) {
@@ -240,10 +235,10 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param elements
-	 * 
+	 *
 	 * @return
 	 */
 	public static List<Packet> makeArray(Packet... packets) {
@@ -256,48 +251,42 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 		return result;
 	}
 
-	/** Field description */
-	protected final PubSubConfig config;
+	@Inject
+	protected PubSubConfig config;
 
-	/** Field description */
-	protected final Logger log = Logger.getLogger(this.getClass().getName());
-	protected final static Logger logAbstract = Logger.getLogger(AbstractPubSubModule.class.getName());
+	@Inject
+	protected PacketWriter packetWriter;
 
-	protected final PacketWriter packetWriter;
-	
+	@Inject(nullAllowed = false)
+	private IPubSubRepository repository;
+
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param config
 	 * @param pubsubRepository
 	 * @param packetWriter
 	 *            TODO
 	 */
-	public AbstractPubSubModule(final PubSubConfig config, PacketWriter packetWriter) {
-		this.config = config;
-		this.packetWriter = packetWriter;
+	public AbstractPubSubModule() {
 		this.setStatisticsPrefix(getClass().getSimpleName());
 	}
 
-	protected EventBus getEventBus() {
-		return config.getEventBus();
+	protected IPubSubRepository getRepository() {
+		return repository;
 	}
 
-	protected IPubSubRepository getRepository() {
-		return config.getPubSubRepository();
-	}
-	
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param jid
 	 * @param affiliations
 	 * @param subscriptions
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	protected boolean hasSenderSubscription(final BareJID bareJid, final IAffiliations affiliations,
@@ -314,7 +303,7 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 				return true;
 			}
 
-			Map<BareJID,RosterElement> buddies = getRepository().getUserRoster(owner.getJid());
+			Map<BareJID, RosterElement> buddies = getRepository().getUserRoster(owner.getJid());
 			RosterElement re = buddies.get(bareJid);
 			if (re != null) {
 				if (re.getSubscription() == SubscriptionType.both || re.getSubscription() == SubscriptionType.from
@@ -328,15 +317,15 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param jid
 	 * @param nodeConfig
 	 * @param affiliations
 	 * @param subscriptions
-	 * 
+	 *
 	 * @return
-	 * 
+	 *
 	 * @throws RepositoryException
 	 */
 	protected boolean isSenderInRosterGroup(BareJID bareJid, AbstractNodeConfig nodeConfig, IAffiliations affiliations,
@@ -347,7 +336,7 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 		if ((groupsAllowed == null) || (groupsAllowed.length == 0)) {
 			return true;
 		}
-		
+
 		// @TODO - is there a way to optimize this?
 		for (UsersSubscription owner : subscribers) {
 			UsersAffiliation affiliation = affiliations.getSubscriberAffiliation(owner.getJid());
@@ -359,15 +348,15 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 				return true;
 			}
 
-			Map<BareJID,RosterElement> buddies = getRepository().getUserRoster(owner.getJid());
+			Map<BareJID, RosterElement> buddies = getRepository().getUserRoster(owner.getJid());
 			RosterElement re = buddies.get(bareJid);
 			if (re != null && re.getGroups() != null) {
 				for (String group : groupsAllowed) {
 					if (Utils.contain(group, groupsAllowed)) {
 						return true;
-					}				
+					}
 				}
-			}			
+			}
 		}
 
 		return false;

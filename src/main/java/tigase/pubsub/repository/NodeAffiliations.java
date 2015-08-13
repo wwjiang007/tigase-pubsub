@@ -1,6 +1,5 @@
 package tigase.pubsub.repository;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +13,15 @@ public abstract class NodeAffiliations implements IAffiliations {
 
 	protected final static String DELIMITER = ";";
 
+	public static tigase.pubsub.repository.cached.NodeAffiliations create(Queue<UsersAffiliation> data) {
+		tigase.pubsub.repository.cached.NodeAffiliations a = new tigase.pubsub.repository.cached.NodeAffiliations();
+		if (data == null)
+			return a;
+
+		a.init(data);
+		return a;
+	}
+
 	public static tigase.pubsub.repository.cached.NodeAffiliations create(String data) {
 		tigase.pubsub.repository.cached.NodeAffiliations a = new tigase.pubsub.repository.cached.NodeAffiliations();
 		try {
@@ -23,17 +31,9 @@ public abstract class NodeAffiliations implements IAffiliations {
 			return new tigase.pubsub.repository.cached.NodeAffiliations();
 		}
 	}
-	
-	public static tigase.pubsub.repository.cached.NodeAffiliations create(Queue<UsersAffiliation> data) {
-		tigase.pubsub.repository.cached.NodeAffiliations a = new tigase.pubsub.repository.cached.NodeAffiliations();
-		if (data == null)
-			return a;
-		
-		a.init(data);
-		return a;
-	}
 
-	protected final ConcurrentMap<BareJID, UsersAffiliation> affs = new ConcurrentHashMap<BareJID, UsersAffiliation>(16, 0.9f, 8);
+	protected final ConcurrentMap<BareJID, UsersAffiliation> affs = new ConcurrentHashMap<BareJID, UsersAffiliation>(16, 0.9f,
+			8);
 
 	private boolean changed = false;
 
@@ -68,11 +68,6 @@ public abstract class NodeAffiliations implements IAffiliations {
 		}
 		clone.changed = changed;
 		return clone;
-	}
-
-	@Override
-	public String toString() {
-		return "NodeAffiliations:" + affs;
 	}
 
 	protected UsersAffiliation get(final BareJID bareJid) {
@@ -158,6 +153,11 @@ public abstract class NodeAffiliations implements IAffiliations {
 			}
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public String toString() {
+		return "NodeAffiliations:" + affs;
 	}
 
 }

@@ -1,48 +1,50 @@
 package tigase.pubsub.modules.commands;
 
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+
+import tigase.component.adhoc.AdHocCommand;
+import tigase.component.adhoc.AdHocCommandException;
+import tigase.component.adhoc.AdHocResponse;
+import tigase.component.adhoc.AdhHocRequest;
 import tigase.db.UserRepository;
-
-import tigase.xmpp.Authorization;
-import tigase.xmpp.BareJID;
-import tigase.xmpp.JID;
-
-import tigase.adhoc.AdHocCommand;
-import tigase.adhoc.AdHocCommandException;
-import tigase.adhoc.AdHocResponse;
-import tigase.adhoc.AdhHocRequest;
 import tigase.form.Field;
 import tigase.form.Form;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.util.DateTimeFormatter;
 import tigase.xml.Element;
+import tigase.xmpp.Authorization;
+import tigase.xmpp.BareJID;
+import tigase.xmpp.JID;
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-
+@Bean(name = "retrieveItemsCommand")
 public class RetrieveItemsCommand implements AdHocCommand {
 
-	private final PubSubConfig config;
+	public static final String TIGASE_PUBSUB_INTERNAL_KEY = "tigase-pubsub#internal";
+
+	public static final String TIGASE_PUBSUB_ITEMID_KEY = "tigase-pubsub#item-id";
+
+	public static final String TIGASE_PUBSUB_NODENAME_KEY = "tigase-pubsub#node-name";
+
+	public static final String TIGASE_PUBSUB_SERVICE_KEY = "tigase-pubsub#service-name";
+
+	public static final String TIGASE_PUBSUB_TIMESTAMP_KEY = "tigase-pubsub#timestamp";
+
+	@Inject
+	private PubSubConfig config;
 
 	private final DateTimeFormatter dtf = new DateTimeFormatter();
 
-	private final IPubSubRepository repository;
+	@Inject
+	private IPubSubRepository repository;
 
-	private final UserRepository userRepo;
-
-	public static final String TIGASE_PUBSUB_SERVICE_KEY = "tigase-pubsub#service-name";
-	public static final String TIGASE_PUBSUB_NODENAME_KEY = "tigase-pubsub#node-name";
-	public static final String TIGASE_PUBSUB_TIMESTAMP_KEY = "tigase-pubsub#timestamp";
-	public static final String TIGASE_PUBSUB_ITEMID_KEY = "tigase-pubsub#item-id";
-	public static final String TIGASE_PUBSUB_INTERNAL_KEY = "tigase-pubsub#internal";
-
-	public RetrieveItemsCommand(PubSubConfig config, IPubSubRepository repository, UserRepository userRepo) {
-		this.repository = repository;
-		this.config = config;
-		this.userRepo = userRepo;
-	}
+	@Inject
+	private UserRepository userRepo;
 
 	@Override
 	public void execute(AdhHocRequest request, AdHocResponse response) throws AdHocCommandException {
@@ -58,9 +60,9 @@ public class RetrieveItemsCommand implements AdHocCommand {
 					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_SERVICE_KEY, "", "Service name"));
 					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_NODENAME_KEY, "", "Node name"));
 					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_ITEMID_KEY, "", "Item ID"));
-					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_TIMESTAMP_KEY, dtf.formatDateTime(new Date()),
-							"Items since"));
-					form.addField(Field.fieldHidden( TIGASE_PUBSUB_INTERNAL_KEY, "" ));
+					form.addField(
+							Field.fieldTextSingle(TIGASE_PUBSUB_TIMESTAMP_KEY, dtf.formatDateTime(new Date()), "Items since"));
+					form.addField(Field.fieldHidden(TIGASE_PUBSUB_INTERNAL_KEY, ""));
 
 					response.getElements().add(form.getElement());
 					response.startSession();
@@ -79,9 +81,10 @@ public class RetrieveItemsCommand implements AdHocCommand {
 
 						final JID sender = request.getSender();
 
-						// only admins commands and connadns from service-owner can be executed
-						if ( !config.isAdmin( sender ) && !sender.getBareJID().toString().equals( serviceName ) ){
-							throw new AdHocCommandException( Authorization.FORBIDDEN );
+						// only admins commands and connadns from service-owner
+						// can be executed
+						if (!config.isAdmin(sender) && !sender.getBareJID().toString().equals(serviceName)) {
+							throw new AdHocCommandException(Authorization.FORBIDDEN);
 						}
 
 						if (nodeName == null) {
@@ -94,43 +97,43 @@ public class RetrieveItemsCommand implements AdHocCommand {
 
 						Element f = new Element("x", new String[] { "xmlns" }, new String[] { "jabber:x:data" });
 						IItems nodeItems;
-						if ( null != serviceName ){
-							nodeItems = repository.getNodeItems( BareJID.bareJIDInstance( serviceName ), nodeName );
+						if (null != serviceName) {
+							nodeItems = repository.getNodeItems(BareJID.bareJIDInstance(serviceName), nodeName);
 						} else {
 							f.addChild(new Element("title", "Items"));
-							Element reported = new Element( "reported" );
-							reported.addChild( new Element( "field", new String[] { "var" }, new String[] { "id" } ) );
-							f.addChild( reported );
+							Element reported = new Element("reported");
+							reported.addChild(new Element("field", new String[] { "var" }, new String[] { "id" }));
+							f.addChild(reported);
 
-							nodeItems = repository.getNodeItems( request.getIq().getTo().getBareJID(), nodeName );
+							nodeItems = repository.getNodeItems(request.getIq().getTo().getBareJID(), nodeName);
 						}
-						if ( null != nodeId ){
+						if (null != nodeId) {
 							final String[] itemsIds = nodeItems.getItemsIds();
-							if ( null != itemsIds && Arrays.asList(itemsIds).contains( nodeId ) ){
-								Element i = nodeItems.getItem( nodeId );
-								Element field = new Element( "field", new String[] { "var" }, new String[] { "item" } );
-								field.addChild( new Element( "value", new Element[] { i }, null, null ) );
+							if (null != itemsIds && Arrays.asList(itemsIds).contains(nodeId)) {
+								Element i = nodeItems.getItem(nodeId);
+								Element field = new Element("field", new String[] { "var" }, new String[] { "item" });
+								field.addChild(new Element("value", new Element[] { i }, null, null));
 
-								f.addChild( field );
+								f.addChild(field);
 							}
 						} else {
-							String[] allItems = nodeItems.getItemsIdsSince( timestamp.getTime() );
-							for ( String id : allItems ) {
-								Element i = new Element( "item" );
-								Element fi = new Element( "field", new String[] { "var" }, new String[] { "id" } );
-								fi.addChild( new Element( "value", id ) );
-								i.addChild( fi );
-								f.addChild( i );
+							String[] allItems = nodeItems.getItemsIdsSince(timestamp.getTime());
+							for (String id : allItems) {
+								Element i = new Element("item");
+								Element fi = new Element("field", new String[] { "var" }, new String[] { "id" });
+								fi.addChild(new Element("value", id));
+								i.addChild(fi);
+								f.addChild(i);
 							}
 
 							// ==================
 						}
 
-						if ( null != internalId ){
-							Field fieldHidden = Field.fieldHidden( TIGASE_PUBSUB_INTERNAL_KEY, internalId );
-							f.addChild(fieldHidden.getElement() );
+						if (null != internalId) {
+							Field fieldHidden = Field.fieldHidden(TIGASE_PUBSUB_INTERNAL_KEY, internalId);
+							f.addChild(fieldHidden.getElement());
 						}
-						response.getElements().add( f );
+						response.getElements().add(f);
 					}
 					response.completeSession();
 				}
@@ -152,6 +155,11 @@ public class RetrieveItemsCommand implements AdHocCommand {
 	@Override
 	public String getNode() {
 		return "retrieve-items";
+	}
+
+	@Override
+	public boolean isAllowedFor(JID jid) {
+		return Arrays.asList(config.getAdmins()).contains(jid.toString());
 	}
 
 }

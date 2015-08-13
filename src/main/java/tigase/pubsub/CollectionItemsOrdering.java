@@ -21,47 +21,48 @@
  */
 package tigase.pubsub;
 
-import tigase.pubsub.repository.IItems;
-
 import java.util.Comparator;
+
+import tigase.pubsub.repository.IItems;
 
 public enum CollectionItemsOrdering {
 
-	byCreationDate( "Sort items by creation time", new Comparator<IItems.ItemMeta>() {
+	byCreationDate("Sort items by creation time", new Comparator<IItems.ItemMeta>() {
 
 		@Override
-		public int compare( IItems.ItemMeta o1, IItems.ItemMeta o2 ) {
-			return o1.getCreationDate().compareTo( o2.getCreationDate() ) * ( -1 );
+		public int compare(IItems.ItemMeta o1, IItems.ItemMeta o2) {
+			return o1.getCreationDate().compareTo(o2.getCreationDate()) * (-1);
 		}
-	} ),
-	
-	byUpdateDate( "Sort items by last update time", new Comparator<IItems.ItemMeta>() {
+	}),
+
+	byUpdateDate("Sort items by last update time", new Comparator<IItems.ItemMeta>() {
 
 		@Override
-		public int compare( IItems.ItemMeta o1, IItems.ItemMeta o2 ) {
-			return o1.getItemUpdateDate().compareTo( o2.getItemUpdateDate() ) * ( -1 );
+		public int compare(IItems.ItemMeta o1, IItems.ItemMeta o2) {
+			return o1.getItemUpdateDate().compareTo(o2.getItemUpdateDate()) * (-1);
 		}
-	} ),;
+	}),;
 
 	public static String[] descriptions() {
-		String[] result = new String[ values().length ];
+		String[] result = new String[values().length];
 		int i = 0;
-		for ( CollectionItemsOrdering item : values() ) {
+		for (CollectionItemsOrdering item : values()) {
 			result[i++] = item.description;
 		}
 		return result;
 	}
 
-	public Comparator<IItems.ItemMeta> getComparator() {
-		return comparator;
-	}
-
-	private final String description;
 	private final Comparator<IItems.ItemMeta> comparator;
 
-	private CollectionItemsOrdering( String description, Comparator<IItems.ItemMeta> cmp ) {
+	private final String description;
+
+	private CollectionItemsOrdering(String description, Comparator<IItems.ItemMeta> cmp) {
 		this.description = description;
 		this.comparator = cmp;
+	}
+
+	public Comparator<IItems.ItemMeta> getComparator() {
+		return comparator;
 	}
 
 }

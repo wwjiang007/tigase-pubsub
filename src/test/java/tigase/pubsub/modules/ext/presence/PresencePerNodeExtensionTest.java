@@ -9,9 +9,8 @@ import java.util.Collection;
 import org.junit.Before;
 import org.junit.Test;
 
-import tigase.component2.eventbus.DefaultEventBus;
-import tigase.component2.eventbus.EventBus;
-import tigase.pubsub.PubSubConfig;
+import tigase.disteventbus.EventBus;
+import tigase.disteventbus.EventBusFactory;
 import tigase.server.Packet;
 import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
@@ -28,15 +27,10 @@ public class PresencePerNodeExtensionTest {
 
 	@Before
 	public void setUp() throws Exception {
-		final EventBus bus = new DefaultEventBus();
+		final EventBus bus = EventBusFactory.getInstance();
 
-		PubSubConfig config = new PubSubConfig(null) {
-			@Override
-			public EventBus getEventBus() {
-				return bus;
-			}
-		};
-		this.ext = new PresencePerNodeExtension(config, null);
+		this.ext = new PresencePerNodeExtension();
+		this.ext.setEventBus(bus);
 	}
 
 	@Test

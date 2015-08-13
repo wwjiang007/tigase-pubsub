@@ -22,20 +22,16 @@
 
 package tigase.pubsub.modules;
 
-import java.util.List;
-
-import tigase.component2.PacketWriter;
-import tigase.component2.eventbus.Event;
-import tigase.component2.eventbus.EventHandler;
-import tigase.component2.eventbus.EventType;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.disteventbus.EventBus;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.CollectionNodeConfig;
-import tigase.pubsub.PubSubConfig;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.modules.NodeDeleteModule.NodeDeleteHandler.NodeDeleteEvent;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
@@ -47,68 +43,25 @@ import tigase.xmpp.JID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  */
+@Bean(name = "nodeDeleteModule")
 public class NodeDeleteModule extends AbstractPubSubModule {
-	public interface NodeDeleteHandler extends EventHandler {
-
-		public static class NodeDeleteEvent extends Event<NodeDeleteHandler> {
-
-			public static final EventType<NodeDeleteHandler> TYPE = new EventType<NodeDeleteHandler>();
-
-			private final String nodeName;
-
-			private final Packet packet;
-
-			public NodeDeleteEvent(Packet packet, String nodeName) {
-				super(TYPE);
-				this.packet = packet;
-				this.nodeName = nodeName;
-			}
-
-			@Override
-			protected void dispatch(NodeDeleteHandler handler) {
-				handler.onNodeDeleted(packet, nodeName);
-			}
-
-		}
-
-		void onNodeDeleted(Packet packet, final String nodeName);
-	}
 
 	private static final Criteria CRIT_DELETE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(ElementCriteria.name("delete"));
 
-	private final PublishItemModule publishModule;
+	@Inject
+	private EventBus eventBus;
 
-	/**
-	 * Constructs ...
-	 * 
-	 * 
-	 * @param config
-	 * @param pubsubRepository
-	 * @param publishItemModule
-	 */
-	public NodeDeleteModule(PubSubConfig config, PacketWriter packetWriter, PublishItemModule publishItemModule) {
-		super(config, packetWriter);
-		this.publishModule = publishItemModule;
-	}
+	@Inject
+	private PublishItemModule publishModule;
 
 	/**
 	 * Method description
-	 * 
-	 * 
-	 * @param listener
-	 */
-	public void addNodeDeleteHandler(NodeDeleteHandler handler) {
-		config.getEventBus().addHandler(NodeDeleteEvent.TYPE, handler);
-	}
-
-	/**
-	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -118,8 +71,8 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -129,11 +82,11 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 * @return
-	 * 
+	 *
 	 * @throws PubSubException
 	 */
 	@Override
@@ -172,8 +125,8 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 				ISubscriptions nodeSubscriptions = this.getRepository().getNodeSubscriptions(toJid, nodeName);
 				Element del = new Element("delete", new String[] { "node" }, new String[] { nodeName });
 
-				this.publishModule.sendNotifications(del, packet.getStanzaTo(), nodeName, nodeConfig,
-						nodeAffiliations, nodeSubscriptions);
+				this.publishModule.sendNotifications(del, packet.getStanzaTo(), nodeName, nodeConfig, nodeAffiliations,
+						nodeSubscriptions);
 			}
 
 			final String parentNodeName = nodeConfig.getCollection();
@@ -213,8 +166,9 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 			log.fine("Delete node [" + nodeName + "]");
 			getRepository().deleteNode(toJid, nodeName);
 
-			NodeDeleteEvent event = new NodeDeleteEvent(packet, nodeName);
-			getEventBus().fire(event);
+			Element event = new Element("NodeDeleted", new String[] { "xmlns" }, new String[] { PubSubComponent.EVENT_XMLNS });
+			event.addChild(new Element("node", nodeName));
+			eventBus.fire(event);
 
 			packetWriter.write(result);
 		} catch (PubSubException e1) {
@@ -226,15 +180,4 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 		}
 	}
 
-	;
-
-	/**
-	 * Method description
-	 * 
-	 * 
-	 * @param listener
-	 */
-	public void removeNodeDeleteHandler(NodeDeleteHandler handler) {
-		config.getEventBus().remove(handler);
-	}
 }

@@ -19,8 +19,8 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeSubscriptions
 	 */
 	public NodeSubscriptions(tigase.pubsub.repository.NodeSubscriptions nodeSubscriptions) {
@@ -29,11 +29,11 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param jid
 	 * @param subscription
-	 * 
+	 *
 	 * @return
 	 */
 	@Override
@@ -46,10 +46,19 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 		return subid;
 	}
 
+	private Map<BareJID, UsersSubscription> changedSubs() {
+		Map<BareJID, UsersSubscription> changedSubs = this.changedSubs.get();
+		if (changedSubs == null) {
+			changedSubs = new HashMap<BareJID, UsersSubscription>();
+			this.changedSubs.set(changedSubs);
+		}
+		return changedSubs;
+	}
+
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param jid
 	 * @param subscription
 	 */
@@ -87,10 +96,14 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 		return us;
 	}
 
+	public Map<BareJID, UsersSubscription> getChanged() {
+		return changedSubs();
+	}
+
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -106,8 +119,8 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -117,7 +130,7 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 
 	/**
 	 * Method description
-	 * 
+	 *
 	 */
 	public void merge() {
 		Map<BareJID, UsersSubscription> changedSubs = changedSubs();
@@ -128,29 +141,16 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 				subs.put(entry.getKey(), entry.getValue());
 			}
 		}
-		//subs.putAll(changedSubs);
+		// subs.putAll(changedSubs);
 		changedSubs.clear();
 	}
 
-	public Map<BareJID,UsersSubscription> getChanged() {
-		return changedSubs();
-	}
-	
 	/**
 	 * Method description
-	 * 
+	 *
 	 */
 	@Override
 	public void resetChangedFlag() {
 		changedSubs().clear();
-	}
-	
-	private Map<BareJID, UsersSubscription> changedSubs() {
-		Map<BareJID, UsersSubscription> changedSubs = this.changedSubs.get();
-		if (changedSubs == null) {
-			changedSubs = new HashMap<BareJID, UsersSubscription>();
-			this.changedSubs.set(changedSubs);
-		}
-		return changedSubs;
 	}
 }

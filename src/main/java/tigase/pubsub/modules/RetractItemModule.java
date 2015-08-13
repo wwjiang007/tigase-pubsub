@@ -26,14 +26,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import tigase.component2.PacketWriter;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.LeafNodeConfig;
 import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
@@ -47,27 +47,16 @@ import tigase.xmpp.BareJID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  */
+@Bean(name = "retractItemModule")
 public class RetractItemModule extends AbstractPubSubModule {
 	private static final Criteria CRIT_RETRACT = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("retract"));
 
-	private final PublishItemModule publishModule;
-
-	/**
-	 * Constructs ...
-	 * 
-	 * 
-	 * @param config
-	 * @param pubsubRepository
-	 * @param publishItemModule
-	 */
-	public RetractItemModule(final PubSubConfig config, PacketWriter packetWriter, final PublishItemModule publishItemModule) {
-		super(config, packetWriter);
-		this.publishModule = publishItemModule;
-	}
+	@Inject
+	private PublishItemModule publishModule;
 
 	private Element createNotification(final LeafNodeConfig config, final List<String> itemsToSend, final String nodeName) {
 		Element items = new Element("items", new String[] { "node" }, new String[] { nodeName });
@@ -81,8 +70,8 @@ public class RetractItemModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -92,8 +81,8 @@ public class RetractItemModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -103,11 +92,11 @@ public class RetractItemModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 * @return
-	 * 
+	 *
 	 * @throws PubSubException
 	 */
 	@Override
@@ -127,8 +116,8 @@ public class RetractItemModule extends AbstractPubSubModule {
 			if (nodeConfig == null) {
 				throw new PubSubException(packet.getElement(), Authorization.ITEM_NOT_FOUND);
 			} else if (nodeConfig.getNodeType() == NodeType.collection) {
-				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED, new PubSubErrorCondition("unsupported",
-						"retract-items"));
+				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
+						new PubSubErrorCondition("unsupported", "retract-items"));
 			}
 
 			IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(toJid, nodeName);
@@ -141,8 +130,8 @@ public class RetractItemModule extends AbstractPubSubModule {
 			LeafNodeConfig leafNodeConfig = (LeafNodeConfig) nodeConfig;
 
 			if (!leafNodeConfig.isPersistItem()) {
-				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED, new PubSubErrorCondition("unsupported",
-						"persistent-items"));
+				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
+						new PubSubErrorCondition("unsupported", "persistent-items"));
 			}
 
 			List<String> itemsToDelete = new ArrayList<String>();
@@ -172,8 +161,8 @@ public class RetractItemModule extends AbstractPubSubModule {
 				if (date != null) {
 					Element notification = createNotification(leafNodeConfig, itemsToDelete, nodeName);
 
-					publishModule.sendNotifications(notification, packet.getStanzaTo(), nodeName, nodeConfig,
-							nodeAffiliations, nodeSubscriptions);
+					publishModule.sendNotifications(notification, packet.getStanzaTo(), nodeName, nodeConfig, nodeAffiliations,
+							nodeSubscriptions);
 					nodeItems.deleteItem(id);
 				}
 			}

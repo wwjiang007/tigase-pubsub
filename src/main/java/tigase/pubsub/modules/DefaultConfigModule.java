@@ -21,28 +21,28 @@
  */
 package tigase.pubsub.modules;
 
-import tigase.component2.PacketWriter;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.LeafNodeConfig;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 
+@Bean(name = "defaultConfigModule")
 public class DefaultConfigModule extends AbstractPubSubModule {
 
 	private static final Criteria CRIT_DEFAULT = ElementCriteria.nameType("iq", "get").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(ElementCriteria.name("default"));
 
-	private final LeafNodeConfig defaultNodeConfig;
+	@Inject(bean = "defaultNodeConfig")
+	protected LeafNodeConfig defaultNodeConfig;
 
-	public DefaultConfigModule(PubSubConfig config, LeafNodeConfig nodeConfig, PacketWriter packetWriter) {
-		super(config, packetWriter);
-		this.defaultNodeConfig = nodeConfig;
+	public DefaultConfigModule() {
 	}
 
 	@Override
@@ -63,8 +63,8 @@ public class DefaultConfigModule extends AbstractPubSubModule {
 			Element def = new Element("default");
 			Element x = defaultNodeConfig.getFormElement();
 			if (x == null) {
-				throw new PubSubException(packet.getElement(), Authorization.FEATURE_NOT_IMPLEMENTED, new PubSubErrorCondition(
-						"unsupported", "config-node"));
+				throw new PubSubException(packet.getElement(), Authorization.FEATURE_NOT_IMPLEMENTED,
+						new PubSubErrorCondition("unsupported", "config-node"));
 			}
 			def.addChild(x);
 			pubsub.addChild(def);

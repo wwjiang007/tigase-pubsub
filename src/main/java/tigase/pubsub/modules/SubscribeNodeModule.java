@@ -25,14 +25,14 @@ package tigase.pubsub.modules;
 import java.util.ArrayList;
 import java.util.List;
 
-import tigase.component2.PacketWriter;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.AccessModel;
 import tigase.pubsub.Affiliation;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.SendLastPublishedItem;
 import tigase.pubsub.Subscription;
 import tigase.pubsub.Utils;
@@ -49,14 +49,16 @@ import tigase.xmpp.JID;
 
 /**
  * Class description
- * 
- * 
+ *
+ *
  */
+@Bean(name = "subscribeNodeModule")
 public class SubscribeNodeModule extends AbstractPubSubModule {
 	private static final Criteria CRIT_SUBSCRIBE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("subscribe"));
 
-	private static Affiliation calculateNewOwnerAffiliation(final Affiliation ownerAffiliation, final Affiliation newAffiliation) {
+	private static Affiliation calculateNewOwnerAffiliation(final Affiliation ownerAffiliation,
+			final Affiliation newAffiliation) {
 		if (ownerAffiliation.getWeight() > newAffiliation.getWeight()) {
 			return ownerAffiliation;
 		} else {
@@ -66,13 +68,13 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeName
 	 * @param subscriberJid
 	 * @param newSubscription
 	 * @param subid
-	 * 
+	 *
 	 * @return
 	 */
 	public static Element makeSubscription(String nodeName, BareJID subscriberJid, Subscription newSubscription, String subid) {
@@ -91,29 +93,16 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 		return resPubSub;
 	}
 
-	private final PendingSubscriptionModule pendingSubscriptionModule;
+	@Inject
+	private PendingSubscriptionModule pendingSubscriptionModule;
 
+	@Inject
 	private PublishItemModule publishItemModule;
 
 	/**
-	 * Constructs ...
-	 * 
-	 * 
-	 * @param config
-	 * @param pubsubRepository
-	 * @param manageSubscriptionModule
-	 */
-	public SubscribeNodeModule(PubSubConfig config, PacketWriter packetWriter,
-			PendingSubscriptionModule manageSubscriptionModule, PublishItemModule publishItemModule) {
-		super(config, packetWriter);
-		this.pendingSubscriptionModule = manageSubscriptionModule;
-		this.publishItemModule = publishItemModule;
-	}
-
-	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -125,8 +114,8 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -136,11 +125,11 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 * @return
-	 * 
+	 *
 	 * @throws PubSubException
 	 */
 	@Override
@@ -198,7 +187,8 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 				}
 			}
 			if ((accessModel == AccessModel.whitelist)
-					&& ((senderAffiliation == null) || (senderAffiliation.getAffiliation() == Affiliation.none) || (senderAffiliation.getAffiliation() == Affiliation.outcast))) {
+					&& ((senderAffiliation == null) || (senderAffiliation.getAffiliation() == Affiliation.none)
+							|| (senderAffiliation.getAffiliation() == Affiliation.outcast))) {
 				throw new PubSubException(Authorization.NOT_ALLOWED, PubSubErrorCondition.CLOSED_NODE);
 			}
 
@@ -219,7 +209,8 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 				boolean allowed = hasSenderSubscription(jid, nodeAffiliations, nodeSubscriptions);
 
 				if (!allowed) {
-					throw new PubSubException(Authorization.NOT_AUTHORIZED, PubSubErrorCondition.PRESENCE_SUBSCRIPTION_REQUIRED);
+					throw new PubSubException(Authorization.NOT_AUTHORIZED,
+							PubSubErrorCondition.PRESENCE_SUBSCRIPTION_REQUIRED);
 				}
 				newSubscription = Subscription.subscribed;
 				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
@@ -235,8 +226,8 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 				newSubscription = Subscription.subscribed;
 				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
 			} else {
-				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED, "AccessModel '" + accessModel.name()
-						+ "' is not implemented yet");
+				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
+						"AccessModel '" + accessModel.name() + "' is not implemented yet");
 			}
 
 			String subid = nodeSubscriptions.getSubscriptionId(jid);

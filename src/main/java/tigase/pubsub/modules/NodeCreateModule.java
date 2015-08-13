@@ -24,24 +24,22 @@ package tigase.pubsub.modules;
 
 import java.util.UUID;
 
-import tigase.component2.PacketWriter;
-import tigase.component2.eventbus.Event;
-import tigase.component2.eventbus.EventHandler;
-import tigase.component2.eventbus.EventType;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.disteventbus.EventBus;
 import tigase.form.Form;
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AccessModel;
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.CollectionNodeConfig;
 import tigase.pubsub.LeafNodeConfig;
 import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubConfig;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.SendLastPublishedItem;
 import tigase.pubsub.Subscription;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.modules.NodeCreateModule.NodeCreateHandler.NodeCreateEvent;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.server.Packet;
@@ -51,57 +49,34 @@ import tigase.xmpp.BareJID;
 
 /**
  * Case 8.1.2
- * 
+ *
  * @author bmalkow
- * 
+ *
  */
+@Bean(name = "nodeCreateModule")
 public class NodeCreateModule extends AbstractConfigCreateNode {
-	public interface NodeCreateHandler extends EventHandler {
-
-		public static class NodeCreateEvent extends Event<NodeCreateHandler> {
-
-			public static final EventType<NodeCreateHandler> TYPE = new EventType<NodeCreateHandler>();
-
-			private final String nodeName;
-
-			private final Packet packet;
-
-			public NodeCreateEvent(Packet packet, String nodeName) {
-				super(TYPE);
-				this.packet = packet;
-				this.nodeName = nodeName;
-			}
-
-			@Override
-			protected void dispatch(NodeCreateHandler handler) {
-				handler.onNodeCreated(packet, nodeName);
-			}
-
-		}
-
-		void onNodeCreated(Packet packet, final String nodeName);
-	}
 
 	private static final Criteria CRIT_CREATE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("create"));
 
-	private final PublishItemModule publishModule;
-
 	private final LeafNodeConfig defaultPepNodeConfig;
-	
+
+	@Inject
+	private EventBus eventBus;
+
+	@Inject
+	private PublishItemModule publishModule;
+
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
+	 *
 	 * @param config
 	 * @param pubsubRepository
 	 * @param defaultNodeConfig
 	 * @param publishItemModule
 	 */
-	public NodeCreateModule(PubSubConfig config, PacketWriter packetWriter, LeafNodeConfig defaultNodeConfig,
-			PublishItemModule publishItemModule) {
-		super(config, defaultNodeConfig, packetWriter);
-		this.publishModule = publishItemModule;
+	public NodeCreateModule() {
 		// creating default config for autocreate PEP nodes
 		this.defaultPepNodeConfig = new LeafNodeConfig("default-pep");
 		defaultPepNodeConfig.setValue("pubsub#access_model", AccessModel.presence.name());
@@ -111,18 +86,8 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 
 	/**
 	 * Method description
-	 * 
-	 * 
-	 * @param listener
-	 */
-	public void addNodeCreateHandler(NodeCreateHandler handler) {
-		getEventBus().addHandler(NodeCreateEvent.TYPE, handler);
-	}
-
-	/**
-	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -137,8 +102,8 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @return
 	 */
 	@Override
@@ -148,11 +113,11 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
+	 *
 	 * @param packet
 	 * @return
-	 * 
+	 *
 	 * @throws PubSubException
 	 */
 	@Override
@@ -180,8 +145,9 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 			NodeType nodeType = NodeType.leaf;
 			String collection = null;
 			AbstractNodeConfig defaultNodeConfig = this.defaultNodeConfig;
-			if (toJid.getLocalpart() != null) defaultNodeConfig = this.defaultPepNodeConfig;
-			
+			if (toJid.getLocalpart() != null)
+				defaultNodeConfig = this.defaultPepNodeConfig;
+
 			AbstractNodeConfig nodeConfig = new LeafNodeConfig(nodeName, defaultNodeConfig);
 
 			if (configure != null) {
@@ -203,11 +169,13 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 								collection = val;
 							}
 							if (val != null) {
-								if (!config.isSendLastPublishedItemOnPresence() && "pubsub#send_last_published_item".equals(var)){
+								if (!config.isSendLastPublishedItemOnPresence()
+										&& "pubsub#send_last_published_item".equals(var)) {
 									if (SendLastPublishedItem.on_sub_and_presence.name().equals(val)) {
-										throw new PubSubException(Authorization.NOT_ACCEPTABLE, "Requested on_sub_and_presence mode for sending last published item is disabled.");
+										throw new PubSubException(Authorization.NOT_ACCEPTABLE,
+												"Requested on_sub_and_presence mode for sending last published item is disabled.");
 									}
-								}								
+								}
 							}
 							nodeConfig.setValue(var, val);
 						}
@@ -254,8 +222,9 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 				getRepository().update(toJid, collection, colNodeConfig);
 			}
 
-			NodeCreateEvent event = new NodeCreateEvent(packet, nodeName);
-			getEventBus().fire(event);
+			Element event = new Element("NodeCreated", new String[] { "xmlns" }, new String[] { PubSubComponent.EVENT_XMLNS });
+			event.addChild(new Element("node", nodeName));
+			eventBus.fire(event);
 
 			Packet result = packet.okResult((Element) null, 0);
 
@@ -265,8 +234,8 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 				Element colE = new Element("collection", new String[] { "node" }, new String[] { collection });
 
 				colE.addChild(new Element("associate", new String[] { "node" }, new String[] { nodeName }));
-				publishModule.sendNotifications(colE, packet.getStanzaTo(), collection, nodeConfig,
-						colNodeAffiliations, colNodeSubscriptions);
+				publishModule.sendNotifications(colE, packet.getStanzaTo(), collection, nodeConfig, colNodeAffiliations,
+						colNodeSubscriptions);
 			}
 			if (instantNode) {
 				Element ps = new Element("pubsub", new String[] { "xmlns" },
@@ -291,13 +260,4 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 		}
 	}
 
-	/**
-	 * Method description
-	 * 
-	 * 
-	 * @param handler
-	 */
-	public void removeNodeCreateHandler(NodeCreateHandler handler) {
-		getEventBus().remove(handler);
-	}
 }

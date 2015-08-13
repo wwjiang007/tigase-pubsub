@@ -1,15 +1,17 @@
 package tigase.pubsub.cluster;
 
+import java.util.Arrays;
 import java.util.Map.Entry;
 
-import tigase.adhoc.AdHocCommand;
-import tigase.adhoc.AdHocCommandException;
-import tigase.adhoc.AdHocResponse;
-import tigase.adhoc.AdhHocRequest;
+import tigase.component.adhoc.AdHocCommand;
+import tigase.component.adhoc.AdHocCommandException;
+import tigase.component.adhoc.AdHocResponse;
+import tigase.component.adhoc.AdhHocRequest;
 import tigase.form.Field;
 import tigase.form.Form;
 import tigase.pubsub.PubSubConfig;
 import tigase.xmpp.Authorization;
+import tigase.xmpp.JID;
 
 public class ViewNodeLoadCommand implements AdHocCommand {
 
@@ -57,6 +59,11 @@ public class ViewNodeLoadCommand implements AdHocCommand {
 	@Override
 	public String getNode() {
 		return "cluster-load";
+	}
+
+	@Override
+	public boolean isAllowedFor(JID jid) {
+		return Arrays.asList(config.getAdmins()).contains(jid.toString());
 	}
 
 }

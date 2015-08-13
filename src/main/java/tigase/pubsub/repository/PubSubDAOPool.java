@@ -31,16 +31,11 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tigase.db.DBInitException;
 
-import tigase.db.TigaseDBException;
-import tigase.db.UserRepository;
+import tigase.component.exceptions.RepositoryException;
+import tigase.db.DBInitException;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubConfig;
-import tigase.pubsub.repository.NodeAffiliations;
-import tigase.pubsub.repository.NodeSubscriptions;
-import tigase.pubsub.repository.RepositoryException;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xml.Element;
@@ -50,13 +45,14 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 
 	private static final Logger log = Logger.getLogger(PubSubDAOPool.class.getName());
 
-	private final Map<BareJID, LinkedBlockingQueue<IPubSubDAO>> pools = new HashMap<BareJID, LinkedBlockingQueue<IPubSubDAO>>();
-
 	/**
-	 * Variable destroyed is set to true to ensure that all JDBC connections will be closed
-	 * and even if some of them were taken for execution in moment of pool being destroyed.
+	 * Variable destroyed is set to true to ensure that all JDBC connections
+	 * will be closed and even if some of them were taken for execution in
+	 * moment of pool being destroyed.
 	 */
 	private boolean destroyed = false;
+
+	private final Map<BareJID, LinkedBlockingQueue<IPubSubDAO>> pools = new HashMap<BareJID, LinkedBlockingQueue<IPubSubDAO>>();
 
 	public PubSubDAOPool() {
 	}
@@ -85,8 +81,8 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 	}
 
 	@Override
-	public T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-			NodeType nodeType, T collectionId) throws RepositoryException {
+	public T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig, NodeType nodeType,
+			T collectionId) throws RepositoryException {
 		IPubSubDAO<T> dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -152,6 +148,21 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 		if (dao != null) {
 			try {
 				return dao.getAllNodesList(serviceJid);
+			} finally {
+				offerDao(serviceJid, dao);
+			}
+		} else {
+			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
+		}
+		return null;
+	}
+
+	@Override
+	public String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException {
+		IPubSubDAO dao = takeDao(serviceJid);
+		if (dao != null) {
+			try {
+				return dao.getChildNodes(serviceJid, nodeName);
 			} finally {
 				offerDao(serviceJid, dao);
 			}
@@ -344,21 +355,6 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 	}
 
 	@Override
-	public String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException {
-		IPubSubDAO dao = takeDao(serviceJid);
-		if (dao != null) {
-			try {
-				return dao.getChildNodes(serviceJid, nodeName);
-			} finally {
-				offerDao(serviceJid, dao);
-			}
-		} else {
-			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
-		}
-		return null;
-	}
-
-	@Override
 	public Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
@@ -389,8 +385,8 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 	}
 
 	/**
-	 * This method is not doing anything right now
-	 * Parameter values may not reflect values passed to IPubSubDAO instances inside 
+	 * This method is not doing anything right now Parameter values may not
+	 * reflect values passed to IPubSubDAO instances inside
 	 */
 	@Override
 	public void initRepository(String resource_uri, Map<String, String> params) throws DBInitException {
@@ -406,20 +402,15 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 		ee.offer(dao);
 	}
 
-/*	//@Override
-	protected String readNodeConfigFormData(BareJID serviceJid, final long nodeId) throws TigaseDBException {
-		IPubSubDAO dao = takeDao(serviceJid);
-		if (dao != null) {
-			try {
-				return dao.readNodeConfigFormData(serviceJid, nodeName);
-			} finally {
-				offerDao(serviceJid, dao);
-			}
-		} else {
-			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
-		}
-		return null;
-	}*/
+	/*
+	 * //@Override protected String readNodeConfigFormData(BareJID serviceJid,
+	 * final long nodeId) throws TigaseDBException { IPubSubDAO dao =
+	 * takeDao(serviceJid); if (dao != null) { try { return
+	 * dao.readNodeConfigFormData(serviceJid, nodeName); } finally {
+	 * offerDao(serviceJid, dao); } } else { log.warning(
+	 * "dao is NULL, pool empty? - " + getPoolDetails(serviceJid)); } return
+	 * null; }
+	 */
 
 	@Override
 	public void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException {
@@ -475,7 +466,8 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 	}
 
 	@Override
-	public void updateNodeAffiliation(BareJID serviceJid, T nodeId, String nodeName, UsersAffiliation affiliation) throws RepositoryException {
+	public void updateNodeAffiliation(BareJID serviceJid, T nodeId, String nodeName, UsersAffiliation affiliation)
+			throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -519,8 +511,8 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 	}
 
 	@Override
-	public void writeItem(final BareJID serviceJid, T nodeId, long timeInMilis, final String id,
-			final String publisher, final Element item) throws RepositoryException {
+	public void writeItem(final BareJID serviceJid, T nodeId, long timeInMilis, final String id, final String publisher,
+			final Element item) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
