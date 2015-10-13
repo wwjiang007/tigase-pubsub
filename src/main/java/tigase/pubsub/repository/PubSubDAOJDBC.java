@@ -499,9 +499,10 @@ public class PubSubDAOJDBC extends PubSubDAO<Long> {
 	}
 
 	@Override
-	public Long getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}", new Object[] { serviceJid, nodeName });
+	public Long getNodeId( BareJID serviceJid, String nodeName ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}",
+							 new Object[] { serviceJid, nodeName } );
 		}
 		try {
 			ResultSet rs = null;
@@ -512,15 +513,20 @@ public class PubSubDAOJDBC extends PubSubDAO<Long> {
 					get_node_id_sp.setString(2, nodeName);
 					rs = get_node_id_sp.executeQuery();
 					if (rs.next()) {
-						return rs.getLong(1);
+						final long nodeId = rs.getLong(1);
+						if ( log.isLoggable( Level.FINEST ) ){
+							log.log( Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}, nodeId: {2}, get_node_id_sp: {3}",
+											 new Object[] { serviceJid, nodeName, nodeId, get_node_id_sp } );
+						}
+						return nodeId;
 					}
 					return null;
 				} finally {
 					release(null, rs);
 				}
 			}
-		} catch (SQLException e) {
-			throw new RepositoryException("Retrieving node id error", e);
+		} catch ( SQLException e ) {
+			throw new RepositoryException( "Retrieving node id error", e );
 		}
 	}
 
