@@ -1,14 +1,6 @@
 package tigase.pubsub.repository.cached;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,19 +9,10 @@ import tigase.component.exceptions.RepositoryException;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubConfig;
-import tigase.pubsub.Subscription;
-import tigase.pubsub.Utils;
+import tigase.pubsub.*;
 import tigase.pubsub.modules.ext.presence.PresenceNodeSubscriptions;
 import tigase.pubsub.modules.ext.presence.PresenceNotifierModule;
-import tigase.pubsub.repository.IAffiliations;
-import tigase.pubsub.repository.IItems;
-import tigase.pubsub.repository.IPubSubDAO;
-import tigase.pubsub.repository.IPubSubRepository;
-import tigase.pubsub.repository.ISubscriptions;
+import tigase.pubsub.repository.*;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.stats.Counter;
@@ -263,7 +246,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	private StatisticHolder cacheStats;
 
 	@Inject
-	private PubSubConfig config;
+	protected PubSubConfig config;
 
 	@Inject
 	protected IPubSubDAO<T> dao;

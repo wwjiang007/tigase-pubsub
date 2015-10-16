@@ -23,6 +23,7 @@
 package tigase.pubsub;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
 import tigase.component.PropertiesBeanConfigurator;
 import tigase.conf.Configurable;
@@ -44,33 +45,25 @@ import tigase.xmpp.JID;
 public class PubSubConfig implements Initializable {
 
 	public static final String ADMINS_KEY = "admin";
-
 	private static final String MAX_CACHE_SIZE = "pubsub-repository-cache-size";
 	private static final String PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY = "pubsub-high-memory-usage-level";
 	private static final String PUBSUB_LOW_MEMORY_DELAY_KEY = "pubsub-low-memory-delay";
 	private static final String PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_KEY = "pep-remove-empty-geoloc";
 	private static final String PUBSUB_PERSISTENT_PEP_KEY = "persistent-pep";
-
 	private static final String PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY = "send-last-published-item-on-presence";
-
+	protected final Logger log = Logger.getLogger(this.getClass().getName());
 	protected String[] admins;
-
+	protected BareJID serviceBareJID = BareJID.bareJIDInstanceNS("tigase-pubsub");
 	@Inject
 	private PubSubComponent component;
-
-	@Inject
+	@Inject(nullAllowed = true)
 	private PropertiesBeanConfigurator configurator;
 	private float highMemoryUsageLevel = 90;
 	private long lowMemoryDelay = 1000;
 	private Integer maxCacheSize = 2000;
-
 	private boolean pepRemoveEmptyGeoloc = false;
-
 	private boolean persistentPep = false;
-
 	private boolean sendLastPublishedItemOnPresence = false;
-
-	protected BareJID serviceBareJID = BareJID.bareJIDInstanceNS("tigase-pubsub");
 
 	/**
 	 * Method description
@@ -80,6 +73,16 @@ public class PubSubConfig implements Initializable {
 	 */
 	public String[] getAdmins() {
 		return admins;
+	}
+
+	/**
+	 * Method description
+	 *
+	 *
+	 * @param strings
+	 */
+	public void setAdmins(String[] strings) {
+		this.admins = strings;
 	}
 
 	public JID getComponentJID() {
@@ -110,8 +113,15 @@ public class PubSubConfig implements Initializable {
 
 	@Override
 	public void initialize() {
-		final Map<String, Object> props = configurator.getProperties();
+		if (configurator != null) {
+			final Map<String, Object> props = configurator.getProperties();
+			setProperties(props);
+		} else {
+			log.warning("Configurator was not injected!");
+		}
+	}
 
+	public void setProperties(Map<String, Object> props) {
 		if (props.containsKey(PUBSUB_LOW_MEMORY_DELAY_KEY)) {
 			this.lowMemoryDelay = (Long) props.get(PUBSUB_LOW_MEMORY_DELAY_KEY);
 		}
@@ -181,16 +191,6 @@ public class PubSubConfig implements Initializable {
 
 	public boolean isSendLastPublishedItemOnPresence() {
 		return sendLastPublishedItemOnPresence;
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param strings
-	 */
-	public void setAdmins(String[] strings) {
-		this.admins = strings;
 	}
 
 }

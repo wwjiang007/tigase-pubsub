@@ -22,20 +22,8 @@
 
 package tigase.pubsub.modules;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,17 +35,7 @@ import tigase.disteventbus.EventHandler;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.AbstractPubSubModule;
-import tigase.pubsub.AccessModel;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.LeafNodeConfig;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.PublisherModel;
-import tigase.pubsub.SendLastPublishedItem;
-import tigase.pubsub.Subscription;
-import tigase.pubsub.Utils;
+import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
@@ -170,10 +148,6 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 	 * Constructs ...
 	 *
 	 *
-	 * @param config
-	 * @param pubsubRepository
-	 * @param xsltTool
-	 * @param presenceCollector
 	 */
 	public PublishItemModule() {
 		for (String xmlns : SUPPORTED_PEP_XMLNS) {
@@ -373,8 +347,12 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 
 	@Override
 	public void initialize() {
-		eventBus.addHandler("CapsChange", PubSubComponent.EVENT_XMLNS, capsChangeHandler);
-		eventBus.addHandler("PresenceChange", PubSubComponent.EVENT_XMLNS, presenceChangeHandler);
+		if (eventBus != null) {
+			eventBus.addHandler("CapsChange", PubSubComponent.EVENT_XMLNS, capsChangeHandler);
+			eventBus.addHandler("PresenceChange", PubSubComponent.EVENT_XMLNS, presenceChangeHandler);
+		} else {
+			log.warning("EventBus is not injected!");
+		}
 	}
 
 	/**
