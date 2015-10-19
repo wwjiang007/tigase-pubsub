@@ -30,6 +30,7 @@ import tigase.conf.Configurable;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
+import tigase.kernel.beans.config.ConfigField;
 import tigase.sys.TigaseRuntime;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
@@ -52,17 +53,31 @@ public class PubSubConfig implements Initializable {
 	private static final String PUBSUB_PERSISTENT_PEP_KEY = "persistent-pep";
 	private static final String PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY = "send-last-published-item-on-presence";
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
+
+	@ConfigField(desc = "List of admins")
 	protected String[] admins;
 	protected BareJID serviceBareJID = BareJID.bareJIDInstanceNS("tigase-pubsub");
 	@Inject
 	private PubSubComponent component;
 	@Inject(nullAllowed = true)
 	private PropertiesBeanConfigurator configurator;
+
+	@ConfigField(desc = "High memory usage level", alias = PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY)
 	private float highMemoryUsageLevel = 90;
+
+	@ConfigField(desc = "Low memory delay", alias = PUBSUB_LOW_MEMORY_DELAY_KEY)
 	private long lowMemoryDelay = 1000;
+
+	@ConfigField(desc = "Max Cache size", alias = MAX_CACHE_SIZE)
 	private Integer maxCacheSize = 2000;
+
+	@ConfigField(desc = "PEP Remove Empty Geoloc", alias = PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_KEY)
 	private boolean pepRemoveEmptyGeoloc = false;
+
+	@ConfigField(desc = "Persistent PEP", alias = PUBSUB_PERSISTENT_PEP_KEY)
 	private boolean persistentPep = false;
+
+	@ConfigField(desc = "Send Last Published Item on Presence", alias = PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY)
 	private boolean sendLastPublishedItemOnPresence = false;
 
 	/**
@@ -122,26 +137,6 @@ public class PubSubConfig implements Initializable {
 	}
 
 	public void setProperties(Map<String, Object> props) {
-		if (props.containsKey(PUBSUB_LOW_MEMORY_DELAY_KEY)) {
-			this.lowMemoryDelay = (Long) props.get(PUBSUB_LOW_MEMORY_DELAY_KEY);
-		}
-		if (props.containsKey(PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY)) {
-			this.highMemoryUsageLevel = ((Integer) props.get(PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY)).floatValue();
-		}
-		if (props.containsKey(PUBSUB_PERSISTENT_PEP_KEY)) {
-			this.persistentPep = (Boolean) props.get(PUBSUB_PERSISTENT_PEP_KEY);
-		}
-		if (props.containsKey(PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_KEY)) {
-			this.pepRemoveEmptyGeoloc = (Boolean) props.get(PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_KEY);
-		}
-		if (props.containsKey(PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY)) {
-			this.sendLastPublishedItemOnPresence = (Boolean) props.get(PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY);
-		}
-
-		if (props.containsKey(MAX_CACHE_SIZE)) {
-			this.maxCacheSize = (Integer) props.get(MAX_CACHE_SIZE);
-		}
-
 		if (props.containsKey(ADMINS_KEY)) {
 			admins = (String[]) props.get(ADMINS_KEY);
 		} else if (props.get(Configurable.GEN_ADMINS) != null) {
