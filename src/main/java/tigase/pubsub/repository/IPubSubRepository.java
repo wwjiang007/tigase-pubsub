@@ -133,6 +133,8 @@ public interface IPubSubRepository {
 	 */
 	public IItems getNodeItems(BareJID serviceJid, String nodeName) throws RepositoryException;
 
+	public INodeMeta getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException;
+
 	/**
 	 * Method description
 	 *

@@ -1,5 +1,6 @@
 /*
  * Tigase Jabber/XMPP Publish Subscribe Component
+ * Copyright (C) 2009-2016 "Tigase, Inc." <office@tigase.com>
  * Copyright (C) 2009 "Tomasz Sterna" <tomek@xiaoka.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -298,6 +299,21 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 		if (dao != null) {
 			try {
 				return dao.getNodeId(serviceJid, nodeName);
+			} finally {
+				offerDao(serviceJid, dao);
+			}
+		} else {
+			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
+			return null;
+		}
+	}
+
+	@Override
+	public INodeMeta<T> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException {
+		IPubSubDAO<T> dao = takeDao(serviceJid);
+		if (dao != null) {
+			try {
+				return dao.getNodeMeta(serviceJid, nodeName);
 			} finally {
 				offerDao(serviceJid, dao);
 			}

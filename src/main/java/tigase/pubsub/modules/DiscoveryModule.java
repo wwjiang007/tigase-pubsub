@@ -10,18 +10,34 @@ import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.Utils;
 import tigase.pubsub.exceptions.PubSubException;
+import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
+import tigase.pubsub.repository.INodeMeta;
 import tigase.pubsub.repository.IPubSubRepository;
+import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
+import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TimeZone;
 
 @Bean(name = DiscoveryModule.ID)
 public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModule {
 
+	private final SimpleDateFormat formatter;
+
 	@Inject
 	private IPubSubRepository repository;
+
+	public DiscoveryModule() {
+		this.formatter = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" );
+		this.formatter.setTimeZone( TimeZone.getTimeZone( "UTC" ) );
+	}
 
 	@Override
 	protected void processDiscoInfo(final Packet packet, final JID jid, final String node, final JID senderJID)
@@ -36,28 +52,68 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 
 			Packet resultIq = packet.okResult(resultQuery, 0);
 
-			AbstractNodeConfig nodeConfig = repository.getNodeConfig(packet.getStanzaTo().getBareJID(), node);
-
-			if (nodeConfig == null) {
+			INodeMeta nodeMeta = repository.getNodeMeta(packet.getStanzaTo().getBareJID(), node);
+			if (nodeMeta == null) {
 				throw new PubSubException(Authorization.ITEM_NOT_FOUND);
 			}
 
-			boolean allowed = ((senderJid == null) || (nodeConfig == null)) ? true
-					: Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains());
+			AbstractNodeConfig nodeConfigClone;
+			try {
+				nodeConfigClone = nodeMeta.getNodeConfig().clone();
+			} catch (CloneNotSupportedException ex) {
+				throw new RepositoryException("Exception retrieving node configuration", ex);
+			}
+
+			boolean allowed = ((senderJid == null) || (nodeConfigClone == null)) ? true : Utils.isAllowedDomain(
+					senderJid.getBareJID(), nodeConfigClone.getDomains());
 
 			if (!allowed) {
 				throw new PubSubException(Authorization.FORBIDDEN);
 			}
-			resultQuery.addChild(new Element("identity", new String[] { "category", "type" },
-					new String[] { "pubsub", nodeConfig.getNodeType().name() }));
-			resultQuery.addChild(
-					new Element("feature", new String[] { "var" }, new String[] { "http://jabber.org/protocol/pubsub" }));
+			resultQuery.addChild(new Element("identity", new String[] { "category", "type" }, new String[] { "pubsub",
+					nodeConfigClone.getNodeType().name() }));
+			resultQuery.addChild(new Element("feature", new String[] { "var" },
+					new String[] { "http://jabber.org/protocol/pubsub" }));
 
-			Form form = new Form("result", null, null);
+			Form form = nodeConfigClone.getForm();
 
 			form.addField(Field.fieldHidden("FORM_TYPE", "http://jabber.org/protocol/pubsub#meta-data"));
-			form.addField(Field.fieldTextSingle("pubsub#title", nodeConfig.getTitle(), "A short name for the node"));
+
+			List<String> owners = new ArrayList<>();
+			List<String> publishers = new ArrayList<>();
+
+			IAffiliations affiliations = repository.getNodeAffiliations(packet.getStanzaTo().getBareJID(), node);
+			for (UsersAffiliation affiliation : affiliations.getAffiliations()) {
+				if (affiliation.getAffiliation() == null) {
+					continue;
+				}
+
+				switch (affiliation.getAffiliation()) {
+					case owner:
+						owners.add(affiliation.getJid().toString());
+						break;
+					case publisher:
+						publishers.add(affiliation.getJid().toString());
+						break;
+					default:
+						break;
+				}
+			}
+			form.addField(Field.fieldJidMulti("pubsub#owner", owners.toArray(new String[owners.size()]), "Node owners"));
+			form.addField(Field.fieldJidMulti("pubsub#publisher", publishers.toArray(new String[publishers.size()]), "Publishers to this node"));
+
+			BareJID creator = nodeMeta.getCreator();
+			String creationDateStr = "";
+			if (nodeMeta.getCreationTime() != null) {
+				synchronized (formatter) {
+					creationDateStr = formatter.format(nodeMeta.getCreationTime());
+				}
+			}
+			form.addField(Field.fieldJidSingle("pubsub#creator", creator != null ? creator.toString() : "", "Node creator"));
+			form.addField(Field.fieldTextSingle("pubsub#creation_date", creationDateStr, "Creation date"));
+
 			resultQuery.addChild(form.getElement());
+
 
 			write(resultIq);
 		}

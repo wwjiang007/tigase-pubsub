@@ -15,28 +15,17 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  *
- * $Rev$
- * Last modified by $Author$
- * $Date$
  */
 
 package tigase.pubsub;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.db.NonAuthUserRepository;
 import tigase.db.TigaseDBException;
+
 import tigase.server.Iq;
 import tigase.server.Packet;
 import tigase.server.Presence;
-import tigase.util.DNSResolver;
-import tigase.xml.Element;
+
 import tigase.xmpp.Authorization;
 import tigase.xmpp.JID;
 import tigase.xmpp.NotAuthorizedException;
@@ -45,6 +34,17 @@ import tigase.xmpp.XMPPException;
 import tigase.xmpp.XMPPProcessor;
 import tigase.xmpp.XMPPProcessorIfc;
 import tigase.xmpp.XMPPResourceConnection;
+
+import tigase.util.DNSResolverFactory;
+import tigase.xml.Element;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Implements PubSub support for every local user account on it's bare jid using
@@ -56,6 +56,7 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 
 	protected static final String PUBSUB_XMLNS = "http://jabber.org/protocol/pubsub";
 
+	private static final String CAPS_XMLNS = "http://jabber.org/protocol/caps";
 	protected static final Element[] DISCO_FEATURES = {
 			new Element("feature", new String[] { "var" }, new String[] { PUBSUB_XMLNS }),
 			new Element("feature", new String[] { "var" }, new String[] { PUBSUB_XMLNS + "#owner" }),
@@ -71,7 +72,14 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 
 	private static final Logger log = Logger.getLogger(PepPlugin.class.getCanonicalName());
 
+	private static final String[]   PRESENCE_C_PATH         = { Presence.ELEM_NAME, "c" };
 	protected static final String[] XMLNSS = { PUBSUB_XMLNS, Presence.CLIENT_XMLNS, DISCO_ITEMS_XMLNS, DISCO_INFO_XMLNS };
+	
+	private static final Set<StanzaType> TYPES = new HashSet<StanzaType>(Arrays.asList(
+			// stanza types for presences
+			null, StanzaType.available, StanzaType.unavailable, 
+			// stanza types for iq
+			StanzaType.get, StanzaType.set, StanzaType.result, StanzaType.error));
 
 	protected JID pubsubJid = null;
 
@@ -110,7 +118,7 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 		this.simpleNodes.add("urn:xmpp:avatar:data");
 		this.simpleNodes.add("urn:xmpp:avatar:metadata");
 
-		String defHost = DNSResolver.getDefaultHostname();
+		String defHost = DNSResolverFactory.getInstance().getDefaultHost();
 		pubsubJid = JID.jidInstanceNS("pubsub", defHost, null);
 
 		if (settings.containsKey("simplePepEnabled")) {
@@ -119,14 +127,35 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 	}
 
 	@Override
-	public void process(Packet packet, XMPPResourceConnection session, NonAuthUserRepository repo, Queue<Packet> results,
-			Map<String, Object> settings) throws XMPPException {
-		if (packet.getElemName() == Iq.ELEM_NAME) {
-			processIq(packet, session, results);
+	public void process(Packet packet, XMPPResourceConnection session, NonAuthUserRepository repo, Queue<Packet> results, Map<String, Object> settings) throws XMPPException {
+		switch (packet.getElemName()) {
+			case Iq.ELEM_NAME:
+				processIq(packet, session, results);
+				break;
+			case Presence.ELEM_NAME:
+				processPresence(packet, session, results);
+				break;
 		}
-		if (packet.getElemName() == Presence.ELEM_NAME) {
-			processPresence(packet, session, results);
-		}
+	}
+
+	@Override
+	public Element[] supDiscoFeatures(final XMPPResourceConnection session) {
+		return DISCO_FEATURES;
+	}
+	
+	@Override
+	public String[][] supElementNamePaths() {
+		return ELEMENTS;
+	}
+
+	@Override
+	public String[] supNamespaces() {
+		return XMLNSS;
+	}
+	
+	@Override
+	public Set<StanzaType> supTypes() {
+		return TYPES;
 	}
 
 	protected void processIq(Packet packet, XMPPResourceConnection session, Queue<Packet> results) throws XMPPException {
@@ -136,12 +165,7 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 
 		Element pubsubEl = packet.getElement().findChildStaticStr(Iq.IQ_PUBSUB_PATH);
 		if (pubsubEl != null && simplePepEnabled) {
-			List<Element> children = pubsubEl.getChildren();
-			boolean simple = false;
-			for (Element child : children) {
-				String node = child.getAttributeStaticStr("node");
-				simple |= simpleNodes.contains(node);
-			}
+			boolean simple = pubsubEl.findChild(c -> simpleNodes.contains(c.getAttributeStaticStr("node"))) != null;
 			if (simple) {
 				// if simple and simple support is enabled we are leaving
 				// support
@@ -223,11 +247,17 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 		results.offer(result);
 	}
 
-	protected void processPresence(Packet packet, XMPPResourceConnection session, Queue<Packet> results)
-			throws NotAuthorizedException {
-		// is there a point in forwarding <presence/> of type error? we should
-		// forward only online/offline
-		if (packet.getType() != null && packet.getType() != StanzaType.available && packet.getType() != StanzaType.unavailable)
+	protected void processPresence(Packet packet, XMPPResourceConnection session, Queue<Packet> results) throws NotAuthorizedException {
+		boolean forward = false;
+		if (packet.getType() == null || packet.getType() == StanzaType.available) {
+			// forward only available packets with CAPS as without there is no point in doing this
+			forward = packet.getElement().getXMLNSStaticStr(PRESENCE_C_PATH) == CAPS_XMLNS;	
+		} else if (packet.getType() == StanzaType.unavailable) {
+			forward = true;
+		}
+		
+		// is there a point in forwarding <presence/> of type error? we should forward only online/offline
+		if (!forward) 
 			return;
 
 		// if presence is to local user then forward it to PubSub component
@@ -244,21 +274,6 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 			result.setPacketTo(pubsubJid);
 			results.offer(result);
 		}
-	}
-
-	@Override
-	public Element[] supDiscoFeatures(final XMPPResourceConnection session) {
-		return DISCO_FEATURES;
-	}
-
-	@Override
-	public String[][] supElementNamePaths() {
-		return ELEMENTS;
-	}
-
-	@Override
-	public String[] supNamespaces() {
-		return XMLNSS;
 	}
 
 }

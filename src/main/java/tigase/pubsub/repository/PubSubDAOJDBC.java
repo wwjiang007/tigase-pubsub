@@ -1,5 +1,6 @@
 /*
  * Tigase Jabber/XMPP Publish Subscribe Component
+ * Copyright (C) 2009-2016 "Tigase, Inc." <office@tigase.com>
  * Copyright (C) 2009 "Tomasz Sterna" <tomek@xiaoka.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -46,9 +47,11 @@ import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.Subscription;
+import tigase.pubsub.repository.stateless.NodeMeta;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.XMPPServer;
+import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 
@@ -86,6 +89,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long> {
 	private CallableStatement get_node_items_ids_since_sp = null;
 	private CallableStatement get_node_items_ids_sp = null;
 	private CallableStatement get_node_items_meta_sp = null;
+	private CallableStatement get_node_meta_sp = null;
 	private CallableStatement get_node_subscriptions_sp = null;
 	private CallableStatement get_root_nodes_sp = null;
 	private CallableStatement get_user_affiliations_sp = null;
@@ -151,24 +155,33 @@ public class PubSubDAOJDBC extends PubSubDAO<Long> {
 			return;
 
 		try {
-			CallableStatement testCall = conn.prepareCall("{ call TigPubSubGetNodeId(?,?) }");
+			CallableStatement testCall = conn.prepareCall("{ call TigPubSubGetNodeMeta(?,?) }");
 			testCall.setString(1, "tigase-pubsub");
 			testCall.setString(2, "tigase-pubsub");
 			testCall.execute();
 			testCall.close();
 			schemaOk = true;
 		} catch (Exception ex) {
-			String[] msg = { "", "  ---------------------------------------------", "  ERROR! Terminating the server process.",
-					"  PubSub Component is not compatible with", "  database schema which exists in", "  " + db_conn,
-					"  This component uses newer schema. To continue", "  use of currently deployed schema, please use",
-					"  older version of PubSub Component.", "  To convert database to new schema please see:",
-					"  https://projects.tigase.org/projects/tigase-pubsub/wiki/PubSub_database_schema_conversion" };
+			String[] msg = {
+					"",
+					"  ---------------------------------------------",
+					"  ERROR! Terminating the server process.",
+					"  PubSub Component is not compatible with",
+					"  database schema which exists in",
+					"  " + db_conn,
+					"  This component uses newer schema. To continue",
+					"  use of currently deployed schema, please use",
+					"  older version of PubSub Component.",
+					"  To convert database to new schema please see:",
+					"  https://projects.tigase.org/projects/tigase-pubsub/wiki/PubSub_database_schema_conversion"
+			};
 			if (XMPPServer.isOSGi()) {
 				// for some reason System.out.println is not working in OSGi
 				for (String line : msg) {
 					log.log(Level.SEVERE, line);
 				}
-			} else {
+			}
+			else {
 				for (String line : msg) {
 					System.out.println(line);
 				}
@@ -465,10 +478,10 @@ public class PubSubDAOJDBC extends PubSubDAO<Long> {
 	}
 
 	@Override
-	public NodeAffiliations getNodeAffiliations(BareJID serviceJid, Long nodeId) throws RepositoryException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "Getting node affiliation: serviceJid: {0}, nodeId: {1}",
-					new Object[] { serviceJid, nodeId });
+	public NodeAffiliations getNodeAffiliations( BareJID serviceJid, Long nodeId ) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting node affiliation: serviceJid: {0}, nodeId: {1}",
+					new Object[] { serviceJid, nodeId } );
 		}
 		try {
 			ResultSet rs = null;
@@ -488,8 +501,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long> {
 					release(null, rs);
 				}
 			}
-		} catch (SQLException e) {
-			throw new RepositoryException("Node subscribers reading error", e);
+		} catch ( SQLException e ) {
+			throw new RepositoryException( "Node subscribers reading error", e );
 		} // end of catch
 	}
 
@@ -527,6 +540,44 @@ public class PubSubDAOJDBC extends PubSubDAO<Long> {
 			}
 		} catch ( SQLException e ) {
 			throw new RepositoryException( "Retrieving node id error", e );
+		}
+	}
+
+	@Override
+	public NodeMeta<Long> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException {
+		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}",
+					new Object[] { serviceJid, nodeName } );
+		}
+		try {
+			ResultSet rs = null;
+			checkConnection();
+			synchronized (get_node_meta_sp) {
+				try {
+					get_node_meta_sp.setString(1, serviceJid.toString());
+					get_node_meta_sp.setString(2, nodeName);
+					rs = get_node_meta_sp.executeQuery();
+					if (rs.next()) {
+						final long nodeId = rs.getLong(1);
+						final String configStr = rs.getString(2);
+						final String creator = rs.getString(3);
+						final Date creationTime = rs.getTimestamp(4);
+						final NodeMeta<Long> nodeMeta = new NodeMeta(nodeId, parseConfig(nodeName, configStr), creator != null ? BareJID.bareJIDInstance(creator) : null, creationTime);
+
+
+						if ( log.isLoggable( Level.FINEST ) ){
+							log.log( Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}, nodeId: {2}, get_node_id_sp: {3}",
+									new Object[] { serviceJid, nodeName, nodeId, get_node_id_sp } );
+						}
+						return nodeMeta;
+					}
+					return null;
+				} finally {
+					release(null, rs);
+				}
+			}
+		} catch (TigaseStringprepException | SQLException e) {
+			throw new RepositoryException( "Retrieving node meta data error", e );
 		}
 	}
 
@@ -721,7 +772,10 @@ public class PubSubDAOJDBC extends PubSubDAO<Long> {
 		remove_service_sp = conn.prepareCall( query );
 
 		query = "{ call TigPubSubGetNodeId(?, ?) }";
-		get_node_id_sp = conn.prepareCall(query);
+		get_node_id_sp = conn.prepareCall( query );
+
+		query = "{ call TigPubSubGetNodeMeta(?, ?) }";
+		get_node_meta_sp = conn.prepareCall( query );
 
 		query = "{ call TigPubSubGetItem(?, ?) }";
 		get_item_sp = conn.prepareCall(query);

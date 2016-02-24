@@ -25,6 +25,7 @@ package tigase.pubsub;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,9 +42,7 @@ import tigase.conf.ConfigurationException;
 import tigase.db.RepositoryFactory;
 import tigase.db.UserRepository;
 import tigase.disteventbus.EventBus;
-import tigase.disteventbus.EventBusFactory;
 import tigase.disteventbus.EventHandler;
-import tigase.osgi.ModulesManagerImpl;
 import tigase.kernel.core.Kernel;
 import tigase.pubsub.modules.CapsModule;
 import tigase.pubsub.modules.DefaultConfigModule;
@@ -82,7 +81,10 @@ import tigase.server.Packet;
 import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticsList;
 import tigase.xml.Element;
+import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
+import tigase.xmpp.PacketErrorTypeException;
+import tigase.xmpp.StanzaType;
 
 /**
  * Class description
@@ -339,6 +341,22 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	// ~--- set methods
 	// ----------------------------------------------------------
 
+	@Override
+	public void processPacket(Packet packet) {
+		if (!checkPubSubServiceJid(packet))
+			return;
+
+		super.processPacket(packet);
+	}
+
+	@Override
+	public boolean processScriptCommand(Packet pc, Queue<Packet> results) {
+		if (!checkPubSubServiceJid(pc))
+			return true;
+		return super.processScriptCommand(pc, results);
+	}
+
+
 	// ~--- inner classes
 	// --------------------------------------------------------
 
@@ -424,6 +442,30 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	public void stop() {
 		super.stop();
 		eventBus.removeHandler("remove", "tigase:user", removeUserEventHandler);
+	}
+
+	/**
+	 * Method checks if packet is sent to pubsub@xxx and if so then it returns error
+	 * as we no longer allow usage of pubsub@xxx address as pubsub service jid 
+	 * since we added support to use PEP and we have multiple domains support
+	 * with separated nodes.
+	 * 
+	 * @param packet
+	 * @return true - if packet service jid is ok and should be processed
+	 */
+	protected boolean checkPubSubServiceJid(Packet packet) {
+		// if stanza is addressed to getName()@domain then we need to return
+		// SERVICE_UNAVAILABLE error
+		if (packet.getStanzaTo() != null && getName().equals(packet.getStanzaTo().getLocalpart()) && packet.getType() != StanzaType.result) {
+			try {
+				Packet result = Authorization.SERVICE_UNAVAILABLE.getResponseMessage(packet, null, true);
+				addOutPacket(result);
+			} catch (PacketErrorTypeException ex) {
+				log.log(Level.FINE, "Packet already of type=error, while preparing error response", ex);
+			}
+			return false;
+		}
+		return true;
 	}
 	
 	private class RemoveUserEventHandler implements EventHandler {
