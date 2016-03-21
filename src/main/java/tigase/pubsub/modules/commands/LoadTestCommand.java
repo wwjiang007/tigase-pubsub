@@ -1,6 +1,7 @@
 package tigase.pubsub.modules.commands;
 
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
@@ -134,11 +135,21 @@ public class LoadTestCommand implements AdHocCommand {
 		return Arrays.asList(config.getAdmins()).contains(jid.toString());
 	}
 
+	protected final Logger log = Logger.getLogger(this.getClass().getName());
+
 	private void startLoadTest(BareJID serviceJid, String nodeName, BareJID publisher, Long time, Long frequency,
 			Integer length, boolean useBlockingMethod) throws RepositoryException, UserNotFoundException, TigaseDBException {
 
-		(new Thread(new LoadTestGenerator(component, serviceJid, nodeName, publisher, time, frequency, length,
-				useBlockingMethod))).start();
+		final LoadTestGenerator r = new LoadTestGenerator(component, serviceJid, nodeName, publisher, time, frequency, length,
+				useBlockingMethod) {
+			@Override
+			protected void onTestFinish() {
+				LoadTestCommand.this.log.info("Test finished. Published " + getCounter() + " items in "
+						+ ((getTestEndTime() - getTestStartTime()) / 1000) + " seconds.");
+			}
+		};
+		log.info("Staring load test.");
+		(new Thread(r)).start();
 
 	}
 }
