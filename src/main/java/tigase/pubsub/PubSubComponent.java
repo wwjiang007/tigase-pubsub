@@ -22,16 +22,6 @@
 
 package tigase.pubsub;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.script.Bindings;
-
 import tigase.component.AbstractKernelBasedComponent;
 import tigase.component.exceptions.RepositoryException;
 import tigase.component.modules.impl.AdHocCommandModule;
@@ -43,32 +33,10 @@ import tigase.db.RepositoryFactory;
 import tigase.db.UserRepository;
 import tigase.disteventbus.EventBus;
 import tigase.disteventbus.EventHandler;
+import tigase.eventbus.EventListener;
 import tigase.kernel.core.Kernel;
-import tigase.pubsub.modules.CapsModule;
-import tigase.pubsub.modules.DefaultConfigModule;
-import tigase.pubsub.modules.DiscoveryModule;
-import tigase.pubsub.modules.ManageAffiliationsModule;
-import tigase.pubsub.modules.ManageSubscriptionModule;
-import tigase.pubsub.modules.NodeConfigModule;
-import tigase.pubsub.modules.NodeCreateModule;
-import tigase.pubsub.modules.NodeDeleteModule;
-import tigase.pubsub.modules.PendingSubscriptionModule;
-import tigase.pubsub.modules.PresenceCollectorModule;
-import tigase.pubsub.modules.PublishItemModule;
-import tigase.pubsub.modules.PurgeItemsModule;
-import tigase.pubsub.modules.RetractItemModule;
-import tigase.pubsub.modules.RetrieveAffiliationsModule;
-import tigase.pubsub.modules.RetrieveItemsModule;
-import tigase.pubsub.modules.RetrieveSubscriptionsModule;
-import tigase.pubsub.modules.SubscribeNodeModule;
-import tigase.pubsub.modules.UnsubscribeNodeModule;
-import tigase.pubsub.modules.XsltTool;
-import tigase.pubsub.modules.commands.DefaultConfigCommand;
-import tigase.pubsub.modules.commands.DeleteAllNodesCommand;
-import tigase.pubsub.modules.commands.LoadTestCommand;
-import tigase.pubsub.modules.commands.ReadAllNodesCommand;
-import tigase.pubsub.modules.commands.RebuildDatabaseCommand;
-import tigase.pubsub.modules.commands.RetrieveItemsCommand;
+import tigase.pubsub.modules.*;
+import tigase.pubsub.modules.commands.*;
 import tigase.pubsub.modules.ext.presence.PresenceNotifierModule;
 import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension;
 import tigase.pubsub.repository.IPubSubDAO;
@@ -85,6 +53,15 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.PacketErrorTypeException;
 import tigase.xmpp.StanzaType;
+
+import javax.script.Bindings;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Class description
@@ -435,13 +412,13 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	@Override
 	public void start() {
 		super.start();
-		eventBus.addHandler("remove", "tigase:user", removeUserEventHandler);
+		eventBus.addListener("remove", "tigase:user", removeUserEventHandler);
 	}
 
 	@Override
 	public void stop() {
 		super.stop();
-		eventBus.removeHandler("remove", "tigase:user", removeUserEventHandler);
+		eventBus.removeListener(removeUserEventHandler);
 	}
 
 	/**
@@ -468,15 +445,12 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 		return true;
 	}
 	
-	private class RemoveUserEventHandler implements EventHandler {
+	private class RemoveUserEventHandler implements EventListener<Element> {
 
 		private final String[] JID_PATH = { "remove", "jid" };
 		
 		@Override
-		public void onEvent(String name, String xmlns, Element event) {
-			if (!("remove".equals(name) && "tigase:user".equals(xmlns)))
-				return;
-			
+		public void onEvent(Element event) {
 			String jidStr = event.getChildCData(JID_PATH);
 			BareJID jid = BareJID.bareJIDInstanceNS(jidStr);
 			// handle removal of pep service etc..
