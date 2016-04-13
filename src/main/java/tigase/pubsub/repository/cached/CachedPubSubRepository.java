@@ -1,34 +1,21 @@
 package tigase.pubsub.repository.cached;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.Subscription;
 import tigase.pubsub.Utils;
-import tigase.pubsub.repository.IAffiliations;
-import tigase.pubsub.repository.IItems;
-import tigase.pubsub.repository.IPubSubDAO;
-import tigase.pubsub.repository.IPubSubRepository;
-import tigase.pubsub.repository.ISubscriptions;
-import tigase.pubsub.repository.PubSubDAO;
-import tigase.pubsub.repository.RepositoryException;
+import tigase.pubsub.repository.*;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.pubsub.utils.FragmentedMap;
 import tigase.stats.StatisticsList;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class description
@@ -486,19 +473,22 @@ public class CachedPubSubRepository<T> implements IPubSubRepository {
 		}
 		if (rootCollection == null || rootCollection.isEmpty()) {
 			if (rootCollection == null) {
-				Set<String> oldRootCollection = this.rootCollection.putIfAbsent(serviceJid, Collections.synchronizedSet(new HashSet<String>()));				
+				rootCollection = Collections.synchronizedSet(new HashSet<String>());
+				Set<String> oldRootCollection = this.rootCollection.putIfAbsent(serviceJid, rootCollection);
 				if (oldRootCollection != null) {
 					rootCollection = oldRootCollection;
 				}
 			}
-			String[] x = dao.getChildNodes(serviceJid, null);
 
-			if (rootCollection == null) {
-				rootCollection = Collections.synchronizedSet(new HashSet<String>());
-			}
-			if (x != null) {
-				for (String string : x) {
-					rootCollection.add(string);
+			synchronized (rootCollection) {
+				if (rootCollection.isEmpty()) {
+					String[] x = dao.getChildNodes(serviceJid, null);
+
+					if (x != null) {
+						for (String string : x) {
+							rootCollection.add(string);
+						}
+					}
 				}
 			}
 		}
