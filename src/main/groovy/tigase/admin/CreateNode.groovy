@@ -126,9 +126,14 @@ try {
 			nodeConfig, nodeType, collection);
 		
 		def nodeaAffiliations  = pubsubRepository.getNodeAffiliations(toJid, node);
-
 		nodeaAffiliations.addAffiliation(owner,Affiliation.owner);
+
+		def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
+		nodeSubscriptions.addSubscriberJid(owner, Subscription.subscribed);
+
 		pubsubRepository.update(toJid, node, nodeaAffiliations);
+		pubsubRepository.update(toJid, node, nodeSubscriptions);
+
 		if (colNodeConfig == null) {
 			pubsubRepository.addToRootCollection(toJid, node);
 		} else {
