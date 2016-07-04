@@ -1,21 +1,18 @@
 package tigase.pubsub.modules.ext.presence;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collection;
-
 import org.junit.Before;
 import org.junit.Test;
-
-import tigase.disteventbus.EventBus;
-import tigase.disteventbus.EventBusFactory;
+import tigase.eventbus.EventBus;
+import tigase.eventbus.EventBusFactory;
 import tigase.server.Packet;
 import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
+
+import java.util.Collection;
+
+import static org.junit.Assert.*;
 
 public class PresencePerNodeExtensionTest {
 
