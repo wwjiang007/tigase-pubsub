@@ -29,6 +29,8 @@ import tigase.xmpp.JID;
 @Bean(name = "loadTestCommand")
 public class LoadTestCommand implements AdHocCommand {
 
+	protected final Logger log = Logger.getLogger(this.getClass().getName());
+
 	@Inject
 	private AbstractMessageReceiver component;
 
@@ -135,10 +137,8 @@ public class LoadTestCommand implements AdHocCommand {
 		return Arrays.asList(config.getAdmins()).contains(jid.toString());
 	}
 
-	protected final Logger log = Logger.getLogger(this.getClass().getName());
-
 	private void startLoadTest(BareJID serviceJid, String nodeName, BareJID publisher, Long time, Long frequency,
-			Integer length, boolean useBlockingMethod) throws RepositoryException, UserNotFoundException, TigaseDBException {
+							   Integer length, boolean useBlockingMethod) throws RepositoryException, UserNotFoundException, TigaseDBException {
 
 		final LoadTestGenerator r = new LoadTestGenerator(component, serviceJid, nodeName, publisher, time, frequency, length,
 				useBlockingMethod) {

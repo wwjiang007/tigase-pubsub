@@ -21,11 +21,6 @@
  */
 package tigase.pubsub.repository.cached;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
@@ -34,11 +29,6 @@ import tigase.pubsub.*;
 import tigase.pubsub.modules.ext.presence.PresenceNodeSubscriptions;
 import tigase.pubsub.modules.ext.presence.PresenceNotifierModule;
 import tigase.pubsub.repository.*;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.Subscription;
-import tigase.pubsub.Utils;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.stats.Counter;
@@ -47,6 +37,11 @@ import tigase.stats.StatisticHolderImpl;
 import tigase.stats.StatisticsList;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class description
@@ -309,7 +304,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 
 	@Override
 	public void createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-			NodeType nodeType, String collection) throws RepositoryException {
+	                       NodeType nodeType, String collection) throws RepositoryException {
 
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST,
@@ -554,20 +549,22 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 		}
 		if (rootCollection == null || rootCollection.isEmpty()) {
 			if (rootCollection == null) {
-				Set<String> oldRootCollection = this.rootCollection.putIfAbsent(serviceJid,
-						Collections.synchronizedSet(new HashSet<String>()));
+				rootCollection = Collections.synchronizedSet(new HashSet<String>());
+				Set<String> oldRootCollection = this.rootCollection.putIfAbsent(serviceJid, rootCollection);
 				if (oldRootCollection != null) {
 					rootCollection = oldRootCollection;
 				}
 			}
-			String[] x = dao.getChildNodes(serviceJid, null);
 
-			if (rootCollection == null) {
-				rootCollection = Collections.synchronizedSet(new HashSet<String>());
-			}
-			if (x != null) {
-				for (String string : x) {
-					rootCollection.add(string);
+			synchronized (rootCollection) {
+				if (rootCollection.isEmpty()) {
+					String[] x = dao.getChildNodes(serviceJid, null);
+
+					if (x != null) {
+						for (String string : x) {
+							rootCollection.add(string);
+						}
+					}
 				}
 			}
 		}

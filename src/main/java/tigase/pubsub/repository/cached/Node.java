@@ -206,7 +206,9 @@ public class Node<T> implements INodeMeta<T> {
 	@Override
 	public String toString() {
 		return "Node{" + "creationTime=" + creationTime + ", deleted=" + deleted + ", name=" + name + ", nodeId=" + nodeId
-				+ ", nodeAffiliations=" + nodeAffiliations + ", nodeSubscriptions=" + nodeSubscriptions + ", serviceJid="
-				+ serviceJid + '}';
+					 + ", nodeAffiliations=" + nodeAffiliations + ", nodeSubscriptions=" + nodeSubscriptions
+					 + ", serviceJid=" + serviceJid
+					 + ", creator=" + creator +
+					 '}';
 	}
 }
