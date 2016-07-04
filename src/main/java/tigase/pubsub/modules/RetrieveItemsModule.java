@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import tigase.component2.PacketWriter;
 import tigase.criteria.Criteria;
@@ -181,6 +182,10 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 			}
 
 			Date timestamp = nodeItems.getItemCreationDate(id);
+			if (timestamp == null) {
+			    log.log(Level.FINEST, "skipping retrieving item {0} from node {1} from service {2} as there is no such item", new Object[] { id, nodeName, service });
+				continue;
+			}
 
 			result.add(new NodeItem(nodeName, id, timestamp));
 		}
