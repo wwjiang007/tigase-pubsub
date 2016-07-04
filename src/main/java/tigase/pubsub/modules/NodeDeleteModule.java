@@ -24,13 +24,12 @@ package tigase.pubsub.modules;
 
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
-import tigase.disteventbus.EventBus;
+import tigase.eventbus.EventBus;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.CollectionNodeConfig;
-import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
@@ -48,6 +47,19 @@ import tigase.xmpp.JID;
  */
 @Bean(name = "nodeDeleteModule")
 public class NodeDeleteModule extends AbstractPubSubModule {
+
+	public static class NodeDeletedEvent {
+
+		public final BareJID serviceJid;
+
+		public final String node;
+
+		public NodeDeletedEvent(BareJID serviceJid, String node) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+		}
+
+	}
 
 	private static final Criteria CRIT_DELETE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(ElementCriteria.name("delete"));
@@ -166,9 +178,7 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 			log.fine("Delete node [" + nodeName + "]");
 			getRepository().deleteNode(toJid, nodeName);
 
-			Element event = new Element("NodeDeleted", new String[] { "xmlns" }, new String[] { PubSubComponent.EVENT_XMLNS });
-			event.addChild(new Element("node", nodeName));
-			eventBus.fire(event);
+			eventBus.fire(new NodeDeletedEvent(toJid, nodeName));
 
 			packetWriter.write(result);
 		} catch (PubSubException e1) {

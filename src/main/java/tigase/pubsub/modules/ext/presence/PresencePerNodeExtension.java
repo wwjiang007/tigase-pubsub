@@ -1,29 +1,82 @@
 package tigase.pubsub.modules.ext.presence;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import tigase.disteventbus.EventBus;
-import tigase.disteventbus.EventHandler;
+import tigase.eventbus.EventBus;
+import tigase.eventbus.HandleEvent;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
+import tigase.kernel.beans.UnregisterAware;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
+import tigase.pubsub.modules.PresenceCollectorModule;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.StanzaType;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 @Bean(name = "presencePerNodeExtension")
-public class PresencePerNodeExtension implements Initializable {
+public class PresencePerNodeExtension implements Initializable, UnregisterAware {
+
+	public static class LoginToNodeEvent {
+
+		public final String node;
+
+		public final JID occupantJID;
+
+		public final Packet presenceStanza;
+
+		public final BareJID serviceJID;
+
+		public LoginToNodeEvent(BareJID serviceJID, String node, Packet presenceStanza) {
+			this.occupantJID = presenceStanza.getStanzaFrom();
+			this.node = node;
+			this.presenceStanza = presenceStanza;
+			this.serviceJID = serviceJID;
+		}
+	}
+
+	public static class LogoffFromNodeEvent {
+
+		public final String node;
+
+		public final JID occupantJID;
+
+		public final Packet presenceStanza;
+
+		public final BareJID serviceJID;
+
+		public LogoffFromNodeEvent(BareJID serviceJID, String node, JID occupandJID, Packet presenceStanza) {
+			this.occupantJID = occupandJID;
+			this.node = node;
+			this.presenceStanza = presenceStanza;
+			this.serviceJID = serviceJID;
+		}
+	}
+
+	public static class UpdatePresenceEvent {
+
+		public final String node;
+
+		public final JID occupantJID;
+
+		public final Packet presenceStanza;
+
+		public final BareJID serviceJID;
+
+		public UpdatePresenceEvent(BareJID serviceJID, String node, Packet presenceStanza) {
+			this.occupantJID = presenceStanza.getStanzaFrom();
+			this.node = node;
+			this.presenceStanza = presenceStanza;
+			this.serviceJID = serviceJID;
+		}
+
+	}
 
 	public static final String XMLNS_EXTENSION = "tigase:pubsub:1";
 
@@ -36,18 +89,6 @@ public class PresencePerNodeExtension implements Initializable {
 	 * (ServiceJID, (NodeName, {OccupantJID}))
 	 */
 	private final Map<BareJID, Map<String, Set<JID>>> occupants = new ConcurrentHashMap<BareJID, Map<String, Set<JID>>>();
-
-	private final EventHandler presenceChangeHandler = new EventHandler() {
-
-		@Override
-		public void onEvent(String name, String xmlns, Element event) {
-			try {
-				process(Packet.packetInstance(event.getChild("presence")));
-			} catch (Exception e) {
-				log.throwing(PresencePerNodeExtension.class.getName(), "process", e);
-			}
-		}
-	};
 
 	/**
 	 * (OccupantBareJID, (Resource, (ServiceJID, (PubSubNodeName,
@@ -97,13 +138,11 @@ public class PresencePerNodeExtension implements Initializable {
 		nodesPresence.put(nodeName, packet);
 		addJidToOccupants(serviceJID, nodeName, sender);
 
-		Element event = new Element(isUpdate ? "UpdatePresence" : "LoginToNode", new String[] { "xmlns" },
-				new String[] { PubSubComponent.EVENT_XMLNS });
-		event.addChild(new Element("service", serviceJID.toString()));
-		event.addChild(new Element("node", nodeName));
-		event.addChild(packet.getElement());
-
-		eventBus.fire(event);
+		if (isUpdate) {
+			eventBus.fire(new UpdatePresenceEvent(serviceJID, nodeName, packet));
+		} else {
+			eventBus.fire(new LoginToNodeEvent(serviceJID, nodeName, packet));
+		}
 	}
 
 	public EventBus getEventBus() {
@@ -167,7 +206,7 @@ public class PresencePerNodeExtension implements Initializable {
 
 	@Override
 	public void initialize() {
-		eventBus.addHandler("PresenceChange", PubSubComponent.EVENT_XMLNS, presenceChangeHandler);
+		eventBus.registerAll(this);
 	}
 
 	private void intProcessLogoffFrom(BareJID serviceJID, JID sender, Map<String, Packet> nodes, Packet presenceStanza) {
@@ -176,14 +215,13 @@ public class PresencePerNodeExtension implements Initializable {
 		for (String node : nodes.keySet()) {
 			removeJidFromOccupants(serviceJID, node, sender);
 
-			Element event = new Element("LogoffFromNode", new String[] { "xmlns" },
-					new String[] { PubSubComponent.EVENT_XMLNS });
-			event.addChild(new Element("service", serviceJID.toString()));
-			event.addChild(new Element("node", node));
-			event.addChild(new Element("sender", sender.toString()));
-			event.addChild(presenceStanza.getElement());
-			eventBus.fire(event);
+			eventBus.fire(new LogoffFromNodeEvent(serviceJID, node, sender, presenceStanza));
 		}
+	}
+
+	@HandleEvent
+	public void onPresenceEvent(PresenceCollectorModule.PresenceChangeEvent event) {
+		process(event.packet);
 	}
 
 	protected void process(Packet packet) {
@@ -267,4 +305,8 @@ public class PresencePerNodeExtension implements Initializable {
 		this.eventBus = eventBus;
 	}
 
+	@Override
+	public void beforeUnregister() {
+		eventBus.unregisterAll(this);
+	}
 }

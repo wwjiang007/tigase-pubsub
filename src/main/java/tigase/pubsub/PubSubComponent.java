@@ -31,9 +31,7 @@ import tigase.conf.Configurable;
 import tigase.conf.ConfigurationException;
 import tigase.db.RepositoryFactory;
 import tigase.db.UserRepository;
-import tigase.disteventbus.EventBus;
-import tigase.disteventbus.EventHandler;
-import tigase.eventbus.EventListener;
+import tigase.eventbus.HandleEvent;
 import tigase.kernel.core.Kernel;
 import tigase.pubsub.modules.*;
 import tigase.pubsub.modules.commands.*;
@@ -48,9 +46,7 @@ import tigase.server.DisableDisco;
 import tigase.server.Packet;
 import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticsList;
-import tigase.xml.Element;
 import tigase.xmpp.Authorization;
-import tigase.xmpp.BareJID;
 import tigase.xmpp.PacketErrorTypeException;
 import tigase.xmpp.StanzaType;
 
@@ -139,8 +135,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 
 	private XsltTool xslTransformer;
 
-	private RemoveUserEventHandler removeUserEventHandler = new RemoveUserEventHandler();
-	
 	/**
 	 * Constructs ...
 	 *
@@ -271,7 +265,8 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	 * Method description
 	 *
 	 */
-	public void onChangeDefaultNodeConfig() {
+	@HandleEvent
+	public void onChangeDefaultNodeConfig(DefaultConfigCommand.DefaultNodeConfigurationChangedEvent event) {
 		try {
 			PubSubConfig componentConfig = kernel.getInstance(PubSubConfig.class);
 			UserRepository userRepository = kernel.getInstance(UserRepository.class);
@@ -398,27 +393,18 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 		}
 
 		super.setProperties(props);
-
-		kernel.getInstance(EventBus.class).addHandler("DefaultNodeConfigurationChanged", PubSubComponent.EVENT_XMLNS,
-				new EventHandler() {
-
-					@Override
-					public void onEvent(String name, String xmlns, Element event) {
-						onChangeDefaultNodeConfig();
-					}
-				});
 	}
 
 	@Override
 	public void start() {
 		super.start();
-		eventBus.addListener("remove", "tigase:user", removeUserEventHandler);
+		eventBus.registerAll(this);
 	}
 
 	@Override
 	public void stop() {
 		super.stop();
-		eventBus.removeListener(removeUserEventHandler);
+		eventBus.unregisterAll(this);
 	}
 
 	/**
@@ -444,24 +430,15 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 		}
 		return true;
 	}
-	
-	private class RemoveUserEventHandler implements EventListener<Element> {
 
-		private final String[] JID_PATH = { "remove", "jid" };
-		
-		@Override
-		public void onEvent(Element event) {
-			String jidStr = event.getChildCData(JID_PATH);
-			BareJID jid = BareJID.bareJIDInstanceNS(jidStr);
-			// handle removal of pep service etc..
-			try {
-				IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
-				pubsubRepository.onUserRemoved(jid);
-			} catch (RepositoryException ex) {
-				log.log(Level.WARNING, "could not remove PubSub data for removed user " + jidStr, ex);
-			}
+	@HandleEvent
+	public void onUserRemoved(UserRepository.UserRemovedEvent event) {
+		try {
+			IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
+			pubsubRepository.onUserRemoved(event.jid);
+		} catch (RepositoryException ex) {
+			log.log(Level.WARNING, "could not remove PubSub data for removed user " + event.jid, ex);
 		}
-		
 	}
-	
+
 }

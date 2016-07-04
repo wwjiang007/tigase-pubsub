@@ -21,15 +21,12 @@
  */
 package tigase.pubsub.modules.commands;
 
-import java.util.Arrays;
-import java.util.logging.Logger;
-
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
 import tigase.component.adhoc.AdhHocRequest;
 import tigase.db.UserRepository;
-import tigase.disteventbus.EventBus;
+import tigase.eventbus.EventBus;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
@@ -41,8 +38,15 @@ import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.JID;
 
+import java.util.Arrays;
+import java.util.logging.Logger;
+
 @Bean(name = "default-config-adhoc")
 public class DefaultConfigCommand implements AdHocCommand {
+
+	public static class DefaultNodeConfigurationChangedEvent {
+
+	}
 
 	@Inject
 	private PubSubConfig config;
@@ -80,9 +84,7 @@ public class DefaultConfigCommand implements AdHocCommand {
 
 					nodeConfig.write(userRepository, config, PubSubComponent.DEFAULT_LEAF_NODE_CONFIG_KEY);
 
-					Element event = new Element("DefaultNodeConfigurationChanged", new String[] { "xmlns" },
-							new String[] { PubSubComponent.EVENT_XMLNS });
-					eventbus.fire(event);
+					eventbus.fire(new DefaultNodeConfigurationChangedEvent());
 
 					Form f = new Form("result", "Info", "Default config saved.");
 

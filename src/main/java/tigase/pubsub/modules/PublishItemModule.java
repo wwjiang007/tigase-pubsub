@@ -22,19 +22,15 @@
 
 package tigase.pubsub.modules;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
-import tigase.disteventbus.EventBus;
-import tigase.disteventbus.EventHandler;
+import tigase.eventbus.EventBus;
+import tigase.eventbus.HandleEvent;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
+import tigase.kernel.beans.UnregisterAware;
 import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
@@ -56,6 +52,11 @@ import tigase.xmpp.StanzaType;
 import tigase.xmpp.impl.roster.RosterAbstract.SubscriptionType;
 import tigase.xmpp.impl.roster.RosterElement;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Class description
  *
@@ -64,7 +65,7 @@ import tigase.xmpp.impl.roster.RosterElement;
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
 @Bean(name = "publishItemModule")
-public class PublishItemModule extends AbstractPubSubModule implements Initializable {
+public class PublishItemModule extends AbstractPubSubModule implements Initializable, UnregisterAware {
 
 	private static class Item {
 		final String id;
@@ -100,18 +101,6 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 		System.out.println(".");
 	}
 
-	private final EventHandler capsChangeHandler = new EventHandler() {
-
-		@Override
-		public void onEvent(String name, String xmlns, Element event) {
-			try {
-				onCapsChange(event);
-			} catch (Exception e) {
-				log.throwing(PublishItemModule.class.getName(), "onCapsChange", e);
-			}
-		}
-	};
-
 	private final LeafNodeConfig defaultPepNodeConfig;
 
 	private final DateTimeFormatter dtf = new DateTimeFormatter();
@@ -122,18 +111,6 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 	private long idCounter = 0;
 
 	private final Set<String> pepNodes = new HashSet<String>();
-
-	private final EventHandler presenceChangeHandler = new EventHandler() {
-
-		@Override
-		public void onEvent(String name, String xmlns, Element event) {
-			try {
-				onPresenceChangeEvent(event);
-			} catch (Exception e) {
-				log.throwing(PublishItemModule.class.getName(), "onPresenceChangeEvent", e);
-			}
-		}
-	};
 
 	@Inject
 	private PresenceCollectorModule presenceCollector;
@@ -348,8 +325,7 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 	@Override
 	public void initialize() {
 		if (eventBus != null) {
-			eventBus.addHandler("CapsChange", PubSubComponent.EVENT_XMLNS, capsChangeHandler);
-			eventBus.addHandler("PresenceChange", PubSubComponent.EVENT_XMLNS, presenceChangeHandler);
+			eventBus.registerAll(this);
 		} else {
 			log.warning("EventBus is not injected!");
 		}
@@ -392,10 +368,9 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 		return items;
 	}
 
-	protected void onCapsChange(Element event) throws TigaseStringprepException {
-		final BareJID serviceJid = BareJID.bareJIDInstance(event.getCData(new String[] { "CapsChange", "service" }));
-		final JID buddyJid = JID.jidInstance(event.getCData(new String[] { "CapsChange", "jid" }));
-		final Collection<String> newFeatures = extractCDataItems(event, new String[] { "CapsChange", "newFeatures" });
+	@HandleEvent
+	protected void onCapsChange(PresenceCollectorModule.CapsChangeEvent event) throws TigaseStringprepException {
+		final Collection<String> newFeatures = event.newFeatures;
 
 		if (newFeatures == null || newFeatures.isEmpty() || !config.isSendLastPublishedItemOnPresence())
 			return;
@@ -409,9 +384,9 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 			String nodeName = feature.substring(0, feature.length() - "+notify".length());
 
 			try {
-				AbstractNodeConfig nodeConfig = repository.getNodeConfig(serviceJid, nodeName);
+				AbstractNodeConfig nodeConfig = repository.getNodeConfig(event.serviceJid, nodeName);
 				if (nodeConfig != null && nodeConfig.getSendLastPublishedItem() == SendLastPublishedItem.on_sub_and_presence) {
-					publishLastItem(serviceJid, nodeConfig, buddyJid);
+					publishLastItem(event.serviceJid, nodeConfig, event.buddyJid);
 				}
 			} catch (RepositoryException ex) {
 				log.log(Level.WARNING,
@@ -421,8 +396,9 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 
 	}
 
-	protected void onPresenceChangeEvent(Element event) throws TigaseStringprepException {
-		Packet packet = Packet.packetInstance(event.getChild("presence"));
+	@HandleEvent
+	protected void onPresenceChangeEvent(PresenceCollectorModule.PresenceChangeEvent event) throws TigaseStringprepException {
+		Packet packet = event.packet;
 		// PEP services are using CapsChangeEvent - but we should process
 		// this here as well
 		// as on PEP service we can have some nodes which have there types
@@ -850,4 +826,8 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 		}
 	}
 
+	@Override
+	public void beforeUnregister() {
+		eventBus.unregisterAll(this);
+	}
 }

@@ -22,23 +22,13 @@
 
 package tigase.pubsub.modules;
 
-import java.util.UUID;
-
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
-import tigase.disteventbus.EventBus;
+import tigase.eventbus.EventBus;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.AccessModel;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.CollectionNodeConfig;
-import tigase.pubsub.LeafNodeConfig;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.SendLastPublishedItem;
-import tigase.pubsub.Subscription;
+import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
@@ -46,6 +36,8 @@ import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
+
+import java.util.UUID;
 
 /**
  * Case 8.1.2
@@ -55,6 +47,19 @@ import tigase.xmpp.BareJID;
  */
 @Bean(name = "nodeCreateModule")
 public class NodeCreateModule extends AbstractConfigCreateNode {
+
+	public static class NodeCreatedEvent {
+
+		public final BareJID serviceJid;
+
+		public final String node;
+
+		public NodeCreatedEvent(BareJID serviceJid, String node) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+		}
+
+	}
 
 	private static final Criteria CRIT_CREATE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("create"));
@@ -67,15 +72,6 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 	@Inject
 	private PublishItemModule publishModule;
 
-	/**
-	 * Constructs ...
-	 *
-	 *
-	 * @param config
-	 * @param pubsubRepository
-	 * @param defaultNodeConfig
-	 * @param publishItemModule
-	 */
 	public NodeCreateModule() {
 		// creating default config for autocreate PEP nodes
 		this.defaultPepNodeConfig = new LeafNodeConfig("default-pep");
@@ -222,9 +218,7 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 				getRepository().update(toJid, collection, colNodeConfig);
 			}
 
-			Element event = new Element("NodeCreated", new String[] { "xmlns" }, new String[] { PubSubComponent.EVENT_XMLNS });
-			event.addChild(new Element("node", nodeName));
-			eventBus.fire(event);
+			eventBus.fire(new NodeCreatedEvent(toJid, nodeName));
 
 			Packet result = packet.okResult((Element) null, 0);
 

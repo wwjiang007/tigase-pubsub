@@ -22,24 +22,12 @@
 
 package tigase.pubsub.modules;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
-import tigase.disteventbus.EventBus;
+import tigase.eventbus.EventBus;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractPubSubModule;
-import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.server.Packet;
 import tigase.server.Presence;
@@ -49,6 +37,11 @@ import tigase.xmpp.JID;
 import tigase.xmpp.StanzaType;
 import tigase.xmpp.impl.PresenceCapabilitiesManager;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * Class description
  *
@@ -56,6 +49,47 @@ import tigase.xmpp.impl.PresenceCapabilitiesManager;
  */
 @Bean(name = "presenceCollectorModule")
 public class PresenceCollectorModule extends AbstractPubSubModule {
+
+	public static class BuddyVisibilityEvent {
+
+		public final boolean becomeOnline;
+		public final BareJID buddyJID;
+
+		public BuddyVisibilityEvent(BareJID buddyJID, boolean becomeOnline) {
+			this.buddyJID = buddyJID;
+			this.becomeOnline = becomeOnline;
+		}
+
+	}
+
+
+	public static class CapsChangeEvent {
+
+		public final BareJID serviceJid;
+		public final JID buddyJid;
+		public final String[] newCaps;
+		public final String[] oldCaps;
+		public final Set<String> newFeatures;
+
+		public CapsChangeEvent(BareJID serviceJid, JID buddyJid, String[] newCaps, String[] oldCaps, Set<String> newFeatures) {
+			this.serviceJid = serviceJid;
+			this.buddyJid = buddyJid;
+			this.newCaps = newCaps;
+			this.oldCaps = oldCaps;
+			this.newFeatures = newFeatures;
+		}
+
+	}
+
+	public static class PresenceChangeEvent {
+
+		public final Packet packet;
+
+		public PresenceChangeEvent(Packet packet) {
+			this.packet = packet;
+		}
+
+	}
 
 	private static final ConcurrentMap<String, String[]> CAPS_MAP = new ConcurrentHashMap<String, String[]>();
 
@@ -179,46 +213,15 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 	}
 
 	private void fireBuddyVisibilityEvent(BareJID bareJid, boolean b) {
-		Element event = new Element("BuddyVisibility", new String[] { "xmlns" }, new String[] { PubSubComponent.EVENT_XMLNS });
-		event.addChild(new Element("jid", bareJid.toString()));
-		event.addChild(new Element("visibility", Boolean.toString(b)));
-
-		eventBus.fire(event);
+		eventBus.fire(new BuddyVisibilityEvent(bareJid, b));
 	}
 
 	private void fireCapsChangeEvent(BareJID serviceJid, JID jid, String[] caps, String[] oldCaps, Set<String> newFeatures) {
-		Element event = new Element("CapsChange", new String[] { "xmlns" }, new String[] { PubSubComponent.EVENT_XMLNS });
-		event.addChild(new Element("service", serviceJid.toString()));
-		event.addChild(new Element("jid", jid.toString()));
-
-		Element capsEl = new Element("caps");
-		event.addChild(capsEl);
-		if (caps != null)
-			for (String string : caps) {
-				capsEl.addChild(new Element("item", string));
-			}
-
-		Element oldCapsEl = new Element("oldCaps");
-		event.addChild(oldCapsEl);
-		if (oldCaps != null)
-			for (String string : oldCaps) {
-				oldCapsEl.addChild(new Element("item", string));
-			}
-
-		Element newFeaturesEl = new Element("newFeatures");
-		event.addChild(newFeaturesEl);
-		if (newFeatures != null)
-			for (String string : newFeatures) {
-				newFeaturesEl.addChild(new Element("item", string));
-			}
-
-		eventBus.fire(event);
+		eventBus.fire(new CapsChangeEvent(serviceJid, jid, caps, oldCaps, newFeatures));
 	}
 
 	private void firePresenceChangeEvent(Packet packet) {
-		Element event = new Element("PresenceChange", new String[] { "xmlns" }, new String[] { PubSubComponent.EVENT_XMLNS });
-		event.addChild(packet.getElement());
-		eventBus.fire(event);
+		eventBus.fire(new PresenceChangeEvent(packet));
 	}
 
 	/**
@@ -249,7 +252,6 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 	 *
 	 *
 	 * @param serviceJid
-	 * @param bareJid
 	 * @param feature
 	 * @return
 	 */

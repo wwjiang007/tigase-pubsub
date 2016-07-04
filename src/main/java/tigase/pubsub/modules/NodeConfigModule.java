@@ -22,22 +22,14 @@
 
 package tigase.pubsub.modules;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
-import tigase.disteventbus.EventBus;
+import tigase.eventbus.EventBus;
 import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.CollectionNodeConfig;
-import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.PubSubConfig;
-import tigase.pubsub.SendLastPublishedItem;
+import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
@@ -50,6 +42,9 @@ import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.StanzaType;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 /**
  * Class description
  *
@@ -57,6 +52,19 @@ import tigase.xmpp.StanzaType;
  */
 @Bean(name = "nodeConfigModule")
 public class NodeConfigModule extends AbstractConfigCreateNode {
+
+	public static class NodeConfigurationChangedEvent {
+
+		public final BareJID serviceJid;
+
+		public final String node;
+
+		public NodeConfigurationChangedEvent(BareJID serviceJid, String node) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+		}
+
+	}
 
 	private static final Criteria CRIT_CONFIG = ElementCriteria.name("iq").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(ElementCriteria.name("configure"));
@@ -345,10 +353,7 @@ public class NodeConfigModule extends AbstractConfigCreateNode {
 				}
 				getRepository().update(toJid, nodeName, nodeConfig);
 
-				Element event = new Element("NodeConfigurationChanged", new String[] { "xmlns" },
-						new String[] { PubSubComponent.EVENT_XMLNS });
-				event.addChild(new Element("node", nodeName));
-				eventBus.fire(event);
+				eventBus.fire(new NodeConfigurationChangedEvent(toJid, nodeName));
 
 				if (nodeConfig.isNotify_config()) {
 					Element configuration = new Element("configuration", new String[] { "node" }, new String[] { nodeName });

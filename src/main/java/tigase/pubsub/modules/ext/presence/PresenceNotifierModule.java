@@ -1,19 +1,16 @@
 package tigase.pubsub.modules.ext.presence;
 
-import java.util.Collection;
-import java.util.logging.Level;
-
 import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
-import tigase.disteventbus.EventBus;
-import tigase.disteventbus.EventHandler;
+import tigase.eventbus.EventBus;
+import tigase.eventbus.HandleEvent;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
+import tigase.kernel.beans.UnregisterAware;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
-import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.modules.PublishItemModule;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
@@ -24,15 +21,14 @@ import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.StanzaType;
 
+import java.util.Collection;
+import java.util.logging.Level;
+
 @Bean(name = "presenceNotifierModule")
-public class PresenceNotifierModule extends AbstractPubSubModule implements Initializable {
+public class PresenceNotifierModule extends AbstractPubSubModule implements Initializable, UnregisterAware {
 
 	@Inject
 	private EventBus eventBus;
-
-	private final EventHandler loginToNodeHandler;
-
-	private final EventHandler logoffFromNodeHandler;
 
 	@Inject
 	private PresencePerNodeExtension presencePerNodeExtension;
@@ -40,62 +36,7 @@ public class PresenceNotifierModule extends AbstractPubSubModule implements Init
 	@Inject
 	private PublishItemModule publishItemModule;
 
-	private final EventHandler updatePresenceHandler;
-
 	public PresenceNotifierModule() {
-
-		this.loginToNodeHandler = new EventHandler() {
-
-			@Override
-			public void onEvent(String name, String xmlns, Element event) {
-				try {
-					Packet presence = Packet.packetInstance(event.getChild("presence"));
-					JID occupantJID = presence.getStanzaFrom();
-					String node = event.getCData(new String[] { "LoginToNode", "node" });
-					BareJID serviceJID = BareJID.bareJIDInstanceNS(event.getCData(new String[] { "LoginToNode", "service" }));
-
-					PresenceNotifierModule.this.onLoginToNode(serviceJID, node, occupantJID, presence);
-				} catch (Exception e) {
-					log.throwing(PresenceNotifierModule.class.getName(), "onLoginToNode", e);
-				}
-			}
-		};
-
-		this.logoffFromNodeHandler = new EventHandler() {
-
-			@Override
-			public void onEvent(String name, String xmlns, Element event) {
-				try {
-					Packet presence = Packet.packetInstance(event.getChild("presence"));
-					String node = event.getCData(new String[] { "LogoffFromNode", "node" });
-					BareJID serviceJID = BareJID.bareJIDInstanceNS(
-							event.getCData(new String[] { "LogoffFromNode", "service" }));
-					JID occupantJID = JID.jidInstanceNS(event.getCData(new String[] { "LogoffFromNode", "sender" }));
-
-					PresenceNotifierModule.this.onLogoffFromNode(serviceJID, node, occupantJID, presence);
-				} catch (Exception e) {
-					log.throwing(PresenceNotifierModule.class.getName(), "onLogoffFromNode", e);
-				}
-			}
-		};
-
-		this.updatePresenceHandler = new EventHandler() {
-
-			@Override
-			public void onEvent(String name, String xmlns, Element event) {
-				try {
-					Packet presence = Packet.packetInstance(event.getChild("presence"));
-					JID occupantJID = presence.getStanzaFrom();
-					String node = event.getCData(new String[] { "UpdatePresence", "node" });
-					BareJID serviceJID = BareJID.bareJIDInstanceNS(
-							event.getCData(new String[] { "UpdatePresence", "service" }));
-
-					PresenceNotifierModule.this.onPresenceUpdate(serviceJID, node, occupantJID, presence);
-				} catch (Exception e) {
-					log.throwing(PresenceNotifierModule.class.getName(), "onPresenceUpdate", e);
-				}
-			}
-		};
 
 	}
 
@@ -130,9 +71,7 @@ public class PresenceNotifierModule extends AbstractPubSubModule implements Init
 
 	@Override
 	public void initialize() {
-		eventBus.addHandler("LoginToNode", PubSubComponent.EVENT_XMLNS, loginToNodeHandler);
-		eventBus.addHandler("LogoffFromNode", PubSubComponent.EVENT_XMLNS, logoffFromNodeHandler);
-		eventBus.addHandler("UpdatePresence", PubSubComponent.EVENT_XMLNS, updatePresenceHandler);
+		eventBus.registerAll(this);
 	}
 
 	protected void onLoginToNode(BareJID serviceJID, String node, JID occupantJID, Packet presenceStanza) {
@@ -206,4 +145,23 @@ public class PresenceNotifierModule extends AbstractPubSubModule implements Init
 		}
 	}
 
+	@HandleEvent
+	public void onLoginToNode(PresencePerNodeExtension.LoginToNodeEvent event) {
+		onLoginToNode(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
+	}
+
+	@HandleEvent
+	public void onLogoffFromNodeH(PresencePerNodeExtension.LogoffFromNodeEvent event) {
+		onLogoffFromNode(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
+	}
+
+	@HandleEvent
+	public void onUpdatePresence(PresencePerNodeExtension.UpdatePresenceEvent event) {
+		onPresenceUpdate(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
+	}
+
+	@Override
+	public void beforeUnregister() {
+		eventBus.unregisterAll(this);
+	}
 }
