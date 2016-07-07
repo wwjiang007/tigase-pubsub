@@ -1,7 +1,5 @@
 package tigase.pubsub.modules.commands;
 
-import java.util.Arrays;
-
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -10,6 +8,7 @@ import tigase.component.exceptions.RepositoryException;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.pubsub.repository.IPubSubRepository;
@@ -18,15 +17,21 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
-@Bean(name = "readAllNodesCommand")
+import java.util.Arrays;
+
+@Bean(name = "readAllNodesCommand", parent = PubSubComponent.class)
 public class ReadAllNodesCommand implements AdHocCommand {
 
 	@Inject
 	private PubSubConfig config;
 	@Inject
-	private IPubSubDAO<?> dao;
+	private IPubSubDAO<?,?> dao;
 	@Inject
 	private IPubSubRepository repository;
+
+	public ReadAllNodesCommand() {
+
+	}
 
 	@Override
 	public void execute(AdhHocRequest request, AdHocResponse response) throws AdHocCommandException {

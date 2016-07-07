@@ -1,8 +1,5 @@
 package tigase.pubsub.modules.commands;
 
-import java.util.Arrays;
-import java.util.logging.Logger;
-
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -16,6 +13,7 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.Affiliation;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IPubSubRepository;
@@ -26,7 +24,10 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
-@Bean(name = "loadTestCommand")
+import java.util.Arrays;
+import java.util.logging.Logger;
+
+@Bean(name = "loadTestCommand", parent = PubSubComponent.class)
 public class LoadTestCommand implements AdHocCommand {
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());

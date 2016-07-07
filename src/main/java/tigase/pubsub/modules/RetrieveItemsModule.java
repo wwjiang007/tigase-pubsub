@@ -22,28 +22,11 @@
 
 package tigase.pubsub.modules;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.kernel.beans.Bean;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.AbstractPubSubModule;
-import tigase.pubsub.AccessModel;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.CollectionItemsOrdering;
-import tigase.pubsub.CollectionNodeConfig;
-import tigase.pubsub.LeafNodeConfig;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.Subscription;
-import tigase.pubsub.Utils;
+import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
@@ -57,12 +40,14 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
+import java.util.*;
+
 /**
  * Class description
  *
  *
  */
-@Bean(name = "retrieveItemsModule")
+@Bean(name = "retrieveItemsModule", parent = PubSubComponent.class)
 public class RetrieveItemsModule extends AbstractPubSubModule {
 
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(

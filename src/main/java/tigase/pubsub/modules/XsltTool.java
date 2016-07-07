@@ -1,5 +1,19 @@
 package tigase.pubsub.modules;
 
+import tigase.kernel.beans.Bean;
+import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.PubSubComponent;
+import tigase.xml.DomBuilderHandler;
+import tigase.xml.Element;
+import tigase.xml.SimpleParser;
+import tigase.xml.SingletonFactory;
+
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -9,24 +23,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.xml.DomBuilderHandler;
-import tigase.xml.Element;
-import tigase.xml.SimpleParser;
-import tigase.xml.SingletonFactory;
-
+@Bean(name = "xslTransformer", parent = PubSubComponent.class)
 public class XsltTool {
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 
 	private TransformerFactory tFactory = TransformerFactory.newInstance();
+
+	public XsltTool() {
+
+	}
 
 	public List<Element> transform(final Element item, AbstractNodeConfig nodeConfig) throws TransformerException, IOException {
 		Source xsltSource;

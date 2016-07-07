@@ -1,9 +1,5 @@
 package tigase.pubsub.modules.commands;
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -13,6 +9,7 @@ import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubRepository;
@@ -22,7 +19,11 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
-@Bean(name = "retrieveItemsCommand")
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+
+@Bean(name = "retrieveItemsCommand", parent = PubSubComponent.class)
 public class RetrieveItemsCommand implements AdHocCommand {
 
 	public static final String TIGASE_PUBSUB_INTERNAL_KEY = "tigase-pubsub#internal";

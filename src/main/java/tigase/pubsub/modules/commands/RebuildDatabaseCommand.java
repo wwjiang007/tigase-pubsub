@@ -1,12 +1,5 @@
 package tigase.pubsub.modules.commands;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -18,6 +11,7 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.CollectionNodeConfig;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.xml.Element;
@@ -25,7 +19,10 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
-@Bean(name = "rebuildDatabaseCommand")
+import java.util.*;
+import java.util.Map.Entry;
+
+@Bean(name = "rebuildDatabaseCommand", parent = PubSubComponent.class)
 public class RebuildDatabaseCommand implements AdHocCommand {
 
 	@Inject

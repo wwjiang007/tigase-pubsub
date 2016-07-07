@@ -27,13 +27,14 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.LeafNodeConfig;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 
-@Bean(name = "defaultConfigModule")
+@Bean(name = "defaultConfigModule", parent = PubSubComponent.class)
 public class DefaultConfigModule extends AbstractPubSubModule {
 
 	private static final Criteria CRIT_DEFAULT = ElementCriteria.nameType("iq", "get").add(

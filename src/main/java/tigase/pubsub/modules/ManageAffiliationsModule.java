@@ -22,12 +22,6 @@
 
 package tigase.pubsub.modules;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-
 import tigase.component.PacketWriter;
 import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
@@ -36,6 +30,7 @@ import tigase.kernel.beans.Bean;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.Affiliation;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
@@ -48,12 +43,18 @@ import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.StanzaType;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+
 /**
  * Class description
  *
  *
  */
-@Bean(name = "manageAffiliationsModule")
+@Bean(name = "manageAffiliationsModule", parent = PubSubComponent.class)
 public class ManageAffiliationsModule extends AbstractPubSubModule {
 	private static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(

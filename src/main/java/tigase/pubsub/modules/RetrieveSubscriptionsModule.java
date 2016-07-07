@@ -22,27 +22,22 @@
 
 package tigase.pubsub.modules;
 
-import java.util.Map;
-
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.kernel.beans.Bean;
+import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-
 import tigase.server.Packet;
-
-import tigase.xmpp.Authorization;
-
 import tigase.xml.Element;
-
+import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 
-import tigase.pubsub.AbstractNodeConfig;
-
+import java.util.Map;
 import java.util.logging.Level;
 
 /**
@@ -52,7 +47,7 @@ import java.util.logging.Level;
  * @version 5.0.0, 2010.03.27 at 05:27:10 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "retrieveSubscriptionsModule")
+@Bean(name = "retrieveSubscriptionsModule", parent = PubSubComponent.class)
 public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("subscriptions"));

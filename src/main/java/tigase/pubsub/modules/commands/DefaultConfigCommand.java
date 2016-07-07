@@ -41,7 +41,7 @@ import tigase.xmpp.JID;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-@Bean(name = "default-config-adhoc")
+@Bean(name = "default-config-adhoc", parent = PubSubComponent.class)
 public class DefaultConfigCommand implements AdHocCommand {
 
 	public static class DefaultNodeConfigurationChangedEvent {

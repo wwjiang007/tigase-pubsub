@@ -22,7 +22,9 @@
 package tigase.pubsub.repository.cached;
 
 import tigase.component.exceptions.RepositoryException;
+import tigase.db.DataSource;
 import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.BeanSelector;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.*;
@@ -50,7 +52,7 @@ import java.util.logging.Logger;
  * @version 5.0.0, 2010.03.27 at 05:20:46 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "pubsubRepository")
+@Bean(name = "pubsubRepository", parent = PubSubComponent.class, selectors = BeanSelector.NonClusterMode.class)
 public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHolder, Initializable {
 
 	private class NodeSaver {
@@ -254,7 +256,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	protected PubSubConfig config;
 
 	@Inject
-	protected IPubSubDAO<T> dao;
+	protected IPubSubDAO<T,DataSource> dao;
 
 	protected Logger log = Logger.getLogger(this.getClass().getName());
 
@@ -277,6 +279,10 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	private long updateSubscriptionsCalled = 0;
 
 	private long writingTime = 0;
+
+	public CachedPubSubRepository() {
+
+	}
 
 	/**
 	 * Method description

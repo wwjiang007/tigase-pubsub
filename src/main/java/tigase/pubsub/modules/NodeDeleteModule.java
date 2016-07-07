@@ -30,6 +30,7 @@ import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.CollectionNodeConfig;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
@@ -45,7 +46,7 @@ import tigase.xmpp.JID;
  *
  *
  */
-@Bean(name = "nodeDeleteModule")
+@Bean(name = "nodeDeleteModule", parent = PubSubComponent.class)
 public class NodeDeleteModule extends AbstractPubSubModule {
 
 	public static class NodeDeletedEvent {

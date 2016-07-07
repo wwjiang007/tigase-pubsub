@@ -28,6 +28,7 @@ import tigase.eventbus.EventBus;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractPubSubModule;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.server.Packet;
 import tigase.server.Presence;
@@ -47,7 +48,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  *
  */
-@Bean(name = "presenceCollectorModule")
+@Bean(name = "presenceCollectorModule", parent = PubSubComponent.class)
 public class PresenceCollectorModule extends AbstractPubSubModule {
 
 	public static class BuddyVisibilityEvent {

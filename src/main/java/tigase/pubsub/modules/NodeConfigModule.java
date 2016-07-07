@@ -50,7 +50,7 @@ import java.util.HashSet;
  *
  *
  */
-@Bean(name = "nodeConfigModule")
+@Bean(name = "nodeConfigModule", parent = PubSubComponent.class)
 public class NodeConfigModule extends AbstractConfigCreateNode {
 
 	public static class NodeConfigurationChangedEvent {

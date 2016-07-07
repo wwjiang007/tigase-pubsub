@@ -25,10 +25,7 @@ package tigase.pubsub.modules;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.kernel.beans.Bean;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.AbstractPubSubModule;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.Subscription;
+import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
@@ -45,7 +42,7 @@ import tigase.xmpp.JID;
  *
  *
  */
-@Bean(name = "unsubscribeNodeModule")
+@Bean(name = "unsubscribeNodeModule", parent = PubSubComponent.class)
 public class UnsubscribeNodeModule extends AbstractPubSubModule {
 	private static final Criteria CRIT_UNSUBSCRIBE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("unsubscribe"));

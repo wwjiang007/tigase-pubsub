@@ -4,16 +4,11 @@
  */
 package tigase.pubsub.repository;
 
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.logging.Logger;
-
 import tigase.component.exceptions.RepositoryException;
-import tigase.db.DBInitException;
+import tigase.db.DataSource;
 import tigase.db.UserRepository;
 import tigase.form.Form;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.CollectionNodeConfig;
 import tigase.pubsub.LeafNodeConfig;
@@ -26,15 +21,22 @@ import tigase.xmpp.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.impl.roster.RosterFlat;
 
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.logging.Logger;
+
 /**
  *
  * @author andrzej
  */
-public abstract class PubSubDAO<T> implements IPubSubDAO<T> {
+public abstract class PubSubDAO<T, S extends DataSource> implements IPubSubDAO<T, S> {
 
 	protected static final Logger log = Logger.getLogger(PubSubDAO.class.getCanonicalName());
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
+	@Inject
 	private UserRepository repository;
 
 	protected PubSubDAO() {
@@ -120,17 +122,6 @@ public abstract class PubSubDAO<T> implements IPubSubDAO<T> {
 		} catch (Exception e) {
 			throw new RepositoryException("Getting user roster error", e);
 		}
-	}
-
-	@Override
-	public void init(String resource_uri, Map<String, String> params, UserRepository userRepository)
-			throws RepositoryException {
-		try {
-			initRepository(resource_uri, params);
-		} catch (DBInitException ex) {
-			throw new RepositoryException(ex);
-		}
-		this.repository = userRepository;
 	}
 
 	protected Element itemDataToElement(char[] data) {

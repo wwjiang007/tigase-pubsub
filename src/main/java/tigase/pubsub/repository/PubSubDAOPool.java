@@ -22,27 +22,29 @@
  */
 package tigase.pubsub.repository;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.db.DBInitException;
+import tigase.db.DataSource;
+import tigase.db.DataSourceHelper;
+import tigase.db.beans.MDRepositoryBean;
+import tigase.kernel.beans.Bean;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
+import tigase.xmpp.impl.roster.RosterElement;
 
-public class PubSubDAOPool<T> extends PubSubDAO<T> {
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+@Bean(name="dao", parent = PubSubComponent.class)
+public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPubSubDAO<T, S>> implements IPubSubDAO<T, S>  {
 
 	private static final Logger log = Logger.getLogger(PubSubDAOPool.class.getName());
 
@@ -53,18 +55,7 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 	 */
 	private boolean destroyed = false;
 
-	private final Map<BareJID, LinkedBlockingQueue<IPubSubDAO>> pools = new HashMap<BareJID, LinkedBlockingQueue<IPubSubDAO>>();
-
 	public PubSubDAOPool() {
-	}
-
-	public void addDao(BareJID domain, IPubSubDAO dao) {
-		LinkedBlockingQueue<IPubSubDAO> ee = pools.get(domain);
-		if (ee == null) {
-			ee = new LinkedBlockingQueue<IPubSubDAO>();
-			pools.put(domain, ee);
-		}
-		ee.offer(dao);
 	}
 
 	@Override
@@ -84,7 +75,7 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 	@Override
 	public T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig, NodeType nodeType,
 			T collectionId) throws RepositoryException {
-		IPubSubDAO<T> dao = takeDao(serviceJid);
+		IPubSubDAO<T, DataSource> dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
 				return dao.createNode(serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collectionId);
@@ -131,16 +122,6 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 			log.log(Level.FINEST, "destroying IPubSubDAOPool {0}", this);
 		}
 		destroyed = true;
-		Set<BareJID> keys = new HashSet<BareJID>(pools.keySet());
-		for (BareJID serviceJid : keys) {
-			List<IPubSubDAO> list = new ArrayList<IPubSubDAO>(pools.get(serviceJid));
-			for (IPubSubDAO dao : list) {
-				try {
-					dao.destroy();
-				} finally {
-				}
-			}
-		}
 	}
 
 	@Override
@@ -154,6 +135,24 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 			}
 		} else {
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
+		}
+		return null;
+	}
+
+	@Override
+	public String[] getBuddyGroups(BareJID owner, BareJID bareJid) throws RepositoryException {
+		IPubSubDAO dao = takeDao(null);
+		if (dao != null) {
+			return dao.getBuddyGroups(owner, bareJid);
+		}
+		return null;
+	}
+
+	@Override
+	public String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException {
+		IPubSubDAO dao = takeDao(null);
+		if (dao != null) {
+			return dao.getBuddySubscription(owner, buddy);
 		}
 		return null;
 	}
@@ -295,7 +294,7 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 
 	@Override
 	public T getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
-		IPubSubDAO<T> dao = takeDao(serviceJid);
+		IPubSubDAO<T, DataSource> dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
 				return dao.getNodeId(serviceJid, nodeName);
@@ -310,7 +309,7 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 
 	@Override
 	public INodeMeta<T> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException {
-		IPubSubDAO<T> dao = takeDao(serviceJid);
+		IPubSubDAO<T, DataSource> dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
 				return dao.getNodeMeta(serviceJid, nodeName);
@@ -353,21 +352,9 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 		return null;
 	}
 
+	@Deprecated
 	protected String getPoolDetails(BareJID serviceJid) {
-		String result = "";
-
-		LinkedBlockingQueue<IPubSubDAO> ee;
-		if (pools.containsKey(serviceJid)) {
-			result += serviceJid + " pool ";
-			ee = this.pools.get(serviceJid);
-		} else {
-			result += "default pool ";
-			ee = this.pools.get(null);
-		}
-
-		result += "has " + ee.size() + " element(s).";
-
-		return result;
+		return "";
 	}
 
 	@Override
@@ -386,6 +373,11 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 	}
 
 	@Override
+	public Map<BareJID, RosterElement> getUserRoster(BareJID owner) throws RepositoryException {
+		return null;
+	}
+
+	@Override
 	public Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID jid) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
@@ -400,22 +392,17 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 		return null;
 	}
 
-	/**
-	 * This method is not doing anything right now Parameter values may not
-	 * reflect values passed to IPubSubDAO instances inside
-	 */
 	@Override
-	public void initRepository(String resource_uri, Map<String, String> params) throws DBInitException {
+	public AbstractNodeConfig parseConfig(String nodeName, String cfgData) throws RepositoryException {
+		return null;
 	}
 
+	@Deprecated
 	protected void offerDao(BareJID serviceJid, IPubSubDAO dao) {
 		if (destroyed) {
 			dao.destroy();
 			return;
 		}
-		LinkedBlockingQueue<IPubSubDAO> ee = this.pools.containsKey(serviceJid) ? this.pools.get(serviceJid)
-				: this.pools.get(null);
-		ee.offer(dao);
 	}
 
 	/*
@@ -471,14 +458,7 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 	}
 
 	public IPubSubDAO takeDao(BareJID serviceJid) {
-		try {
-			LinkedBlockingQueue<IPubSubDAO> ee = this.pools.containsKey(serviceJid) ? this.pools.get(serviceJid)
-					: this.pools.get(null);
-			return ee.take();
-		} catch (InterruptedException ex) {
-			log.log(Level.WARNING, "Couldn't obtain PubSub DAO from the pool", ex);
-		}
-		return null;
+		return getRepository(serviceJid.getDomain());
 	}
 
 	@Override
@@ -554,4 +534,14 @@ public class PubSubDAOPool<T> extends PubSubDAO<T> {
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
 		}	}
 
+	@Override
+	public void setDataSource(DataSource dataSource) {
+	   	// This is pool so there is nothing to do here
+	}
+
+	@Override
+	protected Class<? extends IPubSubDAO<T, S>> findClassForDataSource(DataSource dataSource) throws DBInitException {
+		Class cls = DataSourceHelper.getDefaultClass(PubSubDAO.class, dataSource.getResourceUri());
+		return (Class<PubSubDAO<T, S>>) cls;
+	}
 }

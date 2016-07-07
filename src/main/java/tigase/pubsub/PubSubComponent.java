@@ -33,15 +33,9 @@ import tigase.db.RepositoryFactory;
 import tigase.db.UserRepository;
 import tigase.eventbus.HandleEvent;
 import tigase.kernel.core.Kernel;
-import tigase.pubsub.modules.*;
-import tigase.pubsub.modules.commands.*;
-import tigase.pubsub.modules.ext.presence.PresenceNotifierModule;
-import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension;
-import tigase.pubsub.repository.IPubSubDAO;
+import tigase.pubsub.modules.XsltTool;
+import tigase.pubsub.modules.commands.DefaultConfigCommand;
 import tigase.pubsub.repository.IPubSubRepository;
-import tigase.pubsub.repository.PubSubDAOFactory;
-import tigase.pubsub.repository.UserRepositoryFactory;
-import tigase.pubsub.repository.cached.CachedPubSubRepository;
 import tigase.server.DisableDisco;
 import tigase.server.Packet;
 import tigase.stats.StatisticHolder;
@@ -334,45 +328,45 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 
 	@Override
 	protected void registerModules(final Kernel kernel) {
-		kernel.registerBean(CapsModule.class).exec();
-		kernel.registerBean(PresenceCollectorModule.class).exec();
-		kernel.registerBean(PublishItemModule.class).exec();
-		kernel.registerBean(RetractItemModule.class).exec();
-		kernel.registerBean(PendingSubscriptionModule.class).exec();
-		kernel.registerBean(ManageSubscriptionModule.class).exec();
-		kernel.registerBean(SubscribeNodeModule.class).exec();
-		kernel.registerBean(NodeCreateModule.class).exec();
-		kernel.registerBean(NodeDeleteModule.class).exec();
-		kernel.registerBean(DefaultConfigModule.class).exec();
+//		kernel.registerBean(CapsModule.class).exec();
+//		kernel.registerBean(PresenceCollectorModule.class).exec();
+//		kernel.registerBean(PublishItemModule.class).exec();
+//		kernel.registerBean(RetractItemModule.class).exec();
+//		kernel.registerBean(PendingSubscriptionModule.class).exec();
+//		kernel.registerBean(ManageSubscriptionModule.class).exec();
+//		kernel.registerBean(SubscribeNodeModule.class).exec();
+//		kernel.registerBean(NodeCreateModule.class).exec();
+//		kernel.registerBean(NodeDeleteModule.class).exec();
+//		kernel.registerBean(DefaultConfigModule.class).exec();
 
 		kernel.registerBean(AdHocCommandModule.class).exec();
-		kernel.registerBean(NodeConfigModule.class).exec();
-		kernel.registerBean(UnsubscribeNodeModule.class).exec();
-		kernel.registerBean(ManageAffiliationsModule.class).exec();
-		kernel.registerBean(RetrieveItemsModule.class).exec();
-		kernel.registerBean(PurgeItemsModule.class).exec();
+//		kernel.registerBean(NodeConfigModule.class).exec();
+//		kernel.registerBean(UnsubscribeNodeModule.class).exec();
+//		kernel.registerBean(ManageAffiliationsModule.class).exec();
+//		kernel.registerBean(RetrieveItemsModule.class).exec();
+//		kernel.registerBean(PurgeItemsModule.class).exec();
 		kernel.registerBean(JabberVersionModule.class).exec();
-		kernel.registerBean(DiscoveryModule.class).exec();
-		kernel.registerBean(RetrieveAffiliationsModule.class).exec();
-		kernel.registerBean(RetrieveSubscriptionsModule.class).exec();
+//		kernel.registerBean(DiscoveryModule.class).exec();
+//		kernel.registerBean(RetrieveAffiliationsModule.class).exec();
+//		kernel.registerBean(RetrieveSubscriptionsModule.class).exec();
 		kernel.registerBean(XmppPingModule.class).exec();
-		kernel.registerBean(PresenceNotifierModule.class).exec();
-		kernel.registerBean("xslTransformer").asInstance(new XsltTool()).exec();
+//		kernel.registerBean(PresenceNotifierModule.class).exec();
+//		kernel.registerBean("xslTransformer").asInstance(new XsltTool()).exec();
 
-		kernel.registerBean("user-repository").asClass(UserRepository.class).withFactory(UserRepositoryFactory.class).exec();
-		kernel.registerBean(CachedPubSubRepository.class).exec();
-		kernel.registerBean("dao").asClass(IPubSubDAO.class).withFactory(PubSubDAOFactory.class).exec();
+//		kernel.registerBean("user-repository").asClass(UserRepository.class).withFactory(UserRepositoryFactory.class).exec();
+//		kernel.registerBean(CachedPubSubRepository.class).exec();
+//		kernel.registerBean("dao").asClass(IPubSubDAO.class).withFactory(PubSubDAOFactory.class).exec();
 
-		kernel.registerBean(DefaultConfigCommand.class).exec();
-		kernel.registerBean(RebuildDatabaseCommand.class).exec();
-		kernel.registerBean(DeleteAllNodesCommand.class).exec();
-		kernel.registerBean(LoadTestCommand.class).exec();
-		kernel.registerBean(ReadAllNodesCommand.class).exec();
-		kernel.registerBean(RetrieveItemsCommand.class).exec();
-
-		kernel.registerBean(PresencePerNodeExtension.class).exec();
-
-		kernel.registerBean(PubSubConfig.class).exec();
+//		kernel.registerBean(DefaultConfigCommand.class).exec();
+//		kernel.registerBean(RebuildDatabaseCommand.class).exec();
+//		kernel.registerBean(DeleteAllNodesCommand.class).exec();
+//		kernel.registerBean(LoadTestCommand.class).exec();
+//		kernel.registerBean(ReadAllNodesCommand.class).exec();
+//		kernel.registerBean(RetrieveItemsCommand.class).exec();
+//
+//		kernel.registerBean(PresencePerNodeExtension.class).exec();
+//
+//		kernel.registerBean(PubSubConfig.class).exec();
 	}
 
 	/**

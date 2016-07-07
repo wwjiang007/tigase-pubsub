@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Bean(name = "presencePerNodeExtension")
+@Bean(name = "presencePerNodeExtension", parent = PubSubComponent.class)
 public class PresencePerNodeExtension implements Initializable, UnregisterAware {
 
 	public static class LoginToNodeEvent {

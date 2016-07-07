@@ -6,27 +6,28 @@
 
 package tigase.pubsub.modules;
 
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Queue;
-
 import tigase.component.exceptions.ComponentException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.criteria.Or;
 import tigase.kernel.beans.Bean;
 import tigase.pubsub.AbstractPubSubModule;
+import tigase.pubsub.PubSubComponent;
 import tigase.server.Packet;
 import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.JID;
 import tigase.xmpp.impl.PresenceCapabilitiesManager;
 
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Queue;
+
 /**
  *
  * @author andrzej
  */
-@Bean(name = "capsModule")
+@Bean(name = "capsModule", parent = PubSubComponent.class)
 public class CapsModule extends AbstractPubSubModule {
 
 	private static final Criteria CRIT = new Or(

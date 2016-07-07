@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 import tigase.component.exceptions.RepositoryException;
+import tigase.db.DataSource;
+import tigase.db.DataSourceAware;
 import tigase.db.Repository;
 import tigase.db.UserRepository;
 import tigase.pubsub.AbstractNodeConfig;
@@ -44,7 +46,7 @@ import tigase.xmpp.impl.roster.RosterElement;
  * @version 5.0.0, 2010.03.27 at 05:16:25 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-public interface IPubSubDAO<T> extends Repository {
+public interface IPubSubDAO<T, S extends DataSource> extends DataSourceAware<S> {
 
 	/**
 	 * Method description
@@ -198,16 +200,16 @@ public interface IPubSubDAO<T> extends Repository {
 
 	Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID jid) throws RepositoryException;
 
-	/**
-	 * Method initilizes implementation of this interface which will internally
-	 * call {@link initReposiotry()} method to initialize repository.
-	 *
-	 * @param resource_uri
-	 * @param params
-	 * @param userRepository
-	 * @throws RepositoryException
-	 */
-	public void init(String resource_uri, Map<String, String> params, UserRepository userRepository) throws RepositoryException;
+//	/**
+//	 * Method initilizes implementation of this interface which will internally
+//	 * call {@link initReposiotry()} method to initialize repository.
+//	 *
+//	 * @param resource_uri
+//	 * @param params
+//	 * @param userRepository
+//	 * @throws RepositoryException
+//	 */
+//	public void init(String resource_uri, Map<String, String> params, UserRepository userRepository) throws RepositoryException;
 
 	public AbstractNodeConfig parseConfig(String nodeName, String cfgData) throws RepositoryException;
 

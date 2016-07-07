@@ -45,7 +45,7 @@ import java.util.UUID;
  * @author bmalkow
  *
  */
-@Bean(name = "nodeCreateModule")
+@Bean(name = "nodeCreateModule", parent = PubSubComponent.class)
 public class NodeCreateModule extends AbstractConfigCreateNode {
 
 	public static class NodeCreatedEvent {

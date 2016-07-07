@@ -64,7 +64,7 @@ import java.util.logging.Logger;
  * @version 5.0.0, 2010.03.27 at 05:21:54 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "publishItemModule")
+@Bean(name = "publishItemModule", parent = PubSubComponent.class)
 public class PublishItemModule extends AbstractPubSubModule implements Initializable, UnregisterAware {
 
 	private static class Item {

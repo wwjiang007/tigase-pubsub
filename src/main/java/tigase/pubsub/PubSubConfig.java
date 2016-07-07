@@ -22,9 +22,6 @@
 
 package tigase.pubsub;
 
-import java.util.Map;
-import java.util.logging.Logger;
-
 import tigase.component.PropertiesBeanConfigurator;
 import tigase.conf.Configurable;
 import tigase.kernel.beans.Bean;
@@ -35,6 +32,9 @@ import tigase.sys.TigaseRuntime;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
+import java.util.Map;
+import java.util.logging.Logger;
+
 /**
  * Class description
  *
@@ -42,7 +42,7 @@ import tigase.xmpp.JID;
  * @version 5.0.0, 2010.03.27 at 05:10:54 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "pubsubConfig")
+@Bean(name = "pubsubConfig", parent = PubSubComponent.class)
 public class PubSubConfig implements Initializable {
 
 	public static final String ADMINS_KEY = "admin";

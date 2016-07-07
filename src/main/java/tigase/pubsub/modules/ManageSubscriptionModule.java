@@ -22,22 +22,12 @@
 
 package tigase.pubsub.modules;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.component.PacketWriter;
 import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.kernel.beans.Bean;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.AbstractPubSubModule;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.Subscription;
+import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension;
@@ -53,6 +43,13 @@ import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.StanzaType;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Class description
  *
@@ -60,7 +57,7 @@ import tigase.xmpp.StanzaType;
  * @version 5.0.0, 2010.03.27 at 05:25:49 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "manageSubscriptionModule")
+@Bean(name = "manageSubscriptionModule", parent = PubSubComponent.class)
 public class ManageSubscriptionModule extends AbstractPubSubModule {
 
 	private class SubscriptionFilter {

@@ -8,6 +8,7 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.Utils;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
@@ -26,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 
-@Bean(name = DiscoveryModule.ID)
+@Bean(name = DiscoveryModule.ID, parent = PubSubComponent.class)
 public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModule {
 
 	private final SimpleDateFormat formatter;

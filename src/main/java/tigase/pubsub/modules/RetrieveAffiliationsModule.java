@@ -22,13 +22,12 @@
 
 package tigase.pubsub.modules;
 
-import java.util.Map;
-
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.kernel.beans.Bean;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.Affiliation;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
@@ -36,12 +35,14 @@ import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 
+import java.util.Map;
+
 /**
  * Class description
  *
  *
  */
-@Bean(name = "retrieveAffiliationsModule")
+@Bean(name = "retrieveAffiliationsModule", parent = PubSubComponent.class)
 public class RetrieveAffiliationsModule extends AbstractPubSubModule {
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("affiliations"));

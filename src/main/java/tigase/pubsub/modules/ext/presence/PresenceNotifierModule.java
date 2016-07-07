@@ -11,6 +11,7 @@ import tigase.kernel.beans.Inject;
 import tigase.kernel.beans.UnregisterAware;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.modules.PublishItemModule;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
@@ -24,7 +25,7 @@ import tigase.xmpp.StanzaType;
 import java.util.Collection;
 import java.util.logging.Level;
 
-@Bean(name = "presenceNotifierModule")
+@Bean(name = "presenceNotifierModule", parent = PubSubComponent.class)
 public class PresenceNotifierModule extends AbstractPubSubModule implements Initializable, UnregisterAware {
 
 	@Inject
