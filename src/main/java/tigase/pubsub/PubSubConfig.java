@@ -54,7 +54,7 @@ public class PubSubConfig implements Initializable {
 	private static final String PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY = "send-last-published-item-on-presence";
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
-	@ConfigField(desc = "List of admins")
+	@ConfigField(desc = "List of admins", alias = "admins")
 	protected String[] admins;
 	protected BareJID serviceBareJID = BareJID.bareJIDInstanceNS("tigase-pubsub");
 	@Inject

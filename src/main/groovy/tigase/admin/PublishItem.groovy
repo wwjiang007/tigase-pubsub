@@ -27,14 +27,21 @@
 
 package tigase.admin
 
+import groovy.transform.CompileStatic
 import tigase.db.TigaseDBException
+import tigase.eventbus.EventBus
+import tigase.kernel.core.Kernel
 import tigase.pubsub.AbstractNodeConfig
+import tigase.pubsub.LeafNodeConfig
 import tigase.pubsub.NodeType
+import tigase.pubsub.PubSubComponent
+import tigase.pubsub.PubSubConfig
 import tigase.pubsub.exceptions.PubSubErrorCondition
 import tigase.pubsub.exceptions.PubSubException
 import tigase.pubsub.modules.PublishItemModule
 import tigase.pubsub.repository.IPubSubRepository
 import tigase.server.Command
+import tigase.server.Iq
 import tigase.server.Packet
 import tigase.util.DateTimeFormatter
 import tigase.xml.DomBuilderHandler
@@ -42,162 +49,169 @@ import tigase.xml.Element
 import tigase.xml.SingletonFactory
 import tigase.xmpp.Authorization
 
+Kernel kernel = (Kernel) kernel;
+PubSubComponent component = (PubSubComponent) component
+packet = (Iq) packet
+eventBus = (EventBus) eventBus
 
-try {
-def NODE = "node"
-def ID = "item-id";
-def EXPIRE = "expire-at";
-def ENTRY = "entry";
+@CompileStatic
+Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus, Set admins) {
 
-IPubSubRepository pubsubRepository = component.pubsubRepository
+    def componentConfig = kernel.getInstance(PubSubConfig.class)
 
-def p = (Packet)packet
-def admins = (Set)adminsSet
-def stanzaFromBare = p.getStanzaFrom().getBareJID()
-def isServiceAdmin = admins.contains(stanzaFromBare)
+    IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 
-def node = Command.getFieldValue(packet, NODE)
-def id = Command.getFieldValue(packet, ID);
-def expire = Command.getFieldValue(packet, EXPIRE);
-def entry = Command.getFieldValues(packet, ENTRY);
+    try {
+        def NODE = "node"
+        def ID = "item-id";
+        def EXPIRE = "expire-at";
+        def ENTRY = "entry";
 
-def dtf = new DateTimeFormatter();
+        def stanzaFromBare = p.getStanzaFrom().getBareJID()
+        def isServiceAdmin = admins.contains(stanzaFromBare)
 
-if (!node || !entry) {
-	def result = p.commandResult(Command.DataType.form);
+        def node = Command.getFieldValue(p, NODE)
+        def id = Command.getFieldValue(p, ID);
+        def expire = Command.getFieldValue(p, EXPIRE);
+        def entry = Command.getFieldValues(p, ENTRY);
 
-	Command.addTitle(result, "Publish item to a node")
-	Command.addInstructions(result, "Fill out this form to publish item to a node.")
+        def dtf = new DateTimeFormatter();
 
-	Command.addFieldValue(result, NODE, node ?: "", "text-single",
-			"The node to publish to")
-	Command.addFieldValue(result, ID, id ?: "", "text-single",
-			"ID of item")
-	Command.addFieldValue(result, EXPIRE, expire ?: "", "text-single",
-			"Expiry date of item (XEP-0082 format)")
-	Command.addFieldValue(result, ENTRY, entry ?: "", "text-multi",
-			"Entry")
+        if (!node || !entry) {
+            def result = p.commandResult(Command.DataType.form);
 
-	return result
-}
+            Command.addTitle(result, "Publish item to a node")
+            Command.addInstructions(result, "Fill out this form to publish item to a node.")
 
-def result = p.commandResult(Command.DataType.result)
-try {
-	if (isServiceAdmin || component.componentConfig.isAdmin(stanzaFromBare)) {
-		def toJid = p.getStanzaTo().getBareJID();
+            Command.addFieldValue(result, NODE, node ?: "", "text-single",
+                    "The node to publish to")
+            Command.addFieldValue(result, ID, id ?: "", "text-single",
+                    "ID of item")
+            Command.addFieldValue(result, EXPIRE, expire ?: "", "text-single",
+                    "Expiry date of item (XEP-0082 format)")
+            Command.addFieldValue(result, ENTRY, entry ? entry.join("\n") : "", "text-multi",
+                    "Entry")
 
-		def nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
-		if (nodeConfig == null) {
-			throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Node " + node + " needs " +
-				"to be created before an item can be published.");
-		}
-		if (nodeConfig.getNodeType() == NodeType.collection) {
-			throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
-						new PubSubErrorCondition("unsupported", "publish"));
-		}
-
-		def nodeAffiliations = pubsubRepository.getNodeAffiliations(toJid, node);
-		def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
-
-		Element item = new Element("item");
-		if (!id) id = UUID.randomUUID().toString();
-		item.setAttribute("id", id);
-
-        if (expire) {
-            try {
-                    def parseDateTime = dtf.parseDateTime(expire);
-                    if (parseDateTime) {
-                        item.setAttribute(EXPIRE, dtf.formatDateTime(parseDateTime.getTime()));
-                    }
-            } catch (IllegalArgumentException e) {
-                throw new PubSubException(Authorization.BAD_REQUEST, "Expiration date " + expire  +
-                        " is malformed.");
-            }
+            return result
         }
 
-		def data = entry.join("\n")
-		data = ((String) data).toCharArray();
+        def result = p.commandResult(Command.DataType.result)
+        try {
+            if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
+                def toJid = p.getStanzaTo().getBareJID();
 
-		def handler = new DomBuilderHandler();
-		def parser = SingletonFactory.getParserInstance();
-		parser.parse(handler, data, 0, data.length);
-		item.addChildren(handler.getParsedElements());
+                def nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
+                if (nodeConfig == null) {
+                    throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Node " + node + " needs " +
+                            "to be created before an item can be published.");
+                }
+                if (nodeConfig.getNodeType() == NodeType.collection) {
+                    throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
+                            new PubSubErrorCondition("unsupported", "publish"));
+                }
 
-		def items = new Element("items");
-		items.setAttribute("node", node);
-		items.addChild(item);
+                def nodeAffiliations = pubsubRepository.getNodeAffiliations(toJid, node);
+                def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
 
-		def results = [];
-			component.publishNodeModule.sendNotifications(items, packet.getStanzaTo(),
-			node, pubsubRepository.getNodeConfig(toJid, node),
-			nodeAffiliations, nodeSubscriptions)
+                Element item = new Element("item");
+                if (!id) id = UUID.randomUUID().toString();
+                item.setAttribute("id", id);
 
-		def parents = component.publishNodeModule.getParents(toJid, node);
+                if (expire) {
+                    try {
+                        def parseDateTime = dtf.parseDateTime(expire);
+                        if (parseDateTime) {
+                            item.setAttribute(EXPIRE, dtf.formatDateTime(parseDateTime.getTime()));
+                        }
+                    } catch (IllegalArgumentException e) {
+                        throw new PubSubException(Authorization.BAD_REQUEST, "Expiration date " + expire +
+                                " is malformed.");
+                    }
+                }
 
-		if (!parents) {
-			parents.each { collection ->
-				def headers = [Collection:collection];
+                def data = entry.join("\n")
+                def chars = ((String) data).toCharArray();
 
-				AbstractNodeConfig colNodeConfig    = pubsubRepository.getNodeConfig(toJid, collection);
-				def colNodeSubscriptions =
-					pubsubRepository.getNodeSubscriptions(toJid, collection);
-				def colNodeAffiliations =
-					pubsubRepository.getNodeAffiliations(toJid, collection);
+                def handler = new DomBuilderHandler();
+                def parser = SingletonFactory.getParserInstance();
+                parser.parse(handler, chars, 0, chars.length);
+                item.addChildren((LinkedList<Element>) handler.getParsedElements());
 
-					component.publishNodeModule.sendNotifications(items, packet.getStanzaTo(),
-									node, headers, colNodeConfig,
-									colNodeAffiliations, colNodeSubscriptions)
-			}
-		}
+                def items = new Element("items");
+                items.setAttribute("node", node);
+                items.addChild(item);
 
-		if (nodeConfig.isPersistItem()) {
-			def nodeItems = pubsubRepository.getNodeItems(toJid, node);
+                def publishNodeModule = kernel.getInstance(PublishItemModule.class);
+                publishNodeModule.sendNotifications(items, p.getStanzaTo(),
+                        node, pubsubRepository.getNodeConfig(toJid, node),
+                        nodeAffiliations, nodeSubscriptions)
 
-			nodeItems.writeItem(System.currentTimeMillis(), id,
-					p.getAttributeStaticStr("from"), item);
+                def parents = publishNodeModule.getParents(toJid, node);
 
-			if (nodeConfig.getMaxItems() != null) {
-				component.publishNodeModule.trimItems(nodeItems, nodeConfig.getMaxItems());
-			}
-		}
+                if (!parents) {
+                    parents.each { collection ->
+                        def headers = [Collection: collection];
 
-		results.each { packet ->
-			component.addOutPacket(packet);
-		}
+                        AbstractNodeConfig colNodeConfig = pubsubRepository.getNodeConfig(toJid, collection);
+                        def colNodeSubscriptions =
+                                pubsubRepository.getNodeSubscriptions(toJid, collection);
+                        def colNodeAffiliations =
+                                pubsubRepository.getNodeAffiliations(toJid, collection);
 
-        def itemsToSend = [];
-        itemsToSend += item;
+                        publishNodeModule.sendNotifications(items, p.getStanzaTo(),
+                                node, headers, colNodeConfig,
+                                colNodeAffiliations, colNodeSubscriptions)
+                    }
+                }
 
-        eventBus.fire(
-				new PublishItemModule.ItemPublishedEvent(p.getStanzaTo().getBareJID(), node, itemsToSend));
+                def leafNodeConfig = (LeafNodeConfig) nodeConfig;
+                if (leafNodeConfig.isPersistItem()) {
+                    def nodeItems = pubsubRepository.getNodeItems(toJid, node);
 
-		Command.addTextField(result, "Note", "Operation successful");
-		Command.addFieldValue(result, "item-id", "" + id, "fixed", "Item ID")
-	} else {
-		//Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
-		throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
-				"permissions to publish item to a node.");
-	}
-} catch (PubSubException ex) {
-	Command.addTextField(result, "Error", ex.getMessage())
-	if (ex.getErrorCondition()) {
-		def error = ex.getErrorCondition();
-		Element errorEl = new Element("error");
-		errorEl.setAttribute("type", error.getErrorType());
-		Element conditionEl = new Element(error.getCondition(), ex.getMessage());
-		conditionEl.setXMLNS(Packet.ERROR_NS);
-		errorEl.addChild(conditionEl);
-		Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
-		if (pubsubCondition)
-			errorEl.addChild(pubsubCondition);
-		result.getElement().addChild(errorEl);
-	}
-} catch (TigaseDBException ex) {
-	Command.addTextField(result, "Note", "Problem accessing database, item not published to node.");
+                    nodeItems.writeItem(System.currentTimeMillis(), id,
+                            p.getAttributeStaticStr("from"), item);
+
+                    if (leafNodeConfig.getMaxItems() != null) {
+                        publishNodeModule.trimItems(nodeItems, leafNodeConfig.getMaxItems());
+                    }
+                }
+
+                def itemsToSend = [];
+                itemsToSend += item;
+
+                eventBus.fire(
+                        new PublishItemModule.ItemPublishedEvent(p.getStanzaTo().getBareJID(), node, itemsToSend));
+
+                Command.addTextField(result, "Note", "Operation successful");
+                Command.addFieldValue(result, "item-id", "" + id, "fixed", "Item ID")
+            } else {
+                //Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
+                throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
+                        "permissions to publish item to a node.");
+            }
+        } catch (PubSubException ex) {
+            Command.addTextField(result, "Error", ex.getMessage())
+            if (ex.getErrorCondition()) {
+                def error = ex.getErrorCondition();
+                Element errorEl = new Element("error");
+                errorEl.setAttribute("type", error.getErrorType());
+                Element conditionEl = new Element(error.getCondition(), ex.getMessage());
+                conditionEl.setXMLNS(Packet.ERROR_NS);
+                errorEl.addChild(conditionEl);
+                Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
+                if (pubsubCondition)
+                    errorEl.addChild(pubsubCondition);
+                result.getElement().addChild(errorEl);
+            }
+        } catch (TigaseDBException ex) {
+            Command.addTextField(result, "Note", "Problem accessing database, item not published to node.");
+        }
+
+        return result;
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        return null;
+    }
 }
 
-return result
-
-} catch (Exception ex) {
-	ex.printStackTrace();
-}
+return process(kernel, component, packet, eventBus, (Set) adminsSet)

@@ -30,51 +30,64 @@
 
 package tigase.admin
 
-import tigase.server.*
-import tigase.util.*
-import tigase.xmpp.*
-import tigase.db.*
-import tigase.xml.*
-import tigase.vhosts.*
-import tigase.pubsub.*
-import tigase.pubsub.repository.IPubSubRepository
+import groovy.transform.CompileStatic
+import tigase.eventbus.EventBus
+import tigase.kernel.core.Kernel
+import tigase.pubsub.PubSubComponent
+import tigase.pubsub.PubSubConfig
 import tigase.pubsub.exceptions.PubSubException
-import tigase.pubsub.modules.NodeCreateModule.NodeCreateHandler.NodeCreateEvent;
+import tigase.pubsub.repository.IPubSubRepository
+import tigase.server.Command
+import tigase.server.Iq
+import tigase.server.Packet
+import tigase.xml.Element
+import tigase.xmpp.Authorization;
 
-IPubSubRepository pubsubRepository = component.pubsubRepository
+Kernel kernel = (Kernel) kernel;
+PubSubComponent component = (PubSubComponent) component
+packet = (Iq) packet
+eventBus = (EventBus) eventBus
 
-def p = (Packet)packet
-def admins = (Set)adminsSet
-def stanzaFromBare = p.getStanzaFrom().getBareJID()
-def isServiceAdmin = admins.contains(stanzaFromBare)
+@CompileStatic
+Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus, Set admins) {
 
-def result = p.commandResult(Command.DataType.result);
-Command.addTitle(result, "List of available nodes");
+    def componentConfig = kernel.getInstance(PubSubConfig.class)
 
-try {
-	if (isServiceAdmin || component.componentConfig.isAdmin(stanzaFromBare)) {	
-		def serviceJid = p.getStanzaTo().getBareJID();
-		def nodes = pubsubRepository.getRootCollection(serviceJid);
+    IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 
-		Command.addFieldMultiValue(result, "nodes", nodes as List);
-		result.getElement().getChild('command').getChild('x').getChildren().find { e -> e.getAttribute("var") == "nodes" }?.setAttribute("label", "Nodes");
-	} else {
-		throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
-			"permissions to list available nodes.");
-	}
-} catch (PubSubException ex) {
-	Command.addTextField(result, "Error", ex.getMessage())
-	if (ex.getErrorCondition()) {
-		def error = ex.getErrorCondition();
-		Element errorEl = new Element("error");
-		errorEl.setAttribute("type", error.getErrorType());
-		Element conditionEl = new Element(error.getCondition(), ex.getMessage());
-		conditionEl.setXMLNS(Packet.ERROR_NS);
-		errorEl.addChild(conditionEl);
-		Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
-		if (pubsubCondition)
-			errorEl.addChild(pubsubCondition);
-		result.getElement().addChild(errorEl);
-	}
+    def stanzaFromBare = p.getStanzaFrom().getBareJID()
+    def isServiceAdmin = admins.contains(stanzaFromBare)
+
+    def result = p.commandResult(Command.DataType.result);
+    Command.addTitle(result, "List of available nodes");
+
+    try {
+        if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
+            def serviceJid = p.getStanzaTo().getBareJID();
+            def nodes = pubsubRepository.getRootCollection(serviceJid);
+
+            Command.addFieldMultiValue(result, "nodes", nodes as List);
+            result.getElement().getChild('command').getChild('x').getChildren().find { e -> e.getAttribute("var") == "nodes" }?.setAttribute("label", "Nodes");
+        } else {
+            throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
+                    "permissions to list available nodes.");
+        }
+    } catch (PubSubException ex) {
+        Command.addTextField(result, "Error", ex.getMessage())
+        if (ex.getErrorCondition()) {
+            def error = ex.getErrorCondition();
+            Element errorEl = new Element("error");
+            errorEl.setAttribute("type", error.getErrorType());
+            Element conditionEl = new Element(error.getCondition(), ex.getMessage());
+            conditionEl.setXMLNS(Packet.ERROR_NS);
+            errorEl.addChild(conditionEl);
+            Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
+            if (pubsubCondition)
+                errorEl.addChild(pubsubCondition);
+            result.getElement().addChild(errorEl);
+        }
+    }
+    return result;
 }
-return result
+
+return process(kernel, component, packet, eventBus, (Set) adminsSet)

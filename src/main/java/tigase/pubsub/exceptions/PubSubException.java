@@ -188,6 +188,10 @@ public class PubSubException extends ComponentException {
 		return errorCondition.getCondition();
 	}
 
+	public PubSubErrorCondition getPubSubErrorCondition() {
+		return pubSubErrorCondition;
+	}
+
 	/**
 	 * @return Returns the type.
 	 */

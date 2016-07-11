@@ -295,7 +295,7 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 	 *
 	 * @throws RepositoryException
 	 */
-	protected List<String> getParents(final BareJID serviceJid, final String nodeName) throws RepositoryException {
+	public List<String> getParents(final BareJID serviceJid, final String nodeName) throws RepositoryException {
 		ArrayList<String> result = new ArrayList<String>();
 		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
 		String cn = nodeConfig.getCollection();

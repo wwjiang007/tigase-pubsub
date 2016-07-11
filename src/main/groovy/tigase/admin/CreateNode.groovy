@@ -30,160 +30,170 @@
 
 package tigase.admin
 
+import groovy.transform.CompileStatic
 import tigase.db.TigaseDBException
+import tigase.eventbus.EventBus
+import tigase.kernel.core.Kernel
 import tigase.pubsub.*
 import tigase.pubsub.exceptions.PubSubException
 import tigase.pubsub.modules.NodeCreateModule
+import tigase.pubsub.modules.PublishItemModule
 import tigase.pubsub.repository.IPubSubRepository
 import tigase.server.Command
+import tigase.server.Iq
 import tigase.server.Packet
 import tigase.xml.Element
 import tigase.xmpp.Authorization
 import tigase.xmpp.BareJID;
 
-def NODE = "node"
-def OWNER = "owner";
+Kernel kernel = (Kernel) kernel;
+PubSubComponent component = (PubSubComponent) component
+packet = (Iq) packet
+eventBus = (EventBus) eventBus
 
-IPubSubRepository pubsubRepository = component.pubsubRepository
+@CompileStatic
+Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus, Set admins) {
+    def NODE = "node"
+    def OWNER = "owner";
 
-def p = (Packet)packet
-def admins = (Set)adminsSet
-def stanzaFromBare = p.getStanzaFrom().getBareJID()
-def isServiceAdmin = admins.contains(stanzaFromBare)
+    def componentConfig = kernel.getInstance(PubSubConfig.class)
 
-def node = Command.getFieldValue(packet, NODE)
-def owner = Command.getFieldValue(packet, OWNER);
+    IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 
-if (node == null) {
-	def result = p.commandResult(Command.DataType.form);
+    def stanzaFromBare = p.getStanzaFrom().getBareJID()
+    def isServiceAdmin = admins.contains(stanzaFromBare)
 
-	Command.addTitle(result, "Creating a node")
-	Command.addInstructions(result, "Fill out this form to create a node.")
+    def node = Command.getFieldValue(p, NODE)
+    def owner = Command.getFieldValue(p, OWNER);
 
-	Command.addFieldValue(result, NODE, node ?: "", "text-single",
-			"The node to create")	
-	Command.addFieldValue(result, OWNER, owner ?: "", "jid-single",
-			"Owner JID")
-	
-	def nodeConfig = new LeafNodeConfig(null);
-	List<Element> fields = nodeConfig.getFormElement().getChildren();
-	Element x = Command.getData(result, "x","jabber:x:data");
-	x.addChildren(fields);
-	//Command.addFieldValue(result, "FORM_TYPE", "http://jabber.org/protocol/admin",
-	//		"hidden")
+    if (node == null) {
+        def result = p.commandResult(Command.DataType.form);
 
-	return result
+        Command.addTitle(result, "Creating a node")
+        Command.addInstructions(result, "Fill out this form to create a node.")
+
+        Command.addFieldValue(result, NODE, node ? node : "", "text-single",
+                "The node to create")
+        Command.addFieldValue(result, OWNER, owner ? owner : "", "jid-single",
+                "Owner JID")
+
+        def nodeConfig = new LeafNodeConfig(null);
+        List<Element> fields = nodeConfig.getFormElement().getChildren();
+        Element x = Command.getData(result, "x", "jabber:x:data");
+        x.addChildren(fields);
+
+        return result
+    }
+
+    def result = p.commandResult(Command.DataType.result)
+    try {
+        if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
+            def toJid = p.getStanzaTo().getBareJID();
+
+            def nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
+
+            if (nodeConfig != null) {
+                throw new PubSubException(Authorization.CONFLICT, "Node " + node + " already exists");
+            }
+
+            def nodeTypeStr = Command.getFieldValue(p, "pubsub#node_type");
+            def nodeType = nodeTypeStr ? NodeType.valueOf(nodeTypeStr) : NodeType.leaf;
+
+            def defaultNodeConfig = (DefaultNodeConfig) kernel.getInstance("defaultNodeConfig");
+
+            nodeConfig = (nodeType == NodeType.leaf) ? new LeafNodeConfig(node, defaultNodeConfig) : new CollectionNodeConfig(node);
+
+            Command.getData(p, "x", "jabber:x:data").getChildren().each { fieldEl ->
+                def var = fieldEl.getAttribute("var");
+                def field = nodeConfig.getForm().get(var);
+                def value = fieldEl.getChildCData("/field/value")
+                if (!field) return;
+                if (field.getType().name().endsWith("-multi")) {
+                    nodeConfig.setValues(field.getVar(), value.tokenize() as String[]);
+                } else {
+                    nodeConfig.setValue(field.getVar(), value);
+                }
+            };
+
+            def collection = nodeConfig.getCollection();
+            CollectionNodeConfig colNodeConfig = null;
+
+            if (collection != '') {
+                AbstractNodeConfig absNodeConfig = pubsubRepository.getNodeConfig(toJid, collection);
+
+                if (absNodeConfig == null) {
+                    throw new PubSubException(p.getElement(), Authorization.ITEM_NOT_FOUND);
+                } else if (absNodeConfig.getNodeType() == NodeType.leaf) {
+                    throw new PubSubException(p.getElement(), Authorization.NOT_ALLOWED);
+                }
+                colNodeConfig = (CollectionNodeConfig) absNodeConfig;
+            }
+
+            def ownerJid = (!owner) ? p.getStanzaFrom().getBareJID() : BareJID.bareJIDInstance(owner);
+            pubsubRepository.createNode(toJid, node, ownerJid,
+                    nodeConfig, nodeType, collection);
+
+            def nodeaAffiliations = pubsubRepository.getNodeAffiliations(toJid, node);
+            nodeaAffiliations.addAffiliation(ownerJid, Affiliation.owner);
+
+            def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
+            nodeSubscriptions.addSubscriberJid(ownerJid, Subscription.subscribed);
+
+            pubsubRepository.update(toJid, node, nodeaAffiliations);
+            pubsubRepository.update(toJid, node, nodeSubscriptions);
+
+            if (colNodeConfig == null) {
+                pubsubRepository.addToRootCollection(toJid, node);
+            } else {
+                colNodeConfig.addChildren(node);
+                pubsubRepository.update(toJid, collection, colNodeConfig);
+            }
+
+            NodeCreateModule.NodeCreatedEvent event = new NodeCreateModule.NodeCreatedEvent(toJid, node);
+            eventBus.fire(event);
+
+            if (collection != '') {
+                def colNodeSubscriptions =
+                        pubsubRepository.getNodeSubscriptions(toJid, collection);
+                def colNodeAffiliations =
+                        pubsubRepository.getNodeAffiliations(toJid, collection);
+                Element colE = new Element("collection");
+                colE.setAttribute("node", collection);
+                Element associateEl = new Element("associate");
+                associateEl.setAttribute("node", node);
+                colE.addChild(associateEl);
+
+                def publishNodeModule = kernel.getInstance(PublishItemModule.class);
+                publishNodeModule.sendNotifications(colE,
+                        p.getStanzaTo(), collection, nodeConfig,
+                        colNodeAffiliations, colNodeSubscriptions);
+            }
+
+            Command.addTextField(result, "Note", "Operation successful");
+        } else {
+            //Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
+            throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
+                    "permissions to publish item to a node.");
+        }
+    } catch (PubSubException ex) {
+        Command.addTextField(result, "Error", ex.getMessage())
+        if (ex.getErrorCondition()) {
+            def error = ex.getErrorCondition();
+            Element errorEl = new Element("error");
+            errorEl.setAttribute("type", error.getErrorType());
+            Element conditionEl = new Element(error.getCondition(), ex.getMessage());
+            conditionEl.setXMLNS(Packet.ERROR_NS);
+            errorEl.addChild(conditionEl);
+            Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
+            if (pubsubCondition)
+                errorEl.addChild(pubsubCondition);
+            result.getElement().addChild(errorEl);
+        }
+    } catch (TigaseDBException ex) {
+        Command.addTextField(result, "Note", "Problem accessing database, node not created.");
+    }
+
+    return result
 }
 
-def result = p.commandResult(Command.DataType.result)
-try {
-	if (isServiceAdmin || component.componentConfig.isAdmin(stanzaFromBare)) {
-		def toJid = p.getStanzaTo().getBareJID();
-
-		def nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
-
-		if (nodeConfig != null) {
-			throw new PubSubException(Authorization.CONFLICT, "Node " + node + " already exists");
-		}
-		
-		def nodeTypeStr = Command.getFieldValue(p, "pubsub#node_type");
-		def nodeType = nodeTypeStr ? NodeType.valueOf(nodeTypeStr) : NodeType.leaf;
-		nodeConfig = (nodeType == NodeType.leaf) ? new LeafNodeConfig(node, component.defaultNodeConfig) : new CollectionNodeConfig(node);
-		
-		Command.getData(p, "x", "jabber:x:data").getChildren().each { fieldEl ->
-			def var = fieldEl.getAttribute("var");			
-			def field = nodeConfig.getForm().get(var);
-			def value = fieldEl.getChildCData( "/field/value")
-			if (!field) return;
-			if (field.getType().name().endsWith("-multi")) {
-				nodeConfig.setValues(field.getVar(), value.tokenize());
-			}
-			else {
-				nodeConfig.setValue(field.getVar(), value);
-			}
-		};
-		
-		def collection = nodeConfig.getCollection();
-		CollectionNodeConfig colNodeConfig = null;
-		
-		if (collection != '') {
-			AbstractNodeConfig absNodeConfig = pubsubRepository.getNodeConfig(toJid, collection);
-
-			if (absNodeConfig == null) {
-				throw new PubSubException(p.getElement(), Authorization.ITEM_NOT_FOUND);
-			} else if (absNodeConfig.getNodeType() == NodeType.leaf) {
-				throw new PubSubException(p.getElement(), Authorization.NOT_ALLOWED);
-			}
-			colNodeConfig = (CollectionNodeConfig) absNodeConfig;
-		}		
-			
-		if (owner == null || owner.isEmpty()) { 
-			owner = p.getStanzaFrom().getBareJID();
-		} else {
-			owner = BareJID.bareJIDInstance(owner);
-		}
-		pubsubRepository.createNode(toJid, node, owner,
-			nodeConfig, nodeType, collection);
-		
-		def nodeaAffiliations  = pubsubRepository.getNodeAffiliations(toJid, node);
-		nodeaAffiliations.addAffiliation(owner,Affiliation.owner);
-
-		def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
-		nodeSubscriptions.addSubscriberJid(owner, Subscription.subscribed);
-
-		pubsubRepository.update(toJid, node, nodeaAffiliations);
-		pubsubRepository.update(toJid, node, nodeSubscriptions);
-
-		if (colNodeConfig == null) {
-			pubsubRepository.addToRootCollection(toJid, node);
-		} else {
-			colNodeConfig.addChildren(node);
-			pubsubRepository.update(toJid, collection, colNodeConfig);
-		}
-		
-		NodeCreateModule.NodeCreatedEvent event = new NodeCreateModule.NodeCreatedEvent(toJid, node);
-		component.getEventBus().fire(event);
-
-		if (collection != '') {
-			def colNodeSubscriptions =
-				pubsubRepository.getNodeSubscriptions(toJid, collection);
-			def colNodeAffiliations =
-				pubsubRepository.getNodeAffiliations(toJid, collection);
-			Element colE = new Element("collection");
-			colE.setAttribute("node", collection);
-			Element associateEl = new Element("associate");
-			associateEl.setAttribute("node", node);
-			colE.addChild(associateEl);
-			def results = (component.publishNodeModule.sendNotifications(colE,
-							packet.getStanzaTo(), collection, nodeConfig,
-							colNodeAffiliations, colNodeSubscriptions));
-			results.each { packet -> 
-				component.addOutPacket(packet);
-			}
-		}		
-		
-		Command.addTextField(result, "Note", "Operation successful");
-	} else {
-		//Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
-		throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " + 
-				"permissions to publish item to a node.");
-	}
-} catch (PubSubException ex) {
-	Command.addTextField(result, "Error", ex.getMessage())
-	if (ex.getErrorCondition()) {
-		def error = ex.getErrorCondition();
-		Element errorEl = new Element("error");
-		errorEl.setAttribute("type", error.getErrorType());
-		Element conditionEl = new Element(error.getCondition(), ex.getMessage());
-		conditionEl.setXMLNS(Packet.ERROR_NS);
-		errorEl.addChild(conditionEl);
-		Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
-		if (pubsubCondition)
-			errorEl.addChild(pubsubCondition);
-		result.getElement().addChild(errorEl);	
-	}	
-} catch (TigaseDBException ex) {
-	Command.addTextField(result, "Note", "Problem accessing database, node not created.");
-}
-
-return result
+return process(kernel, component, packet, eventBus, (Set) adminsSet)

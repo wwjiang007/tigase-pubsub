@@ -27,132 +27,151 @@
 
 package tigase.admin
 
+import groovy.transform.CompileStatic
 import tigase.db.TigaseDBException
+import tigase.eventbus.EventBus
+import tigase.kernel.core.Kernel
 import tigase.pubsub.AbstractNodeConfig
+import tigase.pubsub.LeafNodeConfig
 import tigase.pubsub.NodeType
+import tigase.pubsub.PubSubComponent
+import tigase.pubsub.PubSubConfig
 import tigase.pubsub.exceptions.PubSubErrorCondition
 import tigase.pubsub.exceptions.PubSubException
+import tigase.pubsub.modules.PublishItemModule
 import tigase.pubsub.modules.RetractItemModule
 import tigase.pubsub.repository.IPubSubRepository
 import tigase.server.Command
+import tigase.server.Iq
 import tigase.server.Packet
 import tigase.xml.Element
 import tigase.xmpp.Authorization
 
-try {
-def NODE = "node"
-def ID = "item-id";
-def EXPIRE = "expire-at";
-def ENTRY = "entry";
 
-IPubSubRepository pubsubRepository = component.pubsubRepository
+Kernel kernel = (Kernel) kernel;
+PubSubComponent component = (PubSubComponent) component
+packet = (Iq) packet
+eventBus = (EventBus) eventBus
 
-def p = (Packet)packet
-def admins = (Set)adminsSet
-def stanzaFromBare = p.getStanzaFrom().getBareJID()
-def isServiceAdmin = admins.contains(stanzaFromBare)
+@CompileStatic
+Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus, Set admins) {
 
-def node = Command.getFieldValue(packet, NODE)
-def id = Command.getFieldValue(packet, ID);
+    try {
+        def NODE = "node"
+        def ID = "item-id";
 
-if (!node || !id) {
-	def result = p.commandResult(Command.DataType.form);
+        def componentConfig = kernel.getInstance(PubSubConfig.class)
+        IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 
-	Command.addTitle(result, "Delete item from a node")
-	Command.addInstructions(result, "Fill out this form to delete item from a node.")
+        def stanzaFromBare = p.getStanzaFrom().getBareJID()
+        def isServiceAdmin = admins.contains(stanzaFromBare)
 
-	Command.addFieldValue(result, NODE, node ?: "", "text-single",
-			"The node to delete from")
-	Command.addFieldValue(result, ID, id ?: "", "text-single",
-			"ID of item")
-	return result
+        def node = Command.getFieldValue(p, NODE);
+        def id = Command.getFieldValue(p, ID);
+
+        if (!node || !id) {
+            def result = p.commandResult(Command.DataType.form);
+
+            Command.addTitle(result, "Delete item from a node")
+            Command.addInstructions(result, "Fill out this form to delete item from a node.")
+
+            Command.addFieldValue(result, NODE, node ?: "", "text-single",
+                    "The node to delete from")
+            Command.addFieldValue(result, ID, id ?: "", "text-single",
+                    "ID of item")
+            return result
+        }
+
+        def result = p.commandResult(Command.DataType.result)
+        try {
+            if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
+                def toJid = p.getStanzaTo().getBareJID();
+
+                def nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
+                if (nodeConfig == null) {
+                    throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Node " + node + " needs " +
+                            "to be created before an item can be published.");
+                }
+                if (nodeConfig.getNodeType() == NodeType.collection) {
+                    throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
+                            new PubSubErrorCondition("unsupported", "publish"));
+                }
+
+                def nodeAffiliations = pubsubRepository.getNodeAffiliations(toJid, node);
+                def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
+
+                def removed = false;
+                if (((LeafNodeConfig) nodeConfig).isPersistItem()) {
+                    def nodeItems = pubsubRepository.getNodeItems(toJid, node);
+                    if (nodeItems.getItemCreationDate(id)) {
+                        Element retract = new Element("retract", ["id"] as String[], [id] as String[]);
+                        Element notification = new Element("items", ["node"] as String[], [node] as String[]);
+                        notification.addChild(retract);
+
+                        removed = true;
+                        nodeItems.deleteItem(id);
+                        eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, node, notification));
+
+                        def publishNodeModule = kernel.getInstance(PublishItemModule.class);
+                        publishNodeModule.sendNotifications(notification, p.getStanzaTo(),
+                                node, nodeConfig,
+                                nodeAffiliations, nodeSubscriptions)
+
+                        def parents = publishNodeModule.getParents(toJid, node);
+
+                        if (!parents) {
+                            parents.each { collection ->
+                                def headers = [Collection: collection];
+
+                                AbstractNodeConfig colNodeConfig = pubsubRepository.getNodeConfig(toJid, collection);
+                                def colNodeSubscriptions =
+                                        pubsubRepository.getNodeSubscriptions(toJid, collection);
+                                def colNodeAffiliations =
+                                        pubsubRepository.getNodeAffiliations(toJid, collection);
+
+                                publishNodeModule.sendNotifications(notification, p.getStanzaTo(),
+                                        node, headers, colNodeConfig,
+                                        colNodeAffiliations, colNodeSubscriptions)
+                            }
+                        }
+                    }
+                }
+
+                if (removed) {
+                    Command.addTextField(result, "Note", "Operation successful");
+                    Command.addFieldValue(result, "item-id", "" + id, "fixed", "Item ID");
+                } else {
+                    throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Item with ID " + id + " was not found");
+                }
+            } else {
+                //Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
+                throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
+                        "permissions to publish item to a node.");
+            }
+        } catch (PubSubException ex) {
+            Command.addTextField(result, "Error", ex.getMessage())
+            if (ex.getErrorCondition()) {
+                def error = ex.getErrorCondition();
+                Element errorEl = new Element("error");
+                errorEl.setAttribute("type", error.getErrorType());
+                Element conditionEl = new Element(error.getCondition(), ex.getMessage());
+                conditionEl.setXMLNS(Packet.ERROR_NS);
+                errorEl.addChild(conditionEl);
+                Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
+                if (pubsubCondition)
+                    errorEl.addChild(pubsubCondition);
+                result.getElement().addChild(errorEl);
+            }
+        } catch (TigaseDBException ex) {
+            Command.addTextField(result, "Note", "Problem accessing database, item not published to node.");
+        }
+
+        return result
+
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        return null;
+    }
 }
 
-def result = p.commandResult(Command.DataType.result)
-try {
-	if (isServiceAdmin || component.componentConfig.isAdmin(stanzaFromBare)) {
-		def toJid = p.getStanzaTo().getBareJID();
-
-		def nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
-		if (nodeConfig == null) {
-			throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Node " + node + " needs " +
-				"to be created before an item can be published.");
-		}
-		if (nodeConfig.getNodeType() == NodeType.collection) {
-			throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
-						new PubSubErrorCondition("unsupported", "publish"));
-		}
-
-		def nodeAffiliations = pubsubRepository.getNodeAffiliations(toJid, node);
-		def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
-
-		def removed = false;
-		if (nodeConfig.isPersistItem()) {
-			def nodeItems = pubsubRepository.getNodeItems(toJid, node);
-			if (nodeItems.getItemCreationDate(id)) {
-				Element retract = new Element("retract", ["id"] as String[], [id] as String[]);
-				Element notification = new Element("items", ["node"] as String[], [node] as String[]);
-				notification.addChild(retract);
-					
-				removed = true;
-				nodeItems.deleteItem(id);
-				eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, node, notification));
-
-				component.publishNodeModule.sendNotifications(notification, packet.getStanzaTo(),
-						node, nodeConfig,
-						nodeAffiliations, nodeSubscriptions)
-
-				def parents = component.publishNodeModule.getParents(toJid, node);
-
-				if (!parents) {
-					parents.each { collection ->
-						def headers = [Collection:collection];
-
-						AbstractNodeConfig colNodeConfig    = pubsubRepository.getNodeConfig(toJid, collection);
-						def colNodeSubscriptions =
-								pubsubRepository.getNodeSubscriptions(toJid, collection);
-						def colNodeAffiliations =
-								pubsubRepository.getNodeAffiliations(toJid, collection);
-
-						component.publishNodeModule.sendNotifications(notification, packet.getStanzaTo(),
-								node, headers, colNodeConfig,
-								colNodeAffiliations, colNodeSubscriptions)
-					}
-				}
-			}
-		}
-		
-		if (removed) {	
-			Command.addTextField(result, "Note", "Operation successful");
-			Command.addFieldValue(result, "item-id", "" + id, "fixed", "Item ID");
-		} else {
-			throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Item with ID " + id + " was not found");
-		}
-	} else {
-		//Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
-		throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
-				"permissions to publish item to a node.");
-	}
-} catch (PubSubException ex) {
-	Command.addTextField(result, "Error", ex.getMessage())
-	if (ex.getErrorCondition()) {
-		def error = ex.getErrorCondition();
-		Element errorEl = new Element("error");
-		errorEl.setAttribute("type", error.getErrorType());
-		Element conditionEl = new Element(error.getCondition(), ex.getMessage());
-		conditionEl.setXMLNS(Packet.ERROR_NS);
-		errorEl.addChild(conditionEl);
-		Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
-		if (pubsubCondition)
-			errorEl.addChild(pubsubCondition);
-		result.getElement().addChild(errorEl);
-	}
-} catch (TigaseDBException ex) {
-	Command.addTextField(result, "Note", "Problem accessing database, item not published to node.");
-}
-
-return result
-
-} catch (Exception ex) {
-	ex.printStackTrace();
-}
+return process(kernel, component, packet, eventBus, (Set) adminsSet)
