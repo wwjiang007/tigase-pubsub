@@ -1,7 +1,5 @@
 package tigase.pubsub.modules.commands;
 
-import java.util.Arrays;
-
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -21,6 +19,8 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
+import java.util.Arrays;
+
 /**
  * Class description
  *
@@ -35,7 +35,7 @@ public class DeleteAllNodesCommand implements AdHocCommand {
 	private PubSubConfig config;
 
 	@Inject
-	private IPubSubDAO<?> dao;
+	private IPubSubDAO<?,?> dao;
 
 	@Inject
 	private UserRepository userRepo;

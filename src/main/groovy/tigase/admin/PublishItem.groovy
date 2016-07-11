@@ -27,17 +27,20 @@
 
 package tigase.admin
 
-import tigase.server.*
-import tigase.util.*
-import tigase.xmpp.*
-import tigase.db.*
-import tigase.xml.*
-import tigase.vhosts.*
-import tigase.pubsub.*
-import tigase.pubsub.repository.IPubSubRepository
-import tigase.pubsub.exceptions.PubSubException
+import tigase.db.TigaseDBException
+import tigase.pubsub.AbstractNodeConfig
+import tigase.pubsub.NodeType
 import tigase.pubsub.exceptions.PubSubErrorCondition
-import tigase.pubsub.modules.PublishItemModule.ItemPublishedHandler
+import tigase.pubsub.exceptions.PubSubException
+import tigase.pubsub.modules.PublishItemModule
+import tigase.pubsub.repository.IPubSubRepository
+import tigase.server.Command
+import tigase.server.Packet
+import tigase.util.DateTimeFormatter
+import tigase.xml.DomBuilderHandler
+import tigase.xml.Element
+import tigase.xml.SingletonFactory
+import tigase.xmpp.Authorization
 
 
 try {
@@ -165,8 +168,8 @@ try {
         def itemsToSend = [];
         itemsToSend += item;
 
-        component.getEventBus().fire(
-				new ItemPublishedHandler.ItemPublishedEvent(packet.getStanzaTo().getBareJID(), node, itemsToSend));
+        eventBus.fire(
+				new PublishItemModule.ItemPublishedEvent(p.getStanzaTo().getBareJID(), node, itemsToSend));
 
 		Command.addTextField(result, "Note", "Operation successful");
 		Command.addFieldValue(result, "item-id", "" + id, "fixed", "Item ID")

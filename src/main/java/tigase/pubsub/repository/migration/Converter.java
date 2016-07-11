@@ -4,15 +4,6 @@
  */
 package tigase.pubsub.repository.migration;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.conf.ConfiguratorAbstract;
 import tigase.db.RepositoryFactory;
@@ -22,6 +13,11 @@ import tigase.pubsub.CollectionNodeConfig;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xmpp.BareJID;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -244,7 +240,8 @@ public class Converter {
 			newRepo = new PubSubNewDAOJDBC();
 			log.log(Level.INFO, "initializing destination repository {0} for uri {1}",
 					new Object[] { newRepo.getClass().getCanonicalName(), newRepoUri });
-			newRepo.init(newRepoUri, null, null);
+			// FIXME: Converter will no longer work!!
+			//newRepo.init(newRepoUri, null, null);
 		} catch (Exception ex) {
 			throw new RepositoryException("could not initialize converter", ex);
 		}

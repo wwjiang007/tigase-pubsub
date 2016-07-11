@@ -470,6 +470,11 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 		return node;
 	}
 
+	protected Node getNodeFromCache(BareJID serviceJid, String nodeName) {
+		String key = createKey(serviceJid, nodeName);
+		return this.nodes.get(key);
+	}
+
 	@Override
 	public IAffiliations getNodeAffiliations(BareJID serviceJid, String nodeName) throws RepositoryException {
 		Node node = getNode(serviceJid, nodeName);

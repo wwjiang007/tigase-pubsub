@@ -27,18 +27,17 @@
 
 package tigase.admin
 
-import tigase.server.*
-import tigase.util.*
-import tigase.xmpp.*
-import tigase.db.*
-import tigase.xml.*
-import tigase.vhosts.*
-import tigase.pubsub.*
-import tigase.pubsub.repository.IPubSubRepository
-import tigase.pubsub.exceptions.PubSubException
+import tigase.db.TigaseDBException
+import tigase.pubsub.AbstractNodeConfig
+import tigase.pubsub.NodeType
 import tigase.pubsub.exceptions.PubSubErrorCondition
-import tigase.pubsub.modules.PublishItemModule.ItemPublishedHandler
-
+import tigase.pubsub.exceptions.PubSubException
+import tigase.pubsub.modules.RetractItemModule
+import tigase.pubsub.repository.IPubSubRepository
+import tigase.server.Command
+import tigase.server.Packet
+import tigase.xml.Element
+import tigase.xmpp.Authorization
 
 try {
 def NODE = "node"
@@ -95,29 +94,31 @@ try {
 				Element notification = new Element("items", ["node"] as String[], [node] as String[]);
 				notification.addChild(retract);
 					
+				removed = true;
+				nodeItems.deleteItem(id);
+				eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, node, notification));
+
 				component.publishNodeModule.sendNotifications(notification, packet.getStanzaTo(),
 						node, nodeConfig,
 						nodeAffiliations, nodeSubscriptions)
-					
+
 				def parents = component.publishNodeModule.getParents(toJid, node);
-					
+
 				if (!parents) {
 					parents.each { collection ->
 						def headers = [Collection:collection];
-						
+
 						AbstractNodeConfig colNodeConfig    = pubsubRepository.getNodeConfig(toJid, collection);
 						def colNodeSubscriptions =
-						pubsubRepository.getNodeSubscriptions(toJid, collection);
+								pubsubRepository.getNodeSubscriptions(toJid, collection);
 						def colNodeAffiliations =
-						pubsubRepository.getNodeAffiliations(toJid, collection);
-							
+								pubsubRepository.getNodeAffiliations(toJid, collection);
+
 						component.publishNodeModule.sendNotifications(notification, packet.getStanzaTo(),
 								node, headers, colNodeConfig,
 								colNodeAffiliations, colNodeSubscriptions)
 					}
 				}
-				removed = true;
-				nodeItems.deleteItem(id);
 			}
 		}
 		

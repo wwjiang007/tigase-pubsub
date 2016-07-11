@@ -30,16 +30,16 @@
 
 package tigase.admin
 
-import tigase.server.*
-import tigase.util.*
-import tigase.xmpp.*
-import tigase.db.*
-import tigase.xml.*
-import tigase.vhosts.*
-import tigase.pubsub.*
-import tigase.pubsub.repository.IPubSubRepository
+import tigase.db.TigaseDBException
+import tigase.pubsub.AbstractNodeConfig
+import tigase.pubsub.CollectionNodeConfig
 import tigase.pubsub.exceptions.PubSubException
-import tigase.pubsub.modules.NodeDeleteModule.NodeDeleteHandler.NodeDeleteEvent;
+import tigase.pubsub.modules.NodeDeleteModule
+import tigase.pubsub.repository.IPubSubRepository
+import tigase.server.Command
+import tigase.server.Packet
+import tigase.xml.Element
+import tigase.xmpp.Authorization;
 
 def NODE = "node"
 
@@ -126,7 +126,7 @@ try {
 		
 		pubsubRepository.deleteNode(toJid, node);
 			
-		NodeDeleteEvent event = new NodeDeleteEvent(packet, node);
+		NodeDeleteModule.NodeDeletedEvent event = new NodeDeleteModule.NodeDeletedEvent(toJid, node);
 		component.getEventBus().fire(event);
 		
 		results.each { packet ->

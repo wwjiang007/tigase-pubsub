@@ -30,16 +30,16 @@
 
 package tigase.admin
 
-import tigase.server.*
-import tigase.util.*
-import tigase.xmpp.*
-import tigase.db.*
-import tigase.xml.*
-import tigase.vhosts.*
+import tigase.db.TigaseDBException
 import tigase.pubsub.*
-import tigase.pubsub.repository.IPubSubRepository
 import tigase.pubsub.exceptions.PubSubException
-import tigase.pubsub.modules.NodeCreateModule.NodeCreateHandler.NodeCreateEvent;
+import tigase.pubsub.modules.NodeCreateModule
+import tigase.pubsub.repository.IPubSubRepository
+import tigase.server.Command
+import tigase.server.Packet
+import tigase.xml.Element
+import tigase.xmpp.Authorization
+import tigase.xmpp.BareJID;
 
 def NODE = "node"
 def OWNER = "owner";
@@ -141,7 +141,7 @@ try {
 			pubsubRepository.update(toJid, collection, colNodeConfig);
 		}
 		
-		NodeCreateEvent event = new NodeCreateEvent(packet, node);		
+		NodeCreateModule.NodeCreatedEvent event = new NodeCreateModule.NodeCreatedEvent(toJid, node);
 		component.getEventBus().fire(event);
 
 		if (collection != '') {

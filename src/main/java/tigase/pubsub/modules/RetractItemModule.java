@@ -24,6 +24,7 @@ package tigase.pubsub.modules;
 
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.eventbus.EventBus;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.*;
@@ -31,16 +32,13 @@ import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
-import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Class description
@@ -49,8 +47,26 @@ import java.util.List;
  */
 @Bean(name = "retractItemModule", parent = PubSubComponent.class)
 public class RetractItemModule extends AbstractPubSubModule {
+
+	public static class ItemRetractedEvent {
+
+		public final BareJID serviceJid;
+		public final String node;
+		public final Element notification;
+
+		public ItemRetractedEvent(BareJID serviceJid, String node, Element notification) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+			this.notification = notification;
+		}
+
+	}
+
 	private static final Criteria CRIT_RETRACT = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("retract"));
+
+	@Inject
+	private EventBus eventBus;
 
 	@Inject
 	private PublishItemModule publishModule;
@@ -149,7 +165,6 @@ public class RetractItemModule extends AbstractPubSubModule {
 
 			Packet result = packet.okResult((Element) null, 0);
 
-			ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(toJid, nodeName);
 			IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
 
 			for (String id : itemsToDelete) {
@@ -158,9 +173,11 @@ public class RetractItemModule extends AbstractPubSubModule {
 				if (date != null) {
 					Element notification = createNotification(leafNodeConfig, itemsToDelete, nodeName);
 
-					publishModule.sendNotifications(notification, packet.getStanzaTo(), nodeName, nodeConfig, nodeAffiliations,
-							nodeSubscriptions);
 					nodeItems.deleteItem(id);
+
+					eventBus.fire(new ItemRetractedEvent(packet.getStanzaTo().getBareJID(), nodeName, notification));
+
+					publishModule.sendNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(notification));
 				}
 			}
 

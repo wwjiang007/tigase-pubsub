@@ -4,14 +4,12 @@
  */
 package tigase.pubsub.repository.migration;
 
+import tigase.component.exceptions.RepositoryException;
+import tigase.xmpp.BareJID;
+
 import java.sql.CallableStatement;
 import java.sql.SQLException;
 import java.util.Date;
-import java.util.Map;
-
-import tigase.component.exceptions.RepositoryException;
-import tigase.db.UserRepository;
-import tigase.xmpp.BareJID;
 
 /**
  *
@@ -62,15 +60,4 @@ public class PubSubNewDAOJDBC extends tigase.pubsub.repository.PubSubDAOJDBC {
 		}
 	}
 
-	@Override
-	public void init(String resource_uri, Map<String, String> params, UserRepository userRepository)
-			throws RepositoryException {
-		super.init(resource_uri, params, userRepository);
-		try {
-			fix_node_st = conn.prepareCall("{ call TigPubSubFixNode(?,?) }");
-			fix_item_st = conn.prepareCall("{ call TigPubSubFixItem(?,?,?,?) }");
-		} catch (SQLException ex) {
-			throw new RepositoryException("could not initialize repository", ex);
-		}
-	}
 }

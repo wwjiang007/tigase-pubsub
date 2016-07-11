@@ -67,6 +67,20 @@ import java.util.logging.Logger;
 @Bean(name = "publishItemModule", parent = PubSubComponent.class)
 public class PublishItemModule extends AbstractPubSubModule implements Initializable, UnregisterAware {
 
+	public static class ItemPublishedEvent {
+
+		public final BareJID serviceJid;
+		public final String node;
+		public final List<Element> itemsToSend;
+
+		public ItemPublishedEvent(BareJID serviceJid, String node, List<Element> itemsToSend) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+			this.itemsToSend = itemsToSend;
+		}
+
+	}
+
 	private static class Item {
 		final String id;
 		final Date updateDate;
@@ -174,17 +188,40 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 	}
 
 	public void doPublishItems(BareJID serviceJID, String nodeName, LeafNodeConfig leafNodeConfig,
-			IAffiliations nodeAffiliations, ISubscriptions nodeSubscriptions, String publisher, List<Element> itemsToSend)
+			String publisher, List<Element> itemsToSend)
 					throws RepositoryException {
-		Element event = new Element("ItemPublished", new String[] { "xmlns" }, new String[] { PubSubComponent.EVENT_XMLNS });
-		event.addChild(new Element("service", serviceJID.toString()));
-		event.addChild(new Element("node", nodeName));
-		Element itemsEv = new Element("items");
-		event.addChild(itemsEv);
-		itemsEv.addChildren(itemsToSend);
-		eventBus.fire(event);
+		if (leafNodeConfig.isPersistItem()) {
+			IItems nodeItems = getRepository().getNodeItems(serviceJID, nodeName);
 
+			for (Element item : itemsToSend) {
+				final String id = item.getAttributeStaticStr("id");
+
+				if (!config.isPepRemoveEmptyGeoloc()) {
+					nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item);
+				} else {
+					Element geoloc = item.findChildStaticStr(new String[] { "item", "geoloc" });
+					if (geoloc != null && (geoloc.getChildren() == null || geoloc.getChildren().size() == 0)) {
+						nodeItems.deleteItem(id);
+					} else {
+						nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item);
+					}
+				}
+			}
+			if (leafNodeConfig.getMaxItems() != null) {
+				trimItems(nodeItems, leafNodeConfig.getMaxItems());
+			}
+		}
+
+		eventBus.fire(new ItemPublishedEvent(serviceJID, nodeName, itemsToSend));
+		sendNotifications(serviceJID, nodeName, itemsToSend);
+	}
+
+	public void sendNotifications(BareJID serviceJID, String nodeName, List<Element> itemsToSend) throws RepositoryException {
 		final Element items = new Element("items", new String[] { "node" }, new String[] { nodeName });
+
+		AbstractNodeConfig leafNodeConfig = getRepository().getNodeConfig(serviceJID, nodeName);
+		IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJID, nodeName);
+		ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(serviceJID, nodeName);
 
 		items.addChildren(itemsToSend);
 		sendNotifications(items, JID.jidInstance(serviceJID), nodeName,
@@ -207,27 +244,6 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 
 				sendNotifications(items, JID.jidInstance(serviceJID), nodeName, headers, colNodeConfig, colNodeAffiliations,
 						colNodeSubscriptions);
-			}
-		}
-		if (leafNodeConfig.isPersistItem()) {
-			IItems nodeItems = getRepository().getNodeItems(serviceJID, nodeName);
-
-			for (Element item : itemsToSend) {
-				final String id = item.getAttributeStaticStr("id");
-
-				if (!config.isPepRemoveEmptyGeoloc()) {
-					nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item);
-				} else {
-					Element geoloc = item.findChildStaticStr(new String[] { "item", "geoloc" });
-					if (geoloc != null && (geoloc.getChildren() == null || geoloc.getChildren().size() == 0)) {
-						nodeItems.deleteItem(id);
-					} else {
-						nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item);
-					}
-				}
-			}
-			if (leafNodeConfig.getMaxItems() != null) {
-				trimItems(nodeItems, leafNodeConfig.getMaxItems());
 			}
 		}
 	}
@@ -534,7 +550,7 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 			}
 			packetWriter.write(resultIq);
 
-			doPublishItems(toJid, nodeName, leafNodeConfig, nodeAffiliations, nodeSubscriptions,
+			doPublishItems(toJid, nodeName, leafNodeConfig,
 					element.getAttributeStaticStr("from"), itemsToSend);
 		} catch (PubSubException e1) {
 			throw e1;
@@ -550,7 +566,7 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 		IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJid, nodeName);
 		ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(serviceJid, nodeName);
 
-		doPublishItems(serviceJid, nodeName, (LeafNodeConfig) nodeConfig, nodeAffiliations, nodeSubscriptions, publisher,
+		doPublishItems(serviceJid, nodeName, (LeafNodeConfig) nodeConfig, publisher,
 				Collections.singletonList(item));
 	}
 

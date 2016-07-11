@@ -1,21 +1,21 @@
 package tigase.pubsub.repository.cached;
 
-import java.util.Date;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 class Items<T> implements IItems {
 
 	private static final Logger log = Logger.getLogger(Items.class.getName());
 
-	private final IPubSubDAO<T> dao;
+	private final IPubSubDAO<T,?> dao;
 
 	private final T nodeId;
 

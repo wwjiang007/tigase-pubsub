@@ -32,6 +32,7 @@ import tigase.conf.ConfigurationException;
 import tigase.db.RepositoryFactory;
 import tigase.db.UserRepository;
 import tigase.eventbus.HandleEvent;
+import tigase.kernel.beans.Inject;
 import tigase.kernel.core.Kernel;
 import tigase.pubsub.modules.XsltTool;
 import tigase.pubsub.modules.commands.DefaultConfigCommand;
@@ -119,6 +120,7 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	}
 
 	/** Field description */
+	@Inject(bean = "defaultNodeConfig")
 	protected LeafNodeConfig defaultNodeConfig;
 
 	/** Field description */
