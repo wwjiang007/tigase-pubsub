@@ -31,7 +31,6 @@ import groovy.transform.CompileStatic
 import tigase.db.TigaseDBException
 import tigase.eventbus.EventBus
 import tigase.kernel.core.Kernel
-import tigase.pubsub.AbstractNodeConfig
 import tigase.pubsub.LeafNodeConfig
 import tigase.pubsub.NodeType
 import tigase.pubsub.PubSubComponent
@@ -46,7 +45,6 @@ import tigase.server.Iq
 import tigase.server.Packet
 import tigase.xml.Element
 import tigase.xmpp.Authorization
-
 
 Kernel kernel = (Kernel) kernel;
 PubSubComponent component = (PubSubComponent) component
@@ -97,43 +95,18 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
                             new PubSubErrorCondition("unsupported", "publish"));
                 }
 
-                def nodeAffiliations = pubsubRepository.getNodeAffiliations(toJid, node);
-                def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
-
                 def removed = false;
                 if (((LeafNodeConfig) nodeConfig).isPersistItem()) {
                     def nodeItems = pubsubRepository.getNodeItems(toJid, node);
                     if (nodeItems.getItemCreationDate(id)) {
-                        Element retract = new Element("retract", ["id"] as String[], [id] as String[]);
-                        Element notification = new Element("items", ["node"] as String[], [node] as String[]);
-                        notification.addChild(retract);
+                        Element notification = new Element("retract", ["id"] as String[], [id] as String[]);
 
                         removed = true;
                         nodeItems.deleteItem(id);
                         eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, node, notification));
 
                         def publishNodeModule = kernel.getInstance(PublishItemModule.class);
-                        publishNodeModule.sendNotifications(notification, p.getStanzaTo(),
-                                node, nodeConfig,
-                                nodeAffiliations, nodeSubscriptions)
-
-                        def parents = publishNodeModule.getParents(toJid, node);
-
-                        if (!parents) {
-                            parents.each { collection ->
-                                def headers = [Collection: collection];
-
-                                AbstractNodeConfig colNodeConfig = pubsubRepository.getNodeConfig(toJid, collection);
-                                def colNodeSubscriptions =
-                                        pubsubRepository.getNodeSubscriptions(toJid, collection);
-                                def colNodeAffiliations =
-                                        pubsubRepository.getNodeAffiliations(toJid, collection);
-
-                                publishNodeModule.sendNotifications(notification, p.getStanzaTo(),
-                                        node, headers, colNodeConfig,
-                                        colNodeAffiliations, colNodeSubscriptions)
-                            }
-                        }
+                        publishNodeModule.sendNotifications(p.getStanzaTo().getBareJID(), node, [notification]);
                     }
                 }
 

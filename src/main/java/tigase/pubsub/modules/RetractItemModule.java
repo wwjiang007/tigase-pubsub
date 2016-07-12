@@ -71,16 +71,6 @@ public class RetractItemModule extends AbstractPubSubModule {
 	@Inject
 	private PublishItemModule publishModule;
 
-	private Element createNotification(final LeafNodeConfig config, final List<String> itemsToSend, final String nodeName) {
-		Element items = new Element("items", new String[] { "node" }, new String[] { nodeName });
-
-		for (String id : itemsToSend) {
-			items.addChild(new Element("retract", new String[] { "id" }, new String[] { id }));
-		}
-
-		return items;
-	}
-
 	/**
 	 * Method description
 	 *
@@ -167,18 +157,22 @@ public class RetractItemModule extends AbstractPubSubModule {
 
 			IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
 
-			for (String id : itemsToDelete) {
-				Date date = nodeItems.getItemCreationDate(id);
+			List<Element> itemsToSend = new ArrayList<>(itemsToDelete.size());
+			try {
+				for (String id : itemsToDelete) {
+					Date date = nodeItems.getItemCreationDate(id);
 
-				if (date != null) {
-					Element notification = createNotification(leafNodeConfig, itemsToDelete, nodeName);
+					if (date != null) {
+						nodeItems.deleteItem(id);
 
-					nodeItems.deleteItem(id);
+						Element notification = new Element("retract", new String[]{"id"}, new String[]{id});
 
-					eventBus.fire(new ItemRetractedEvent(packet.getStanzaTo().getBareJID(), nodeName, notification));
-
-					publishModule.sendNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(notification));
+						eventBus.fire(new ItemRetractedEvent(packet.getStanzaTo().getBareJID(), nodeName, notification));
+						itemsToSend.add(notification);
+					}
 				}
+			} finally {
+				publishModule.sendNotifications(packet.getStanzaTo().getBareJID(), nodeName, itemsToSend);
 			}
 
 			packetWriter.write(result);
