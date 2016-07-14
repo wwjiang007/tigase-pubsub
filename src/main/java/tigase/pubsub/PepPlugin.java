@@ -22,10 +22,12 @@ package tigase.pubsub;
 import tigase.db.NonAuthUserRepository;
 import tigase.db.TigaseDBException;
 
+import tigase.kernel.beans.Bean;
 import tigase.server.Iq;
 import tigase.server.Packet;
 import tigase.server.Presence;
 
+import tigase.server.xmppsession.SessionManager;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.JID;
 import tigase.xmpp.NotAuthorizedException;
@@ -52,6 +54,7 @@ import java.util.logging.Logger;
  *
  * @author andrzej
  */
+@Bean(name = "pep", parent = SessionManager.class, active = false)
 public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 
 	protected static final String PUBSUB_XMLNS = "http://jabber.org/protocol/pubsub";

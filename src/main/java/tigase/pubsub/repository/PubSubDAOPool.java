@@ -374,6 +374,10 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPu
 
 	@Override
 	public Map<BareJID, RosterElement> getUserRoster(BareJID owner) throws RepositoryException {
+		IPubSubDAO dao = takeDao(null);
+		if (dao != null) {
+			return dao.getUserRoster(owner);
+		}
 		return null;
 	}
 
@@ -458,6 +462,9 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPu
 	}
 
 	public IPubSubDAO takeDao(BareJID serviceJid) {
+		if (serviceJid == null) {
+			return getRepository("default");
+		}
 		return getRepository(serviceJid.getDomain());
 	}
 
