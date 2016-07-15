@@ -56,6 +56,7 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPu
 	private boolean destroyed = false;
 
 	public PubSubDAOPool() {
+		domainSelection = SelectorType.MainOnly;
 	}
 
 	@Override
