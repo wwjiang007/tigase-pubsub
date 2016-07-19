@@ -28,6 +28,7 @@ import tigase.db.DataSource;
 import tigase.db.DataSourceHelper;
 import tigase.db.beans.MDRepositoryBean;
 import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.config.ConfigField;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubComponent;
@@ -55,8 +56,11 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPu
 	 */
 	private boolean destroyed = false;
 
+	@ConfigField(desc = "Use same domain to lookup for PEP nodes and component nodes")
+	private boolean mapComponentToBareDomain = false;
+
 	public PubSubDAOPool() {
-		domainSelection = SelectorType.MainOnly;
+		dataSourceSelection = SelectorType.MainOnly;
 	}
 
 	@Override
@@ -466,6 +470,15 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPu
 		if (serviceJid == null) {
 			return getRepository("default");
 		}
+		if (mapComponentToBareDomain && serviceJid.getLocalpart() == null) {
+			int idx = serviceJid.getDomain().indexOf(".");
+			if (idx > 0) {
+				//String cmpName = serviceJid.getDomain().substring(0, idx);
+				String basename = serviceJid.getDomain().substring(idx + 1);
+				return getRepository(basename);
+			}
+		}
+
 		return getRepository(serviceJid.getDomain());
 	}
 
