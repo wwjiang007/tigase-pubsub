@@ -28,8 +28,6 @@ import tigase.component.modules.impl.AdHocCommandModule;
 import tigase.component.modules.impl.JabberVersionModule;
 import tigase.component.modules.impl.XmppPingModule;
 import tigase.conf.Configurable;
-import tigase.conf.ConfigurationException;
-import tigase.db.RepositoryFactory;
 import tigase.db.UserRepository;
 import tigase.eventbus.HandleEvent;
 import tigase.kernel.beans.Inject;
@@ -169,30 +167,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	public String getComponentVersion() {
 		String version = this.getClass().getPackage().getImplementationVersion();
 		return version == null ? "0.0.0" : version;
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param params
-	 *
-	 * @return
-	 */
-	@Override
-	public Map<String, Object> getDefaults(Map<String, Object> params) {
-		Map<String, Object> props = super.getDefaults(params);
-
-		// By default use the same repository as all other components:
-		String repo_uri = null;
-
-		if (params.get(RepositoryFactory.GEN_USER_DB_URI) != null) {
-			repo_uri = (String) params.get(RepositoryFactory.GEN_USER_DB_URI);
-		} // end of if (params.get(GEN_USER_DB_URI) != null)
-		props.put(PUBSUB_REPO_URL_PROP_KEY, repo_uri);
-		props.put(PUBSUB_REPO_POOL_SIZE_PROP_KEY, 10);
-
-		return props;
 	}
 
 	@Override
@@ -369,26 +343,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 //		kernel.registerBean(PresencePerNodeExtension.class).exec();
 //
 //		kernel.registerBean(PubSubConfig.class).exec();
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param props
-	 */
-	@Override
-	public void setProperties(Map<String, Object> props) throws ConfigurationException {
-		if (props.size() == 1) {
-			// If props.size() == 1, it means this is a single property update
-			// and this component does not support single property change for
-			// the rest
-			// of it's settings
-			log.config("props.size() == 1, ignoring setting properties");
-			return;
-		}
-
-		super.setProperties(props);
 	}
 
 	@Override
