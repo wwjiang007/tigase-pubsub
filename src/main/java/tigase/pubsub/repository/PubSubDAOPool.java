@@ -60,7 +60,6 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPu
 	private boolean mapComponentToBareDomain = false;
 
 	public PubSubDAOPool() {
-		dataSourceSelection = SelectorType.MainOnly;
 	}
 
 	@Override
@@ -564,5 +563,14 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPu
 	protected Class<? extends IPubSubDAO<T, S>> findClassForDataSource(DataSource dataSource) throws DBInitException {
 		Class cls = DataSourceHelper.getDefaultClass(PubSubDAO.class, dataSource.getResourceUri());
 		return (Class<PubSubDAO<T, S>>) cls;
+	}
+
+	@Override
+	public Class<?> getDefaultBeanClass() {
+		return PubSubDAOConfigBean.class;
+	}
+
+	public static class PubSubDAOConfigBean extends MDRepositoryConfigBean<IPubSubDAO> {
+
 	}
 }
