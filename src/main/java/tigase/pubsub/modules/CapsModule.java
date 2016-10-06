@@ -71,8 +71,15 @@ public class CapsModule extends AbstractPubSubModule {
 			if (caps != null) {
 				Arrays.sort(caps);
 			}
+
 			Queue<Packet> results = new ArrayDeque<>();
-			PresenceCapabilitiesManager.prepareCapsQueries(config.getComponentJID(), jid, caps, results);
+			JID pubSubJid = packet.getStanzaTo();
+			if (pubSubJid.getLocalpart() != null) {
+				String compName = config.getComponentJID().getLocalpart();
+				pubSubJid = JID.jidInstanceNS(compName + "." + pubSubJid.getDomain());
+			}
+
+			PresenceCapabilitiesManager.prepareCapsQueries(pubSubJid, jid, caps, results);
 			packetWriter.write(results);
 		}
 		return caps;
