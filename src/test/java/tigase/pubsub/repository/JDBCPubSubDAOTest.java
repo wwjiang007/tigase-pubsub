@@ -1,5 +1,5 @@
 /*
- * PubSubDAOJDBCTest.java
+ * JDBCPubSubDAOTest.java
  *
  * Tigase PubSub Component
  * Copyright (C) 2004-2016 "Tigase, Inc." <office@tigase.com>
@@ -24,37 +24,27 @@ package tigase.pubsub.repository;
 import org.junit.*;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
-import org.junit.runners.MethodSorters;
 import org.junit.runners.model.Statement;
-import tigase.component.exceptions.RepositoryException;
 import tigase.db.DBInitException;
-import tigase.pubsub.LeafNodeConfig;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.repository.stateless.NodeMeta;
+import tigase.db.DataRepository;
+import tigase.db.DataRepositoryPool;
 import tigase.util.SchemaLoader;
-import tigase.util.TigaseStringprepException;
-import tigase.xmpp.BareJID;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Properties;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Created by andrzej on 23.02.2016.
  */
-// FIXME: Needs to be adjusted to work properly with new bean based DAO
-@Ignore
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class PubSubDAOJDBCTest {
+public class JDBCPubSubDAOTest extends AbstractPubSubDAOTest<DataRepository> {
 
 	private static final String PROJECT_ID = "pubsub";
-	private static final String VERSION = "3.2.0";
+	private static final String VERSION = "3.3.0";
 
-	private static final String uri = System.getProperty("testDbUri");
+	// We need at least 2 for SQLServer
+	private static int no_of_connections = 1;
 
 	@ClassRule
 	public static TestRule rule = new TestRule() {
@@ -91,6 +81,7 @@ public class PubSubDAOJDBCTest {
 					dbName = uri.substring(idx+1, uri.indexOf(";"));
 					break;
 				case "sqlserver":
+					no_of_connections = 2;
 					idx = uri.indexOf("//", idx) + 2;
 					rest = uri.substring(idx);
 					for (String x : rest.split(";")) {
@@ -185,51 +176,13 @@ public class PubSubDAOJDBCTest {
 		}
 	}
 
-	private PubSubDAOJDBC repo = new PubSubDAOJDBC();
-
-	private BareJID serviceJid;
-	private String nodeName;
-	private Long nodeId;
-
-	@Before
-	public void setup() throws RepositoryException, DBInitException {
-		///repo.initRepository(uri, new HashMap<>());
-	}
-
-	@After
-	public void tearDown() {
-		if (serviceJid != null && nodeId != null) {
-			try {
-				repo.deleteNode(serviceJid, nodeId);
-			} catch (RepositoryException e) {
-				e.printStackTrace();
-			}
+	@Override
+	protected DataRepository prepareDataSource() throws DBInitException, IllegalAccessException, InstantiationException {
+		DataRepositoryPool pool = new DataRepositoryPool();
+		pool.initRepository(uri, new HashMap());
+		for (int i=0; i<no_of_connections; i++) {
+			pool.addRepo(super.prepareDataSource());
 		}
-		repo.destroy();
+		return pool;
 	}
-
-	@Test
-	public void test1_nodeCreationMetaRetrievalNodeRemoval() throws TigaseStringprepException, RepositoryException {
-		serviceJid  = BareJID.bareJIDInstance("pubsub.example.com");
-		String nodeName = "test1_" + UUID.randomUUID();
-		BareJID owner = BareJID.bareJIDInstance("owner1_" + UUID.randomUUID(), "example.com");
-		LeafNodeConfig config = new LeafNodeConfig(nodeName);
-
-		long timeBefore = System.currentTimeMillis() / 1000;
-		nodeId = repo.createNode(serviceJid, nodeName, owner, config, NodeType.leaf, null);
-		long timeAfter = System.currentTimeMillis() / 1000;
-		assertNotNull(nodeId);
-
-		NodeMeta meta = repo.getNodeMeta(serviceJid, nodeName);
-		assertNotNull(meta);
-		assertEquals(nodeId, meta.getNodeId());
-		assertEquals(config.getNodeName(), meta.getNodeConfig().getNodeName());
-		assertEquals(owner, meta.getCreator());
-		assertNotNull(meta.getCreationTime());
-		// division is required as some databases store time in seconds
-//		long creationTime = meta.getCreationTime().getTime() / 1000;
-//		assertTrue("got creation time = " + creationTime + " and period was (" + timeBefore + "," + timeAfter + ") = time drift " + (creationTime - timeBefore),
-//				timeBefore < creationTime && timeAfter > creationTime);
-	}
-
 }

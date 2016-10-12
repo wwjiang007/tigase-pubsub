@@ -163,7 +163,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 		}
 	}
 
-	private class SizedCache extends LinkedHashMap<String, Node> implements StatisticHolder {
+	private class SizedCache extends LinkedHashMap<NodeKey, Node> implements StatisticHolder {
 		private static final long serialVersionUID = 1L;
 
 		private Counter hitsCounter = new Counter("cache/hits", Level.FINEST);
@@ -214,7 +214,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 		}
 
 		@Override
-		protected boolean removeEldestEntry(Map.Entry<String, Node> eldest) {
+		protected boolean removeEldestEntry(Map.Entry<NodeKey, Node> eldest) {
 			return (size() > maxCacheSize) && !eldest.getValue().needsWriting();
 		}
 
@@ -260,7 +260,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 
 	protected Logger log = Logger.getLogger(this.getClass().getName());
 
-	protected Map<String, Node> nodes;
+	protected Map<NodeKey, Node> nodes;
 
 	private long nodes_added = 0;
 
@@ -304,8 +304,8 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 		this.getRootCollectionSet(serviceJid).add(nodeName);
 	}
 
-	protected String createKey(BareJID serviceJid, String nodeName) {
-		return serviceJid.toString() + "/" + nodeName;
+	protected NodeKey createKey(BareJID serviceJid, String nodeName) {
+		return new NodeKey(serviceJid, nodeName);
 	}
 
 	@Override
@@ -338,7 +338,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 		NodeSubscriptions nodeSubscriptions = wrapNodeSubscriptions ( tigase.pubsub.repository.NodeSubscriptions.create() );
 		Node node = new Node(nodeId, serviceJid, nodeConfig, nodeAffiliations, nodeSubscriptions, ownerJid, new Date());
 
-		String key = createKey(serviceJid, nodeName);
+		NodeKey key = createKey(serviceJid, nodeName);
 		this.nodes.put(key, node);
 
 		long end = System.currentTimeMillis();
@@ -354,7 +354,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 
 	@Override
 	public void deleteNode(BareJID serviceJid, String nodeName) throws RepositoryException {
-		String key = createKey(serviceJid, nodeName);
+		NodeKey key = createKey(serviceJid, nodeName);
 		Node<T> node = this.nodes.get(key);
 		T nodeId = node != null ? node.getNodeId() : dao.getNodeId(serviceJid, nodeName);
 
@@ -408,7 +408,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 
 	@Override
 	public void forgetConfiguration(BareJID serviceJid, String nodeName) throws RepositoryException {
-		String key = createKey(serviceJid, nodeName);
+		NodeKey key = createKey(serviceJid, nodeName);
 		this.nodes.remove(key);
 	}
 
@@ -427,7 +427,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	}
 
 	protected Node getNode(BareJID serviceJid, String nodeName) throws RepositoryException {
-		String key = createKey(serviceJid, nodeName);
+		NodeKey key = createKey(serviceJid, nodeName);
 		Node<T> node = this.nodes.get(key);
 
 		if (log.isLoggable(Level.FINEST)) {
@@ -471,7 +471,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	}
 
 	protected Node getNodeFromCache(BareJID serviceJid, String nodeName) {
-		String key = createKey(serviceJid, nodeName);
+		NodeKey key = createKey(serviceJid, nodeName);
 		return this.nodes.get(key);
 	}
 
@@ -506,7 +506,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 
 	@Override
 	public IItems getNodeItems(BareJID serviceJid, String nodeName) throws RepositoryException {
-		String key = createKey(serviceJid, nodeName);
+		NodeKey key = createKey(serviceJid, nodeName);
 		long start = System.currentTimeMillis();
 		Node<T> node = this.nodes.get(key);
 		T nodeId = node != null ? node.getNodeId() : dao.getNodeId(serviceJid, nodeName);
@@ -594,10 +594,10 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 		long affiliationsCount = 0;
 
 		// synchronized (mutex) {
-		Map<String, Node> tmp = null;
+		Map<NodeKey, Node> tmp = null;
 
 		synchronized (nodes) {
-			tmp = new LinkedHashMap<String, Node>(nodes);
+			tmp = new LinkedHashMap<NodeKey, Node>(nodes);
 		}
 
 		for (Node nd : tmp.values()) {
@@ -695,7 +695,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 
 	@Override
 	public void removeFromRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
-		String key = createKey(serviceJid, nodeName);
+		NodeKey key = createKey(serviceJid, nodeName);
 		Node<T> node = this.nodes.get(key);
 		T nodeId = node != null ? node.getNodeId() : dao.getNodeId(serviceJid, nodeName);
 		if (log.isLoggable(Level.FINEST)) {
@@ -797,5 +797,34 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	
 	protected NodeSubscriptions wrapNodeSubscriptions(tigase.pubsub.repository.NodeSubscriptions nodeSubscriptions) {
 		return new NodeSubscriptions(nodeSubscriptions);
+	}
+
+	public static class NodeKey {
+
+		public final BareJID serviceJid;
+		public final String node;
+
+		public NodeKey(BareJID serviceJid, String node) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+		}
+
+		@Override
+		public int hashCode() {
+			return serviceJid.hashCode() * 31 + node.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (!(obj instanceof NodeKey)) {
+				return false;
+			}
+			return serviceJid.equals(((NodeKey) obj).serviceJid) && node.equals(((NodeKey) obj).node);
+		}
+
+		@Override
+		public String toString() {
+			return "NodeKey[serviceJid = " + serviceJid.toString() + ", node = " + node + "]";
+		}
 	}
 }

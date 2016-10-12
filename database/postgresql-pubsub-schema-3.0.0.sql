@@ -221,6 +221,10 @@ end;
 -- QUERY END:
 
 -- QUERY START:
+drop function if exists TigPubSubCreateNode(varchar,varchar,int,varchar,text,bigint);
+-- QUERY END:
+
+-- QUERY START:
 create or replace function TigPubSubCreateNode(varchar(2049),varchar(1024),int,varchar(2049),text,bigint) returns bigint as '
 declare
 	_service_jid alias for $1;

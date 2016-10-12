@@ -21,6 +21,10 @@
  */
 package tigase.pubsub.repository.derby;
 
+import tigase.util.Algorithms;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -81,25 +85,26 @@ public class StoredProcedures {
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
+			String serviceJidSha1 = sha1OfLower(serviceJid);
 			PreparedStatement ps = conn.prepareStatement("delete from tig_pubsub_items where node_id in ("
 					+ "select n.node_id from tig_pubsub_nodes n"
-					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid = ?)");
-			ps.setString(1, serviceJid);
+					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_affiliations where node_id in ("
 					+ "select n.node_id from tig_pubsub_nodes n"
-					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid = ?)");
-			ps.setString(1, serviceJid);
+					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_subscriptions where node_id in ("
 					+ "select n.node_id from tig_pubsub_nodes n"
-					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid = ?)");
-			ps.setString(1, serviceJid);
+					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_nodes where node_id in ("
 					+ "select n.node_id from tig_pubsub_nodes n"
-					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid = ?)");
-			ps.setString(1, serviceJid);
+					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			// e.printStackTrace();
@@ -136,10 +141,54 @@ public class StoredProcedures {
 
 		try {
 			PreparedStatement ps = conn.prepareStatement("delete from tig_pubsub_subscriptions where node_id = ?"
-					+ " and jid_id = (select jid_id from tig_pubsub_jids where jid = ?)");
+					+ " and jid_id = (select jid_id from tig_pubsub_jids where jid_sha1 = ?)");
 			ps.setLong(1, nodeId);
-			ps.setString(2, jid);
+			ps.setString(2, sha1OfLower(jid));
 			ps.executeUpdate();
+		} catch (SQLException e) {
+			// e.printStackTrace();
+			// log.log(Level.SEVERE, "SP error", e);
+			throw e;
+		} finally {
+			conn.close();
+		}
+	}
+
+	public static void tigPubSubWriteItem(Long nodeId, String itemId, String publisher, String itemData,
+										  ResultSet[] data) throws SQLException {
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			PreparedStatement ps = conn.prepareStatement("select 1 from tig_pubsub_items "
+																 + "where node_id = ? and id = ?");
+			ps.setLong(1, nodeId);
+			ps.setString(2, itemId);
+
+			ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				ps = conn.prepareStatement("update tig_pubsub_items set update_date = ?, data = ? "
+												   + "where node_id = ? and id = ?");
+				ps.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
+				ps.setString(2, itemData);
+				ps.setLong(3, nodeId);
+				ps.setString(4, itemId);
+				ps.executeUpdate();
+			}
+			else {
+				long publisherId = tigPubSubEnsureJid(publisher);
+				ps = conn.prepareStatement("insert into tig_pubsub_items (node_id, id, creation_date, "
+												   + "update_date, publisher_id, data) values (?, ?, ?, ?, ?, ?)");
+				ps.setLong(1, nodeId);
+				ps.setString(2, itemId);
+				java.sql.Timestamp ts = new java.sql.Timestamp(System.currentTimeMillis());
+				ps.setTimestamp(3, ts);
+				ps.setTimestamp(4, ts);
+				ps.setLong(5, publisherId);
+				ps.setString(6, itemData);
+				ps.executeUpdate();
+			}
 		} catch (SQLException e) {
 			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
@@ -155,15 +204,17 @@ public class StoredProcedures {
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
-			PreparedStatement ps = conn.prepareStatement("select jid_id from tig_pubsub_jids where jid = ?");
+			String jidSha1 = sha1OfLower(jid);
+			PreparedStatement ps = conn.prepareStatement("select jid_id from tig_pubsub_jids where jid_sha1 = ?");
 
-			ps.setString(1, jid);
+			ps.setString(1, jidSha1);
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
 				return rs.getLong(1);
 			} else {
-				ps = conn.prepareStatement("insert into tig_pubsub_jids (jid) values (?)", Statement.RETURN_GENERATED_KEYS);
+				ps = conn.prepareStatement("insert into tig_pubsub_jids (jid, jid_sha1) values (?, ?)", Statement.RETURN_GENERATED_KEYS);
 				ps.setString(1, jid);
+				ps.setString(2, jidSha1);
 				ps.executeUpdate();
 				rs = ps.getGeneratedKeys();
 				if (rs.next())
@@ -186,17 +237,19 @@ public class StoredProcedures {
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
+			String serviceJidSha1 = sha1OfLower(serviceJid);
 			PreparedStatement ps = conn.prepareStatement(
-					"select service_id from tig_pubsub_service_jids where service_jid = ?");
+					"select service_id from tig_pubsub_service_jids where service_jid_sha1 = ?");
 
-			ps.setString(1, serviceJid);
+			ps.setString(1, serviceJidSha1);
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
 				return rs.getLong(1);
 			} else {
-				ps = conn.prepareStatement("insert into tig_pubsub_service_jids (service_jid) values (?)",
+				ps = conn.prepareStatement("insert into tig_pubsub_service_jids (service_jid, service_jid_sha1) values (?, ?)",
 						Statement.RETURN_GENERATED_KEYS);
 				ps.setString(1, serviceJid);
+				ps.setString(2, serviceJidSha1);
 				ps.executeUpdate();
 				rs = ps.getGeneratedKeys();
 				if (rs.next())
@@ -272,8 +325,8 @@ public class StoredProcedures {
 
 		try {
 			PreparedStatement ps = conn.prepareStatement("select n.name, n.node_id from tig_pubsub_nodes n"
-					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid = ?");
-			ps.setString(1, serviceJid);
+					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" + " where sj.service_jid_sha1 = ?");
+			ps.setString(1, sha1OfLower(serviceJid));
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
 			// e.printStackTrace();
@@ -293,8 +346,8 @@ public class StoredProcedures {
 			PreparedStatement ps = conn.prepareStatement("select n.name, n.node_id from tig_pubsub_nodes n"
 					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id"
 					+ " inner join tig_pubsub_nodes p on p.node_id = n.collection_id and p.service_id = sj.service_id"
-					+ " where sj.service_jid = ? and p.name = ?");
-			ps.setString(1, serviceJid);
+					+ " where sj.service_jid_sha1 = ? and p.name = ?");
+			ps.setString(1, sha1OfLower(serviceJid));
 			ps.setString(2, collection);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
@@ -372,8 +425,8 @@ public class StoredProcedures {
 		try {
 			PreparedStatement ps = conn.prepareStatement("select n.node_id from tig_pubsub_nodes n "
 					+ "inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id "
-					+ "where sj.service_jid = ? and n.name = ?");
-			ps.setString(1, serviceJid);
+					+ "where sj.service_jid_sha1 = ? and n.name = ?");
+			ps.setString(1, sha1OfLower(serviceJid));
 			ps.setString(2, nodeName);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
@@ -454,8 +507,8 @@ public class StoredProcedures {
 					+ "from tig_pubsub_nodes n "
 					+ "inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id "
 					+ "inner join tig_pubsub_jids cj on cj.jid_id = n.creator_id "
-					+ "where sj.service_jid = ? and n.name = ?");
-			ps.setString(1, serviceJid);
+					+ "where sj.service_jid_sha1 = ? and n.name = ?");
+			ps.setString(1, sha1OfLower(serviceJid));
 			ps.setString(2, nodeName);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
@@ -495,8 +548,8 @@ public class StoredProcedures {
 		try {
 			PreparedStatement ps = conn.prepareStatement("select n.name, n.node_id from tig_pubsub_nodes n"
 					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id"
-					+ " where sj.service_jid = ? and collection_id is null");
-			ps.setString(1, serviceJid);
+					+ " where sj.service_jid_sha1 = ? and collection_id is null");
+			ps.setString(1, sha1OfLower(serviceJid));
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
 			// e.printStackTrace();
@@ -516,9 +569,10 @@ public class StoredProcedures {
 			PreparedStatement ps = conn.prepareStatement("select n.name, pa.affiliation" + " from tig_pubsub_nodes n"
 					+ " inner join tig_pubsub_service_jids sj on sj.service_id = n.service_id"
 					+ " inner join tig_pubsub_affiliations pa on pa.node_id = n.node_id"
-					+ " inner join tig_pubsub_jids pj on pj.jid_id = pa.jid_id" + " where pj.jid = ? and sj.service_jid = ?");
-			ps.setString(1, jid);
-			ps.setString(2, serviceJid);
+					+ " inner join tig_pubsub_jids pj on pj.jid_id = pa.jid_id"
+						+ " where pj.jid_sha1 = ? and sj.service_jid_sha1 = ?");
+			ps.setString(1, sha1OfLower(jid));
+			ps.setString(2, sha1OfLower(serviceJid));
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
 			// e.printStackTrace();
@@ -538,9 +592,10 @@ public class StoredProcedures {
 			PreparedStatement ps = conn.prepareStatement("select n.name, ps.subscription, ps.subscription_id"
 					+ " from tig_pubsub_nodes n" + " inner join tig_pubsub_service_jids sj on sj.service_id = n.service_id"
 					+ " inner join tig_pubsub_subscriptions ps on ps.node_id = n.node_id"
-					+ " inner join tig_pubsub_jids pj on pj.jid_id = ps.jid_id" + " where pj.jid = ? and sj.service_jid = ?");
-			ps.setString(1, jid);
-			ps.setString(2, serviceJid);
+					+ " inner join tig_pubsub_jids pj on pj.jid_id = ps.jid_id"
+					+ " where pj.jid_sha1 = ? and sj.service_jid_sha1 = ?");
+			ps.setString(1, sha1OfLower(jid));
+			ps.setString(2, sha1OfLower(serviceJid));
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
 			// e.printStackTrace();
@@ -586,21 +641,21 @@ public class StoredProcedures {
 
 		try {
 			PreparedStatement ps = conn.prepareStatement("select 1 from tig_pubsub_affiliations pa"
-					+ " inner join tig_pubsub_jids pj on pa.jid_id = pj.jid_id" + " where pa.node_id = ? and pj.jid = ?");
+					+ " inner join tig_pubsub_jids pj on pa.jid_id = pj.jid_id" + " where pa.node_id = ? and pj.jid_sha1 = ?");
 			ps.setLong(1, nodeId);
-			ps.setString(2, jid);
+			ps.setString(2, sha1OfLower(jid));
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
 				if ("none".equals(affil)) {
 					ps = conn.prepareStatement("delete from tig_pubsub_affiliations" + " where node_id = ? and jid_id = ("
-							+ " select jid_id from tig_pubsub_jids where jid = ?)");
+							+ " select jid_id from tig_pubsub_jids where jid_sha1 = ?)");
 					ps.setLong(1, nodeId);
-					ps.setString(2, jid);
+					ps.setString(2, sha1OfLower(jid));
 					ps.executeUpdate();
 				} else {
 					long jidId = tigPubSubEnsureJid(jid);
 					ps = conn.prepareStatement(
-							"update tig_pubsub_affiliations set affiliation = ?" + " where node_id = ? and jid_id = ?;");
+							"update tig_pubsub_affiliations set affiliation = ?" + " where node_id = ? and jid_id = ?");
 					ps.setString(1, affil);
 					ps.setLong(2, nodeId);
 					ps.setLong(3, jidId);
@@ -668,7 +723,7 @@ public class StoredProcedures {
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
 				ps = conn.prepareStatement(
-						"update tig_pubsub_subscriptions set subscription = ?" + " where node_id = ? and jid_id = ?;");
+						"update tig_pubsub_subscriptions set subscription = ?" + " where node_id = ? and jid_id = ?");
 				ps.setString(1, subscr);
 				ps.setLong(2, nodeId);
 				ps.setLong(3, jidId);
@@ -697,39 +752,40 @@ public class StoredProcedures {
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
+			String serviceJidSha1 = sha1OfLower(serviceJid);
 			PreparedStatement ps = conn.prepareStatement("delete from tig_pubsub_items where node_id in ("
 					+ "select n.node_id from tig_pubsub_nodes n"
 					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id"
-					+ " where sj.service_jid = ?)");
-			ps.setString(1, serviceJid);
+					+ " where sj.service_jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_affiliations where node_id in ("
 					+ "select n.node_id from tig_pubsub_nodes n"
 					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id"
-					+ " where sj.service_jid = ?)");
-			ps.setString(1, serviceJid);
+					+ " where sj.service_jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_subscriptions where node_id in ("
 					+ "select n.node_id from tig_pubsub_nodes n"
 					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id"
-					+ " where sj.service_jid = ?)");
-			ps.setString(1, serviceJid);
+					+ " where sj.service_jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_nodes where node_id in ("
 					+ "select n.node_id from tig_pubsub_nodes n"
 					+ " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id"
-					+ " where sj.service_jid = ?)");	
-			ps.setString(1, serviceJid);
+					+ " where sj.service_jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
 
-			ps = conn.prepareStatement("delete from tig_pubsub_service_jids where service_jid = ?");	
-			ps.setString(1, serviceJid);
+			ps = conn.prepareStatement("delete from tig_pubsub_service_jids where service_jid_sha1 = ?");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
-			ps = conn.prepareStatement("delete from tig_pubsub_affiliations where jid_id in (select j.jid_id from tig_pubsub_jids j where j.jid = ?)");	
-			ps.setString(1, serviceJid);
+			ps = conn.prepareStatement("delete from tig_pubsub_affiliations where jid_id in (select j.jid_id from tig_pubsub_jids j where j.jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
-			ps = conn.prepareStatement("delete from tig_pubsub_subscriptions where jid_id in (select j.jid_id from tig_pubsub_jids j where j.jid = ?)");	
-			ps.setString(1, serviceJid);
+			ps = conn.prepareStatement("delete from tig_pubsub_subscriptions where jid_id in (select j.jid_id from tig_pubsub_jids j where j.jid_sha1 = ?)");
+			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();		
 
 		} catch (SQLException e) {
@@ -739,5 +795,15 @@ public class StoredProcedures {
 		} finally {
 			conn.close();
 		}			
-	}	
+	}
+
+	protected static String sha1OfLower(String data) throws SQLException {
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-1");
+			byte[] hash = md.digest(data.toLowerCase().getBytes());
+			return Algorithms.bytesToHex(hash);
+		} catch (NoSuchAlgorithmException e) {
+			throw new SQLException(e);
+		}
+	}
 }
