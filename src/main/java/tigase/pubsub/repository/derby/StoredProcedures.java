@@ -23,6 +23,7 @@ package tigase.pubsub.repository.derby;
 
 import tigase.util.Algorithms;
 
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -40,6 +41,8 @@ import java.util.logging.Logger;
 public class StoredProcedures {
 
 	private static final Logger log = Logger.getLogger(tigase.db.derby.StoredProcedures.class.getName());
+
+	private static final Charset UTF8 = Charset.forName("UTF-8");
 
 	public static void tigPubSubCreateNode(String serviceJid, String nodeName, Integer nodeType, String nodeCreator,
 			String nodeConf, Long collectionId, ResultSet[] data) throws SQLException {
@@ -800,7 +803,7 @@ public class StoredProcedures {
 	protected static String sha1OfLower(String data) throws SQLException {
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
-			byte[] hash = md.digest(data.toLowerCase().getBytes());
+			byte[] hash = md.digest(data.toLowerCase().getBytes(UTF8));
 			return Algorithms.bytesToHex(hash);
 		} catch (NoSuchAlgorithmException e) {
 			throw new SQLException(e);
