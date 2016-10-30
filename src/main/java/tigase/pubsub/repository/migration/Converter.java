@@ -136,10 +136,7 @@ public class Converter {
 				rootCollection.add(nodeName);
 			} else {
 				AbstractNodeConfig potentialParent = nodeConfigs.get(collectionNodeName);
-				if (potentialParent != null && potentialParent instanceof CollectionNodeConfig) {
-					CollectionNodeConfig collectionConfig = (CollectionNodeConfig) potentialParent;
-					collectionConfig.addChildren(nodeName);
-				} else {
+				if (potentialParent == null || !(potentialParent instanceof CollectionNodeConfig)) {
 					nodeConfig.setCollection("");
 					rootCollection.add(nodeName);
 				}

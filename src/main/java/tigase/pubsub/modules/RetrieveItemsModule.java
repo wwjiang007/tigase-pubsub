@@ -175,7 +175,7 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 
 			if (nodeConfig instanceof CollectionNodeConfig) {
 				List<IItems.ItemMeta> itemsMeta = new ArrayList<IItems.ItemMeta>();
-				String[] childNodes = nodeConfig.getChildren();
+				String[] childNodes = getRepository().getChildNodes(toJid, nodeName);
 				Map<String, IItems> nodeItemsCache = new HashMap<String, IItems>();
 				if (childNodes != null) {
 					for (String childNodeName : childNodes) {

@@ -22,11 +22,12 @@
 package tigase.pubsub.repository.cached;
 
 import tigase.pubsub.AbstractNodeConfig;
-
 import tigase.pubsub.repository.INodeMeta;
 import tigase.xmpp.BareJID;
 
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,6 +39,7 @@ public class Node<T> implements INodeMeta<T> {
 	private boolean conNeedsWriting = false;
 	private final Date creationTime;
 	private final BareJID creator;
+	private CopyOnWriteArrayList<String> childNodes;
 
 	private boolean deleted = false;
 	private String name;
@@ -105,6 +107,13 @@ public class Node<T> implements INodeMeta<T> {
 	// public Long getNodeAffiliationsChangeTimestamp() {
 	// return nodeAffiliationsChangeTimestamp;
 	// }
+
+	public String[] getChildNodes() {
+		if (childNodes == null) {
+			return null;
+		}
+		return childNodes.toArray(new String[0]);
+	}
 
 	public Date getCreationTime() {
 		return creationTime;
@@ -210,5 +219,35 @@ public class Node<T> implements INodeMeta<T> {
 					 + ", serviceJid=" + serviceJid
 					 + ", creator=" + creator +
 					 '}';
+	}
+
+	protected void setChildNodes(List<String> childNodes) {
+		synchronized (this) {
+			if (this.childNodes == null) {
+				this.childNodes = new CopyOnWriteArrayList<>(childNodes);
+			} else {
+				this.childNodes.addAllAbsent(childNodes);
+				this.childNodes.retainAll(childNodes);
+			}
+		}
+	}
+
+	public void childNodeAdded(String childNode) {
+		synchronized (this) {
+			if (this.childNodes == null) {
+				return;
+			}
+			this.childNodes.addIfAbsent(childNode);
+		}
+	}
+
+	public void childNodeRemoved(String childNode) {
+		synchronized (this) {
+			if (this.childNodes == null) {
+				return;
+			}
+
+			this.childNodes.remove(childNode);
+		}
 	}
 }

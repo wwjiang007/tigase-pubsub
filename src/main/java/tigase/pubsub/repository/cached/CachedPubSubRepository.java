@@ -341,6 +341,10 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 		NodeKey key = createKey(serviceJid, nodeName);
 		this.nodes.put(key, node);
 
+		if (collection != null && !collection.equals("")) {
+			nodeCollectionChanged(serviceJid, nodeName, null, collection);
+		}
+
 		long end = System.currentTimeMillis();
 
 		if ( log.isLoggable( Level.FINEST ) ){
@@ -424,6 +428,20 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	@Override
 	public String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException {
 		return this.dao.getBuddySubscription(owner, buddy);
+	}
+
+	public String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException {
+		Node node = this.getNode(serviceJid, nodeName);
+		if (node == null) {
+			return new String[0];
+		}
+
+		String[] children = node.getChildNodes();
+		if (children == null) {
+			children = this.dao.getChildNodes(serviceJid, nodeName);
+			node.setChildNodes(Arrays.asList(children));
+		}
+		return children;
 	}
 
 	protected Node getNode(BareJID serviceJid, String nodeName) throws RepositoryException {
@@ -722,13 +740,18 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 		Node node = getNode(serviceJid, nodeName);
 
 		if (node != null) {
+			String oldCollection = node.getNodeConfig().getCollection();
 			node.configCopyFrom(nodeConfig);
 
 			// node.setNodeConfigChangeTimestamp();
 			// synchronized (mutex) {
 			log.finest("Node '" + nodeName + "' added to lazy write queue (config)");
 			nodeSaver.save(node);
-			// }
+
+			String newCollection = nodeConfig.getCollection();
+			if (!Objects.equals(oldCollection, newCollection)) {
+				nodeCollectionChanged(serviceJid, nodeName, oldCollection, newCollection);
+			}
 		}
 	}
 
@@ -792,6 +815,21 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 			NodeAffiliations nodeAffiliations = node.getNodeAffiliations();
 			nodeAffiliations.changeAffiliation(userJid, Affiliation.none);
 			nodeAffiliations.merge();
+		}
+	}
+
+	protected void nodeCollectionChanged(BareJID serviceJid, String nodeName, String oldCollection, String newCollection) {
+		if (oldCollection != null && !"".equals(oldCollection)) {
+			Node colNode = getNodeFromCache(serviceJid, oldCollection);
+			if (colNode != null) {
+				colNode.childNodeRemoved(nodeName);
+			}
+		}
+		if (newCollection != null && !"".equals(newCollection)) {
+			Node colNode = getNodeFromCache(serviceJid, newCollection);
+			if (colNode != null) {
+				colNode.childNodeAdded(nodeName);
+			}
 		}
 	}
 	

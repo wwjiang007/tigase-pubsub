@@ -101,25 +101,26 @@ public class RebuildDatabaseCommand implements AdHocCommand {
 			}
 		}
 
-		for (Entry<String, AbstractNodeConfig> entry : nodeConfigs.entrySet()) {
-			final AbstractNodeConfig nodeConfig = entry.getValue();
-			final String nodeName = entry.getKey();
-			final String collectionNodeName = nodeConfig.getCollection();
-			if (collectionNodeName == null || collectionNodeName.equals("")) {
-				nodeConfig.setCollection("");
-				rootCollection.add(nodeName);
-			} else {
-				AbstractNodeConfig potentialParent = nodeConfigs.get(collectionNodeName);
-				if (potentialParent != null && potentialParent instanceof CollectionNodeConfig) {
-					CollectionNodeConfig collectionConfig = (CollectionNodeConfig) potentialParent;
-					collectionConfig.addChildren(nodeName);
-				} else {
-					nodeConfig.setCollection("");
-					rootCollection.add(nodeName);
-				}
-
-			}
-		}
+		// Collections and node children are in sync on database level so no point to check it here
+//		for (Entry<String, AbstractNodeConfig> entry : nodeConfigs.entrySet()) {
+//			final AbstractNodeConfig nodeConfig = entry.getValue();
+//			final String nodeName = entry.getKey();
+//			final String collectionNodeName = nodeConfig.getCollection();
+//			if (collectionNodeName == null || collectionNodeName.equals("")) {
+//				nodeConfig.setCollection("");
+//				rootCollection.add(nodeName);
+//			} else {
+//				AbstractNodeConfig potentialParent = nodeConfigs.get(collectionNodeName);
+//				if (potentialParent != null && potentialParent instanceof CollectionNodeConfig) {
+//					CollectionNodeConfig collectionConfig = (CollectionNodeConfig) potentialParent;
+//					collectionConfig.addChildren(nodeName);
+//				} else {
+//					nodeConfig.setCollection("");
+//					rootCollection.add(nodeName);
+//				}
+//
+//			}
+//		}
 
 		for (Entry<String, AbstractNodeConfig> entry : nodeConfigs.entrySet()) {
 			final AbstractNodeConfig nodeConfig = entry.getValue();

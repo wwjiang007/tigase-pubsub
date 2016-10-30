@@ -213,9 +213,6 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 			getRepository().update(toJid, nodeName, nodeSubscriptions);
 			if (colNodeConfig == null) {
 				getRepository().addToRootCollection(toJid, nodeName);
-			} else {
-				colNodeConfig.addChildren(nodeName);
-				getRepository().update(toJid, collection, colNodeConfig);
 			}
 
 			eventBus.fire(new NodeCreatedEvent(toJid, nodeName));

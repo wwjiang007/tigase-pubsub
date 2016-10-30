@@ -1,7 +1,5 @@
 package tigase.pubsub.repository;
 
-import java.util.Map;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
@@ -10,6 +8,8 @@ import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticsList;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+
+import java.util.Map;
 
 public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHolder {
 
@@ -53,6 +53,11 @@ public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHold
 	@Override
 	public String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException {
 		return repo.getBuddySubscription(owner, buddy);
+	}
+
+	@Override
+	public String[] getChildNodes(BareJID serviceJid, String node) throws RepositoryException {
+		return repo.getChildNodes(serviceJid, node);
 	}
 
 	@Override

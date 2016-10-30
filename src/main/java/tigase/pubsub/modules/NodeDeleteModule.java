@@ -143,19 +143,13 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 			}
 
 			final String parentNodeName = nodeConfig.getCollection();
-			CollectionNodeConfig parentCollectionConfig = null;
 
-			if ((parentNodeName != null) && !parentNodeName.equals("")) {
-				parentCollectionConfig = (CollectionNodeConfig) getRepository().getNodeConfig(toJid, parentNodeName);
-				if (parentCollectionConfig != null) {
-					parentCollectionConfig.removeChildren(nodeName);
-				}
-			} else {
+			if (parentNodeName == null || "".equals(parentNodeName)) {
 				getRepository().removeFromRootCollection(toJid, nodeName);
 			}
 			if (nodeConfig instanceof CollectionNodeConfig) {
 				CollectionNodeConfig cnc = (CollectionNodeConfig) nodeConfig;
-				final String[] childrenNodes = cnc.getChildren();
+				final String[] childrenNodes = getRepository().getChildNodes(toJid, nodeName);
 
 				if ((childrenNodes != null) && (childrenNodes.length > 0)) {
 					for (String childNodeName : childrenNodes) {
@@ -165,16 +159,11 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 							childNodeConfig.setCollection(parentNodeName);
 							getRepository().update(toJid, childNodeName, childNodeConfig);
 						}
-						if (parentCollectionConfig != null) {
-							parentCollectionConfig.addChildren(childNodeName);
-						} else {
+						if (parentNodeName == null || "".equals(parentNodeName)) {
 							getRepository().addToRootCollection(toJid, childNodeName);
 						}
 					}
 				}
-			}
-			if (parentCollectionConfig != null) {
-				getRepository().update(toJid, parentNodeName, parentCollectionConfig);
 			}
 			log.fine("Delete node [" + nodeName + "]");
 			getRepository().deleteNode(toJid, nodeName);

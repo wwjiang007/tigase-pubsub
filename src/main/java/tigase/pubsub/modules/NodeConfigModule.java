@@ -42,7 +42,6 @@ import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.StanzaType;
 
-import java.util.Arrays;
 import java.util.HashSet;
 
 /**
@@ -244,14 +243,16 @@ public class NodeConfigModule extends AbstractConfigCreateNode {
 				Element rPubSub = new Element("pubsub", new String[] { "xmlns" },
 						new String[] { "http://jabber.org/protocol/pubsub#owner" });
 				Element rConfigure = new Element("configure", new String[] { "node" }, new String[] { nodeName });
+				if (nodeConfig instanceof CollectionNodeConfig) {
+					((CollectionNodeConfig) nodeConfig).setChildren(getRepository().getChildNodes(toJid, nodeName));
+				}
 				Element f = nodeConfig.getFormElement();
 
 				rConfigure.addChild(f);
 				rPubSub.addChild(rConfigure);
 				result.getElement().addChild(rPubSub);
 			} else if (type == StanzaType.set) {
-				String[] children = (nodeConfig.getChildren() == null) ? new String[] {}
-						: Arrays.copyOf(nodeConfig.getChildren(), nodeConfig.getChildren().length);
+				String[] children = nodeConfig instanceof CollectionNodeConfig ? getRepository().getChildNodes(toJid, nodeName) : new String[0];
 				final String collectionOld = (nodeConfig.getCollection() == null) ? "" : nodeConfig.getCollection();
 
 				parseConf(nodeConfig, configure, config);
@@ -267,7 +268,6 @@ public class NodeConfigModule extends AbstractConfigCreateNode {
 							throw new PubSubException(Authorization.NOT_ALLOWED,
 									"(#1) Node '" + nodeConfig.getCollection() + "' is not collection node");
 						}
-						((CollectionNodeConfig) colNodeConfig).addChildren(nodeName);
 						getRepository().update(toJid, colNodeConfig.getNodeName(), colNodeConfig);
 						getRepository().removeFromRootCollection(toJid, nodeName);
 
@@ -284,7 +284,6 @@ public class NodeConfigModule extends AbstractConfigCreateNode {
 						AbstractNodeConfig colNodeConfig = getRepository().getNodeConfig(toJid, collectionOld);
 
 						if ((colNodeConfig != null) && (colNodeConfig instanceof CollectionNodeConfig)) {
-							((CollectionNodeConfig) colNodeConfig).removeChildren(nodeName);
 							getRepository().update(toJid, colNodeConfig.getNodeName(), colNodeConfig);
 						}
 						getRepository().addToRootCollection(toJid, nodeName);
@@ -300,11 +299,12 @@ public class NodeConfigModule extends AbstractConfigCreateNode {
 					}
 				}
 				if (nodeConfig instanceof CollectionNodeConfig) {
-					final String[] removedChildNodes = diff((children == null) ? new String[] {} : children,
-							(nodeConfig.getChildren() == null) ? new String[] {} : nodeConfig.getChildren());
-					final String[] addedChildNodes = diff(
-							(nodeConfig.getChildren() == null) ? new String[] {} : nodeConfig.getChildren(),
-							(children == null) ? new String[] {} : children);
+					String[] newChildren = nodeConfig.getChildren();
+					if (newChildren == null) {
+						newChildren = new String[0];
+					}
+					final String[] removedChildNodes = diff(children, newChildren);
+					final String[] addedChildNodes = diff(newChildren, children);
 
 					for (String ann : addedChildNodes) {
 						AbstractNodeConfig nc = getRepository().getNodeConfig(toJid, ann);
@@ -314,19 +314,6 @@ public class NodeConfigModule extends AbstractConfigCreateNode {
 						}
 						if (nc.getCollection().equals("")) {
 							getRepository().removeFromRootCollection(toJid, nc.getNodeName());
-						} else {
-							AbstractNodeConfig cnc = getRepository().getNodeConfig(toJid, nc.getCollection());
-
-							if (cnc == null) {
-								throw new PubSubException(Authorization.ITEM_NOT_FOUND,
-										"(#3) Node '" + nc.getCollection() + "' doesn't exists");
-							}
-							if (!(cnc instanceof CollectionNodeConfig)) {
-								throw new PubSubException(Authorization.NOT_ALLOWED,
-										"(#2) Node '" + nc.getCollection() + "' is not collection node");
-							}
-							((CollectionNodeConfig) cnc).removeChildren(nc.getNodeName());
-							getRepository().update(toJid, cnc.getNodeName(), cnc);
 						}
 						nc.setCollection(nodeName);
 						getRepository().update(toJid, nc.getNodeName(), nc);

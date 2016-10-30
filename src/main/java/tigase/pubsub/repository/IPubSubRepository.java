@@ -97,6 +97,8 @@ public interface IPubSubRepository {
 	@Deprecated
 	public abstract String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException;
 
+	public String[] getChildNodes(BareJID serviceJid, String node) throws RepositoryException;
+
 	/**
 	 * Method description
 	 *

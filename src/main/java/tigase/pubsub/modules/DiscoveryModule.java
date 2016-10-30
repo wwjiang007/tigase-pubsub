@@ -137,6 +137,10 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 		AbstractNodeConfig nodeConfig = (nodeName == null) ? null : repository.getNodeConfig(toJid.getBareJID(), nodeName);
 		String[] nodes;
 
+		if (nodeName != null && nodeConfig == null) {
+			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
+		}
+
 		if ((nodeName == null) || ((nodeConfig != null) && (nodeConfig.getNodeType() == NodeType.collection))) {
 			String parentName;
 
@@ -145,7 +149,7 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 				nodes = repository.getRootCollection(toJid.getBareJID());
 			} else {
 				parentName = nodeName;
-				nodes = nodeConfig.getChildren();
+				nodes = repository.getChildNodes(toJid.getBareJID(), nodeName);
 			}
 
 			// = this.repository.getNodesList();

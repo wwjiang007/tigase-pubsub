@@ -105,20 +105,13 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 
 
             final String parentNodeName = nodeConfig.getCollection();
-            CollectionNodeConfig parentCollectionConfig = null;
 
-            if ((parentNodeName != null) && parentNodeName != "") {
-                parentCollectionConfig =
-                        (CollectionNodeConfig) pubsubRepository.getNodeConfig(toJid, parentNodeName);
-                if (parentCollectionConfig != null) {
-                    parentCollectionConfig.removeChildren(node);
-                }
-            } else {
+            if (parentNodeName == null || "".equals(parentNodeName)) {
                 pubsubRepository.removeFromRootCollection(toJid, node);
             }
             if (nodeConfig instanceof CollectionNodeConfig) {
                 CollectionNodeConfig cnc = (CollectionNodeConfig) nodeConfig;
-                final String[] childrenNodes = cnc.getChildren();
+                final String[] childrenNodes = pubsubRepository.getChildNodes(toJid, node);
 
                 if ((childrenNodes != null) && (childrenNodes.length > 0)) {
                     for (String childNodeName : childrenNodes) {
@@ -128,16 +121,11 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
                             childNodeConfig.setCollection(parentNodeName);
                             pubsubRepository.update(toJid, childNodeName, childNodeConfig);
                         }
-                        if (parentCollectionConfig != null) {
-                            parentCollectionConfig.addChildren(childNodeName);
-                        } else {
+                        if (parentNodeName == null || "".equals(parentNodeName)) {
                             pubsubRepository.addToRootCollection(toJid, childNodeName);
                         }
                     }
                 }
-            }
-            if (parentCollectionConfig != null) {
-                pubsubRepository.update(toJid, parentNodeName, parentCollectionConfig);
             }
 
             pubsubRepository.deleteNode(toJid, node);
