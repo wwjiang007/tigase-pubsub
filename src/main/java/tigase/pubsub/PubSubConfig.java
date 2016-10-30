@@ -47,6 +47,7 @@ public class PubSubConfig implements Initializable {
 
 	public static final String ADMINS_KEY = "admin";
 	private static final String MAX_CACHE_SIZE = "pubsub-repository-cache-size";
+	private static final String AUTO_SUBSCRIBE_NODE_CREATOR = "auto-subscribe-node-creator";
 	private static final String PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY = "pubsub-high-memory-usage-level";
 	private static final String PUBSUB_LOW_MEMORY_DELAY_KEY = "pubsub-low-memory-delay";
 	private static final String PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_KEY = "pep-remove-empty-geoloc";
@@ -61,6 +62,9 @@ public class PubSubConfig implements Initializable {
 	private PubSubComponent component;
 	@Inject(nullAllowed = true)
 	private PropertiesBeanConfigurator configurator;
+
+	@ConfigField(desc = "Automatically subscribe creator to node", alias = AUTO_SUBSCRIBE_NODE_CREATOR)
+	private boolean autoSubscribeNodeCreator = true;
 
 	@ConfigField(desc = "High memory usage level", alias = PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY)
 	private float highMemoryUsageLevel = 90;
@@ -144,6 +148,10 @@ public class PubSubConfig implements Initializable {
 		} else {
 			admins = new String[] { "admin@" + component.getDefHostName() };
 		}
+	}
+
+	public boolean isAutoSubscribeNodeCreator() {
+		return autoSubscribeNodeCreator;
 	}
 
 	/**

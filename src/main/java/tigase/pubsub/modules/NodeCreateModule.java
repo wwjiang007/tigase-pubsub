@@ -207,7 +207,9 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 			ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(toJid, nodeName);
 			IAffiliations nodeaAffiliations = getRepository().getNodeAffiliations(toJid, nodeName);
 
-			nodeSubscriptions.addSubscriberJid(packet.getStanzaFrom().getBareJID(), Subscription.subscribed);
+			if (config.isAutoSubscribeNodeCreator()) {
+				nodeSubscriptions.addSubscriberJid(packet.getStanzaFrom().getBareJID(), Subscription.subscribed);
+			}
 			nodeaAffiliations.addAffiliation(packet.getStanzaFrom().getBareJID(), Affiliation.owner);
 			getRepository().update(toJid, nodeName, nodeaAffiliations);
 			getRepository().update(toJid, nodeName, nodeSubscriptions);

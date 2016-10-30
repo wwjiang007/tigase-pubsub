@@ -291,19 +291,16 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 	 */
 	protected boolean hasSenderSubscription(final BareJID bareJid, final IAffiliations affiliations,
 			final ISubscriptions subscriptions) throws RepositoryException {
-		final UsersSubscription[] subscribers = subscriptions.getSubscriptions();
 
-		for (UsersSubscription owner : subscribers) {
-			UsersAffiliation affiliation = affiliations.getSubscriberAffiliation(owner.getJid());
-
-			if (affiliation.getAffiliation() != Affiliation.owner) {
+		for (UsersAffiliation affiliation : affiliations.getAffiliations()) {
+			if (affiliation.getAffiliation() != Affiliation.owner)
 				continue;
-			}
-			if (bareJid.equals(owner.getJid())) {
+
+			if (bareJid.equals(affiliation.getJid())) {
 				return true;
 			}
 
-			Map<BareJID, RosterElement> buddies = getRepository().getUserRoster(owner.getJid());
+			Map<BareJID, RosterElement> buddies = getRepository().getUserRoster(affiliation.getJid());
 			RosterElement re = buddies.get(bareJid);
 			if (re != null) {
 				if (re.getSubscription() == SubscriptionType.both || re.getSubscription() == SubscriptionType.from

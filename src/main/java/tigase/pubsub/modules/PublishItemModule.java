@@ -176,7 +176,9 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 			IAffiliations nodeaAffiliations = repo.getNodeAffiliations(toJid, nodeName);
 			nodeaAffiliations.addAffiliation(ownerJid, Affiliation.owner);
 			ISubscriptions nodeaSubscriptions = repo.getNodeSubscriptions(toJid, nodeName);
-			nodeaSubscriptions.addSubscriberJid(toJid, Subscription.subscribed);
+			if (config.isAutoSubscribeNodeCreator()) {
+				nodeaSubscriptions.addSubscriberJid(toJid, Subscription.subscribed);
+			}
 			repo.update(toJid, nodeName, nodeaAffiliations);
 			repo.addToRootCollection(toJid, nodeName);
 			log.log(Level.FINEST, "Created new PEP node: {0}, conf: {1}, aff: {2}, subs: {3} ",
