@@ -1,0 +1,9 @@
+
+= Features
+:author: Andrzej Wójcik
+:date: 2016-11-12 18:38
+
+include::features/AdHocCommands.asciidoc[]
+include::features/PubSub_Node_Presence_Protocol.asciidoc[]
+include::features/OfflineMessagesSink.asciidoc[]
+include::features/REST_API.asciidoc[]

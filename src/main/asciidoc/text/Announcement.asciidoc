@@ -1,0 +1,22 @@
+
+= Announcement
+:author: Andrzej Wójcik
+:date: 2016-11-12 11:38
+
+== Major changes
+Tigase PubSub component has undergone a few major changes to our code and structure. To continue to use Tigase PubSub component, a few changes may be needed to be made to your systems. Please see them below:
+
+=== Database schema changes
+Current version comes with changes to database schema to improve JID comparison during lookup of nodes, subscriptions, affiliations, etc.
+
+To continue usage of new versions of PubSub component it is required to manually load new component database schema, see <<Preparation of database>> section for informations about that.
+
+WARNING: Loading of new database schema is required to use new version of PubSub component.
+
+== New features
+
+=== Support for using separate database for different domains
+Since this version it is possible to use separate PubSub nodes and items based on domains.
+This allows you to configure component to store informations about nodes and items for particular domain to different database.
+
+For more informations please look into <<Using separate store>>

@@ -1,0 +1,5 @@
+= Overview
+:author: Andrzej Wójcik
+:date: 2016-11-12 18:38
+
+Tigase PubSub Component is component providing support for http://www.xmpp.org/extensions/xep-0060.html[XEP-0060: Publish-Subscribe] and http://xmpp.org/extensions/xep-0163.html[XEP-0163: Personal Eventing Protocol] to Tigase XMPP Server.

@@ -1,0 +1,116 @@
+
+= Configuration
+:author: Andrzej Wójcik
+:date: 2016-11-12 18:38
+
+To enable Tigase PubSub Component you need to add following block to `etc/init.properties` file:
+----
+pubsub () {
+}
+----
+It will enable component and configure it under name `pubsub`.
+By default it will also use database configured as `default` data source to store data.
+
+== Using separate store
+As mentioned above, by default Tigase PubSub component uses default data source configured for Tigase XMPP Server. It is possible to use separate store by PubSub component. To do so you need to configure new `DataSource` in `dataSource` section. Here we will use `pubsub-store` as name of newly configured data source. Additionally you need to pass name of newly configured data source to `dataSourceName` property of default DAO of PubSub component.
+----
+dataSource {
+    pubsub-store () {
+        uri = 'jdbc:postgresql://server/pubsub-database'
+    }
+}
+
+pubsub () {
+    dao {
+        default () {
+            dataSourceName = 'pubsub-store'
+        }
+    }
+}
+----
+It is also possible to configure separate store for particular domain, ie. `pubsub.example.com`. Here we will configure data source with name `pubsub.example.com` and use it to store data for PubSub nodes and items at `pubsub.example.com`:
+----
+dataSource {
+    'pubsub.example.com' () {
+        uri = 'jdbc:postgresql://server/example-database'
+    }
+}
+
+pubsub () {
+    dao {
+        'pubsub.example.com' () {
+          # we may not set dataSourceName as it matches name of domain
+        }
+    }
+}
+----
+NOTE: With this configuration room data for other domains than `pubsub.example.com` will be stored in default data source.
+
+== Enabling PEP support
+To enable http://xmpp.org/extensions/xep-0163.html[XEP-0163: Personal Eventing Protocol] support it is required to set `persistent-pep` property of PubSub component to `true`, set `send-last-published-item-on-presence` property of component to `true` and enable `pep` SessionManager processor.
+----
+pubsub () {
+    persistent-pep = true
+    send-last-published-item-on-presence = true
+}
+
+sess-man () {
+    pep () {
+    }
+}
+----
+
+== Enabling REST API
+To use REST API for PubSub component it is required that:
+
+* Tigase HTTP API component is installed and configured properly. For information about HTTP API component installation please look into <<Tigase HTTP API component Guide>>
+* Tigase PubSub REST scripts are copied to HTTP API REST scripts directory
+In installation package this is already done and scripts are in proper locations.
+* JID of HTTP API component needs to be added to list of trusted jids of Tigase PubSub component `trusted` property (if `http` is name of HTTP API component)
+----
+pubsub () {
+    trusted = [ 'http@{clusterNode}' ];
+}
+----
+
+== Changing nodes cache size
+By default Tigase PubSub component caches node configuration of 2000 last loaded nodes.
+If there are many requests to database to load node configuration and your installation contains many nodes it may be a good idea to increase number of cached nodes.
+
+To do this you need to set `pubsub-repository-cache-size` property of PubSub component to new size.
+----
+pubsub () {
+    pubsub-repository-cache-size = 4000
+}
+----
+
+== Enable sending last published item on presence
+By default it is not possible to use delivery of last published item when users broadcasts initial presence. To do so you need to set `send-last-published-item-on-presence` of PubSub component to `true`. This will allow you to configure nodes to send last published item on presence.
+----
+pubsub () {
+    send-last-published-item-on-presence = true
+}
+----
+
+== Tune handling of low memory
+If there is less than 10% of free heap memory available during publication of item then Tigase PubSub component will trigger Garbage Collection and it there is still very little amount of free memory will slow down delivery of notifications for published items (waiting about 1 second before continuing).
+
+If you have assigned a lot of memory to Tigase XMPP Server or in your case this delay is not acceptable you can adjust it by PubSub component properties:
+
+* setting `pubsub-high-memory-usage-level` to percentage of heap memory accepted as near OOM state
+* setting `pubsub-low-memory-delay` to number of miliseconds to wait to throttle delivery of notifications
+
+----
+pubsub () {
+    pubsub-high-memory-usage-level = 95
+    pubsub-low-memory-delay = 100
+}
+----
+
+== Disable automatic subscription of node creator
+During creation of node PubSub component subscribes creator to PubSub node and delivers notifications to creator. If in your case you do not want this behaviour, you may set `auto-subscribe-node-creator` property of PubSub component to `false`.
+----
+pubsub () {
+    auto-subscribe-node-creator = false
+}
+----
