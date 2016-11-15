@@ -227,6 +227,11 @@ public class PresencePerNodeExtension implements Initializable, UnregisterAware 
 	protected void process(Packet packet) {
 		final StanzaType type = packet.getType();
 		final BareJID serviceJID = packet.getStanzaTo().getBareJID();
+		final JID stanzaFrom = packet.getStanzaFrom();
+
+		if (stanzaFrom == null) {
+			return;
+		}
 
 		Element pubsubExtElement = packet.getElement().getChild("pubsub", XMLNS_EXTENSION);
 		if (pubsubExtElement != null) {
@@ -235,12 +240,12 @@ public class PresencePerNodeExtension implements Initializable, UnregisterAware 
 			if (type == null || type == StanzaType.available) {
 				addPresence(serviceJID, nodeName, packet);
 			} else if (StanzaType.unavailable == type) {
-				removePresence(serviceJID, nodeName, packet.getStanzaFrom(), packet);
+				removePresence(serviceJID, nodeName, stanzaFrom, packet);
 			}
 		} else if (type == StanzaType.unavailable) {
-			Collection<String> nds = getNodes(serviceJID, packet.getStanzaFrom());
+			Collection<String> nds = getNodes(serviceJID, stanzaFrom);
 			for (String nodeName : nds) {
-				removePresence(serviceJID, nodeName, packet.getStanzaFrom(), packet);
+				removePresence(serviceJID, nodeName, stanzaFrom, packet);
 			}
 		}
 	}
