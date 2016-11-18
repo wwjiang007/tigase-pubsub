@@ -1,5 +1,9 @@
 package tigase.rest.pubsub
 
+import tigase.http.coders.JsonCoder
+import tigase.http.rest.Service
+import tigase.server.Iq
+
 /*
  * Tigase HTTP API
  * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
@@ -21,196 +25,153 @@ package tigase.rest.pubsub
  * Last modified by $Author$
  * $Date$
  */
-import tigase.http.rest.Service
-import tigase.server.Command
-import tigase.server.Iq
 import tigase.server.Packet
-import tigase.util.Base64
-import tigase.xml.*
-import tigase.xmpp.BareJID
-import tigase.xmpp.JID
-import tigase.xmpp.StanzaType
+import tigase.xml.DomBuilderHandler
+import tigase.xml.Element
+import tigase.xml.SingletonFactory
+import tigase.xml.XMLUtils
 
+import javax.servlet.http.HttpServletRequest
 /**
- * Class implements generic support for PubSub ad-hoc commands
- */
-class PubSubActionsHandler extends tigase.http.rest.Handler {
+ * Class implements generic support for PubSub ad-hoc commands*/
+class PubSubActionsHandler
+		extends tigase.http.rest.Handler {
 
-    def TIMEOUT = 30 * 1000;
+	def TIMEOUT = 30 * 1000;
 
-    def COMMAND_XMLNS = "http://jabber.org/protocol/commands";
-    def DATA_XMLNS = "jabber:x:data";
-    def DISCO_ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
+	def COMMAND_XMLNS = "http://jabber.org/protocol/commands";
+	def DATA_XMLNS = "jabber:x:data";
+	def DISCO_ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
 
-    public PubSubActionsHandler() {
-		description = [
-			regex : "/{pubsub_jid}/{adhoc_command_node}",
-			GET : [ info:'Retrieve PubSub adhoc command fields', 
-				description: """This is simplified version of adhoc command for PubSub component, which allows for easier management of PubSub component nodes and items than default adhoc command REST API.
+	public PubSubActionsHandler() {
+		description = [ regex: "/{pubsub_jid}/{adhoc_command_node}",
+						GET  : [ info       : 'Retrieve PubSub adhoc command fields',
+								 description: """This is simplified version of adhoc command for PubSub component, which allows for easier management of PubSub component nodes and items than default adhoc command REST API.
 As part of url you need to pass PubSub component jid as {pubsub_jid} parameter and adhoc command node as {adhoc_command_node} for which you wish to retrieve list of fileds for.
 Retrieved XML after filling it with proper data and replacing external XML element name from result to data may be passed as content for POST request to execute this command with passed parameters for command.
-"""],
-			POST : [ info:'Execute PubSub adhoc command',
-				description: """This is simplified version of adhoc command for PubSub component, which allows for easier management of PubSub component nodes and items than default adhoc command REST API.
+""" ],
+						POST : [ info       : 'Execute PubSub adhoc command',
+								 description: """This is simplified version of adhoc command for PubSub component, which allows for easier management of PubSub component nodes and items than default adhoc command REST API.
 As part of url you need to pass PubSub component jid as {pubsub_jid} parameter and adhoc command node as {adhoc_command_node} for which you wish to execute.
 For a content of a HTTP POST request you need to pass filled XML data retrieved using GET method with external element result name changed in data.
-"""]
-		];
-        regex = /\/(?:([^@\/]+)@){0,1}([^@\/]+)\/([^\/]+)/
-        isAsync = true
+""" ] ];
+		regex = /\/(?:([^@\/]+)@){0,1}([^@\/]+)\/([^\/]+)/
+		isAsync = true
 		decodeContent = false;
 
-        execGet = { Service service, callback, localPart, domain, cmd ->
-			execPost(service, callback, null, localPart, domain, cmd);            
-        }
+		execGet = { Service service, callback, localPart, domain, cmd ->
+			execPost(service, callback, null, localPart, domain, cmd);
+		}
 
-        execPost = { Service service, callback, content, localPart, domain, cmd ->
+		execPost = { Service service, callback, HttpServletRequest request, localPart, domain, cmd ->
 			//if (localPart) {
 			//	localPart = localPart.substring(0,localPart.length()-1);
 			//}
-			
-			content = decodeContent(content ? content.getReader().getText() : null);
-			
-            def compJid = BareJID.bareJIDInstance(localPart, domain);
 
-            Element iq = new Element("iq");
+			def type = request?.getContentType();
+			def content = decodeContent(request);
+
+			Element iq = new Element("iq");
 			iq.setXMLNS(Iq.CLIENT_XMLNS);
-            iq.setAttribute("to", localPart ? "$localPart@$domain" : domain);
-            iq.setAttribute("type", "set");
-            iq.setAttribute("id", UUID.randomUUID().toString())
+			iq.setAttribute("to", localPart ? "$localPart@$domain" : domain);
+			iq.setAttribute("type", "set");
+			iq.setAttribute("id", UUID.randomUUID().toString())
 
-            Element command = new Element("command");
-            command.setXMLNS(COMMAND_XMLNS);
-            command.setAttribute("node", cmd);
-            iq.addChild(command);
+			Element command = new Element("command");
+			command.setXMLNS(COMMAND_XMLNS);
+			command.setAttribute("node", cmd);
+			iq.addChild(command);
 
-            if (content && content.getName() == "data") {
-				Element data = (Element) content;
-				
-				def elemNames = (data.getChildren() ?: []).collect { it.getName() }
-				
-                Element x = new Element("x");
-                x.setXMLNS(DATA_XMLNS);
-                x.setAttribute("type", "submit");
-                command.addChild(x);
+			if (content) {
+				def data = content;
+				Element x = new Element("x");
+				x.setXMLNS(DATA_XMLNS);
+				x.setAttribute("type", "submit");
+				command.addChild(x);
 
-				elemNames.each { var ->
-					List<Element> children = data.getChildren().findAll({ it.getName() == var});
-					if (children.isEmpty())
-						return;
-						
-					if (children.size() == 1 && children.get(0).getAttribute("prefix")) {
-						Element wrap = children.get(0);
-						String prefix = wrap.getName();
-						
-						wrap.getChildren().each { sub ->
-							Element fieldEl = new Element("field");
-							fieldEl.setAttribute("var", prefix + "#" + sub.getName());
-							x.addChild(fieldEl);
-							
-							def values = sub.getChildren()?.findAll({it.getName() == "value"});
-							if (values) {
-								values.each { value ->
-									Element valueEl = new Element("value", value.getCData());
-									fieldEl.addChild(valueEl);						
-								}			
-							}
-							else {
-								Element valueEl = new Element("value", sub.getCData());
-								fieldEl.addChild(valueEl);														
-							}
-						}
-						return;
-					}
-					
+				data.each { k, v ->
 					Element fieldEl = new Element("field");
-					fieldEl.setAttribute("var", var);
+					fieldEl.setAttribute("var", k);
 					x.addChild(fieldEl);
-					
-					
-					
-					List<Element> values = children.get(0).getChildren()?.findAll { it.getName() == "value" };
-					if (values != null && !values.isEmpty()) {
-						values.each { value ->
-							Element valueEl = new Element("value", value.getCData());
-							fieldEl.addChild(valueEl);						
-						}					
-					}
-					else {
-						def elems = children.get(0).getChildren();
-						if (elems == null || elems.isEmpty()) {
-							Element valueEl = new Element("value", children.get(0).getCData());
-							fieldEl.addChild(valueEl);
+
+					if (v instanceof Collection) {
+						v.each {
+							fieldEl.addChild(new Element("value", XMLUtils.escape((String) it)));
 						}
-						else {
-							elems.join("").split("\n").each { value ->
-								Element valueEl = new Element("value", XMLUtils.escape(value));
-								fieldEl.addChild(valueEl);													
-							}
-						}
+					} else {
+					   if (v instanceof String) {
+						   fieldEl.addChild(new Element("value", XMLUtils.escape((String) v)));
+					   } else if (v instanceof Element) {
+						   fieldEl.addChild(new Element("value", XMLUtils.escape((Element) v).toString()));
+					   } else {
+						   Element payload = new Element("payload");
+						   payload.setCData(new JsonCoder().encode(v));
+						   fieldEl.addChild(new Element("value", XMLUtils.escape(payload.toString())));
+					   }
 					}
 				}
-				
-            }
+			}
 
-            service.sendPacket(new Iq(iq), TIMEOUT, { Packet result ->
-				def error = result?.getElement().getChild("error");
-                if (result == null || error != null) {
-					String errorResult = error?.toString();
-                    callback(errorResult);
-                    return;
-                }
+			service.sendPacket(new Iq(iq), TIMEOUT, { Packet result ->
+				def results = type == "application/json" ? encodeResponseJson(result) : encodeResponseXml(result);
+				callback(results.toString())
+			});
+		}
+	}
 
-                command = result.getElement().getChild("command", COMMAND_XMLNS);
-                def data = command.getChild("x", DATA_XMLNS);
-                def fieldElems = data.getChildren().findAll({ it.getName() == "field"});
-                
-				Element results = new Element("result");
-				
+	def encodeResponseJson = { result ->
+		def error = result?.getElement().getChild("error");
+		if (result == null || error != null) {
+			return new JsonCoder().encode([ error: error.getChildren().first?.getName() ?: "internal-server-error" ])
+		}
 
-                def titleEl = data.getChild("title");
-                if (titleEl) {
-					data.removeChild(titleEl);
-					results.addChild(titleEl);
-				}
+		def results = [:];
 
-                def instructionsEl = data.getChild("instructions");
-                if (instructionsEl) {
-					data.removeChild(instructionsEl);
-					results.addChild(instructionsEl);
-				}
+		Element command = result.getElement().getChild("command", COMMAND_XMLNS);
+		def data = command.getChild("x", DATA_XMLNS);
+		data.getChildren().each { el ->
+			if (el.getName() == "field") {
+				def var = el.getAttributeStaticStr("var");
+				def values = el.getChildren().findAll { c -> c.getName() == "value" }.collect { XMLUtils.unescape(it.getCData()) };
+				results[var] = el.getAttributeStaticStr("type")?.contains("-multi") ? values : (values.isEmpty() ? "" : values?.first())
+			}
+			else if (["title", "instructions", "note"].contains(el.getName())) {
+				results[el.getName()] = el.getCData();
+			}
+		}
 
-                def noteEl = command.getChild("note");
-                if (noteEl) {
-					command.removeChild(noteEl);
-					results.addChild(noteEl);
-                }
+		return new JsonCoder().encode(results);
+	}
 
-				convertFieldElements(fieldElems, results);
-				
-				def reportedElems = data.getChildren().findAll({ it.getName() == "reported"});
-				reportedElems.each { reportedEl ->
-					def reported = new Element("reported");
-					convertFieldElements(reportedEl.getChildren(), reported);
-					results.addChild(reported);
-				}
-					
-				def itemsElems = data.getChildren().findAll({ it.getName() == "item"});
-				itemsElems.each { itemEl ->
-					def items = new Element("item");				
-					convertFieldElements(itemEl.getChildren(), items);
-					results.addChild(items);
-				}
+	def encodeResponseXml = { result ->
+		def error = result?.getElement().getChild("error");
+		if (result == null || error != null) {
+			return error?.toString();
+		}
 
-                callback(results.toString())
-            });
-        }
-    }
-	
+		Element command = result.getElement().getChild("command", COMMAND_XMLNS);
+		def data = command.getChild("x", DATA_XMLNS);
+		def fieldElems = data.getChildren().findAll({ it.getName() == "field" });
+
+		Element results = new Element("result");
+
+		["title", "instructions", "note"].each { name ->
+			def el = data.getChild(name);
+			if (el) {
+				data.removeChild(el);
+				results.addChild(el);
+			}
+		}
+
+		convertFieldElements(fieldElems, results);
+
+		return results;
+	}
+
 	def convertFieldElements = { fieldElems, results ->
 		fieldElems.each { fieldEl ->
-			def var = fieldEl.getAttribute("var");	
-			def varTmp = var.split("#");					
+			def var = fieldEl.getAttribute("var");
+			def varTmp = var.split("#");
 			def elem = null;
 			if (varTmp.length > 1) {
 				elem = new Element(varTmp[1]);
@@ -221,26 +182,23 @@ For a content of a HTTP POST request you need to pass filled XML data retrieved 
 					results.addChild(wrap);
 				}
 				wrap.addChild(elem);
-			}
-			else {
+			} else {
 				elem = new Element(var);
 				results.addChild(elem);
 			}
-			
-			
-			["label", "type"].each { attr ->
+
+
+			[ "label", "type" ].each { attr ->
 				if (fieldEl.getAttribute(attr)) {
 					elem.setAttribute(attr, fieldEl.getAttribute(attr));
 				}
 			}
-			
+
 			def valueElems = fieldEl.getChildren().findAll({ it.getName() == "value" });
 			if (valueElems != null) {
-				valueElems.each { val ->
-					elem.addChild(new Element("value", val.getCData()));							
-				}
+				valueElems.each { val -> elem.addChild(new Element("value", var == "item" ? XMLUtils.unescape(val.getCData()) : val.getCData())) }
 			}
-			
+
 			def optionElems = fieldEl.getChildren().findAll({ it.getName() == "option" });
 			if (!optionElems.isEmpty()) {
 				optionElems.each { optionEl ->
@@ -251,20 +209,64 @@ For a content of a HTTP POST request you need to pass filled XML data retrieved 
 					elem.addChild(option);
 				}
 			}
-		}		
+		}
 	}
-	
-	Element decodeContent(String input) {
-		if (!input) return null;
-		
+
+	def decodeContent(HttpServletRequest request) {
+		if (request == null) {
+			return null;
+		}
+
+		String content = request.getReader().getText();
+		if (content == null) {
+			return null;
+		}
+
+		return (request.getContentType() == "application/json") ? decodeContentJson(content) :
+			   decodeContentXml(content);
+	}
+
+	def decodeContentJson(String input) {
+		return new JsonCoder().decode(input);
+	}
+
+	def decodeContentXml(String input) {
+		if (!input) {
+			return null
+		};
+
 		def handler = new DomBuilderHandler();
-		def parser = SingletonFactory.getParserInstance();			
-		
-		def data = ((String) input).toCharArray();
-		
-		parser.parse(handler, data, 0, data.length);
-		
-		return handler.getParsedElements().get(0);		
+		def parser = SingletonFactory.getParserInstance();
+
+		def chars = ((String) input).toCharArray();
+
+		parser.parse(handler, chars, 0, chars.length);
+
+		Element data = handler.getParsedElements().get(0);
+		def result = [:];
+
+		if (data && data.getName() == "data") {
+			data.getChildren().each { child ->
+				if (child.getAttribute("prefix") == "true") {
+					child.getChildren().each { sub ->
+						result[child.name + "#" + sub.name] = sub.getCData();
+					}
+				} else {
+					def values = child.getChildren().findAll { it.getName() == "value" }
+					if (!values.isEmpty()) {
+						result[child.name] = values.collect { it.getCData() };
+					} else {
+						if (child.getCData()) {
+							result[child.name] = child.getCData();
+						} else {
+							result[child.name] = child.getChildren()?.first();
+						}
+					}
+				}
+			}
+		}
+
+		return result;
 	}
 
 }

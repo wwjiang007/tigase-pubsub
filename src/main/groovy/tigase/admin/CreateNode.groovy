@@ -145,7 +145,6 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
             if (colNodeConfig == null) {
                 pubsubRepository.addToRootCollection(toJid, node);
             } else {
-                colNodeConfig.addChildren(node);
                 pubsubRepository.update(toJid, collection, colNodeConfig);
             }
 

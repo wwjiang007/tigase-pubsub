@@ -13,6 +13,12 @@ To continue usage of new versions of PubSub component it is required to manually
 
 WARNING: Loading of new database schema is required to use new version of PubSub component.
 
+=== Changes in REST API
+We continuously work on improving usability and making our REST API easier to use we added support for handling JSON requests in REST API for PubSub.
+At the same time we decided to slightly modify responses in XML sent by REST API to make responses in JSON and XML similar.
+
+For more informations about current REST API please look into <<REST API>> section.
+
 == New features
 
 === Support for using separate database for different domains

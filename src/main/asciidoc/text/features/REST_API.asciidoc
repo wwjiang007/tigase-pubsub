@@ -5,7 +5,10 @@
 
 All example calls to PubSub REST API are prepared for PubSub component running at `pubsub.example.com`. It is required to replace this value with JID of PubSub component from your installation.
 
-All parameters passed in content of HTTP request needs to be wrapped with `<data/>` tag as root tag of XML document, while returned parameters will be wrapped `<result/>` tag as root tag of XML document.
+It is possible to provide parameters to requests as:
+
+XML:: All parameters passed in content of HTTP request needs to be wrapped with `<data/>` tag as root tag of XML document, while returned parameters will be wrapped `<result/>` tag as root tag of XML document.
+JSON:: Parameters must be passed as serialized JSON object. Additionally `Content-Type` header of HTTP request needs to be set to `application/json`.
 
 === Create a node
 HTTP URI: `/rest/pubsub/pubsub.example.com/create-node`
@@ -25,6 +28,9 @@ Command requires fields `node` and `pubsub#node_type` to be filled with proper v
 * `pubsub#node_type` - should contain type of node to create (two values are possible: @leaf@ - node to which items will be published, @collection@ - node which will contain other nodes)
 
 Example content to create node of id `example` and of type `leaf` and with owner set to `admin@example.com`.
+
+===== Using XML
+.Request in XML
 [source,xml]
 ----
 <data>
@@ -36,7 +42,7 @@ Example content to create node of id `example` and of type `leaf` and with owner
 </data>
 ----
 
-Example response:
+.Response in XML
 [source,xml]
 ----
 <result>
@@ -44,6 +50,25 @@ Example response:
     <value>Operation successful</value>
   </Note>
 </result>
+----
+
+===== Using JSON
+.Request in JSON
+[source,json]
+----
+{
+  "node" : "example",
+  "owner" : "admin@example.com",
+  "pubsub#node_type" : "leaf"
+}
+----
+
+.Response in JSON
+[source,json]
+----
+{
+  "Note": "Operation successful"
+}
 ----
 
 === Delete a node
@@ -63,6 +88,9 @@ Command requires field `node` to be filled.
 * `node` - field should contain id of node to delete
 
 Example content to delete node with id `example`
+
+===== Using XML
+.Request in XML
 [source,xml]
 ----
 <data>
@@ -70,7 +98,7 @@ Example content to delete node with id `example`
 </data>
 ----
 
-Example response:
+.Response in XML
 [source,xml]
 ----
 <result>
@@ -78,6 +106,22 @@ Example response:
     <value>Operation successful</value>
   </Note>
 </result>
+----
+
+===== Using JSON
+.Request in JSON
+[source,json]
+----
+{
+  "node" : "example"
+}
+----
+.Response in JSON
+[source,json]
+----
+{
+  "Note" : "Operation successful"
+}
 ----
 
 === Subscribe to a node
@@ -98,6 +142,9 @@ Command requires fields `node` and `jids` to be filled.
 * `jids` - field should contain list of jids to be subscribed to node
 
 Example content to subscribe to node with id `example` users with jid `test1@example.com` and `test2@example.com`
+
+===== Using XML
+.Request in XML
 [source,xml]
 ----
 <data>
@@ -109,7 +156,7 @@ Example content to subscribe to node with id `example` users with jid `test1@exa
 </data>
 ----
 
-Example response:
+.Response in XML
 [source,xml]
 ----
 <result>
@@ -117,6 +164,27 @@ Example response:
     <value>Operation successful</value>
   </Note>
 </result>
+----
+
+===== Using JSON
+.Request in JSON
+[source,json]
+----
+{
+  "node" : "example",
+  "jids" : [
+    "test1@example.com",
+    "test2@example.com"
+  ]
+}
+----
+
+.Response in JSON
+[source,json]
+----
+{
+  "Note" : "Operation successful"
+}
 ----
 
 === Unsubscribe from a node
@@ -137,6 +205,9 @@ Command requires fields `node` and `jids` to be filled.
 * `jids` - field should contain list of jids to be unsubscribed from node
 
 Example content to unsubscribe from node with id `example` users `test1@example.com` and `test2@example.com`
+
+===== Using XML
+.Request in XML
 [source,xml]
 ----
 <data>
@@ -148,7 +219,7 @@ Example content to unsubscribe from node with id `example` users `test1@example.
 </data>
 ----
 
-Example response:
+.Response in XML
 [source,xml]
 ----
 <result>
@@ -156,6 +227,27 @@ Example response:
     <value>Operation successful</value>
   </Note>
 </result>
+----
+
+===== Using JSON
+.Request in JSON
+[source,json]
+----
+{
+  "node" : "example.com",
+  "jids" : [
+    "test@example.com",
+    "test2@example.com"
+  ]
+}
+----
+
+.Response in JSON
+[source,json]
+----
+{
+  "Note" : "Operation successful"
+}
 ----
 
 === Publish an item to a node
@@ -177,7 +269,22 @@ Command requires fields `node` and `entry` to be filled
 * `expire-at` - field may contain timestamp (in http://xmpp.org/extensions/xep-0082.html[XEP-0082] format) after which item should not be delivered to user
 * `entry` - field should contain multiline entry content which should be valid XML value for an item
 
-Example content to publish item with id `item-1` to node with id `example` and with content in example field.
+Example content to publish item with id `item-1` to node with id `example` and with content in example field. P
+
+===== Using XML
+====== with XML payload
+In this example we will use following XML payload:
+
+.Payload
+[source,xml]
+----
+<item-entry>
+  <title>Example 1</title>
+  <content>Example content</content>
+</item-entry>
+----
+
+.Request in XML
 [source,xml]
 ----
 <data>
@@ -193,7 +300,7 @@ Example content to publish item with id `item-1` to node with id `example` and w
 </data>
 ----
 
-Example response:
+.Response in XML
 [source,xml]
 ----
 <result>
@@ -201,6 +308,111 @@ Example response:
     <value>Operation successful</value>
   </Note>
 </result>
+----
+
+====== with JSON payload
+It is possible to publish JSON payload as value of published XML element. In example below we are publishing following JSON object:
+
+.Payload
+[source,json]
+----
+{ "key-1" : 2, "key-2" : "value-2" }
+----
+
+.Request in XML
+[source,xml]
+----
+<data>
+  <node>example</node>
+  <item-id>item-1</item-id>
+  <expire-at>2015-05-13T16:05:00+02:00</expire-at>
+  <entry>
+    <payload>{ &quot;key-1&quot; : 2, &quot;key-2&quot; : &quot;value-2&quot; }</payload>
+  </entry>
+</data>
+----
+
+.Response in XML
+[source,xml]
+----
+<result>
+  <Note type="fixed">
+    <value>Operation successful</value>
+  </Note>
+</result>
+----
+
+===== Using JSON
+====== with XML payload
+To publish XML using JSON you need to set serialized XML payload as value for `entry` key.
+In this example we will use following XML payload:
+
+.Payload
+[source,xml]
+----
+<item-entry>
+  <title>Example 1</title>
+  <content>Example content</content>
+</item-entry>
+----
+
+.Request in JSON
+[source, json]
+----
+{
+  "node" : "example",
+  "item-id" : "item-1",
+  "expire-at" : "2015-05-13T16:05:00+02:00",
+  "entry" : "<item-entry>
+    <title>Example 1</title>
+    <content>Example content</content>
+  </item-entry>"
+}
+----
+
+.Response in JSON
+[source,json]
+----
+{
+  "Note" : "Operation successful"
+}
+----
+
+====== with JSON payload
+As JSON needs to be set as a value of an XML element it will be wrapped on server side as a value for `<payload/>` element.
+
+.Payload
+[source,json]
+----
+{ "key-1" : 2, "key-2" : "value-2" }
+----
+
+.Request in JSON
+[source,json]
+----
+{
+  "node" : "example",
+  "item-id" : "item-1",
+  "expire-at" : "2015-05-13T16:05:00+02:00",
+  "entry" : {
+    "key-1" : 2,
+    "key-2" : "value-2"
+  }
+}
+----
+
+.Response in JSON
+[source,json]
+----
+{
+  "Note" : "Operation successful"
+}
+----
+
+.Published item
+[source,xml]
+----
+<payload>{ &quot;key-1&quot; : 2, &quot;key-2&quot; : &quot;value-2&quot; }</payload>
 ----
 
 === Delete an item from a node
@@ -221,6 +433,9 @@ Command requires fields `node` and `item-id` to be filled
 * `item-id` - field contains id of entry to publish
 
 Example content to delete an item with id `item-1` from node with id `example`.
+
+===== Using XML
+.Request in XML
 [source,xml]
 ----
 <data>
@@ -229,7 +444,7 @@ Example content to delete an item with id `item-1` from node with id `example`.
 </data>
 ----
 
-Example response:
+.Response in XML
 [source,xml]
 ----
 <result>
@@ -237,6 +452,24 @@ Example response:
     <value>Operation successful</value>
   </Note>
 </result>
+----
+
+===== Using JSON
+.Request in JSON
+[source,json]
+----
+{
+  "node" : "example",
+  "item-id" : "item-1"
+}
+----
+
+.Response in JSON
+[source,json]
+----
+{
+  "Note" : "Operation successful"
+}
 ----
 
 === List available nodes
@@ -249,7 +482,7 @@ Available HTTP methods:
 
 Method returns list of available PubSub nodes for domain passed as part of URI (`pubsub.example.com`).
 
-Example response:
+.Example response in XML
 [source,xml]
 ----
 <result>
@@ -260,6 +493,21 @@ Example response:
     <value>node_3ws5lz0037</value>
   </nodes>
 </result>
+----
+
+in which we see nodes: `test`, `node_54idf40037` and `node_3ws5lz0037`.
+
+.Example response in JSON
+[source,json]
+----
+{
+  "title" : "List of available nodes",
+  "nodes" : [
+    "test",
+    "node_54idf40037",
+    "node_3ws5lz0037"
+  ]
+}
 ----
 
 in which we see nodes: `test`, `node_54idf40037` and `node_3ws5lz0037`.
@@ -281,6 +529,9 @@ Command requires field `node` to be filled
 * `node` - field contains id of node which items we want to list
 
 Example content to list of items published on node with id `example`.
+
+===== Using XML
+.Request in XML
 [source,xml]
 ----
 <data>
@@ -288,7 +539,7 @@ Example content to list of items published on node with id `example`.
 </data>
 ----
 
-Example response:
+.Response in XML
 [source,xml]
 ----
 <result>
@@ -304,6 +555,31 @@ Example response:
 ----
 
 where `item-1` and `item-2` are identifiers of published items for node `example`.
+
+===== Using JSON
+.Request in JSON
+[source,json]
+----
+{
+  "node" : "example"
+}
+----
+
+.Response in JSON
+[source,json]
+----
+{
+  "title" : "List of PubSub node items",
+  "node" : "example",
+  "items" : [
+    "item-1",
+    "item-2"
+  ]
+}
+----
+
+where `item-1` and `item-2` are identifiers of published items for node `example`.
+
 
 === Retrieve item published on node
 
@@ -323,6 +599,9 @@ Command requires fields `node` and `item-id` to be filled
 * `item-id` - field contains id of item to retrieve
 
 Example content to list of items published on node with id `example`.
+
+===== Using XML
+.Request in XML
 [source,xml]
 ----
 <data>
@@ -331,7 +610,7 @@ Example content to list of items published on node with id `example`.
 </data>
 ----
 
-Example response:
+.Response in XML
 [source,xml]
 ----
 <result>
@@ -343,13 +622,43 @@ Example response:
     <value>item-1</value>
   </item-id>
   <item label="Item" type="text-multi">
-    <value>&lt;item expire-at=&quot;2015-05-13T14:05:00Z&quot; id=&quot;item-1&quot;&gt;&lt;item-entry&gt;
-      &lt;title&gt;Example 1&lt;/title&gt;
-      &lt;content&gt;Example content&lt;/content&gt;
-    &lt;/item-entry&gt;&lt;/item&gt;
+    <value>
+      <item expire-at="2015-05-13T14:05:00Z" id="item-1">
+        <item-entry>
+          <title>Example 1</title>
+          <content>Example content</content>
+        </item-entry>
+      </item>
     </value>
   </item>
 </result>
 ----
 
 inside item element there is XML encoded element which is published on node `example` with id `item-1`.
+
+===== Using JSON
+.Request in JSON
+[source,json]
+----
+{
+  "node" : "example",
+  "item-id" : "item-1"
+}
+----
+.Response in JSON
+[source,json]
+----
+{
+  "title" : "Retrieve PubSub node item",
+  "node" : "example",
+  "item-id" : "item-1",
+  "item" : [
+    "<item expire-at\"2015-05-13T14:05:00Z\" id=\"item-1\">
+      <item-entry>
+        <title>Example 1</title>
+        <content>Example content</content>
+      </item-entry>
+    </item>"
+  ]
+}
+----
