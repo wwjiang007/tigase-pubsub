@@ -217,7 +217,8 @@
 				<directory>src/main/asciidoc</directory>
 				<targetPath>PubSub</targetPath>
 				<includes>
-					<include>**/*.*</include>
+					<include>**/*.asciidoc</include>
+					<include>**/*.css</include>
 				</includes>
 			</resource>
 		</resources>
