@@ -204,6 +204,7 @@
 					<include>**/*.txt</include>
 				</includes>
 			</resource>
+			
 			<resource>
 				<directory>src/main/groovy/tigase/</directory>
 				<targetPath>scripts</targetPath>
@@ -211,7 +212,16 @@
 					<include>**/*.groovy</include>
 				</includes>
 			</resource>
+			
+			<resource>
+				<directory>src/main/asciidoc</directory>
+				<targetPath>PubSub</targetPath>
+				<includes>
+					<include>**/*.*</include>
+				</includes>
+			</resource>
 		</resources>
+		
 	</build>
     <profiles>
         <profile>
