@@ -102,7 +102,7 @@ For a content of a HTTP POST request you need to pass filled XML data retrieved 
 					   if (v instanceof String) {
 						   fieldEl.addChild(new Element("value", XMLUtils.escape((String) v)));
 					   } else if (v instanceof Element) {
-						   fieldEl.addChild(new Element("value", XMLUtils.escape((Element) v).toString()));
+						   fieldEl.addChild(new Element("value", XMLUtils.escape(((Element) v).toString())));
 					   } else {
 						   Element payload = new Element("payload");
 						   payload.setCData(new JsonCoder().encode(v));
