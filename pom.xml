@@ -213,14 +213,16 @@
 				</includes>
 			</resource>
 			
+						
 			<resource>
 				<directory>src/main/asciidoc</directory>
-				<targetPath>PubSub</targetPath>
+				<targetPath>documentation</targetPath>
 				<includes>
 					<include>**/*.asciidoc</include>
 					<include>**/*.css</include>
 				</includes>
 			</resource>
+
 		</resources>
 		
 	</build>
