@@ -662,3 +662,63 @@ inside item element there is XML encoded element which is published on node `exa
   ]
 }
 ----
+
+=== Retrieve user subscriptions
+HTTP URI: `/rest/pubsub/pubsub.example.com/retrieve-user-subscriptions`
+
+Available HTTP methods:
+
+==== GET
+
+Method returns example content which contains all required and optional parameters that may be passed.
+
+==== POST
+
+Command requires field `jid` to be filled.
+
+* `jid` - field contains JID of a user for which we want to retrieve subscriptions
+* `node-pattern` - field contains regex pattern to match. When field is not empty, request will return only subscribed nodes which match this pattern. If field should be empty it may be omitted in a request.
+
+Example content to retrieve list of nodes to which user `test@example.com` is subscribed at `pubsub.example.com` which starts with `test-` (pattern `test-.*`)
+
+===== Using XML
+.Request in XML
+[source,xml]
+----
+<data>
+  <jid>test@example.com</jid>
+  <node-pattern>test-.*</node-pattern>
+</data>
+----
+
+.Response in XML
+[source,xml]
+----
+<result>
+  <nodes label="Nodes" type="text-multi">
+    <value>test-123</value>
+    <value>test-342</value>
+  </nodes>
+</result>
+----
+
+===== Using JSON
+.Request in JSON
+[source,json]
+----
+{
+  "jid" : "test@example.com",
+  "node-pattern" : "test-.*"
+}
+----
+
+.Response in JSON
+[source,json]
+----
+{
+  "nodes" : [
+    "test-123",
+    "test-342"
+  ]
+}
+----

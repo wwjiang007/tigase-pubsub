@@ -30,7 +30,12 @@
 
 package tigase.admin
 
+import groovy.transform.CompileStatic
 import tigase.db.TigaseDBException
+import tigase.eventbus.EventBus
+import tigase.kernel.core.Kernel
+import tigase.pubsub.PubSubComponent
+import tigase.pubsub.PubSubConfig
 import tigase.pubsub.exceptions.PubSubException
 import tigase.pubsub.repository.IPubSubRepository
 import tigase.server.Command
@@ -42,69 +47,82 @@ import tigase.xmpp.BareJID
 
 import java.util.regex.Pattern
 
-def JID = "jid";
-def PATTERN = "node-pattern"
 
-IPubSubRepository pubsubRepository = component.pubsubRepository
+Kernel kernel = (Kernel) kernel;
+PubSubComponent component = (PubSubComponent) component
+packet = (Iq) packet
+eventBus = (EventBus) eventBus
 
-def p = (Iq) packet
-def admins = (Set)adminsSet
-def stanzaFromBare = p.getStanzaFrom().getBareJID()
-def isServiceAdmin = admins.contains(stanzaFromBare)
+@CompileStatic
+Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus, Set admins) {
+	def JID = "jid";
+	def PATTERN = "node-pattern"
 
-def jid = Command.getFieldValue(packet, JID);
-def pattern = Command.getFieldValue(packet, PATTERN);
+	def componentConfig = kernel.getInstance(PubSubConfig.class);
+	IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
+	def stanzaFromBare = p.getStanzaFrom().getBareJID()
+	def isServiceAdmin = admins.contains(stanzaFromBare)
 
-if (jid == null) {
-	def result = p.commandResult(Command.DataType.form);
+	String jid = Command.getFieldValue(p, JID);
+	String patternStr = Command.getFieldValue(p, PATTERN);
 
-	Command.addTitle(result, "Retrieve user subscriptions")
-	Command.addInstructions(result, "Fill out this form to retrieve list of nodes to which user is subscribed to.")
+	if (jid == null) {
+		def result = p.commandResult(Command.DataType.form);
 
-	Command.addFieldValue(result, JID, jid ?: "", "jid-single",
-						  "User JID to retrieve subscriptions")
-	Command.addFieldValue(result, PATTERN, pattern ?: "", "text-single",
-						  "Regex pattern of retrieved nodes")
+		Command.addTitle(result, "Retrieve user subscriptions")
+		Command.addInstructions(result, "Fill out this form to retrieve list of nodes to which user is subscribed to.")
 
-	return result
-}
+		Command.addFieldValue(result, JID, jid ?: "", "jid-single",
+							  "User JID to retrieve subscriptions")
+		Command.addFieldValue(result, PATTERN, patternStr ?: "", "text-single",
+							  "Regex pattern of retrieved nodes")
 
-def result = p.commandResult(Command.DataType.result)
+		return result
+	}
 
-try {
-	if (isServiceAdmin || component.componentConfig.isAdmin(stanzaFromBare)) {
-		def bareJid = BareJID.bareJIDInstance(jid);
-		List<String> subscriptions = [ ];
-		subscriptions.addAll(
-				pubsubRepository.getUserSubscriptions(p.getStanzaTo().getBareJID(), bareJid).keySet());
-		if (pattern != null && !pattern.isEmpty()) {
-			pattern = Pattern.compile(pattern);
-			subscriptions = subscriptions.findAll { node -> ((Pattern) pattern).matcher(node).matches() };
+	def result = p.commandResult(Command.DataType.result)
+
+	try {
+		if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
+			def bareJid = BareJID.bareJIDInstance(jid);
+			List<String> subscriptions = [ ];
+			subscriptions.addAll(pubsubRepository.getUserSubscriptions(p.getStanzaTo().getBareJID(), bareJid).keySet());
+			if (patternStr != null && !patternStr.isEmpty()) {
+				Pattern pattern = Pattern.compile(patternStr);
+				subscriptions = subscriptions.findAll { node -> pattern.matcher(node).matches() };
+			}
+
+			Command.addFieldMultiValue(result, "nodes", subscriptions as List);
+			result.getElement().
+					getChild('command').
+					getChild('x').
+					getChildren().
+					find { e -> e.getAttribute("var") == "nodes" }?.
+					setAttribute("label", "Nodes");
+		} else {
+			throw new PubSubException(Authorization.FORBIDDEN,
+									  "You do not have enough " + "permissions to retrieve user subscriptions.");
 		}
+	} catch (PubSubException ex) {
+		Command.addTextField(result, "Error", ex.getMessage())
+		if (ex.getErrorCondition()) {
+			def error = ex.getErrorCondition();
+			Element errorEl = new Element("error");
+			errorEl.setAttribute("type", error.getErrorType());
+			Element conditionEl = new Element(error.getCondition(), ex.getMessage());
+			conditionEl.setXMLNS(Packet.ERROR_NS);
+			errorEl.addChild(conditionEl);
+			Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
+			if (pubsubCondition) {
+				errorEl.addChild(pubsubCondition)
+			};
+			result.getElement().addChild(errorEl);
+		}
+	} catch (TigaseDBException ex) {
+		Command.addTextField(result, "Note", "Problem accessing database.");
+	}
 
-		Command.addFieldMultiValue(result, "nodes", subscriptions as List);
-		result.getElement().getChild('command').getChild('x').getChildren().find { e -> e.getAttribute("var") == "nodes" }?.setAttribute("label", "Nodes");
-	} else {
-		throw new PubSubException(Authorization.FORBIDDEN,
-								  "You do not have enough " + "permissions to retrieve user subscriptions.");
-	}
-} catch (PubSubException ex) {
-	Command.addTextField(result, "Error", ex.getMessage())
-	if (ex.getErrorCondition()) {
-		def error = ex.getErrorCondition();
-		Element errorEl = new Element("error");
-		errorEl.setAttribute("type", error.getErrorType());
-		Element conditionEl = new Element(error.getCondition(), ex.getMessage());
-		conditionEl.setXMLNS(Packet.ERROR_NS);
-		errorEl.addChild(conditionEl);
-		Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
-		if (pubsubCondition) {
-			errorEl.addChild(pubsubCondition)
-		};
-		result.getElement().addChild(errorEl);
-	}
-} catch (TigaseDBException ex) {
-	Command.addTextField(result, "Note", "Problem accessing database.");
+	return result;
 }
 
-return result;
+return process(kernel, component, packet, eventBus, (Set) adminsSet)
