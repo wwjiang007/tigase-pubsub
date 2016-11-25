@@ -1,6 +1,7 @@
 == PubSub Node Presence Protocol
 
 *Occupant Use Case*
+
 === Log in to Pubsub Node
 To log in to PubSub Node user must send presence to PubSub component with additional information about node:
 [source,xml]

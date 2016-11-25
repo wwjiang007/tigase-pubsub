@@ -44,7 +44,7 @@ pubsub () {
     }
 }
 ----
-NOTE: With this configuration room data for other domains than `pubsub.example.com` will be stored in default data source.
+NOTE: With this configuration, data for other domains than `pubsub.example.com` will be stored in default data source.
 
 == Enabling PEP support
 To enable http://xmpp.org/extensions/xep-0163.html[XEP-0163: Personal Eventing Protocol] support it is required to set `persistent-pep` property of PubSub component to `true`, set `send-last-published-item-on-presence` property of component to `true` and enable `pep` SessionManager processor.

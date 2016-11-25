@@ -1,3 +1,4 @@
+
 == Offline Message Sink
 :author: Bartosz Malkowski
 :version: v1.0, October 2015

@@ -13,7 +13,7 @@ You need to manually select schema for correct database and component and load t
 
 == Upgrade of database schema
 Database schema for our components may change between versions and if so it needs to be updated before new version may be started.
-To upgrade schema please follow instuctions from <<Preparation of database>> section.
+To upgrade schema please follow instructions from <<Preparation of database>> section.
 [NOTE]
 If you use SNAPSHOT builds then schema may change for same version as this are versions we are still working on.
 
@@ -29,7 +29,7 @@ This table stores all jids for which PubSub component contains nodes.
 | service_jid | Value of a service JID |
 | service_jid_sha1 | SHA1 value of lowercased service JID | Used for proper bare JID comparison during lookup.
 
-(Not exists in PostgreSQL schema)
+(N/A to PostgreSQL schema)
 |============
 
 === Table `tig_pubsub_jids`
@@ -41,7 +41,7 @@ This table stores all jids related to PubSub nodes, ie. subscriber, affiliates, 
 | jid | Value of a bare JID |
 | jid_sha1 | SHA1 value of lowercased bare JID | Used for proper bare JID comparison during lookup.
 
-(Not exists in PostgreSQL schema)
+(N/A to PostgreSQL schema)
 |============
 
 === Table `tig_pubsub_nodes`
@@ -54,7 +54,7 @@ Table stores nodes tree structure and node configuration.
 | name | Name of PubSub node |
 | name_sha1 | SHA1 of PubSub node name | Used for indexing and faster lookup.
 
-(Not exists in PostgreSQL schema)
+(N/A to PostgreSQL schema)
 | type | Type of PubSub node | 0 - collection
 
 1 - leaf
@@ -95,7 +95,7 @@ Table stores items of PubSub nodes.
 | id | Id of an items |
 | id_sha1 | SHA1 of item id | Indexed and used for faster lookup
 
-(Not exists in PostgreSQL schema)
+(N/A to PostgreSQL schema)
 | creation_date | Creation date |
 | publusher_id | ID of publisher JID | References `jid_id` from `tig_pubsub_jids`
 | update_date | Timestamp of last item modification |

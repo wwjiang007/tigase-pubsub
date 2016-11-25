@@ -16,9 +16,3 @@ include::text/Database.asciidoc[]
 include::text/Configuration.asciidoc[]
 include::text/Features.asciidoc[]
 include::text/Limitations.asciidoc[]
-
-include::text/features/AdHocCommands.asciidoc[]
-include::text/features/OfflineMessagesSink.asciidoc[]
-include::text/features/PubSub_Node_Presence_Protocol.asciidoc[]
-include::text/features/REST_API.asciidoc[]
-

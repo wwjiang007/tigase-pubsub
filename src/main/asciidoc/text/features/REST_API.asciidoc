@@ -25,7 +25,7 @@ Command requires fields `node` and `pubsub#node_type` to be filled with proper v
 
 * `node` - field should contain id of node to create
 * `owner` - field may contains jid which should be used as jid of owner of newly created node (will use jid of Tigase HTTP API Component if not passed)
-* `pubsub#node_type` - should contain type of node to create (two values are possible: @leaf@ - node to which items will be published, @collection@ - node which will contain other nodes)
+* `pubsub#node_type` - should contain type of node to create (two values are possible: `leaf` - node to which items will be published, `collection` - node which will contain other nodes)
 
 Example content to create node of id `example` and of type `leaf` and with owner set to `admin@example.com`.
 
