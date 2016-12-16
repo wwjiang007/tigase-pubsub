@@ -26,7 +26,7 @@ import tigase.component.exceptions.RepositoryException;
 import tigase.db.DBInitException;
 import tigase.db.DataSource;
 import tigase.db.DataSourceHelper;
-import tigase.db.beans.MDRepositoryBean;
+import tigase.db.beans.MDRepositoryBeanWithStatistics;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.pubsub.AbstractNodeConfig;
@@ -34,6 +34,7 @@ import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
+import tigase.server.BasicComponent;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
@@ -45,7 +46,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Bean(name="dao", parent = PubSubComponent.class)
-public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPubSubDAO<T, S>> implements IPubSubDAO<T, S>  {
+public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBeanWithStatistics<IPubSubDAO<T, S>>
+		implements IPubSubDAO<T, S>  {
 
 	private static final Logger log = Logger.getLogger(PubSubDAOPool.class.getName());
 
@@ -60,6 +62,7 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPu
 	private boolean mapComponentToBareDomain = false;
 
 	public PubSubDAOPool() {
+		super(IPubSubDAO.class);
 	}
 
 	@Override
@@ -74,6 +77,11 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBean<IPu
 		} else {
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
 		}
+	}
+
+	@Override
+	public boolean belongsTo(Class<? extends BasicComponent> component) {
+		return PubSubComponent.class.isAssignableFrom(component);
 	}
 
 	@Override
