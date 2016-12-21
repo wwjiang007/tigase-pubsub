@@ -6,6 +6,7 @@ package tigase.pubsub.repository;
 
 import tigase.component.exceptions.RepositoryException;
 import tigase.db.DataSource;
+import tigase.db.UserNotFoundException;
 import tigase.db.UserRepository;
 import tigase.form.Form;
 import tigase.kernel.beans.Inject;
@@ -22,9 +23,8 @@ import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.impl.roster.RosterFlat;
 
 import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -116,9 +116,13 @@ public abstract class PubSubDAO<T, S extends DataSource> implements IPubSubDAO<T
 		try {
 			String tmp = this.repository.getData(owner, "roster");
 			Map<BareJID, RosterElement> roster = new HashMap<BareJID, RosterElement>();
-			if (tmp != null)
-				RosterFlat.parseRosterUtil(tmp, roster, null);
+			if (tmp != null) RosterFlat.parseRosterUtil(tmp, roster, null);
 			return roster;
+		} catch (UserNotFoundException ex) {
+			if (log.isLoggable(Level.FINER)) {
+				log.log(Level.FINER, "Cannot find roster of user {0}. Probably anonymous user.", new Object[] { owner });
+			}
+			return Collections.emptyMap();
 		} catch (Exception e) {
 			throw new RepositoryException("Getting user roster error", e);
 		}

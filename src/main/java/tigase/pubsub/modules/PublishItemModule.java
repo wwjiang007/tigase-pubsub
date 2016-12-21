@@ -453,13 +453,14 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 
 	private void pepProcess(final Packet packet, final Element pubSub, final Element publish) throws RepositoryException {
 		final JID senderJid = packet.getStanzaFrom();
+		JID[] subscribers = getValidBuddies(senderJid.getBareJID());
+
 		final Element item = publish.getChild("item");
-		final Element items = new Element("items", new String[] { "node" },
-				new String[] { publish.getAttributeStaticStr("node") });
+		final Element items = new Element("items", new String[]{"node"},
+										  new String[]{publish.getAttributeStaticStr("node")});
 
 		items.addChild(item);
 
-		JID[] subscribers = getValidBuddies(senderJid.getBareJID());
 		sendNotifications(subscribers, items, senderJid, null, publish.getAttributeStaticStr("node"), null);
 
 		packetWriter.write(packet.okResult((Element) null, 0));
