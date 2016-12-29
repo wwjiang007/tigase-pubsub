@@ -230,3 +230,132 @@ begin
 end ;
 $$ LANGUAGE 'plpgsql';
 -- QUERY END:
+
+-- QUERT START:
+create or replace function TigPubSubMamQueryItems(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _limit int, _offset int) returns table (
+    node_name varchar(1024),
+    node_id bigint,
+    item_id varchar(1024),
+    creation_date timestamp,
+    payload text
+) as $$
+declare
+    publisherId bigint;
+	nodesIds text;
+begin
+    if _publisher is not null then
+        select jid_id into publisherId
+        from tig_pubsub_jids
+        where jid = _publisher;
+    end if;
+
+    nodesIds := '{' || _nodes_ids || '}';
+
+    if _order = 0 then
+        return query select pn.name, pi.node_id, pi.id, pi.creation_date, pi.data
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (select unnest(nodesIds::bigint[]))
+            and (_since is null or pi.creation_date >= _since)
+            and (_to is null or pi.creation_date <= _to)
+            and (_publisher is null or pi.publisher_id = publisherId)
+        order by pi.creation_date
+        limit _limit offset _offset;
+    else
+        return query select pn.name, pi.node_id, pi.id, pi.update_date, pi.data
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (select unnest(nodesIds::bigint[]))
+            and (_since is null or pi.update_date >= _since)
+            and (_to is null or pi.update_date <= _to)
+            and (_publisher is null or pi.publisher_id = publisherId)
+        order by pi.update_date
+        limit _limit offset _offset;
+    end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERT START:
+create or replace function TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _node_id bigint, _item_id varchar(1024)) returns table (
+    "position" bigint
+) as $$
+declare
+    publisherId bigint;
+	nodesIds text;
+begin
+    if _publisher is not null then
+        select jid_id into publisherId
+        from tig_pubsub_jids
+        where jid = _publisher;
+    end if;
+
+    nodesIds := '{' || _nodes_ids || '}';
+
+    if _order = 0 then
+        return query select x.position from (
+		    select row_number() over (w) as position, pi.node_id, id
+            from tig_pubsub_items pi
+            where
+                pi.node_id in (select unnest(nodesIds::bigint[]))
+                and (_since is null or pi.creation_date >= _since)
+                and (_to is null or pi.creation_date <= _to)
+                and (_publisher is null or pi.publisher_id = publisherId)
+            window w as (order by pi.creation_date)
+            ) x where x.node_id = _node_id and x.id = _item_id;
+    else
+        return query select x.position from (
+		    select row_number() over (w) as position, pi.node_id, id
+            from tig_pubsub_items pi
+            where
+                pi.node_id in (select unnest(nodesIds::bigint[]))
+                and (_since is null or pi.update_date >= _since)
+                and (_to is null or pi.update_date <= _to)
+                and (_publisher is null or pi.publisher_id = publisherId)
+            window w as (order by pi.update_date)
+            ) x where x.node_id = _node_id and x.id = _item_id;
+    end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERT START:
+create or replace function TigPubSubMamQueryItemsCount(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int) returns table (
+    "count" bigint
+) as $$
+declare
+    publisherId bigint;
+	nodesIds text;
+begin
+    if _publisher is not null then
+        select jid_id into publisherId
+        from tig_pubsub_jids
+        where jid = _publisher;
+    end if;
+
+    nodesIds := '{' || _nodes_ids || '}';
+
+    if _order = 0 then
+        return query select count(1)
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (select unnest(nodesIds::bigint[]))
+            and (_since is null or pi.creation_date >= _since)
+            and (_to is null or pi.creation_date <= _to)
+            and (_publisher is null or pi.publisher_id = publisherId);
+    else
+        return query select count(1)
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (select unnest(nodesIds::bigint[]))
+            and (_since is null or pi.update_date >= _since)
+            and (_to is null or pi.update_date <= _to)
+            and (_publisher is null or pi.publisher_id = publisherId);
+    end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:

@@ -26,18 +26,22 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.db.DataSource;
 import tigase.db.DataSourceAware;
 import tigase.db.Repository;
 import tigase.db.UserRepository;
 import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.NodeType;
+import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+import tigase.xmpp.mam.MAMRepository;
 
 /**
  * Interface description
@@ -46,7 +50,7 @@ import tigase.xmpp.impl.roster.RosterElement;
  * @version 5.0.0, 2010.03.27 at 05:16:25 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-public interface IPubSubDAO<T, S extends DataSource> extends DataSourceAware<S> {
+public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends DataSourceAware<S> {
 
 	/**
 	 * Method description
@@ -212,6 +216,9 @@ public interface IPubSubDAO<T, S extends DataSource> extends DataSourceAware<S> 
 //	public void init(String resource_uri, Map<String, String> params, UserRepository userRepository) throws RepositoryException;
 
 	public AbstractNodeConfig parseConfig(String nodeName, String cfgData) throws RepositoryException;
+
+	void queryItems(Q query, List<T> nodesIds, MAMRepository.ItemHandler<Q, IPubSubRepository.Item> itemHandler)
+			throws RepositoryException, ComponentException;
 
 	public void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException;
 	

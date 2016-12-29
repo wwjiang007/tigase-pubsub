@@ -21,6 +21,7 @@
  */
 package tigase.pubsub.repository.cached;
 
+import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.db.DataSource;
 import tigase.kernel.beans.Bean;
@@ -28,22 +29,28 @@ import tigase.kernel.beans.BeanSelector;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.*;
+import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.modules.ext.presence.PresenceNodeSubscriptions;
 import tigase.pubsub.modules.ext.presence.PresenceNotifierModule;
+import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.*;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
+import tigase.pubsub.utils.Logic;
 import tigase.stats.Counter;
 import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticHolderImpl;
 import tigase.stats.StatisticsList;
 import tigase.xmpp.BareJID;
+import tigase.xmpp.JID;
 import tigase.xmpp.impl.roster.RosterElement;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Class description
@@ -256,7 +263,11 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	protected PubSubConfig config;
 
 	@Inject
-	protected IPubSubDAO<T,DataSource> dao;
+	protected IPubSubDAO<T,DataSource, Query> dao;
+
+
+	@Inject
+	protected Logic logic;
 
 	protected Logger log = Logger.getLogger(this.getClass().getName());
 
@@ -712,6 +723,68 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	}
 
 	@Override
+	public void queryItems(Query query, ItemHandler<Query, Item> itemHandler)
+			throws RepositoryException, ComponentException {
+
+		BareJID serviceJid = query.getComponentJID().getBareJID();
+		JID requester = query.getQuestionerJID();
+		List<Node<T>> nodes = getNodeAndSubnodes(serviceJid, query.getPubsubNode(),
+												 node -> hasAccessPermission(node, requester),
+												 node -> (node.getNodeConfig() instanceof LeafNodeConfig));
+
+		if (nodes.isEmpty()) {
+			return;
+		}
+
+		if (query.getOrder() == null) {
+			query.setOrder(nodes.get(0).getNodeConfig().getCollectionItemsOrdering());
+		}
+
+		List<T> nodeIds = nodes.stream().map(node -> node.getNodeId()).collect(Collectors.toList());
+		dao.queryItems(query, nodeIds, itemHandler);
+	}
+
+	protected List<Node<T>> getNodeAndSubnodes(BareJID serviceJid, String nodeName, Predicate<Node<T>> filterWithSubnodes, Predicate<Node<T>> filter)
+			throws RepositoryException {
+		List<Node<T>> result = new ArrayList<>();
+
+		Node node = getNode(serviceJid, nodeName);
+		if (filterWithSubnodes != null && !filterWithSubnodes.test(node)) {
+			return Collections.emptyList();
+		}
+
+		if (filter != null && filter.test(node)) {
+			result.add(node);
+		}
+		AbstractNodeConfig nodeConfig = node.getNodeConfig();
+		if (nodeConfig instanceof CollectionNodeConfig) {
+			String[] childNodes = getChildNodes(serviceJid, nodeName);
+			if (childNodes != null) {
+				for (String child : childNodes) {
+					result.addAll(getNodeAndSubnodes(serviceJid, child, filterWithSubnodes, filter));
+				}
+			}
+		}
+
+		return result;
+	}
+
+	protected boolean hasAccessPermission(Node node, JID requester) {
+		try {
+			logic.checkAccessPermission(node.getServiceJid(), node.getNodeConfig(), node.getNodeAffiliations(),
+										node.getNodeSubscriptions(), requester);
+			return true;
+		} catch (PubSubException | RepositoryException ex) {
+			return false;
+		}
+	}
+
+	@Override
+	public Query newQuery() {
+		return new Query();
+	}
+
+	@Override
 	public void removeFromRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
 		NodeKey key = createKey(serviceJid, nodeName);
 		Node<T> node = this.nodes.get(key);
@@ -832,7 +905,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 			}
 		}
 	}
-	
+
 	protected NodeSubscriptions wrapNodeSubscriptions(tigase.pubsub.repository.NodeSubscriptions nodeSubscriptions) {
 		return new NodeSubscriptions(nodeSubscriptions);
 	}

@@ -22,19 +22,25 @@
  */
 package tigase.pubsub.repository;
 
+import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.db.DataRepository;
 import tigase.db.Repository;
+import tigase.db.TigaseDBException;
+import tigase.kernel.beans.config.ConfigField;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.Subscription;
+import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.NodeMeta;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
+import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
+import tigase.xmpp.mam.MAMRepository;
 
 import java.sql.*;
 import java.util.*;
@@ -43,7 +49,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 
 @Repository.Meta(supportedUris = { "jdbc:[^:]+:.*" })
-public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository> {
+public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 
 	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?) }";
 	private static final String REMOVE_NODE_QUERY = "{ call TigPubSubRemoveNode(?) }";
@@ -69,6 +75,13 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository> {
 	private static final String DELETE_NODE_SUBSCRIPTIONS_QUERY = "{ call TigPubSubDeleteNodeSubscription(?, ?) }";
 	private static final String GET_USER_AFFILIATIONS_QUERY = "{ call TigPubSubGetUserAffiliations(?, ?) }";
 	private static final String GET_USER_SUBSCRIPTIONS_QUERY = "{ call TigPubSubGetUserSubscriptions(?, ?) }";
+
+	@ConfigField(desc = "Retrieve items from repository", alias="mam-query-items-query")
+	private String mamQueryItems = "{ call TigPubSubMamQueryItems(?,?,?,?,?,?,?) }";
+	@ConfigField(desc = "Find item position in result set from repository", alias="mam-query-item-position-query")
+	private String mamQueryItemPosition= "{ call TigPubSubMamQueryItemPosition(?,?,?,?,?,?,?) }";
+	@ConfigField(desc = "Count number of items from repository", alias="mam-query-items-count-query")
+	private String mamQueryItemsCount = "{ call TigPubSubMamQueryItemsCount(?,?,?,?,?) }";
 
 	private DataRepository data_repo;
 
@@ -727,6 +740,154 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository> {
 		}
 	}
 
+	protected Integer countItems(Query query, String nodeIds) throws TigaseDBException {
+		try {
+			PreparedStatement st = this.data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
+																	   mamQueryItemsCount);
+			synchronized (st) {
+				ResultSet rs = null;
+				try {
+					setStatementParamsForMAM(st, query, nodeIds);
+
+					rs = st.executeQuery();
+					if (rs.next()) {
+						return rs.getInt(1);
+					} else {
+						return null;
+					}
+				} finally {
+					data_repo.release(null, rs);
+				}
+			}
+		} catch (SQLException ex) {
+			throw new TigaseDBException("Failed to retrieve number of items for nodes at " + query.getComponentJID(),
+										ex);
+		}
+	}
+
+
+	protected Integer getItemPosition(Query query, String nodeIds, String itemId)
+			throws RepositoryException, ComponentException {
+		if (itemId == null) {
+			return null;
+		}
+
+
+		try {
+			String[] parts = itemId.split(",");
+			if (parts.length != 2) {
+				throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
+			}
+			long itemNodeId = Long.parseLong(parts[0]);
+			String id = parts[1];
+
+			PreparedStatement st = this.data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
+																	   mamQueryItemPosition);
+			synchronized (st) {
+				ResultSet rs = null;
+				try {
+					int i = setStatementParamsForMAM(st, query, nodeIds);
+					st.setLong(i++, itemNodeId);
+					st.setString(i++, id);
+
+					rs = st.executeQuery();
+					if (rs.next()) {
+						return rs.getInt(1) - 1;
+					} else {
+						throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
+					}
+				} finally {
+					data_repo.release(null, rs);
+				}
+			}
+		} catch (NumberFormatException ex) {
+			throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
+		} catch (SQLException ex) {
+			throw new TigaseDBException("Can't find position for item with id " + itemId + " in archive for room " +
+												query.getComponentJID(), ex);
+		}
+	}
+
+
+	@Override
+	public void queryItems(Query query, List<Long> nodesIds,
+						   MAMRepository.ItemHandler<Query, IPubSubRepository.Item> itemHandler) throws RepositoryException, ComponentException {
+		StringBuilder sb = new StringBuilder();
+		for (int i=0; i<nodesIds.size(); i++) {
+			if (i != 0) {
+				sb.append(',');
+			}
+			sb.append(nodesIds.get(i).longValue());
+		}
+
+		String ids = sb.toString();
+
+		Integer count = countItems(query, ids);
+		if (count == null) {
+			count = 0;
+		}
+
+		Integer after = getItemPosition(query, ids, query.getRsm().getAfter());
+		Integer before = getItemPosition(query, ids, query.getRsm().getBefore());
+
+		calculateOffsetAndPosition(query, count, before, after);
+
+		try {
+			PreparedStatement st = data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(), mamQueryItems);
+
+			synchronized (st) {
+				ResultSet rs = null;
+				try {
+					int i = setStatementParamsForMAM(st, query, ids);
+					st.setInt(i++, query.getRsm().getMax());
+					st.setInt(i++, query.getRsm().getIndex());
+
+					rs = st.executeQuery();
+
+					while (rs.next()) {
+						String node = rs.getString(1);
+						long nodeId = rs.getLong(2);
+						String itemId = rs.getString(3);
+						Timestamp creationDate = rs.getTimestamp(4);
+						Element itemEl = itemDataToElement(rs.getString(5));
+
+						itemHandler.itemFound(query, new Item(node, nodeId, itemId, creationDate, itemEl));
+					}
+				} finally {
+					data_repo.release(null, rs);
+				}
+			}
+		} catch (SQLException ex) {
+			throw new TigaseDBException("Cound not retrieve items", ex);
+		}
+	}
+
+	protected int setStatementParamsForMAM(PreparedStatement st, Query query, String nodeIds) throws SQLException {
+		int i = 1;
+		st.setString(i++, nodeIds);
+		st.setTimestamp(i++, query.getStart() == null ? null : new Timestamp(query.getStart().getTime()));
+		st.setTimestamp(i++, query.getEnd() == null ? null : new Timestamp(query.getEnd().getTime()));
+		st.setString(i++, query.getWith() == null ? null : query.getWith().toString());
+//		if (query.getStart() != null) {
+//			st.setTimestamp(i++, new Timestamp(query.getStart().getTime()));
+//		} else {
+//			st.setObject(i++, null);
+//		}
+//		if (query.getEnd() != null) {
+//			st.setTimestamp(i++, new Timestamp(query.getEnd().getTime()));
+//		} else {
+//			st.setObject(i++, null);
+//		}
+//		if (query.getWith() != null) {
+//			st.setString(i++, query.getWith().toString());
+//		} else {
+//			st.setObject(i++, null);
+//		}
+		st.setInt(i++, query.getOrder().ordinal());
+
+		return i;
+	}
+
 	/**
 	 * <code>initPreparedStatements</code> method initializes internal database
 	 * connection variables such as prepared statements.
@@ -761,6 +922,10 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository> {
 		data_repo.initPreparedStatement(DELETE_NODE_SUBSCRIPTIONS_QUERY, DELETE_NODE_SUBSCRIPTIONS_QUERY);
 		data_repo.initPreparedStatement(GET_USER_AFFILIATIONS_QUERY, GET_USER_AFFILIATIONS_QUERY);
 		data_repo.initPreparedStatement(GET_USER_SUBSCRIPTIONS_QUERY, GET_USER_SUBSCRIPTIONS_QUERY);
+
+		data_repo.initPreparedStatement(mamQueryItems, mamQueryItems);
+		data_repo.initPreparedStatement(mamQueryItemPosition, mamQueryItemPosition);
+		data_repo.initPreparedStatement(mamQueryItemsCount, mamQueryItemsCount);
 	}
 
 	protected String readNodeConfigFormData(final BareJID serviceJid, final long nodeId) throws RepositoryException {

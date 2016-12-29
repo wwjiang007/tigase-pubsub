@@ -15,7 +15,7 @@ class Items<T> implements IItems {
 
 	private static final Logger log = Logger.getLogger(Items.class.getName());
 
-	private final IPubSubDAO<T,?> dao;
+	private final IPubSubDAO<T,?,?> dao;
 
 	private final T nodeId;
 

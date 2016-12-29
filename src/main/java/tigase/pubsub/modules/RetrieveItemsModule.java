@@ -22,25 +22,26 @@
 
 package tigase.pubsub.modules;
 
-import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.kernel.beans.Bean;
-import tigase.pubsub.*;
+import tigase.pubsub.AbstractPubSubModule;
+import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.repository.IAffiliations;
+import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.IItems;
-import tigase.pubsub.repository.ISubscriptions;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.repository.IPubSubRepository;
 import tigase.server.Packet;
-import tigase.util.DateTimeFormatter;
+import tigase.util.TimestampHelper;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Class description
@@ -50,10 +51,11 @@ import java.util.*;
 @Bean(name = "retrieveItemsModule", parent = PubSubComponent.class)
 public class RetrieveItemsModule extends AbstractPubSubModule {
 
+
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("items"));
 
-	private final DateTimeFormatter dtf = new DateTimeFormatter();
+	private final TimestampHelper timestampHelper = new TimestampHelper();
 
 	private Integer asInteger(String attribute) {
 		if (attribute == null) {
@@ -61,47 +63,6 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 		}
 
 		return Integer.parseInt(attribute);
-	}
-
-	private void checkPermission(JID senderJid, BareJID toJid, String nodeName, AbstractNodeConfig nodeConfig)
-			throws PubSubException, RepositoryException {
-		if (nodeConfig == null) {
-			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
-		}
-		if ((nodeConfig.getNodeAccessModel() == AccessModel.open)
-				&& !Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains())) {
-			throw new PubSubException(Authorization.FORBIDDEN);
-		}
-
-		IAffiliations nodeAffiliations = this.getRepository().getNodeAffiliations(toJid, nodeName);
-		UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(senderJid.getBareJID());
-
-		if (senderAffiliation.getAffiliation() == Affiliation.outcast) {
-			throw new PubSubException(Authorization.FORBIDDEN);
-		}
-
-		ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(toJid, nodeName);
-		Subscription senderSubscription = nodeSubscriptions.getSubscription(senderJid.getBareJID());
-
-		if ((nodeConfig.getNodeAccessModel() == AccessModel.whitelist)
-				&& !senderAffiliation.getAffiliation().isRetrieveItem()) {
-			throw new PubSubException(Authorization.NOT_ALLOWED, PubSubErrorCondition.CLOSED_NODE);
-		} else if ((nodeConfig.getNodeAccessModel() == AccessModel.authorize)
-				&& ((senderSubscription != Subscription.subscribed) || !senderAffiliation.getAffiliation().isRetrieveItem())) {
-			throw new PubSubException(Authorization.NOT_AUTHORIZED, PubSubErrorCondition.NOT_SUBSCRIBED);
-		} else if (nodeConfig.getNodeAccessModel() == AccessModel.presence) {
-			boolean allowed = hasSenderSubscription(senderJid.getBareJID(), nodeAffiliations, nodeSubscriptions);
-
-			if (!allowed) {
-				throw new PubSubException(Authorization.NOT_AUTHORIZED, PubSubErrorCondition.PRESENCE_SUBSCRIPTION_REQUIRED);
-			}
-		} else if (nodeConfig.getNodeAccessModel() == AccessModel.roster) {
-			boolean allowed = isSenderInRosterGroup(senderJid.getBareJID(), nodeConfig, nodeAffiliations, nodeSubscriptions);
-
-			if (!allowed) {
-				throw new PubSubException(Authorization.NOT_AUTHORIZED, PubSubErrorCondition.NOT_IN_ROSTER_GROUP);
-			}
-		}
 	}
 
 	private List<String> extractItemsIds(final Element items) throws PubSubException {
@@ -170,242 +131,78 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 			}
 
 			// XXX CHECK RIGHTS AUTH ETC
-			AbstractNodeConfig nodeConfig = this.getRepository().getNodeConfig(toJid, nodeName);
-			checkPermission(senderJid, toJid, nodeName, nodeConfig);
+			logic.checkAccessPermission(toJid, nodeName, senderJid);
 
-			if (nodeConfig instanceof CollectionNodeConfig) {
-				List<IItems.ItemMeta> itemsMeta = new ArrayList<IItems.ItemMeta>();
-				String[] childNodes = getRepository().getChildNodes(toJid, nodeName);
-				Map<String, IItems> nodeItemsCache = new HashMap<String, IItems>();
-				if (childNodes != null) {
-					for (String childNodeName : childNodes) {
-						AbstractNodeConfig childNode = getRepository().getNodeConfig(toJid, childNodeName);
-						if (childNode == null || childNode.getNodeType() != NodeType.leaf)
-							continue;
+			final Element rpubsub = new Element("pubsub", new String[] { "xmlns" },
+												new String[] { "http://jabber.org/protocol/pubsub" });
 
-						LeafNodeConfig leafChildNode = (LeafNodeConfig) childNode;
-						if (!leafChildNode.isPersistItem())
-							continue;
-
-						try {
-							checkPermission(senderJid, toJid, childNodeName, childNode);
-							IItems childNodeItems = getRepository().getNodeItems(toJid, childNodeName);
-							nodeItemsCache.put(childNodeName, childNodeItems);
-							itemsMeta.addAll(childNodeItems.getItemsMeta());
-						} catch (PubSubException ex) {
-							// here we ignode PubSubExceptions as they are
-							// permission exceptions for subnodes
-						}
+			List<String> requestedId = extractItemsIds(items);
+			if (requestedId != null) {
+				final Element ritems = new Element("items", new String[]{"node"}, new String[]{nodeName});
+				IItems nodeItems = getRepository().getNodeItems(toJid, nodeName);
+				for (String id : requestedId) {
+					Element payload = nodeItems.getItem(id);
+					if (payload != null) {
+						ritems.addChild(payload);
 					}
 				}
+				rpubsub.addChild(ritems);
+			} else {
+				Query query = getRepository().newQuery();
+				query.setComponentJID(packet.getStanzaTo());
+				query.setQuestionerJID(senderJid);
+				query.setPubsubNode(nodeName);
 
-				CollectionItemsOrdering collectionItemsOrdering = nodeConfig.getCollectionItemsOrdering();
-
-				if (collectionItemsOrdering != null) {
-					Collections.sort(itemsMeta, collectionItemsOrdering.getComparator());
-				} else {
-					Collections.sort(itemsMeta, CollectionItemsOrdering.byUpdateDate.getComparator());
-				}
-
-				final Element rpubsub = new Element("pubsub", new String[] { "xmlns" },
-						new String[] { "http://jabber.org/protocol/pubsub" });
-				final Packet iq = packet.okResult(rpubsub, 0);
-
-				Integer maxItems = asInteger(items.getAttributeStaticStr("max_items"));
-				Integer offset = 0;
-
+				final Integer maxItems = asInteger(items.getAttributeStaticStr("max_items"));
 				final Element rsmGet = pubsub.getChild("set", "http://jabber.org/protocol/rsm");
 				if (rsmGet != null) {
-					Element m = rsmGet.getChild("max");
-					if (m != null) {
-						maxItems = asInteger(m.getCData());
+					query.getRsm().fromElement(rsmGet);
+					Element m = rsmGet.getChild("dt_after", "http://tigase.org/pubsub");
+					if (m  != null) {
+						query.setStart(timestampHelper.parseTimestamp(m.getCData()));
 					}
-					m = rsmGet.getChild("index");
-					if (m != null) {
-						offset = asInteger(m.getCData());
+					m = rsmGet.getChild("dt_before", "http://tigase.org/pubsub");
+					if (m  != null) {
+						query.setEnd(timestampHelper.parseTimestamp(m.getCData()));
+					}
+				} else {
+					if (maxItems != null) {
+						query.getRsm().setHasBefore(true);
+						query.getRsm().setMax(maxItems);
 					}
 				}
 
-				Map<String, List<Element>> nodeItemsElMap = new HashMap<String, List<Element>>();
-				int idx = offset;
-				int count = 0;
-				String lastId = null;
-				while (itemsMeta.size() > idx && (maxItems == null || count < maxItems)) {
-					IItems.ItemMeta itemMeta = itemsMeta.get(idx);
-					String node = itemMeta.getNode();
-					List<Element> nodeItemsElems = nodeItemsElMap.get(node);
-					if (nodeItemsElems == null) {
-						// nodeItemsEl = new Element("items", new String[] {
-						// "node" }, new String[] { node });
-						nodeItemsElems = new ArrayList<Element>();
-						nodeItemsElMap.put(node, nodeItemsElems);
+				List<IPubSubRepository.Item> queryResults = new ArrayList<>();
+				getRepository().queryItems(query, (query1, item) -> {
+					queryResults.add(item);
+					if (query.getRsm().getFirst() == null) {
+						query.getRsm().setFirst(item.getId());
 					}
+					query.getRsm().setLast(item.getId());
+				});
 
-					IItems nodeItems = nodeItemsCache.get(node);
-					Element item = nodeItems.getItem(itemMeta.getId());
-					lastId = itemMeta.getId();
-					nodeItemsElems.add(item);
+				queryResults.stream()
+						.collect(Collectors.groupingBy(item -> item.getNode()))
+						.forEach((rnodeName, rnodeItems) -> {
+					final Element ritems = new Element("items", new String[]{"node"}, new String[]{rnodeName});
+					for (IPubSubRepository.Item ritem : rnodeItems) {
+						ritems.addChild(ritem.getMessage());
+					}
+				});
 
-					idx++;
-					count++;
-				}
-
-				nodeItemsCache.clear();
-
-				for (Map.Entry<String, List<Element>> entry : nodeItemsElMap.entrySet()) {
-					Element itemsEl = new Element("items", new String[] { "node" }, new String[] { entry.getKey() });
-
-					List<Element> itemsElems = entry.getValue();
-					Collections.reverse(itemsElems);
-					itemsEl.addChildren(itemsElems);
-
-					rpubsub.addChild(itemsEl);
-				}
-
-				if (nodeItemsElMap.size() > 0) {
-					final Element rsmResponse = new Element("set", new String[] { "xmlns" },
-							new String[] { "http://jabber.org/protocol/rsm" });
-
-					rsmResponse.addChild(new Element("first", itemsMeta.get(offset).getId(), new String[] { "index" },
-							new String[] { String.valueOf(offset) }));
-					rsmResponse.addChild(new Element("count", "" + itemsMeta.size()));
-					if (lastId != null)
-						rsmResponse.addChild(new Element("last", lastId));
-
-					rpubsub.addChild(rsmResponse);
+				if (query.getRsm().getCount() > 0) {
+					if (maxItems == null) {
+						rpubsub.addChild(query.getRsm().toElement());
+					}
 				} else {
 					rpubsub.addChild(new Element("items", new String[] { "node" }, new String[] { nodeName }));
 				}
-
-				packetWriter.write(iq);
-				return;
-			} else if ((nodeConfig instanceof LeafNodeConfig) && !((LeafNodeConfig) nodeConfig).isPersistItem()) {
-				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
-						new PubSubErrorCondition("unsupported", "persistent-items"));
 			}
 
-			List<String> requestedId = extractItemsIds(items);
-			boolean requestedExactItems = requestedId != null;
-			final Element rpubsub = new Element("pubsub", new String[] { "xmlns" },
-					new String[] { "http://jabber.org/protocol/pubsub" });
-			final Element ritems = new Element("items", new String[] { "node" }, new String[] { nodeName });
 			final Packet iq = packet.okResult(rpubsub, 0);
 			iq.setXMLNS( Packet.CLIENT_XMLNS );
-
-			rpubsub.addChild(ritems);
-
-			Integer maxItems = asInteger(items.getAttributeStaticStr("max_items"));
-			Integer offset = 0;
-			Calendar dtAfter = null;
-			String afterId = null;
-			String beforeId = null;
-
-			final Element rsmGet = pubsub.getChild("set", "http://jabber.org/protocol/rsm");
-			if (rsmGet != null) {
-				Element m = rsmGet.getChild("max");
-				if (m != null)
-					maxItems = asInteger(m.getCData());
-				m = rsmGet.getChild("index");
-				if (m != null)
-					offset = asInteger(m.getCData());
-				m = rsmGet.getChild("before");
-				if (m != null)
-					beforeId = m.getCData();
-				m = rsmGet.getChild("adter");
-				if (m != null)
-					afterId = m.getCData();
-				m = rsmGet.getChild("dt_after", "http://tigase.org/pubsub");
-				if (m != null)
-					dtAfter = dtf.parseDateTime(m.getCData());
-			}
-
-			IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
-
-			List<IItems.ItemMeta> itemsMeta = new ArrayList<IItems.ItemMeta>();
-			itemsMeta.addAll(nodeItems.getItemsMeta());
-
-			CollectionItemsOrdering collectionItemsOrdering = nodeConfig.getCollectionItemsOrdering();
-
-			if (collectionItemsOrdering != null) {
-				Collections.sort(itemsMeta, collectionItemsOrdering.getComparator());
-			} else {
-				Collections.sort(itemsMeta, CollectionItemsOrdering.byUpdateDate.getComparator());
-			}
-
-			if (requestedId == null) {
-				requestedId = new ArrayList<>(itemsMeta.size());
-				for (IItems.ItemMeta item : itemsMeta) {
-					requestedId.add(item.getId());
-				}
-			}
-
-			final Element rsmResponse = new Element("set", new String[] { "xmlns" },
-					new String[] { "http://jabber.org/protocol/rsm" });
-
-			if (requestedId != null) {
-				if (maxItems == null)
-					maxItems = requestedId.size();
-
-				List<Element> ritemsList = new ArrayList<Element>();
-
-				rsmResponse.addChild(new Element("count", "" + requestedId.size()));
-
-				String lastId = null;
-				int c = 0;
-				boolean allow = false;
-				for (int i = 0; i < requestedId.size(); i++) {
-					if (i + offset >= requestedId.size())
-						continue;
-
-					if (c >= maxItems)
-						break;
-					String id = requestedId.get(i + offset);
-
-					Date cd = null;
-					if (collectionItemsOrdering == CollectionItemsOrdering.byCreationDate) {
-						cd = nodeItems.getItemCreationDate(id);
-					} else if (collectionItemsOrdering == CollectionItemsOrdering.byUpdateDate) {
-						cd = nodeItems.getItemUpdateDate(id);
-					}
-
-					if (dtAfter != null && cd != null && !cd.after(dtAfter.getTime()))
-						continue;
-
-					if (afterId != null && !allow && afterId.equals(id)) {
-						allow = true;
-						continue;
-					} else if (afterId != null && !allow)
-						continue;
-
-					if (beforeId != null && beforeId.equals(id))
-						break;
-
-					Element item = nodeItems.getItem(id);
-					if (item != null) {
-						if (c == 0) {
-							rsmResponse.addChild(new Element("first", id, new String[]{"index"}, new String[]{""
-								+ (i + offset)}));
-						}
-
-						lastId = id;
-						ritemsList.add(item);
-						++c;
-					}
-				}
-				if (lastId != null)
-					rsmResponse.addChild(new Element("last", lastId));
-
-				Collections.reverse(ritemsList);
-				ritems.addChildren(ritemsList);
-
-				if (!(ritemsList.isEmpty() && requestedExactItems)) {
-					if (maxItems != requestedId.size())
-						rpubsub.addChild(rsmResponse);
-				}
-
-			}
-
 			packetWriter.write(iq);
+
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {

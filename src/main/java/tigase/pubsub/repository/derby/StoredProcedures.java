@@ -26,12 +26,7 @@ import tigase.util.Algorithms;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.logging.Logger;
 
 /**
@@ -799,6 +794,144 @@ public class StoredProcedures {
 			conn.close();
 		}			
 	}
+
+	public static void tigPubSubMamQueryItems(String nodesIds, Timestamp since, Timestamp to, String publisher, Integer order, Integer limit, Integer offset, ResultSet[] data) throws SQLException {
+		String ts = order == 1 ? "update_date" : "creation_date";
+		String query = "select pn.name, pi.node_id, pi.id, pi." + ts + ", pi.data" +
+				" from tig_pubsub_items pi" +
+				" inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id" +
+				" where pi.node_id in (" + nodesIds + ")" +
+				" and (? is null or pi." + ts + " >= ?)" +
+				" and (? is null or pi." + ts + " <= ?)" +
+				" and (? is null or pi.publisher_id = ?)" +
+				" order by pi." + ts +
+				" offset ? rows fetch next ? rows only";
+
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			Long publisherId = getIdOfJid(conn, publisher);
+
+			PreparedStatement st = conn.prepareStatement(query);
+			st.setTimestamp(1, since);
+			st.setTimestamp(2, since);
+			st.setTimestamp(3, to);
+			st.setTimestamp(4, to);
+			if (publisherId != null) {
+				st.setLong(5, publisherId);
+				st.setLong(6, publisherId);
+			} else {
+				st.setNull(5, Types.BIGINT);
+				st.setNull(6, Types.BIGINT);
+			}
+			st.setInt(7, offset);
+			st.setInt(8, limit);
+
+			data[0] = st.executeQuery();
+		} finally {
+			conn.close();
+		}
+	}
+
+	public static void tigPubSubMamQueryItemPosition(String nodesIds, Timestamp since, Timestamp to, String publisher, Integer order, Long nodeId, String itemId, ResultSet[] data) throws SQLException {
+		String ts = order == 1 ? "update_date" : "creation_date";
+		String query = "select pi.node_id, pi.id, row_number() over () as position" +
+				" from tig_pubsub_items pi" +
+				" where pi.node_id in (" + nodesIds + ")" +
+				" and (? is null or pi." + ts + " >= ?)" +
+				" and (? is null or pi." + ts + " <= ?)" +
+				" and (? is null or pi.publisher_id = ?)" +
+				" order by pi." + ts;
+
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			Long publisherId = getIdOfJid(conn, publisher);
+
+			PreparedStatement st = conn.prepareStatement(query);
+			st.setTimestamp(1, since);
+			st.setTimestamp(2, since);
+			st.setTimestamp(3, to);
+			st.setTimestamp(4, to);
+			if (publisherId != null) {
+				st.setLong(5, publisherId);
+				st.setLong(6, publisherId);
+			} else {
+				st.setNull(5, Types.BIGINT);
+				st.setNull(6, Types.BIGINT);
+			}
+
+			int i=0;
+			try (ResultSet rs = st.executeQuery()) {
+				while (rs.next()) {
+					if (rs.getLong(1) == nodeId && itemId.equals(rs.getString(2))) {
+					    i = rs.getInt(3);
+					}
+				}
+			}
+
+			String q = "select " + i + " as position from SYSIBM.SYSDUMMY1 where " + i + " <> 0";
+			data[0] = conn.prepareStatement(q).executeQuery();
+		} finally {
+			conn.close();
+		}
+	}
+
+	public static void tigPubSubMamQueryItemsCount(String nodesIds, Timestamp since, Timestamp to, String publisher, Integer order, ResultSet[] data) throws SQLException {
+		String ts = order == 1 ? "update_date" : "creation_date";
+		String query = "select count(1)" +
+				" from tig_pubsub_items pi" +
+				" where pi.node_id in (" + nodesIds + ")" +
+				" and (? is null or pi." + ts + " >= ?)" +
+				" and (? is null or pi." + ts + " <= ?)" +
+				" and (? is null or pi.publisher_id = ?)";
+
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			Long publisherId = getIdOfJid(conn, publisher);
+
+			PreparedStatement st = conn.prepareStatement(query);
+			st.setTimestamp(1, since);
+			st.setTimestamp(2, since);
+			st.setTimestamp(3, to);
+			st.setTimestamp(4, to);
+			if (publisherId != null) {
+				st.setLong(5, publisherId);
+				st.setLong(6, publisherId);
+			} else {
+				st.setNull(5, Types.BIGINT);
+				st.setNull(6, Types.BIGINT);
+			}
+
+			data[0] = st.executeQuery();
+		} finally {
+			conn.close();
+		}
+	}
+
+	protected static Long getIdOfJid(Connection conn, String jid) throws SQLException {
+		if (jid == null) {
+			return null;
+		}
+
+		String jidSha = sha1OfLower(jid);
+
+		Statement st = conn.createStatement();
+		try (ResultSet rs = st.executeQuery("select jid_id from tig_pubsub_jids where jid_sha1 = '" + jidSha + "'")) {
+			if (rs.next()) {
+				return rs.getLong(1);
+			}
+		}
+		return null;
+	}
+
 
 	protected static String sha1OfLower(String data) throws SQLException {
 		try {

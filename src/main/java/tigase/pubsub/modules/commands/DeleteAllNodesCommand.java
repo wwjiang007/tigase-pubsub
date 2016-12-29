@@ -35,7 +35,7 @@ public class DeleteAllNodesCommand implements AdHocCommand {
 	private PubSubConfig config;
 
 	@Inject
-	private IPubSubDAO<?,?> dao;
+	private IPubSubDAO<?,?,?> dao;
 
 	@Inject
 	private UserRepository userRepo;

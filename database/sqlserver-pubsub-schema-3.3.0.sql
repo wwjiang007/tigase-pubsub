@@ -366,3 +366,162 @@ begin
 end
 -- QUERY END:
 GO
+
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubMamQueryItems')
+	DROP PROCEDURE TigPubSubMamQueryItems
+-- QUERY END:
+GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubMamQueryItems
+	@_nodes_ids nvarchar(max),
+	@_since datetime,
+	@_to datetime,
+	@_publisher nvarchar(2049),
+	@_order int,
+	@_limit int,
+	@_offset int
+AS
+begin
+	declare
+	    @_publisherId bigint,
+	    @_ts nvarchar(20),
+		@params_def nvarchar(max),
+		@query_sql nvarchar(max);
+
+    if @_publisher is not null
+        begin
+        select @_publisherId=jid_id
+        from tig_pubsub_jids
+        where jid_sha1 = HASHBYTES('SHA1', LOWER(@_publisher));
+        end
+
+    set @_ts = N'creation_date';
+    if @_order = 1
+        begin
+        set @_ts = N'update_date';
+        end
+
+	set @params_def = N'@_since datetime, @_to datetime, @_publisherId bigint,  @_offset int, @_limit int';
+
+	set @query_sql = N';with results_cte as(
+	    select pn.name, pi.node_id, pi.id, pi.' + @_ts + ', pi.data, row_number() over (order by pi.' + @_ts + ') as row_num
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (' + @_nodes_ids + ')
+            and (@_since is null or pi.' + @_ts + ' >= @_since)
+            and (@_to is null or pi.' + @_ts + ' <= @_to)
+            and (@_publisherId is null or pi.publisher_id = @_publisherId)
+    ) select * from results_cte where row_num >= @_offset + 1 and row_num < @_offset + 1 + @_limit order by row_num';
+
+	execute sp_executesql @query_sql, @params_def, @_since=@_since, @_to=@_to, @_publisherId=@_publisherId, @_offset=@_offset, @_limit=@_limit;
+
+end
+-- QUERY END:
+GO
+
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubMamQueryItemPosition')
+	DROP PROCEDURE TigPubSubMamQueryItemPosition
+-- QUERY END:
+GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubMamQueryItemPosition
+	@_nodes_ids nvarchar(max),
+	@_since datetime,
+	@_to datetime,
+	@_publisher nvarchar(2049),
+	@_order int,
+	@_node_id bigint,
+	@_item_id nvarchar(1024)
+AS
+begin
+	declare
+	    @_publisherId bigint,
+	    @_ts nvarchar(20),
+		@params_def nvarchar(max),
+		@query_sql nvarchar(max);
+
+    if @_publisher is not null
+        begin
+        select @_publisherId=jid_id
+        from tig_pubsub_jids
+        where jid_sha1 = HASHBYTES('SHA1', LOWER(@_publisher));
+        end
+
+    set @_ts = N'creation_date';
+    if @_order = 1
+        begin
+        set @_ts = N'update_date';
+        end
+
+	set @params_def = N'@_since datetime, @_to datetime, @_publisherId bigint,  @_node_id bigint, @_item_id nvarchar(1024)';
+
+	set @query_sql = N';with results_cte as(
+	    select pi.node_id, pi.id, row_number() over (order by pi.' + @_ts + ') as position
+        from tig_pubsub_items pi
+        where
+            pi.node_id in (' + @_nodes_ids + ')
+            and (@_since is null or pi.' + @_ts + ' >= @_since)
+            and (@_to is null or pi.' + @_ts + ' <= @_to)
+            and (@_publisherId is null or pi.publisher_id = @_publisherId)
+    ) select position from results_cte where node_id = @_node_id and id = @_item_id';
+
+	execute sp_executesql @query_sql, @params_def, @_since=@_since, @_to=@_to, @_publisherId=@_publisherId, @_node_id=@_node_id, @_item_id=@_item_id;
+
+end
+-- QUERY END:
+GO
+
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubMamQueryItemsCount')
+	DROP PROCEDURE TigPubSubMamQueryItemsCount
+-- QUERY END:
+GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubMamQueryItemsCount
+	@_nodes_ids nvarchar(max),
+	@_since datetime,
+	@_to datetime,
+	@_publisher nvarchar(2049),
+	@_order int
+AS
+begin
+	declare
+	    @_publisherId bigint,
+	    @_ts nvarchar(20),
+		@params_def nvarchar(max),
+		@query_sql nvarchar(max);
+
+    if @_publisher is not null
+        begin
+        select @_publisherId=jid_id
+        from tig_pubsub_jids
+        where jid_sha1 = HASHBYTES('SHA1', LOWER(@_publisher));
+        end
+
+    set @_ts = N'creation_date';
+    if @_order = 1
+        begin
+        set @_ts = N'update_date';
+        end
+
+	set @params_def = N'@_since datetime, @_to datetime, @_publisherId bigint';
+
+	set @query_sql = N';select count(1)
+        from tig_pubsub_items pi
+        where
+            pi.node_id in (' + @_nodes_ids + ')
+            and (@_since is null or pi.' + @_ts + ' >= @_since)
+            and (@_to is null or pi.' + @_ts + ' <= @_to)
+            and (@_publisherId is null or pi.publisher_id = @_publisherId)';
+
+	execute sp_executesql @query_sql, @params_def, @_since=@_since, @_to=@_to, @_publisherId=@_publisherId;
+
+end
+-- QUERY END:
+GO

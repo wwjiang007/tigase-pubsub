@@ -22,17 +22,6 @@
 
 package tigase.pubsub;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.component.PacketWriter;
 import tigase.component.exceptions.RepositoryException;
 import tigase.component.modules.Module;
@@ -42,13 +31,16 @@ import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
+import tigase.pubsub.utils.Logic;
 import tigase.server.Packet;
 import tigase.stats.StatisticHolderImpl;
 import tigase.util.JIDUtils;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
-import tigase.xmpp.impl.roster.RosterAbstract.SubscriptionType;
-import tigase.xmpp.impl.roster.RosterElement;
+
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class description
@@ -61,6 +53,9 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 	/** Field description */
 	protected final static Logger log = Logger.getLogger(AbstractPubSubModule.class.getName());
+
+	@Inject
+	protected Logic logic;
 
 	/**
 	 * Method description
@@ -277,85 +272,4 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 		return repository;
 	}
 
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param jid
-	 * @param affiliations
-	 * @param subscriptions
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	protected boolean hasSenderSubscription(final BareJID bareJid, final IAffiliations affiliations,
-			final ISubscriptions subscriptions) throws RepositoryException {
-
-		for (UsersAffiliation affiliation : affiliations.getAffiliations()) {
-			if (affiliation.getAffiliation() != Affiliation.owner)
-				continue;
-
-			if (bareJid.equals(affiliation.getJid())) {
-				return true;
-			}
-
-			Map<BareJID, RosterElement> buddies = getRepository().getUserRoster(affiliation.getJid());
-			RosterElement re = buddies.get(bareJid);
-			if (re != null) {
-				if (re.getSubscription() == SubscriptionType.both || re.getSubscription() == SubscriptionType.from
-						|| re.getSubscription() == SubscriptionType.from_pending_out)
-					return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param jid
-	 * @param nodeConfig
-	 * @param affiliations
-	 * @param subscriptions
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	protected boolean isSenderInRosterGroup(BareJID bareJid, AbstractNodeConfig nodeConfig, IAffiliations affiliations,
-			final ISubscriptions subscriptions) throws RepositoryException {
-		final UsersSubscription[] subscribers = subscriptions.getSubscriptions();
-		final String[] groupsAllowed = nodeConfig.getRosterGroupsAllowed();
-
-		if ((groupsAllowed == null) || (groupsAllowed.length == 0)) {
-			return true;
-		}
-
-		// @TODO - is there a way to optimize this?
-		for (UsersSubscription owner : subscribers) {
-			UsersAffiliation affiliation = affiliations.getSubscriberAffiliation(owner.getJid());
-
-			if (affiliation.getAffiliation() != Affiliation.owner) {
-				continue;
-			}
-			if (bareJid.equals(owner)) {
-				return true;
-			}
-
-			Map<BareJID, RosterElement> buddies = getRepository().getUserRoster(owner.getJid());
-			RosterElement re = buddies.get(bareJid);
-			if (re != null && re.getGroups() != null) {
-				for (String group : groupsAllowed) {
-					if (Utils.contain(group, groupsAllowed)) {
-						return true;
-					}
-				}
-			}
-		}
-
-		return false;
-	}
 }

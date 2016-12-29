@@ -5,9 +5,11 @@ import java.util.Map;
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
+import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+import tigase.xmpp.mam.MAMRepository;
 
 /**
  * Interface description
@@ -16,7 +18,7 @@ import tigase.xmpp.impl.roster.RosterElement;
  * @version 5.0.0, 2010.03.27 at 05:20:15 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-public interface IPubSubRepository {
+public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepository.Item> {
 
 	/**
 	 * Method description
@@ -232,4 +234,12 @@ public interface IPubSubRepository {
 	public void update(BareJID serviceJid, String nodeName, ISubscriptions subscriptions) throws RepositoryException;
 	
 	public void onUserRemoved(BareJID userJid) throws RepositoryException;
+
+	interface Item extends MAMRepository.Item {
+
+		String getItemId();
+
+		String getNode();
+
+	}
 }

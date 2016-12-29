@@ -26,25 +26,23 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.MethodSorters;
 import org.junit.runners.model.Statement;
+import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
-import tigase.db.*;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.LeafNodeConfig;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.Subscription;
+import tigase.db.DBInitException;
+import tigase.db.DataSource;
+import tigase.db.DataSourceHelper;
+import tigase.db.RepositoryFactory;
+import tigase.pubsub.*;
+import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * Created by andrzej on 12.10.2016.
@@ -101,7 +99,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test1_createNode() throws RepositoryException {
+	public void test01_createNode() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		if (nodeId != null) {
 			dao.deleteNode(serviceJid, nodeId);
@@ -114,8 +112,8 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 		Assert.assertNotNull("Could not retrieve nodeId for newly created node", nodeId);
 	}
 
-	@Test
-	public void test2_subscribeNode() throws RepositoryException {
+	@Test()
+	public void test02_subscribeNode() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		Assert.assertNotNull("Could not fined nodeId", nodeId);
 		UsersSubscription subscr = new UsersSubscription(subscriberJid.getBareJID(), "sub-1", Subscription.subscribed);
@@ -128,7 +126,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test3_affiliateNode() throws RepositoryException {
+	public void test03_affiliateNode() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		Assert.assertNotNull("Could not fined nodeId", nodeId);
 		UsersAffiliation affil = new UsersAffiliation(subscriberJid.getBareJID(), Affiliation.publisher);
@@ -143,7 +141,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test4_userSubscriptions() throws RepositoryException {
+	public void test04_userSubscriptions() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		Assert.assertNotNull("Could not fined nodeId", nodeId);
 		Map<String, UsersSubscription> map = dao.getUserSubscriptions(serviceJid, subscriberJid.getBareJID());
@@ -154,7 +152,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test5_userAffiliations() throws RepositoryException {
+	public void test05_userAffiliations() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		Assert.assertNotNull("Could not fined nodeId", nodeId);
 		Map<String, UsersAffiliation> map = dao.getUserAffiliations(serviceJid, subscriberJid.getBareJID());
@@ -165,7 +163,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test6_allNodes() throws RepositoryException {
+	public void test06_allNodes() throws RepositoryException {
 		String[] allNodes = dao.getAllNodesList(serviceJid);
 		Arrays.sort(allNodes);
 		Assert.assertNotEquals("Node name not listed in list of all root nodes", -1,
@@ -173,7 +171,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test6_getNodeMeta() throws RepositoryException {
+	public void test06_getNodeMeta() throws RepositoryException {
 		INodeMeta meta = dao.getNodeMeta(serviceJid, nodeName);
 		assertNotNull(meta);
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
@@ -184,7 +182,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test7_nodeItems() throws RepositoryException {
+	public void test07_nodeItems() throws RepositoryException {
 		String itemId = "item-1";
 		Element item = new Element("item", new String[]{"id"}, new String[]{itemId});
 		item.addChild(new Element("payload", "test-payload", new String[]{"xmlns"}, new String[]{"test-xmlns"}));
@@ -205,7 +203,110 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test8_subscribeNodeRemoval() throws RepositoryException {
+	public void test08_queryNodeItems() throws RepositoryException, InterruptedException, ComponentException {
+		test08_queryNodeItems(CollectionItemsOrdering.byCreationDate);
+		test08_queryNodeItems(CollectionItemsOrdering.byUpdateDate);
+	}
+
+	protected void test08_queryNodeItems(CollectionItemsOrdering order) throws RepositoryException, InterruptedException, ComponentException {
+		List<Element> publishedItems = new ArrayList<>();
+
+		Object nodeId = dao.getNodeId(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", nodeId);
+
+		for (int i=0; i<20; i++) {
+			String itemId = "item-" + i;
+			Element item = new Element("item", new String[]{"id"}, new String[]{itemId});
+			item.addChild(new Element("payload", "test-payload-" + i, new String[]{"xmlns"}, new String[]{"test-xmlns"}));
+
+			dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), itemId, senderJid.getBareJID().toString(), item);
+
+			publishedItems.add(item);
+
+			Thread.sleep(1500);
+		}
+
+		String[] publishedItemIds = publishedItems.stream()
+				.map(el -> el.getAttributeStaticStr("id"))
+				.toArray(value -> new String[value]);
+
+		List<IPubSubRepository.Item> results = new ArrayList<>();
+
+		Query query = new Query();
+		query.setOrder(order);
+		query.setComponentJID(JID.jidInstance(serviceJid));
+		query.setQuestionerJID(senderJid);
+		query.getRsm().setMax(10);
+		results.clear();
+		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
+			results.add((IPubSubRepository.Item) item);
+		});
+
+		assertEquals(10, results.size());
+		for (int i=0; i<10; i++) {
+			IPubSubRepository.Item item = results.get(i);
+			assertEquals(getMAMID(nodeId, publishedItemIds[i]), item.getId());
+			assertEquals(publishedItems.get(i), item.getMessage());
+		}
+
+		query.setWith(senderJid.copyWithoutResource());
+		results.clear();
+		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
+			results.add((IPubSubRepository.Item) item);
+		});
+
+		assertEquals(10, results.size());
+		for (int i=0; i<10; i++) {
+			IPubSubRepository.Item item = results.get(i);
+			assertEquals(getMAMID(nodeId, publishedItemIds[i]), item.getId());
+			assertEquals(publishedItems.get(i), item.getMessage());
+		}
+		query.setWith(null);
+
+		String after = results.get(4).getId();
+		query.getRsm().setAfter(after);
+		results.clear();
+		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
+			results.add((IPubSubRepository.Item) item);
+		});
+
+		assertEquals(10, results.size());
+		for (int i=0; i<10; i++) {
+			IPubSubRepository.Item item = results.get(i);
+			assertEquals(getMAMID(nodeId,publishedItemIds[i+5]), item.getId());
+			assertEquals(publishedItems.get(i+5), item.getMessage());
+		}
+
+		query.getRsm().setAfter(null);
+		query.getRsm().setHasBefore(true);
+		results.clear();
+		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
+			results.add((IPubSubRepository.Item) item);
+		});
+
+		assertEquals(10, results.size());
+		for (int i=0; i<10; i++) {
+			IPubSubRepository.Item item = results.get(i);
+			assertEquals(getMAMID(nodeId, publishedItemIds[i+10]), item.getId());
+			assertEquals(publishedItems.get(i+10), item.getMessage());
+		}
+
+		String[] itemsIds = dao.getItemsIds(serviceJid, nodeId);
+		Arrays.sort(itemsIds);
+		String[] tmp = Arrays.copyOf(publishedItemIds, publishedItemIds.length);
+		Arrays.sort(tmp);
+		Assert.assertArrayEquals("Added item id not listed in list of item ids", tmp, itemsIds);
+
+
+		for (String itemId : publishedItemIds) {
+			dao.deleteItem(serviceJid, nodeId, itemId);
+			Element el = dao.getItem(serviceJid, nodeId, itemId);
+			assertNull("Element still available in store after removal", el);
+		}
+	}
+
+	@Test
+	public void test09_subscribeNodeRemoval() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		Assert.assertNotNull("Could not fined nodeId", nodeId);
 		UsersSubscription subscr = new UsersSubscription(subscriberJid.getBareJID(), "sub-1", Subscription.none);
@@ -218,7 +319,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test8_affiliateNodeRemoval() throws RepositoryException {
+	public void test09_affiliateNodeRemoval() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		Assert.assertNotNull("Could not fined nodeId", nodeId);
 		UsersAffiliation affil = new UsersAffiliation(subscriberJid.getBareJID(), Affiliation.none);
@@ -231,11 +332,12 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	@Test
-	public void test9_nodeRemoval() throws RepositoryException {
+	public void test10_nodeRemoval() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		dao.deleteNode(serviceJid, nodeId);
 		nodeId = dao.getNodeId(serviceJid, nodeName);
 		assertNull("Node not removed", nodeId);
 	}
 
+	protected abstract String getMAMID(Object nodeId, String itemId);
 }

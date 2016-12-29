@@ -1,8 +1,10 @@
 package tigase.pubsub.repository;
 
+import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
+import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticsList;
@@ -108,6 +110,17 @@ public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHold
 	@Override
 	public void init() {
 		repo.init();
+	}
+
+	@Override
+	public void queryItems(Query query, ItemHandler<Query, Item> itemHandler)
+			throws RepositoryException, ComponentException {
+		repo.queryItems(query, itemHandler);
+	}
+
+	@Override
+	public Query newQuery() {
+		return new Query();
 	}
 
 	@Override

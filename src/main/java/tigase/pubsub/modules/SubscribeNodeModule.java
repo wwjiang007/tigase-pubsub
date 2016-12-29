@@ -200,7 +200,7 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 				newSubscription = Subscription.pending;
 				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.none);
 			} else if (accessModel == AccessModel.presence) {
-				boolean allowed = hasSenderSubscription(jid, nodeAffiliations, nodeSubscriptions);
+				boolean allowed = logic.hasSenderSubscription(jid, nodeAffiliations, nodeSubscriptions);
 
 				if (!allowed) {
 					throw new PubSubException(Authorization.NOT_AUTHORIZED,
@@ -209,7 +209,7 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 				newSubscription = Subscription.subscribed;
 				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
 			} else if (accessModel == AccessModel.roster) {
-				boolean allowed = isSenderInRosterGroup(jid, nodeConfig, nodeAffiliations, nodeSubscriptions);
+				boolean allowed = logic.isSenderInRosterGroup(jid, nodeConfig, nodeAffiliations, nodeSubscriptions);
 
 				if (!allowed) {
 					throw new PubSubException(Authorization.NOT_AUTHORIZED, PubSubErrorCondition.NOT_IN_ROSTER_GROUP);

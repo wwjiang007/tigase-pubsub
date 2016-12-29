@@ -44,15 +44,11 @@ import tigase.stats.StatisticsList;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.PacketErrorTypeException;
 import tigase.xmpp.StanzaType;
+import tigase.xmpp.mam.modules.GetFormModule;
 
 import javax.script.Bindings;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Class description
@@ -71,54 +67,8 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	public static final String DEFAULT_LEAF_NODE_CONFIG_KEY = "default-node-config";
 	public static final String EVENT_XMLNS = "tigase:events:pubsub";
 
-	public static final Pattern PARAMETRIZED_PROPERTY_PATTERN = Pattern.compile("(.+)\\[(.*)\\]|(.+)");
-
-	/**
-	 * Field description
-	 */
-	public static final String PUBSUB_REPO_CLASS_PROP_KEY = "pubsub-repo-class";
-	/**
-	 * Field description
-	 */
-	public static final String PUBSUB_REPO_POOL_SIZE_PROP_KEY = "pubsub-repo-pool-size";
-
 	// ~--- fields
 	// ---------------------------------------------------------------
-
-	/**
-	 * Field description
-	 */
-	public static final String PUBSUB_REPO_URL_PROP_KEY = "pubsub-repo-url";
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param key
-	 *            is a <code>String</code>
-	 * @param props
-	 *            is a <code>Map<String,Object></code>
-	 *
-	 * @return a value of <code>Map<String,Object></code>
-	 */
-	public static Map<String, Object> getProperties(String key, Map<String, Object> props) {
-		Map<String, Object> result = new HashMap<String, Object>();
-
-		for (Entry<String, Object> entry : props.entrySet()) {
-			Matcher matcher = PARAMETRIZED_PROPERTY_PATTERN.matcher(entry.getKey());
-
-			if (matcher.find()) {
-				String keyBaseName = (matcher.group(1) != null) ? matcher.group(1) : matcher.group(3);
-				String keyMod = matcher.group(2);
-
-				if (keyBaseName.equals(key)) {
-					result.put(keyMod, entry.getValue());
-				}
-			}
-		}
-
-		return result;
-	}
 
 	/** Field description */
 	@Inject(bean = "defaultNodeConfig")
@@ -346,6 +296,8 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 //		kernel.registerBean(PresencePerNodeExtension.class).exec();
 //
 //		kernel.registerBean(PubSubConfig.class).exec();
+
+		kernel.registerBean(GetFormModule.class).exec();
 	}
 
 	@Override

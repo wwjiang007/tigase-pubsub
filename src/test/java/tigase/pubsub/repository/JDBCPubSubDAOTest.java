@@ -177,6 +177,11 @@ public class JDBCPubSubDAOTest extends AbstractPubSubDAOTest<DataRepository> {
 	}
 
 	@Override
+	protected String getMAMID(Object nodeId, String itemId) {
+		return nodeId.toString() + "," + itemId;
+	}
+
+	@Override
 	protected DataRepository prepareDataSource() throws DBInitException, IllegalAccessException, InstantiationException {
 		DataRepositoryPool pool = new DataRepositoryPool();
 		pool.initRepository(uri, new HashMap());

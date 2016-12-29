@@ -25,7 +25,7 @@ public class ReadAllNodesCommand implements AdHocCommand {
 	@Inject
 	private PubSubConfig config;
 	@Inject
-	private IPubSubDAO<?,?> dao;
+	private IPubSubDAO<?,?,?> dao;
 	@Inject
 	private IPubSubRepository repository;
 

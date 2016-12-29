@@ -250,4 +250,5 @@ public class Node<T> implements INodeMeta<T> {
 			this.childNodes.remove(childNode);
 		}
 	}
+
 }

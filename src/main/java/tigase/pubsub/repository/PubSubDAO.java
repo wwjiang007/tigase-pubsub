@@ -19,8 +19,10 @@ import tigase.xml.Element;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
 import tigase.xmpp.BareJID;
+import tigase.xmpp.RSM;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.impl.roster.RosterFlat;
+import tigase.xmpp.mam.Query;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -31,7 +33,7 @@ import java.util.logging.Logger;
  *
  * @author andrzej
  */
-public abstract class PubSubDAO<T, S extends DataSource> implements IPubSubDAO<T, S> {
+public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.Query> implements IPubSubDAO<T, S, Q> {
 
 	protected static final Logger log = Logger.getLogger(PubSubDAO.class.getCanonicalName());
 
@@ -128,6 +130,10 @@ public abstract class PubSubDAO<T, S extends DataSource> implements IPubSubDAO<T
 		}
 	}
 
+	protected Element itemDataToElement(String data) {
+		return itemDataToElement(data.toCharArray());
+	}
+
 	protected Element itemDataToElement(char[] data) {
 		DomBuilderHandler domHandler = new DomBuilderHandler();
 		parser.parse(domHandler, data, 0, data.length);
@@ -169,6 +175,33 @@ public abstract class PubSubDAO<T, S extends DataSource> implements IPubSubDAO<T
 		}
 	}
 
+	protected static <Q extends Query> void calculateOffsetAndPosition(Q query, int count, Integer before, Integer after) {
+		RSM rsm = query.getRsm();
+		int index = rsm.getIndex() == null ? 0 : rsm.getIndex();
+		int limit = rsm.getMax();
+
+		if (after != null) {
+			// it is ok, if we go out of range we will return empty result
+			index = after + 1;
+		} else if (before != null) {
+			index = before - rsm.getMax();
+			// if we go out of range we need to set index to 0 and reduce limit
+			// to return proper results
+			if (index < 0) {
+				index = 0;
+				limit = before;
+			}
+		} else if (rsm.hasBefore()) {
+			index = count - rsm.getMax();
+			if (index < 0) {
+				index = 0;
+			}
+		}
+		rsm.setIndex(index);
+		rsm.setMax(limit);
+		rsm.setCount(count);
+	}
+
 	protected Form parseConfigForm(String cnfData) {
 		if (cnfData == null)
 			return null;
@@ -185,4 +218,52 @@ public abstract class PubSubDAO<T, S extends DataSource> implements IPubSubDAO<T
 
 		return null;
 	}
+
+	public static class Item<T>
+			implements IPubSubRepository.Item {
+
+		private Element item;
+		private final String itemId;
+		private final String nodeName;
+		private final T nodeId;
+		private final Date ts;
+
+		public Item(String nodeName, T nodeId, String itemId, Date ts, Element item) {
+			this.nodeName = nodeName;
+			this.nodeId = nodeId;
+			this.itemId = itemId;
+			this.ts = ts;
+			this.item = item;
+		}
+
+		@Override
+		public String getId() {
+			return nodeId.toString() + "," + itemId;
+		}
+
+		@Override
+		public String getItemId() {
+			return itemId;
+		}
+
+		@Override
+		public Element getMessage() {
+			return item;
+		}
+
+		@Override
+		public Date getTimestamp() {
+			return ts;
+		}
+
+		@Override
+		public String getNode() {
+			return nodeName;
+		}
+
+		public void setMessage(Element item) {
+			this.item = item;
+		}
+	}
+
 }

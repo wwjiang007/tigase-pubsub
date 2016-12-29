@@ -22,6 +22,7 @@
  */
 package tigase.pubsub.repository;
 
+import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.db.DBInitException;
 import tigase.db.DataSource;
@@ -32,12 +33,14 @@ import tigase.kernel.beans.config.ConfigField;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubComponent;
+import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.BasicComponent;
 import tigase.xml.Element;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+import tigase.xmpp.mam.MAMRepository;
 
 import java.util.Date;
 import java.util.List;
@@ -46,8 +49,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Bean(name="dao", parent = PubSubComponent.class)
-public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBeanWithStatistics<IPubSubDAO<T, S>>
-		implements IPubSubDAO<T, S>  {
+public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.Query> extends MDRepositoryBeanWithStatistics<IPubSubDAO<T, S, Q>>
+		implements IPubSubDAO<T, S, Q>  {
 
 	private static final Logger log = Logger.getLogger(PubSubDAOPool.class.getName());
 
@@ -87,7 +90,7 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBeanWith
 	@Override
 	public T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig, NodeType nodeType,
 			T collectionId) throws RepositoryException {
-		IPubSubDAO<T, DataSource> dao = takeDao(serviceJid);
+		IPubSubDAO<T, DataSource, Q> dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
 				return dao.createNode(serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collectionId);
@@ -306,7 +309,7 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBeanWith
 
 	@Override
 	public T getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
-		IPubSubDAO<T, DataSource> dao = takeDao(serviceJid);
+		IPubSubDAO<T, DataSource, Q> dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
 				return dao.getNodeId(serviceJid, nodeName);
@@ -321,7 +324,7 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBeanWith
 
 	@Override
 	public INodeMeta<T> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException {
-		IPubSubDAO<T, DataSource> dao = takeDao(serviceJid);
+		IPubSubDAO<T, DataSource, Q> dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
 				return dao.getNodeMeta(serviceJid, nodeName);
@@ -411,6 +414,18 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBeanWith
 	@Override
 	public AbstractNodeConfig parseConfig(String nodeName, String cfgData) throws RepositoryException {
 		return null;
+	}
+
+	@Override
+	public void queryItems(Query query, List nodesIds, MAMRepository.ItemHandler itemHandler)
+			throws ComponentException, RepositoryException {
+		BareJID serviceJid = query.getComponentJID().getBareJID();
+		IPubSubDAO dao = takeDao(serviceJid);
+		if (dao != null) {
+			dao.queryItems(query, nodesIds, itemHandler);
+		} else {
+			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
+		}
 	}
 
 	@Deprecated
@@ -568,9 +583,9 @@ public class PubSubDAOPool<T, S extends DataSource> extends MDRepositoryBeanWith
 	}
 
 	@Override
-	protected Class<? extends IPubSubDAO<T, S>> findClassForDataSource(DataSource dataSource) throws DBInitException {
+	protected Class<? extends IPubSubDAO<T, S, Q>> findClassForDataSource(DataSource dataSource) throws DBInitException {
 		Class cls = DataSourceHelper.getDefaultClass(PubSubDAO.class, dataSource.getResourceUri());
-		return (Class<PubSubDAO<T, S>>) cls;
+		return (Class<PubSubDAO<T, S, Q>>) cls;
 	}
 
 	@Override

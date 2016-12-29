@@ -75,6 +75,18 @@ drop procedure if exists TigPubSubRemoveService;
 drop procedure if exists TigPubSubGetNodeMeta;
 -- QUERY END:
 
+-- QUERY START:
+drop procedure if exists TigPubSubMamQueryItems;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigPubSubMamQueryItemPosition;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigPubSubMamQueryItemsCount;
+-- QUERY END:
+
 delimiter //
 
 -- QUERY START:
@@ -320,6 +332,107 @@ begin
 		inner join tig_pubsub_jids cj on cj.jid_id = n.creator_id
 		where sj.service_jid_sha1 = SHA1(LOWER(_service_jid)) and n.name_sha1 = SHA1(_node_name)
 			and n.name = _node_name;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubMamQueryItems(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _limit int, _offset int)
+begin
+    set @since = _since;
+    set @to = _to;
+    set @publisherId = null;
+    set @limit = _limit;
+    set @offset = _offset;
+
+    if _publisher is not null then
+        select jid_id into @publisherId from tig_pubsub_jids where jid_sha1 = SHA1(LOWER(_publisher));
+    end if;
+
+	set @ts = 'creation_date';
+	if _order = 1 then
+	    set @ts = 'update_date';
+	end if;
+
+	set @query = CONCAT('select pn.name, pi.node_id, pi.id, pi.', @ts, ', pi.data
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (', _nodes_ids, ')
+            and (? is null or pi.', @ts, ' >= ?)
+            and (? is null or pi.', @ts, ' <= ?)
+            and (? is null or pi.publisher_id = ?)
+        order by pi.', @ts, '
+        limit ? offset ?;');
+
+    prepare stmt from @query;
+	execute stmt using @since, @since, @to, @to, @publisherId, @publisherId, @limit, @offset;
+	deallocate prepare stmt;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _nodeId bigint, _itemId varchar(1024))
+begin
+    set @since = _since;
+    set @to = _to;
+    set @publisherId = null;
+    set @nodeId = _nodeId;
+    set @itemid = _itemId;
+
+    if _publisher is not null then
+        select jid_id into @publisherId from tig_pubsub_jids where jid_sha1 = SHA1(LOWER(_publisher));
+    end if;
+
+	set @ts = 'creation_date';
+	if _order = 1 then
+	    set @ts = 'update_date';
+	end if;
+
+	set @query = CONCAT('select x.position
+        from (select @row_number := @row_number + 1 AS position, pi.id, pi.node_id
+            from tig_pubsub_items pi,
+                (select @row_number := 0) as t
+            where
+                pi.node_id in (', _nodes_ids, ')
+                and (? is null or pi.', @ts, ' >= ?)
+                and (? is null or pi.', @ts, ' <= ?)
+                and (? is null or pi.publisher_id = ?)
+            order by pi.', @ts, '
+        ) x where x.node_id = ? and x.id = ?');
+
+    prepare stmt from @query;
+	execute stmt using @since, @since, @to, @to, @publisherId, @publisherId, @nodeId, @itemId;
+	deallocate prepare stmt;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubMamQueryItemsCount(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int)
+begin
+    set @since = _since;
+    set @to = _to;
+    set @publisherId = null;
+
+    if _publisher is not null then
+        select jid_id into @publisherId from tig_pubsub_jids where jid_sha1 = SHA1(LOWER(_publisher));
+    end if;
+
+	set @ts = 'creation_date';
+	if _order = 1 then
+	    set @ts = 'update_date';
+	end if;
+
+	set @query = CONCAT('select count(1)
+            from tig_pubsub_items pi
+            where
+                pi.node_id in (', _nodes_ids, ')
+                and (? is null or pi.', @ts, ' >= ?)
+                and (? is null or pi.', @ts, ' <= ?)
+                and (? is null or pi.publisher_id = ?)');
+
+    prepare stmt from @query;
+	execute stmt using @since, @since, @to, @to, @publisherId, @publisherId;
+	deallocate prepare stmt;
 end //
 -- QUERY END:
 

@@ -40,7 +40,6 @@ import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.server.Message;
 import tigase.server.Packet;
 import tigase.util.DateTimeFormatter;
 import tigase.util.TigaseStringprepException;
@@ -763,38 +762,12 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 				}
 			}
 
-			Packet packet = Message.getMessage(jidFrom, jid, null, null, null, null, String.valueOf(++this.idCounter));
-			Element message = packet.getElement();
-
+			Element message = logic.prepareNotificationMessage(jidFrom, jid, String.valueOf(++this.idCounter), itemToSend, headers);
 			if (body != null) {
 				message.addChildren(body);
 			}
 
-			Element event = new Element("event", new String[] { "xmlns" },
-					new String[] { "http://jabber.org/protocol/pubsub#event" });
-
-			event.addChild(itemToSend);
-			String expireAttr = itemToSend.getAttributeStaticStr(new String[] { "items", "item" }, "expire-at");
-			if (expireAttr != null) {
-				Element amp = new Element("amp");
-				amp.setXMLNS(AMP_XMLNS);
-				amp.addChild(new Element("rule", new String[] { "condition", "action", "value" },
-						new String[] { "expire-at", "drop", expireAttr }));
-				message.addChild(amp);
-			}
-			message.addChild(event);
-			if ((headers != null) && (headers.size() > 0)) {
-				Element headElem = new Element("headers", new String[] { "xmlns" },
-						new String[] { "http://jabber.org/protocol/shim" });
-
-				for (Entry<String, String> entry : headers.entrySet()) {
-					Element h = new Element("header", entry.getValue(), new String[] { "name" },
-							new String[] { entry.getKey() });
-
-					headElem.addChild(h);
-				}
-				message.addChild(headElem);
-			}
+			Packet packet = Packet.packetInstance(message, jidFrom, jid);
 
 			// we are adding notifications to outgoing queue instead temporary
 			// list

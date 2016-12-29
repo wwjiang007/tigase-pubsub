@@ -26,3 +26,6 @@ Since this version it is possible to use separate PubSub nodes and items based o
 This allows you to configure component to store informations about nodes and items for particular domain to different database.
 
 For more informations please look into <<Using separate store>>
+
+=== Support for MAM
+In this version we added support for http://xmpp.org/extensions/xep-0313.html:[XEP-0313: Message Archive Management] protocol which allows any MAM compatible XMPP client with PubSub support to retrieve items published on PubSub nodes using MAM protocol for querying.
