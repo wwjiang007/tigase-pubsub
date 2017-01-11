@@ -188,6 +188,7 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 					for (IPubSubRepository.Item ritem : rnodeItems) {
 						ritems.addChild(ritem.getMessage());
 					}
+					rpubsub.addChild(ritems);
 				});
 
 				if (query.getRsm().getCount() > 0) {
