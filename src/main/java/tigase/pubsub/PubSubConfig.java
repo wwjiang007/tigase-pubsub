@@ -84,6 +84,10 @@ public class PubSubConfig implements Initializable {
 	@ConfigField(desc = "Send Last Published Item on Presence", alias = PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY)
 	private boolean sendLastPublishedItemOnPresence = false;
 
+	@ConfigField(desc = "Subscribe to open nodes with presence based filtered notifications to non-PEP services like in PEP",
+			alias = "subscribe-by-presence-filtered-notifications")
+	private boolean subscribeByPresenceFilteredNotifications = false;
+
 	/**
 	 * Method description
 	 *
@@ -194,6 +198,10 @@ public class PubSubConfig implements Initializable {
 
 	public boolean isSendLastPublishedItemOnPresence() {
 		return sendLastPublishedItemOnPresence;
+	}
+
+	public boolean isSubscribeByPresenceFilteredNotifications() {
+		return subscribeByPresenceFilteredNotifications;
 	}
 
 }

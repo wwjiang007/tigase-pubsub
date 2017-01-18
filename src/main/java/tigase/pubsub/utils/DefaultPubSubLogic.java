@@ -53,11 +53,17 @@ import static tigase.pubsub.modules.PublishItemModule.AMP_XMLNS;
 public class DefaultPubSubLogic implements Logic {
 
 	@Inject
+	private PubSubConfig pubSubConfig;
+
+	@Inject
 	private CachedPubSubRepository repository;
 
 	@Override
 	public void checkAccessPermission(BareJID serviceJid, String nodeName, JID senderJid)
 			throws PubSubException, RepositoryException {
+		if (pubSubConfig.isAdmin(senderJid))
+			return;
+
 		checkAccessPermission(serviceJid, repository.getNodeConfig(serviceJid, nodeName),
 							  repository.getNodeAffiliations(serviceJid, nodeName),
 							  repository.getNodeSubscriptions(serviceJid, nodeName), senderJid);

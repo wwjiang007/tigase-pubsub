@@ -185,7 +185,7 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 		if (packet.getStanzaTo() != null && packet.getStanzaTo().getResource() != null) {
 			if ( pubsubEl != null
 					 && ( pubsubEl.getXMLNS() == PUBSUB_XMLNS
-								|| pubsubEl.getXMLNS() == PUBSUB_XMLNS ) ){
+								|| pubsubEl.getXMLNS() == PUBSUB_XMLNS_OWNER ) ){
 				Packet result = null;
 				if (session != null) {
 					XMPPResourceConnection con = session.getParentSession().getResourceForResource(
@@ -231,8 +231,8 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 			// as they
 			// need to be processed only by server
 			if ( pubsubEl == null
-					 || pubsubEl.getXMLNS() != PUBSUB_XMLNS
-					 || pubsubEl.getXMLNS() != PUBSUB_XMLNS ){
+					 || (pubsubEl.getXMLNS() != PUBSUB_XMLNS
+					 && pubsubEl.getXMLNS() != PUBSUB_XMLNS_OWNER) ){
 				// ignoring - disco#info or disco#items to server
 				log.log(Level.FINEST, "got <iq/> packet with no 'to' attribute = {0}", packet);
 				return;

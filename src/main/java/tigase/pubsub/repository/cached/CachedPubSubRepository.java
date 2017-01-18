@@ -733,6 +733,7 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 												 node -> (node.getNodeConfig() instanceof LeafNodeConfig));
 
 		if (nodes.isEmpty()) {
+			query.getRsm().setCount(0);
 			return;
 		}
 

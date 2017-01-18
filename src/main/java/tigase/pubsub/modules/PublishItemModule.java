@@ -514,7 +514,7 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 			// XXX #125
 			final PublisherModel publisherModel = nodeConfig.getPublisherModel();
 
-			if (!senderAffiliation.getAffiliation().isPublishItem()) {
+			if (!senderAffiliation.getAffiliation().isPublishItem() && !config.isAdmin(packet.getStanzaFrom())) {
 				if ((publisherModel == PublisherModel.publishers)
 						|| ((publisherModel == PublisherModel.subscribers) && (nodeSubscriptions.getSubscription(
 								packet.getStanzaFrom().getBareJID()) != Subscription.subscribed))) {
@@ -676,7 +676,7 @@ public class PublishItemModule extends AbstractPubSubModule implements Initializ
 
 			// for pubsub service for user accounts we need dynamic
 			// subscriptions based on presence
-			if (jidFrom.getLocalpart() != null) {
+			if (jidFrom.getLocalpart() != null || config.isSubscribeByPresenceFilteredNotifications()) {
 				switch (nodeConfig.getNodeAccessModel()) {
 				case open:
 				case presence:
