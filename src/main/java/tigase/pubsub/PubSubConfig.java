@@ -88,6 +88,9 @@ public class PubSubConfig implements Initializable {
 			alias = "subscribe-by-presence-filtered-notifications")
 	private boolean subscribeByPresenceFilteredNotifications = false;
 
+	@ConfigField(desc = "Trust every XMPP entity", alias = "trust-every-entity")
+	private boolean trustEveryEntity;
+
 	/**
 	 * Method description
 	 *
@@ -167,6 +170,10 @@ public class PubSubConfig implements Initializable {
 	 * @return
 	 */
 	public boolean isAdmin(final BareJID jid) {
+		if (trustEveryEntity) {
+			return true;
+		}
+		
 		if ((jid == null) || (this.admins == null)) {
 			return false;
 		}
