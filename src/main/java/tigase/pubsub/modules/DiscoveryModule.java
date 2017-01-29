@@ -15,6 +15,7 @@ import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.INodeMeta;
 import tigase.pubsub.repository.IPubSubRepository;
+import tigase.pubsub.repository.cached.CachedPubSubRepository;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.server.Packet;
 import tigase.xml.Element;
@@ -146,7 +147,11 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 
 			if (nodeName == null) {
 				parentName = "";
-				nodes = repository.getRootCollection(toJid.getBareJID());
+				try {
+					nodes = repository.getRootCollection(toJid.getBareJID());
+				} catch (CachedPubSubRepository.RootCollectionSet.IllegalStateException e) {
+					throw new PubSubException(Authorization.RESOURCE_CONSTRAINT);
+				}
 			} else {
 				parentName = nodeName;
 				nodes = repository.getChildNodes(toJid.getBareJID(), nodeName);

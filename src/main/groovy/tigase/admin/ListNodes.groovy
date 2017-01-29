@@ -64,11 +64,15 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
     try {
         if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
             def serviceJid = p.getStanzaTo().getBareJID();
-            def nodes = pubsubRepository.getRootCollection(serviceJid);
+			try {
+            	def nodes = pubsubRepository.getRootCollection(serviceJid);
 
-            Command.addFieldMultiValue(result, "nodes", nodes as List);
-            result.getElement().getChild('command').getChild('x').getChildren().find { e -> e.getAttribute("var") == "nodes" }?.setAttribute("label", "Nodes");
-        } else {
+            	Command.addFieldMultiValue(result, "nodes", nodes as List);
+            	result.getElement().getChild('command').getChild('x').getChildren().find { e -> e.getAttribute("var") == "nodes" }?.setAttribute("label", "Nodes");
+			} catch (tigase.pubsub.repository.cached.CachedPubSubRepository.RootCollectionSet.IllegalStateException ex) {
+				throw new PubSubException(Authorization.RESOURCE_CONSTRAINT);
+			}
+		} else {
             throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
                     "permissions to list available nodes.");
         }

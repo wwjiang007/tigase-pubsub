@@ -127,7 +127,7 @@ public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHold
 	public void removeFromRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
 		repo.removeFromRootCollection(serviceJid, nodeName);
 	}
-
+	
 	@Override
 	public void update(BareJID serviceJid, String nodeName, AbstractNodeConfig nodeConfig) throws RepositoryException {
 		repo.update(serviceJid, nodeName, nodeConfig);
