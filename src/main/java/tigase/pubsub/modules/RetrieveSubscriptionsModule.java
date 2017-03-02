@@ -47,7 +47,7 @@ import java.util.logging.Level;
  * @version 5.0.0, 2010.03.27 at 05:27:10 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "retrieveSubscriptionsModule", parent = PubSubComponent.class)
+@Bean(name = "retrieveSubscriptionsModule", parent = PubSubComponent.class, active = true)
 public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("subscriptions"));

@@ -22,7 +22,7 @@ import tigase.xmpp.JID;
 import java.util.*;
 import java.util.Map.Entry;
 
-@Bean(name = "rebuildDatabaseCommand", parent = PubSubComponent.class)
+@Bean(name = "rebuildDatabaseCommand", parent = PubSubComponent.class, active = true)
 public class RebuildDatabaseCommand implements AdHocCommand {
 
 	@Inject

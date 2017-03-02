@@ -28,7 +28,7 @@ import tigase.xmpp.mam.modules.QueryModule;
 /**
  * Created by andrzej on 28.12.2016.
  */
-@Bean(name = "mamQueryModule", parent = PubSubComponent.class)
+@Bean(name = "mamQueryModule", parent = PubSubComponent.class, active = true)
 public class MAMQueryModule extends QueryModule {
 
 }

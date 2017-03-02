@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 
-@Bean(name = DiscoveryModule.ID, parent = PubSubComponent.class)
+@Bean(name = DiscoveryModule.ID, parent = PubSubComponent.class, active = true)
 public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModule {
 
 	private final SimpleDateFormat formatter;

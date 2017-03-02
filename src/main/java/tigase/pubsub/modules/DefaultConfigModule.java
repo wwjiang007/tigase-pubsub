@@ -34,7 +34,7 @@ import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 
-@Bean(name = "defaultConfigModule", parent = PubSubComponent.class)
+@Bean(name = "defaultConfigModule", parent = PubSubComponent.class, active = true)
 public class DefaultConfigModule extends AbstractPubSubModule {
 
 	private static final Criteria CRIT_DEFAULT = ElementCriteria.nameType("iq", "get").add(

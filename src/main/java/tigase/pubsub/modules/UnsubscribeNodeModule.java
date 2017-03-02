@@ -42,7 +42,7 @@ import tigase.xmpp.JID;
  *
  *
  */
-@Bean(name = "unsubscribeNodeModule", parent = PubSubComponent.class)
+@Bean(name = "unsubscribeNodeModule", parent = PubSubComponent.class, active = true)
 public class UnsubscribeNodeModule extends AbstractPubSubModule {
 	private static final Criteria CRIT_UNSUBSCRIBE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("unsubscribe"));

@@ -57,7 +57,7 @@ import java.util.logging.Logger;
  * @version 5.0.0, 2010.03.27 at 05:25:49 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "manageSubscriptionModule", parent = PubSubComponent.class)
+@Bean(name = "manageSubscriptionModule", parent = PubSubComponent.class, active = true)
 public class ManageSubscriptionModule extends AbstractPubSubModule {
 
 	private class SubscriptionFilter {

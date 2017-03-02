@@ -19,7 +19,7 @@ import tigase.xmpp.JID;
 
 import java.util.Arrays;
 
-@Bean(name = "readAllNodesCommand", parent = PubSubComponent.class)
+@Bean(name = "readAllNodesCommand", parent = PubSubComponent.class, active = true)
 public class ReadAllNodesCommand implements AdHocCommand {
 
 	@Inject

@@ -25,7 +25,7 @@ import tigase.xmpp.StanzaType;
 import java.util.Collection;
 import java.util.logging.Level;
 
-@Bean(name = "presenceNotifierModule", parent = PubSubComponent.class)
+@Bean(name = "presenceNotifierModule", parent = PubSubComponent.class, active = true)
 public class PresenceNotifierModule extends AbstractPubSubModule implements Initializable, UnregisterAware {
 
 	@Inject

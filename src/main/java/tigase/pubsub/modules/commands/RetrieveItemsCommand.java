@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
-@Bean(name = "retrieveItemsCommand", parent = PubSubComponent.class)
+@Bean(name = "retrieveItemsCommand", parent = PubSubComponent.class, active = true)
 public class RetrieveItemsCommand implements AdHocCommand {
 
 	public static final String TIGASE_PUBSUB_INTERNAL_KEY = "tigase-pubsub#internal";

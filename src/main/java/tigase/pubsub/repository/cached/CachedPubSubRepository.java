@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
  * @version 5.0.0, 2010.03.27 at 05:20:46 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "pubsubRepository", parent = PubSubComponent.class, selectors = BeanSelector.NonClusterMode.class)
+@Bean(name = "pubsubRepository", parent = PubSubComponent.class, active = true, selectors = BeanSelector.NonClusterMode.class)
 public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHolder, Initializable {
 
 	private class NodeSaver {

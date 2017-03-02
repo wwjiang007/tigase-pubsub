@@ -46,7 +46,7 @@ import tigase.xmpp.JID;
  *
  *
  */
-@Bean(name = "nodeDeleteModule", parent = PubSubComponent.class)
+@Bean(name = "nodeDeleteModule", parent = PubSubComponent.class, active = true)
 public class NodeDeleteModule extends AbstractPubSubModule {
 
 	public static class NodeDeletedEvent {

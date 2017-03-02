@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  * @version 5.0.0, 2010.03.27 at 05:10:54 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "pubsubConfig", parent = PubSubComponent.class)
+@Bean(name = "pubsubConfig", parent = PubSubComponent.class, active = true)
 public class PubSubConfig implements Initializable {
 
 	public static final String ADMINS_KEY = "admin";

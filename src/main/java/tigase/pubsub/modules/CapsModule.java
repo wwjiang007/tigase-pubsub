@@ -27,7 +27,7 @@ import java.util.Queue;
  *
  * @author andrzej
  */
-@Bean(name = "capsModule", parent = PubSubComponent.class)
+@Bean(name = "capsModule", parent = PubSubComponent.class, active = true)
 public class CapsModule extends AbstractPubSubModule {
 
 	private static final Criteria CRIT = new Or(

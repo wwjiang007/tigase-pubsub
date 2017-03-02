@@ -49,7 +49,7 @@ import java.util.List;
  *
  *
  */
-@Bean(name = "pendingSubscriptionModule", parent = PubSubComponent.class)
+@Bean(name = "pendingSubscriptionModule", parent = PubSubComponent.class, active = true)
 public class PendingSubscriptionModule extends AbstractPubSubModule {
 
 	private static final Criteria CRIT = ElementCriteria.name("message").add(

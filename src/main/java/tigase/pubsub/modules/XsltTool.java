@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
-@Bean(name = "xslTransformer", parent = PubSubComponent.class)
+@Bean(name = "xslTransformer", parent = PubSubComponent.class, active = true)
 public class XsltTool {
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();

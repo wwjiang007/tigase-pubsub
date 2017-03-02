@@ -43,7 +43,7 @@ import tigase.xmpp.BareJID;
  *
  *
  */
-@Bean(name = "purgeItemsModule", parent = PubSubComponent.class)
+@Bean(name = "purgeItemsModule", parent = PubSubComponent.class, active = true)
 public class PurgeItemsModule extends AbstractPubSubModule {
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(ElementCriteria.name("purge"));

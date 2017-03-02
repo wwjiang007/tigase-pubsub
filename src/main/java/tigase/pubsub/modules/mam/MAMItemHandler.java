@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * Created by andrzej on 25.12.2016.
  */
-@Bean(name = "mamItemHandler", parent = MAMQueryModule.class)
+@Bean(name = "mamItemHandler", parent = MAMQueryModule.class, active = true)
 public class MAMItemHandler extends tigase.xmpp.mam.MAMItemHandler {
 
 	private long idCounter = 0;

@@ -42,7 +42,7 @@ import java.util.Map;
  *
  *
  */
-@Bean(name = "retrieveAffiliationsModule", parent = PubSubComponent.class)
+@Bean(name = "retrieveAffiliationsModule", parent = PubSubComponent.class, active = true)
 public class RetrieveAffiliationsModule extends AbstractPubSubModule {
 	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("affiliations"));

@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  *
  */
-@Bean(name = "presenceCollectorModule", parent = PubSubComponent.class)
+@Bean(name = "presenceCollectorModule", parent = PubSubComponent.class, active = true)
 public class PresenceCollectorModule extends AbstractPubSubModule {
 
 	public static class BuddyVisibilityEvent {

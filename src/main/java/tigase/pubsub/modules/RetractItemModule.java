@@ -45,7 +45,7 @@ import java.util.*;
  *
  *
  */
-@Bean(name = "retractItemModule", parent = PubSubComponent.class)
+@Bean(name = "retractItemModule", parent = PubSubComponent.class, active = true)
 public class RetractItemModule extends AbstractPubSubModule {
 
 	public static class ItemRetractedEvent {

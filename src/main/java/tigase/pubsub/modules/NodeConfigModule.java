@@ -49,7 +49,7 @@ import java.util.HashSet;
  *
  *
  */
-@Bean(name = "nodeConfigModule", parent = PubSubComponent.class)
+@Bean(name = "nodeConfigModule", parent = PubSubComponent.class, active = true)
 public class NodeConfigModule extends AbstractConfigCreateNode {
 
 	public static class NodeConfigurationChangedEvent {

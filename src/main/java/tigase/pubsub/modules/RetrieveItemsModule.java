@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  *
  *
  */
-@Bean(name = "retrieveItemsModule", parent = PubSubComponent.class)
+@Bean(name = "retrieveItemsModule", parent = PubSubComponent.class, active = true)
 public class RetrieveItemsModule extends AbstractPubSubModule {
 
 

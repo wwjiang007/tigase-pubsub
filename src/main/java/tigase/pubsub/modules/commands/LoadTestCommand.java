@@ -27,7 +27,7 @@ import tigase.xmpp.JID;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-@Bean(name = "loadTestCommand", parent = PubSubComponent.class)
+@Bean(name = "loadTestCommand", parent = PubSubComponent.class, active = true)
 public class LoadTestCommand implements AdHocCommand {
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());

@@ -54,7 +54,7 @@ import java.util.logging.Level;
  *
  *
  */
-@Bean(name = "manageAffiliationsModule", parent = PubSubComponent.class)
+@Bean(name = "manageAffiliationsModule", parent = PubSubComponent.class, active = true)
 public class ManageAffiliationsModule extends AbstractPubSubModule {
 	private static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(

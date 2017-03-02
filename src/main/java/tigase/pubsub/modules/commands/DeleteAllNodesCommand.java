@@ -28,7 +28,7 @@ import java.util.Arrays;
  * @version 5.0.0, 2010.03.27 at 05:11:57 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "deleteAllNodesCommand")
+@Bean(name = "deleteAllNodesCommand", active = true)
 public class DeleteAllNodesCommand implements AdHocCommand {
 
 	@Inject

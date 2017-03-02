@@ -35,7 +35,7 @@ import tigase.xmpp.Authorization;
 /**
  * Created by andrzej on 22.12.2016.
  */
-@Bean(name = "mamQueryParser", parent = PubSubComponent.class)
+@Bean(name = "mamQueryParser", parent = PubSubComponent.class, active = true)
 public class MAMQueryParser
 		extends tigase.xmpp.mam.MAMQueryParser<Query> {
 

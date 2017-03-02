@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Bean(name="dao", parent = PubSubComponent.class)
+@Bean(name="dao", parent = PubSubComponent.class, active = true)
 public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.Query> extends MDRepositoryBeanWithStatistics<IPubSubDAO<T, S, Q>>
 		implements IPubSubDAO<T, S, Q>  {
 

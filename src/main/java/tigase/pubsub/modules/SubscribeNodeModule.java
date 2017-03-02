@@ -46,7 +46,7 @@ import java.util.List;
  *
  *
  */
-@Bean(name = "subscribeNodeModule", parent = PubSubComponent.class)
+@Bean(name = "subscribeNodeModule", parent = PubSubComponent.class, active = true)
 public class SubscribeNodeModule extends AbstractPubSubModule {
 	private static final Criteria CRIT_SUBSCRIBE = ElementCriteria.nameType("iq", "set").add(
 			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("subscribe"));

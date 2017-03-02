@@ -49,7 +49,7 @@ import static tigase.pubsub.modules.PublishItemModule.AMP_XMLNS;
  *
  * Created by andrzej on 25.12.2016.
  */
-@Bean(name = "logic", parent = PubSubComponent.class)
+@Bean(name = "logic", parent = PubSubComponent.class, active = true)
 public class DefaultPubSubLogic implements Logic {
 
 	@Inject
