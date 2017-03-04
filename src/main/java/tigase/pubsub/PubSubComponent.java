@@ -57,7 +57,7 @@ import java.util.logging.Level;
  * @version 5.1.0, 2010.11.02 at 01:05:02 MDT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "pubsub", parent = Kernel.class, active = false, selectors = {BeanSelector.NonClusterMode.class})
+@Bean(name = "pubsub", parent = Kernel.class, active = true, selectors = {BeanSelector.NonClusterMode.class})
 public class PubSubComponent extends AbstractKernelBasedComponent implements Configurable, DisableDisco {
 
 	/** Field description */
