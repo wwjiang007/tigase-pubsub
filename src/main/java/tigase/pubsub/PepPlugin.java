@@ -54,7 +54,7 @@ import java.util.logging.Logger;
  *
  * @author andrzej
  */
-@Bean(name = "pep", parent = SessionManager.class, active = false)
+@Bean(name = "pep", parent = SessionManager.class, active = true)
 public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 
 	protected static final String PUBSUB_XMLNS = "http://jabber.org/protocol/pubsub";

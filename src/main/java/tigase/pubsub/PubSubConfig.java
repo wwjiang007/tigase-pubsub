@@ -79,10 +79,10 @@ public class PubSubConfig implements Initializable {
 	private boolean pepRemoveEmptyGeoloc = false;
 
 	@ConfigField(desc = "Persistent PEP", alias = PUBSUB_PERSISTENT_PEP_KEY)
-	private boolean persistentPep = false;
+	private boolean persistentPep = true;
 
 	@ConfigField(desc = "Send Last Published Item on Presence", alias = PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY)
-	private boolean sendLastPublishedItemOnPresence = false;
+	private boolean sendLastPublishedItemOnPresence = true;
 
 	@ConfigField(desc = "Subscribe to open nodes with presence based filtered notifications to non-PEP services like in PEP",
 			alias = "subscribe-by-presence-filtered-notifications")
