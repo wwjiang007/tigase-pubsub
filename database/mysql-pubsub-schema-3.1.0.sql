@@ -100,7 +100,7 @@ begin
 	select TigPubSubEnsureJid(_publisher) into _publisher_id;
 	insert into tig_pubsub_items (node_id, id_sha1, id, creation_date, update_date, publisher_id, data)
 		values (_node_id, SHA1(_item_id), _item_id, now(), now(), _publisher_id, _item_data)
-		on duplicate key update publisher_id = _publisher_id, data = _item_data, update_date = now();	
+		on duplicate key update publisher_id = _publisher_id, data = _item_data, update_date = now();
 	COMMIT;
 end //
 -- QUERY END:

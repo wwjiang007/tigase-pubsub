@@ -336,7 +336,7 @@ end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubMamQueryItems(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _limit int, _offset int)
+create procedure TigPubSubMamQueryItems(_nodes_ids text, _since timestamp(6), _to timestamp(6), _publisher varchar(2049), _order int, _limit int, _offset int)
 begin
     set @since = _since;
     set @to = _to;
@@ -371,7 +371,7 @@ end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _nodeId bigint, _itemId varchar(1024))
+create procedure TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp(6), _to timestamp(6), _publisher varchar(2049), _order int, _nodeId bigint, _itemId varchar(1024))
 begin
     set @since = _since;
     set @to = _to;
@@ -407,7 +407,7 @@ end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubMamQueryItemsCount(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int)
+create procedure TigPubSubMamQueryItemsCount(_nodes_ids text, _since timestamp(6), _to timestamp(6), _publisher varchar(2049), _order int)
 begin
     set @since = _since;
     set @to = _to;
@@ -449,3 +449,40 @@ update tig_pubsub_jids
     set jid_sha1 = SHA1(LOWER(jid))
     where lower(jid) <> jid;
 -- QUERY END:
+
+-- QUERY START:
+alter table tig_pubsub_items modify update_date timestamp(6) null default null;
+-- QUERY END:
+
+-- QUERY START:
+alter table tig_pubsub_items modify creation_date timestamp(6) null default null;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigPubSubWriteItem;
+-- QUERY END:
+
+delimiter //
+
+-- QUERY START:
+create procedure TigPubSubWriteItem(_node_id bigint, _item_id varchar(1024), _publisher varchar(2049),
+	 _item_data mediumtext)
+begin
+	declare _publisher_id bigint;
+	DECLARE exit handler for sqlexception
+		BEGIN
+			-- ERROR
+		ROLLBACK;
+	END;
+
+	START TRANSACTION;
+
+	select TigPubSubEnsureJid(_publisher) into _publisher_id;
+	insert into tig_pubsub_items (node_id, id_sha1, id, creation_date, update_date, publisher_id, data)
+		values (_node_id, SHA1(_item_id), _item_id, now(6), now(6), _publisher_id, _item_data)
+		on duplicate key update publisher_id = _publisher_id, data = _item_data, update_date = now(6);
+	COMMIT;
+end //
+-- QUERY END:
+
+delimiter ;
