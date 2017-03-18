@@ -74,6 +74,9 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	@Inject(bean = "defaultNodeConfig")
 	protected LeafNodeConfig defaultNodeConfig;
 
+	@Inject
+	private IPubSubRepository pubsubRepository;
+
 	/** Field description */
 	protected Integer maxRepositoryCacheSize;
 
@@ -92,7 +95,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	@Override
 	public void everyHour() {
 		super.everyHour();
-		IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 		if (pubsubRepository instanceof StatisticHolder) {
 			((StatisticHolder) pubsubRepository).everyHour();
 		}
@@ -101,7 +103,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	@Override
 	public void everyMinute() {
 		super.everyMinute();
-		IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 		if (pubsubRepository instanceof StatisticHolder) {
 			((StatisticHolder) pubsubRepository).everyMinute();
 		}
@@ -110,7 +111,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	@Override
 	public void everySecond() {
 		super.everySecond();
-		IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 		if (pubsubRepository instanceof StatisticHolder) {
 			((StatisticHolder) pubsubRepository).everySecond();
 		}
