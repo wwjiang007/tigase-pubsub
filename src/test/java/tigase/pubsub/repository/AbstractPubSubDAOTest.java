@@ -67,10 +67,15 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 		}
 	};
 
+	protected static String emoji = "\uD83D\uDE97\uD83D\uDCA9\uD83D\uDE21";
+
+	protected boolean checkEmoji = true;
+
 	protected DS dataSource;
 	protected IPubSubDAO dao;
 
-	private String nodeName = "test-node";
+	private String nodeNameWithoutEmoji = "test-node";
+	private String nodeName = nodeNameWithoutEmoji;
 	private JID senderJid = JID.jidInstanceNS("owner@tigase/tigase-1");
 	private BareJID serviceJid = BareJID.bareJIDInstanceNS("pubsub.tigase");
 	private JID subscriberJid = JID.jidInstanceNS("subscriber@tigase/tigase-1");
@@ -83,6 +88,10 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 
 	@Before
 	public void setup() throws RepositoryException, DBInitException, IllegalAccessException, InstantiationException {
+		if (checkEmoji) {
+			nodeName += emoji;
+		}
+
 		dataSource = prepareDataSource();
 		dao = DataSourceHelper.getDefaultClass(IPubSubDAO.class, uri).newInstance();
 		try {
@@ -185,11 +194,15 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	public void test07_nodeItems() throws RepositoryException {
 		String itemId = "item-1";
 		Element item = new Element("item", new String[]{"id"}, new String[]{itemId});
-		item.addChild(new Element("payload", "test-payload", new String[]{"xmlns"}, new String[]{"test-xmlns"}));
+		String payloadCData = "test-payload";
+		if (checkEmoji) {
+			payloadCData += emoji;
+		}
+		item.addChild(new Element("payload", payloadCData, new String[]{"xmlns"}, new String[]{"test-xmlns"}));
 
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		Assert.assertNotNull("Could not fined nodeId", nodeId);
-		dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), itemId, nodeName, item);
+		dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), itemId, nodeNameWithoutEmoji, item);
 
 		String[] itemsIds = dao.getItemsIds(serviceJid, nodeId);
 		Assert.assertArrayEquals("Added item id not listed in list of item ids", new String[]{itemId}, itemsIds);
@@ -216,8 +229,14 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 
 		for (int i=0; i<20; i++) {
 			String itemId = "item-" + i;
+			String payloadCData = "test-payload";
+			if (checkEmoji) {
+				payloadCData += emoji;
+				itemId += emoji;
+			}
+
 			Element item = new Element("item", new String[]{"id"}, new String[]{itemId});
-			item.addChild(new Element("payload", "test-payload-" + i, new String[]{"xmlns"}, new String[]{"test-xmlns"}));
+			item.addChild(new Element("payload", payloadCData + "-" + i, new String[]{"xmlns"}, new String[]{"test-xmlns"}));
 
 			dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), itemId, senderJid.getBareJID().toString(), item);
 

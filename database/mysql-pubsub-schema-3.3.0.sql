@@ -20,6 +20,55 @@ source database/mysql-pubsub-schema-3.2.0.sql;
 -- LOAD FILE: database/mysql-pubsub-schema-3.2.0.sql
 
 -- QUERY START:
+alter table tig_pubsub_items
+    modify `id` varchar(1000) character set utf8mb4 collate utf8mb4_bin,
+    modify `data` mediumtext character set utf8mb4 collate utf8mb4_bin;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigExecuteIf;
+-- QUERY END:
+
+delimiter //
+
+-- QUERY START:
+create procedure TigExecuteIf(cond int, query text)
+begin
+set @s = (select if (
+        cond > 0,
+        query,
+        'select 1'
+    ));
+prepare stmt from @s;
+execute stmt;
+deallocate prepare stmt;
+end //
+-- QUERY END:
+
+delimiter ;
+
+-- QUERY START:
+call TigExecuteIf(
+    (select count(1) from information_schema.statistics where table_schema = database() and table_name = 'tig_pubsub_nodes' and index_name = 'name'),
+    "drop index `name` on tig_pubsub_nodes"
+);
+-- QUERY END:
+-- QUERY START:
+call TigExecuteIf(
+    (select count(1) from information_schema.statistics where table_schema = database() and table_name = 'tig_pubsub_nodes' and index_name = 'service_id_2'),
+    "drop index `service_id_2` on tig_pubsub_nodes"
+);
+-- QUERY END:
+
+-- QUERY START:
+alter table tig_pubsub_nodes
+    modify `name` varchar(1024) character set utf8mb4 collate utf8mb4_bin not null,
+    modify title varchar(1000) character set utf8mb4 collate utf8mb4_bin,
+    modify description mediumtext character set utf8mb4 collate utf8mb4_bin,
+    modify configuration mediumtext character set utf8mb4 collate utf8mb4_bin;
+-- QUERY END:
+
+-- QUERY START:
 drop function if exists TigPubSubEnsureServiceJid;
 -- QUERY END:
 
@@ -127,7 +176,7 @@ end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubGetNodeId(_service_jid varchar(2049), _node_name varchar(1024))
+create procedure TigPubSubGetNodeId(_service_jid varchar(2049), _node_name varchar(1024) charset utf8mb4 collate utf8mb4_bin)
 begin
 	select n.node_id from tig_pubsub_nodes n
 		inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id
@@ -155,7 +204,7 @@ end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubGetChildNodes(_service_jid varchar(2049),_node_name varchar(1024))
+create procedure TigPubSubGetChildNodes(_service_jid varchar(2049),_node_name varchar(1024) charset utf8mb4 collate utf8mb4_bin)
 begin
 	select n.name, n.node_id from tig_pubsub_nodes n
 		inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id
@@ -261,8 +310,8 @@ end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubCreateNode(_service_jid varchar(2049), _node_name varchar(1024), _node_type int,
-	_node_creator varchar(2049), _node_conf text, _collection_id bigint)
+create procedure TigPubSubCreateNode(_service_jid varchar(2049), _node_name varchar(1024) charset utf8mb4 collate utf8mb4_bin, _node_type int,
+	_node_creator varchar(2049), _node_conf text charset utf8mb4 collate utf8mb4_bin, _collection_id bigint)
 begin
 	declare _service_id bigint;
 	declare _node_creator_id bigint;
@@ -273,20 +322,22 @@ begin
 		BEGIN
 			-- ERROR
 		select node_id from tig_pubsub_nodes
-			where name = _node_name and service_id = (
-			        select service_id from tig_pubsub_service_jids where service_jid_sha1 = SHA1(LOWER(_service_id)));
+			where service_id = (
+			        select service_id from tig_pubsub_service_jids where service_jid_sha1 = SHA1(LOWER(_service_id))
+			    )
+			    and name_sha1 = sha1(_node_name) and name = _node_name;
 	END;
 
 	START TRANSACTION;
 	select TigPubSubEnsureServiceJid(_service_jid) into _service_id;
 	select TigPubSubEnsureJid(_node_creator) into _node_creator_id;
 
-	select node_id into _exists from tig_pubsub_nodes where name = _node_name and service_id = _service_id;
+	select node_id into _exists from tig_pubsub_nodes where service_id = _service_id and name_sha1 = sha1(_node_name) and name = _node_name;
 	if _exists is not null then
 		select _exists as node_id;
 	else
 		insert into tig_pubsub_nodes (service_id,name,name_sha1,`type`,creator_id, creation_date, configuration,collection_id)
-			values (_service_id, _node_name, SHA1(_node_name), _node_type, _node_creator_id, now(), _node_conf, _collection_id);
+			values (_service_id, _node_name, sha1(_node_name), _node_type, _node_creator_id, now(), _node_conf, _collection_id);
 		select LAST_INSERT_ID() into _node_id;
 		select _node_id as node_id;
 	end if;
@@ -324,7 +375,7 @@ end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubGetNodeMeta(_service_jid varchar(2049), _node_name varchar(1024))
+create procedure TigPubSubGetNodeMeta(_service_jid varchar(2049), _node_name varchar(1024) charset utf8mb4 collate utf8mb4_bin)
 begin
 	select n.node_id, n.configuration, cj.jid, n.creation_date
 	from tig_pubsub_nodes n
@@ -371,7 +422,7 @@ end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp(6), _to timestamp(6), _publisher varchar(2049), _order int, _nodeId bigint, _itemId varchar(1024))
+create procedure TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp(6), _to timestamp(6), _publisher varchar(2049), _order int, _nodeId bigint, _itemId varchar(1024) charset utf8mb4 collate utf8mb4_bin)
 begin
     set @since = _since;
     set @to = _to;
@@ -462,11 +513,23 @@ alter table tig_pubsub_items modify creation_date timestamp(6) null default null
 drop procedure if exists TigPubSubWriteItem;
 -- QUERY END:
 
+-- QUERY START:
+drop procedure if exists TigPubSubSetNodeConfiguration;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigPubSubGetItem;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigPubSubDeleteItem;
+-- QUERY END:
+
 delimiter //
 
 -- QUERY START:
-create procedure TigPubSubWriteItem(_node_id bigint, _item_id varchar(1024), _publisher varchar(2049),
-	 _item_data mediumtext)
+create procedure TigPubSubWriteItem(_node_id bigint, _item_id varchar(1024) charset utf8mb4 collate utf8mb4_bin, _publisher varchar(2049),
+	 _item_data mediumtext charset utf8mb4)
 begin
 	declare _publisher_id bigint;
 	DECLARE exit handler for sqlexception
@@ -482,6 +545,30 @@ begin
 		values (_node_id, SHA1(_item_id), _item_id, now(6), now(6), _publisher_id, _item_data)
 		on duplicate key update publisher_id = _publisher_id, data = _item_data, update_date = now(6);
 	COMMIT;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubSetNodeConfiguration(_node_id bigint, _node_conf mediumtext charset utf8mb4 collate utf8mb4_bin, _collection_id bigint)
+begin
+	update tig_pubsub_nodes set configuration = _node_conf, collection_id = _collection_id where node_id = _node_id;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubGetItem(_node_id bigint, _item_id varchar(1024) charset utf8mb4 collate utf8mb4_bin)
+begin
+	select `data`, p.jid, creation_date, update_date
+		from tig_pubsub_items pi
+		inner join tig_pubsub_jids p on p.jid_id = pi.publisher_id
+		where node_id = _node_id and id_sha1 = SHA1(_item_id) and id = _item_id;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubDeleteItem(_node_id bigint, _item_id varchar(1024) charset utf8mb4 collate utf8mb4_bin)
+begin
+	delete from tig_pubsub_items where node_id = _node_id and id_sha1 = SHA1(_item_id) and id = _item_id;
 end //
 -- QUERY END:
 
