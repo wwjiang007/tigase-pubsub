@@ -9,7 +9,7 @@ Tigase PubSub component has undergone a few major changes to our code and struct
 === Database schema changes
 Current version comes with changes to database schema to improve JID comparison during lookup of nodes, subscriptions, affiliations, etc.
 
-To continue usage of new versions of PubSub component it is required to manually load new component database schema, see <<Preparation of database>> section for informations about that.
+To continue usage of new versions of PubSub component it is required to manually load new component database schema, see xref:databasePreperation[database preperation] section for more information.
 
 WARNING: Loading of new database schema is required to use new version of PubSub component.
 
@@ -17,7 +17,7 @@ WARNING: Loading of new database schema is required to use new version of PubSub
 We continuously work on improving usability and making our REST API easier to use we added support for handling JSON requests in REST API for PubSub.
 At the same time we decided to slightly modify responses in XML sent by REST API to make responses in JSON and XML similar.
 
-For more informations about current REST API please look into <<REST API>> section.
+For more informations about current REST API please look into xref:restAPI[Rest API] section.
 
 == New features
 
@@ -25,7 +25,7 @@ For more informations about current REST API please look into <<REST API>> secti
 Since this version it is possible to use separate PubSub nodes and items based on domains.
 This allows you to configure component to store informations about nodes and items for particular domain to different database.
 
-For more informations please look into <<Using separate store>>
+For more informations please look into xref:multidb[using multiple databases].
 
 === Support for MAM
 In this version we added support for http://xmpp.org/extensions/xep-0313.html:[XEP-0313: Message Archive Management] protocol which allows any MAM compatible XMPP client with PubSub support to retrieve items published on PubSub nodes using MAM protocol for querying.

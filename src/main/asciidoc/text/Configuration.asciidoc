@@ -63,7 +63,7 @@ sess-man () {
 == Enabling REST API
 To use REST API for PubSub component it is required that:
 
-* Tigase HTTP API component is installed and configured properly. For information about HTTP API component installation please look into <<Tigase HTTP API component Guide>>
+* Tigase HTTP API component is installed and configured properly. For information about HTTP API component installation please look into xref:compHTTPAPI[HTTP component documentation].
 * Tigase PubSub REST scripts are copied to HTTP API REST scripts directory
 In installation package this is already done and scripts are in proper locations.
 * JID of HTTP API component needs to be added to list of trusted jids of Tigase PubSub component `trusted` property (if `http` is name of HTTP API component)
