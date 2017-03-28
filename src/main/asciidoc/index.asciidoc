@@ -1,3 +1,4 @@
+[[compPubSub]]
 = Tigase PubSub Component
 Tigase Team <team@tigase.net>
 :toc:
