@@ -9,10 +9,13 @@ We provide few schemas for this component for MySQL, PostgreSQL, SQLServer and D
 
 They are placed in `database/` directory of installation package and named in `dbtype-pubsub-version.sql`, where `dbname` in name of database type which this schema supports and `version` is version of a PubSub component for which this schema is designed.
 
-You need to manually select schema for correct database and component and load this schema to database. For more information about loading database schema look into xref:databasePreperation[database preperation] section of xref:QuickStart[this guide].
+You need to manually select schema for correct database and component and load this schema to database. For more information about loading database schema look into xref:databasePreperation[database preperation] section of this guide.
+
 == Upgrade of database schema
+
 Database schema for our components may change between versions and if so it needs to be updated before new version may be started.
 To upgrade schema please follow instructions from the xref:databasePreperation[database preperation] section.
+
 [NOTE]
 If you use SNAPSHOT builds then schema may change for same version as this are versions we are still working on.
 
