@@ -28,7 +28,7 @@ import org.junit.runners.model.Statement;
 import tigase.db.DBInitException;
 import tigase.db.DataRepository;
 import tigase.db.DataRepositoryPool;
-import tigase.util.SchemaLoader;
+import tigase.db.util.SchemaLoader;
 
 import java.io.File;
 import java.util.Arrays;
