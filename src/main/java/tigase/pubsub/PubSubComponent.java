@@ -31,8 +31,10 @@ import tigase.conf.Configurable;
 import tigase.db.UserRepository;
 import tigase.eventbus.HandleEvent;
 import tigase.kernel.beans.Bean;
-import tigase.kernel.beans.BeanSelector;
 import tigase.kernel.beans.Inject;
+import tigase.kernel.beans.selector.ClusterModeRequired;
+import tigase.kernel.beans.selector.ConfigType;
+import tigase.kernel.beans.selector.ConfigTypeEnum;
 import tigase.kernel.core.Kernel;
 import tigase.pubsub.modules.XsltTool;
 import tigase.pubsub.modules.commands.DefaultConfigCommand;
@@ -57,7 +59,9 @@ import java.util.logging.Level;
  * @version 5.1.0, 2010.11.02 at 01:05:02 MDT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
-@Bean(name = "pubsub", parent = Kernel.class, active = true, selectors = {BeanSelector.NonClusterMode.class})
+@Bean(name = "pubsub", parent = Kernel.class, active = true)
+@ConfigType(ConfigTypeEnum.DefaultMode)
+@ClusterModeRequired(active = false)
 public class PubSubComponent extends AbstractKernelBasedComponent implements Configurable, DisableDisco {
 
 	/** Field description */
