@@ -49,6 +49,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 
 @Repository.Meta(supportedUris = { "jdbc:[^:]+:.*" })
+@Repository.SchemaId(id = Schema.PUBSUB_SCHEMA_ID, name = Schema.PUBSUB_SCHEMA_NAME)
 public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 
 	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?) }";
