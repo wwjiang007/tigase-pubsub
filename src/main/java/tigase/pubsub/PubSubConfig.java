@@ -22,10 +22,8 @@
 
 package tigase.pubsub;
 
-import tigase.component.PropertiesBeanConfigurator;
 import tigase.conf.Configurable;
 import tigase.kernel.beans.Bean;
-import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.sys.TigaseRuntime;
@@ -43,7 +41,7 @@ import java.util.logging.Logger;
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
 @Bean(name = "pubsubConfig", parent = PubSubComponent.class, active = true)
-public class PubSubConfig implements Initializable {
+public class PubSubConfig {
 
 	public static final String ADMINS_KEY = "admin";
 	private static final String MAX_CACHE_SIZE = "pubsub-repository-cache-size";
@@ -60,8 +58,6 @@ public class PubSubConfig implements Initializable {
 	protected BareJID serviceBareJID = BareJID.bareJIDInstanceNS("tigase-pubsub");
 	@Inject
 	private PubSubComponent component;
-	@Inject(nullAllowed = true)
-	private PropertiesBeanConfigurator configurator;
 
 	@ConfigField(desc = "Automatically subscribe creator to node", alias = AUTO_SUBSCRIBE_NODE_CREATOR)
 	private boolean autoSubscribeNodeCreator = true;
@@ -136,17 +132,7 @@ public class PubSubConfig implements Initializable {
 	public BareJID getServiceBareJID() {
 		return serviceBareJID;
 	}
-
-	@Override
-	public void initialize() {
-		if (configurator != null) {
-			final Map<String, Object> props = configurator.getProperties();
-			setProperties(props);
-		} else {
-			log.warning("Configurator was not injected!");
-		}
-	}
-
+	
 	public void setProperties(Map<String, Object> props) {
 		if (props.containsKey(ADMINS_KEY)) {
 			admins = (String[]) props.get(ADMINS_KEY);
