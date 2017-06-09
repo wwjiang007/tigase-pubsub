@@ -28,7 +28,6 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
 import tigase.kernel.beans.config.ConfigField;
-import tigase.kernel.beans.selector.ClusterModeRequired;
 import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.modules.ext.presence.PresenceNodeSubscriptions;
@@ -61,7 +60,6 @@ import java.util.stream.Collectors;
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
  */
 @Bean(name = "pubsubRepository", parent = PubSubComponent.class, active = true)
-@ClusterModeRequired(active = false)
 public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHolder, Initializable {
 
 	private class NodeSaver {
