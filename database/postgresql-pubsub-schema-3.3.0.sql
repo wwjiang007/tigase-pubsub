@@ -231,7 +231,7 @@ end ;
 $$ LANGUAGE 'plpgsql';
 -- QUERY END:
 
--- QUERT START:
+-- QUERY START:
 create or replace function TigPubSubMamQueryItems(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _limit int, _offset int) returns table (
     node_name varchar(1024),
     node_id bigint,
@@ -278,7 +278,7 @@ end;
 $$ LANGUAGE 'plpgsql';
 -- QUERY END:
 
--- QUERT START:
+-- QUERY START:
 create or replace function TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _node_id bigint, _item_id varchar(1024)) returns table (
     "position" bigint
 ) as $$
@@ -321,7 +321,7 @@ end;
 $$ LANGUAGE 'plpgsql';
 -- QUERY END:
 
--- QUERT START:
+-- QUERY START:
 create or replace function TigPubSubMamQueryItemsCount(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int) returns table (
     "count" bigint
 ) as $$

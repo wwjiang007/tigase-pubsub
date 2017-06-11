@@ -84,6 +84,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	@ConfigField(desc = "Count number of items from repository", alias="mam-query-items-count-query")
 	private String mamQueryItemsCount = "{ call TigPubSubMamQueryItemsCount(?,?,?,?,?) }";
 
+	private final Calendar UTC_CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+
 	private DataRepository data_repo;
 
 	private LinkedBlockingDeque<HashCode> pool_hashCodes = new LinkedBlockingDeque<>();
@@ -302,7 +304,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 						// }
 						// -- why do we need this?
 						// return DateFormat.getDateInstance().parse( date );
-						return rs.getTimestamp(field);
+						return rs.getTimestamp(field, UTC_CALENDAR);
 					}
 				} finally {
 					release(null, rs);
@@ -423,8 +425,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 					List<IItems.ItemMeta> results = new ArrayList<IItems.ItemMeta>();
 					while (rs.next()) {
 						String id = rs.getString(1);
-						Date creationDate = rs.getTimestamp(2);
-						Date updateDate = rs.getTimestamp(3);
+						Date creationDate = rs.getTimestamp(2, UTC_CALENDAR);
+						Date updateDate = rs.getTimestamp(3, UTC_CALENDAR);
 						results.add(new IItems.ItemMeta(nodeName, id, creationDate, updateDate));
 					}
 					return results;
@@ -538,7 +540,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 						final long nodeId = rs.getLong(1);
 						final String configStr = rs.getString(2);
 						final String creator = rs.getString(3);
-						final Date creationTime = rs.getTimestamp(4);
+						final Date creationTime = rs.getTimestamp(4, UTC_CALENDAR);
 						final NodeMeta<Long> nodeMeta = new NodeMeta(nodeId, parseConfig(nodeName, configStr), creator != null ? BareJID.bareJIDInstance(creator) : null, creationTime);
 
 
@@ -849,7 +851,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 						String node = rs.getString(1);
 						long nodeId = rs.getLong(2);
 						String itemId = rs.getString(3);
-						Timestamp creationDate = rs.getTimestamp(4);
+						Timestamp creationDate = rs.getTimestamp(4, UTC_CALENDAR);
 						Element itemEl = itemDataToElement(rs.getString(5));
 
 						itemHandler.itemFound(query, new Item(node, nodeId, itemId, creationDate, itemEl));
@@ -866,8 +868,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	protected int setStatementParamsForMAM(PreparedStatement st, Query query, String nodeIds) throws SQLException {
 		int i = 1;
 		st.setString(i++, nodeIds);
-		st.setTimestamp(i++, query.getStart() == null ? null : new Timestamp(query.getStart().getTime()));
-		st.setTimestamp(i++, query.getEnd() == null ? null : new Timestamp(query.getEnd().getTime()));
+		st.setTimestamp(i++, query.getStart() == null ? null : new Timestamp(query.getStart().getTime()), UTC_CALENDAR);
+		st.setTimestamp(i++, query.getEnd() == null ? null : new Timestamp(query.getEnd().getTime()), UTC_CALENDAR);
 		st.setString(i++, query.getWith() == null ? null : query.getWith().toString());
 //		if (query.getStart() != null) {
 //			st.setTimestamp(i++, new Timestamp(query.getStart().getTime()));
