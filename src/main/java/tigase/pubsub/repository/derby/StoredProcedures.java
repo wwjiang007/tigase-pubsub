@@ -27,6 +27,8 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.logging.Logger;
 
 /**
@@ -56,7 +58,8 @@ public class StoredProcedures {
 			ps.setString(2, nodeName);
 			ps.setInt(3, nodeType);
 			ps.setLong(4, nodeCreatorId);
-			ps.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
+			ps.setTimestamp(5, new java.sql.Timestamp(
+					System.currentTimeMillis() - (ZoneOffset.from(ZonedDateTime.now()).getTotalSeconds() * 1000)));
 			ps.setString(6, nodeConf);
 			if (collectionId == null) {
 				ps.setNull(7, java.sql.Types.BIGINT);
@@ -168,7 +171,7 @@ public class StoredProcedures {
 			if (rs.next()) {
 				ps = conn.prepareStatement("update tig_pubsub_items set update_date = ?, data = ? "
 												   + "where node_id = ? and id = ?");
-				ps.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
+				ps.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis() - (ZoneOffset.from(ZonedDateTime.now()).getTotalSeconds() * 1000)));
 				ps.setString(2, itemData);
 				ps.setLong(3, nodeId);
 				ps.setString(4, itemId);
@@ -180,7 +183,7 @@ public class StoredProcedures {
 												   + "update_date, publisher_id, data) values (?, ?, ?, ?, ?, ?)");
 				ps.setLong(1, nodeId);
 				ps.setString(2, itemId);
-				java.sql.Timestamp ts = new java.sql.Timestamp(System.currentTimeMillis());
+				java.sql.Timestamp ts = new java.sql.Timestamp(System.currentTimeMillis() - (ZoneOffset.from(ZonedDateTime.now()).getTotalSeconds() * 1000));
 				ps.setTimestamp(3, ts);
 				ps.setTimestamp(4, ts);
 				ps.setLong(5, publisherId);
@@ -743,8 +746,8 @@ public class StoredProcedures {
 			conn.close();
 		}
 	}
-	
-	public static void tigPubSubRemoveService(String serviceJid, ResultSet[] data) throws SQLException {	
+
+	public static void tigPubSubRemoveService(String serviceJid, ResultSet[] data) throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
@@ -784,7 +787,7 @@ public class StoredProcedures {
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_subscriptions where jid_id in (select j.jid_id from tig_pubsub_jids j where j.jid_sha1 = ?)");
 			ps.setString(1, serviceJidSha1);
-			ps.executeUpdate();		
+			ps.executeUpdate();
 
 		} catch (SQLException e) {
 			// e.printStackTrace();
@@ -792,7 +795,7 @@ public class StoredProcedures {
 			throw e;
 		} finally {
 			conn.close();
-		}			
+		}
 	}
 
 	public static void tigPubSubMamQueryItems(String nodesIds, Timestamp since, Timestamp to, String publisher, Integer order, Integer limit, Integer offset, ResultSet[] data) throws SQLException {
