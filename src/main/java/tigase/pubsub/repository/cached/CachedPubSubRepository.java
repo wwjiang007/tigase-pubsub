@@ -41,6 +41,7 @@ import tigase.stats.Counter;
 import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticHolderImpl;
 import tigase.stats.StatisticsList;
+import tigase.xmpp.Authorization;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.impl.roster.RosterElement;
@@ -752,10 +753,14 @@ public class CachedPubSubRepository<T> implements IPubSubRepository, StatisticHo
 	}
 
 	protected List<Node<T>> getNodeAndSubnodes(BareJID serviceJid, String nodeName, Predicate<Node<T>> filterWithSubnodes, Predicate<Node<T>> filter)
-			throws RepositoryException {
+			throws RepositoryException, ComponentException {
 		List<Node<T>> result = new ArrayList<>();
 
 		Node node = getNode(serviceJid, nodeName);
+		if (node == null) {
+			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
+		}
+		
 		if (filterWithSubnodes != null && !filterWithSubnodes.test(node)) {
 			return Collections.emptyList();
 		}
