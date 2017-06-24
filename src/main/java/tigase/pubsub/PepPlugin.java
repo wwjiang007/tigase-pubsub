@@ -20,31 +20,17 @@
 package tigase.pubsub;
 
 import tigase.db.NonAuthUserRepository;
-import tigase.db.TigaseDBException;
-
 import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.config.ConfigField;
 import tigase.server.Iq;
 import tigase.server.Packet;
 import tigase.server.Presence;
-
 import tigase.server.xmppsession.SessionManager;
-import tigase.xmpp.Authorization;
-import tigase.xmpp.JID;
-import tigase.xmpp.NotAuthorizedException;
-import tigase.xmpp.StanzaType;
-import tigase.xmpp.XMPPException;
-import tigase.xmpp.XMPPProcessor;
-import tigase.xmpp.XMPPProcessorIfc;
-import tigase.xmpp.XMPPResourceConnection;
-
 import tigase.util.DNSResolverFactory;
 import tigase.xml.Element;
+import tigase.xmpp.*;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -84,9 +70,15 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 			// stanza types for iq
 			StanzaType.get, StanzaType.set, StanzaType.result, StanzaType.error));
 
-	protected JID pubsubJid = null;
+	@ConfigField(desc = "PubSub Component JID", alias = "pubsub-jid")
+	protected JID pubsubJid = JID.jidInstanceNS("pubsub", DNSResolverFactory.getInstance().getDefaultHost(), null);
 
-	protected final Set<String> simpleNodes = new HashSet<String>();
+	protected final Set<String> simpleNodes = new HashSet<String>(
+			Arrays.asList("http://jabber.org/protocol/tune", "http://jabber.org/protocol/mood",
+						  "http://jabber.org/protocol/activity", "http://jabber.org/protocol/geoloc",
+						  "urn:xmpp:avatar:data", "urn:xmpp:avatar:metadata"));
+
+	@ConfigField(desc = "Enable simple PEP", alias = "simple-pep-enabled")
 	protected boolean simplePepEnabled = false;
 
 	@Override
@@ -112,25 +104,6 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 
 	public int concurrentQueuesNo() {
 		return super.concurrentQueuesNo() * 2;
-	}
-	
-	@Override
-	public void init(Map<String, Object> settings) throws TigaseDBException {
-		super.init(settings);
-
-		this.simpleNodes.add("http://jabber.org/protocol/tune");
-		this.simpleNodes.add("http://jabber.org/protocol/mood");
-		this.simpleNodes.add("http://jabber.org/protocol/activity");
-		this.simpleNodes.add("http://jabber.org/protocol/geoloc");
-		this.simpleNodes.add("urn:xmpp:avatar:data");
-		this.simpleNodes.add("urn:xmpp:avatar:metadata");
-
-		String defHost = DNSResolverFactory.getInstance().getDefaultHost();
-		pubsubJid = JID.jidInstanceNS("pubsub", defHost, null);
-
-		if (settings.containsKey("simplePepEnabled")) {
-			this.simplePepEnabled = (Boolean) settings.get("simple-pep-enabled");
-		}
 	}
 
 	@Override
