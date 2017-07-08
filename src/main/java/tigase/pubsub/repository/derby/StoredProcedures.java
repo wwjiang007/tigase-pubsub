@@ -27,8 +27,6 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.logging.Logger;
 
 /**
@@ -42,7 +40,7 @@ public class StoredProcedures {
 	private static final Charset UTF8 = Charset.forName("UTF-8");
 
 	public static void tigPubSubCreateNode(String serviceJid, String nodeName, Integer nodeType, String nodeCreator,
-			String nodeConf, Long collectionId, ResultSet[] data) throws SQLException {
+			String nodeConf, Long collectionId, Timestamp ts, ResultSet[] data) throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
@@ -58,8 +56,7 @@ public class StoredProcedures {
 			ps.setString(2, nodeName);
 			ps.setInt(3, nodeType);
 			ps.setLong(4, nodeCreatorId);
-			ps.setTimestamp(5, new java.sql.Timestamp(
-					System.currentTimeMillis() - (ZoneOffset.from(ZonedDateTime.now()).getTotalSeconds() * 1000)));
+			ps.setTimestamp(5, ts);
 			ps.setString(6, nodeConf);
 			if (collectionId == null) {
 				ps.setNull(7, java.sql.Types.BIGINT);
@@ -155,7 +152,7 @@ public class StoredProcedures {
 		}
 	}
 
-	public static void tigPubSubWriteItem(Long nodeId, String itemId, String publisher, String itemData,
+	public static void tigPubSubWriteItem(Long nodeId, String itemId, String publisher, String itemData, Timestamp ts,
 										  ResultSet[] data) throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
@@ -171,7 +168,7 @@ public class StoredProcedures {
 			if (rs.next()) {
 				ps = conn.prepareStatement("update tig_pubsub_items set update_date = ?, data = ? "
 												   + "where node_id = ? and id = ?");
-				ps.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis() - (ZoneOffset.from(ZonedDateTime.now()).getTotalSeconds() * 1000)));
+				ps.setTimestamp(1, ts);
 				ps.setString(2, itemData);
 				ps.setLong(3, nodeId);
 				ps.setString(4, itemId);
@@ -183,7 +180,6 @@ public class StoredProcedures {
 												   + "update_date, publisher_id, data) values (?, ?, ?, ?, ?, ?)");
 				ps.setLong(1, nodeId);
 				ps.setString(2, itemId);
-				java.sql.Timestamp ts = new java.sql.Timestamp(System.currentTimeMillis() - (ZoneOffset.from(ZonedDateTime.now()).getTotalSeconds() * 1000));
 				ps.setTimestamp(3, ts);
 				ps.setTimestamp(4, ts);
 				ps.setLong(5, publisherId);

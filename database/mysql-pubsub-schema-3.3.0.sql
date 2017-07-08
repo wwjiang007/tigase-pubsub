@@ -311,7 +311,7 @@ end //
 
 -- QUERY START:
 create procedure TigPubSubCreateNode(_service_jid varchar(2049), _node_name varchar(1024) charset utf8mb4 collate utf8mb4_bin, _node_type int,
-	_node_creator varchar(2049), _node_conf text charset utf8mb4 collate utf8mb4_bin, _collection_id bigint)
+	_node_creator varchar(2049), _node_conf text charset utf8mb4 collate utf8mb4_bin, _collection_id bigint, _ts timestamp(6))
 begin
 	declare _service_id bigint;
 	declare _node_creator_id bigint;
@@ -337,7 +337,7 @@ begin
 		select _exists as node_id;
 	else
 		insert into tig_pubsub_nodes (service_id,name,name_sha1,`type`,creator_id, creation_date, configuration,collection_id)
-			values (_service_id, _node_name, sha1(_node_name), _node_type, _node_creator_id, now(), _node_conf, _collection_id);
+			values (_service_id, _node_name, sha1(_node_name), _node_type, _node_creator_id, _ts, _node_conf, _collection_id);
 		select LAST_INSERT_ID() into _node_id;
 		select _node_id as node_id;
 	end if;
@@ -529,7 +529,7 @@ delimiter //
 
 -- QUERY START:
 create procedure TigPubSubWriteItem(_node_id bigint, _item_id varchar(1024) charset utf8mb4 collate utf8mb4_bin, _publisher varchar(2049),
-	 _item_data mediumtext charset utf8mb4)
+	 _item_data mediumtext charset utf8mb4, _ts timestamp(6))
 begin
 	declare _publisher_id bigint;
 	DECLARE exit handler for sqlexception
@@ -542,8 +542,8 @@ begin
 
 	select TigPubSubEnsureJid(_publisher) into _publisher_id;
 	insert into tig_pubsub_items (node_id, id_sha1, id, creation_date, update_date, publisher_id, data)
-		values (_node_id, SHA1(_item_id), _item_id, now(6), now(6), _publisher_id, _item_data)
-		on duplicate key update publisher_id = _publisher_id, data = _item_data, update_date = now(6);
+		values (_node_id, SHA1(_item_id), _item_id, _ts, _ts, _publisher_id, _item_data)
+		on duplicate key update publisher_id = _publisher_id, data = _item_data, update_date = _ts;
 	COMMIT;
 end //
 -- QUERY END:

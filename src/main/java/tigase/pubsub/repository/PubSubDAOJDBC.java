@@ -52,13 +52,13 @@ import java.util.logging.Level;
 @Repository.SchemaId(id = Schema.PUBSUB_SCHEMA_ID, name = Schema.PUBSUB_SCHEMA_NAME)
 public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 
-	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?) }";
+	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?) }";
 	private static final String REMOVE_NODE_QUERY = "{ call TigPubSubRemoveNode(?) }";
 	private static final String REMOVE_SERVICE_QUERY = "{ call TigPubSubRemoveService(?) }";
 	private static final String GET_NODE_ID_QUERY = "{ call TigPubSubGetNodeId(?, ?) }";
 	private static final String GET_NODE_META_QUERY = "{ call TigPubSubGetNodeMeta(?, ?) }";
 	private static final String GET_ITEM_QUERY = "{ call TigPubSubGetItem(?, ?) }";
-	private static final String WRITE_ITEM_QUERY = "{ call TigPubSubWriteItem(?, ?, ?, ?) }";
+	private static final String WRITE_ITEM_QUERY = "{ call TigPubSubWriteItem(?, ?, ?, ?, ?) }";
 	private static final String DELETE_ITEM_QUERY = "{ call TigPubSubDeleteItem(?, ?) }";
 	private static final String GET_NODE_ITEM_IDS_QUERY = "{ call TigPubSubGetNodeItemsIds(?) }";
 	private static final String GET_NODE_ITEM_IDS_SINCE_QUERY = "{ call TigPubSubGetNodeItemsIdsSince(?,?) }";
@@ -83,8 +83,6 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	private String mamQueryItemPosition= "{ call TigPubSubMamQueryItemPosition(?,?,?,?,?,?,?) }";
 	@ConfigField(desc = "Count number of items from repository", alias="mam-query-items-count-query")
 	private String mamQueryItemsCount = "{ call TigPubSubMamQueryItemsCount(?,?,?,?,?) }";
-
-	private final Calendar UTC_CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
 	private DataRepository data_repo;
 
@@ -170,6 +168,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 					} else {
 						create_node_sp.setLong(6, collectionId);
 					}
+					data_repo.setTimestamp(create_node_sp, 7, new Timestamp(System.currentTimeMillis()));
 
 					switch (this.data_repo.getDatabaseType()) {
 						case sqlserver:
@@ -304,7 +303,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 						// }
 						// -- why do we need this?
 						// return DateFormat.getDateInstance().parse( date );
-						return rs.getTimestamp(field, UTC_CALENDAR);
+						return data_repo.getTimestamp(rs, field);
 					}
 				} finally {
 					release(null, rs);
@@ -389,7 +388,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 			synchronized (get_node_items_ids_since_sp) {
 				try {
 					get_node_items_ids_since_sp.setLong(1, nodeId);
-					get_node_items_ids_since_sp.setTimestamp(2, sinceTs);
+					data_repo.setTimestamp(get_node_items_ids_since_sp, 2, sinceTs);
 					rs = get_node_items_ids_since_sp.executeQuery();
 					List<String> ids = new ArrayList<String>();
 					while (rs.next()) {
@@ -425,8 +424,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 					List<IItems.ItemMeta> results = new ArrayList<IItems.ItemMeta>();
 					while (rs.next()) {
 						String id = rs.getString(1);
-						Date creationDate = rs.getTimestamp(2, UTC_CALENDAR);
-						Date updateDate = rs.getTimestamp(3, UTC_CALENDAR);
+						Date creationDate = data_repo.getTimestamp(rs, 2);
+						Date updateDate = data_repo.getTimestamp(rs, 3);
 						results.add(new IItems.ItemMeta(nodeName, id, creationDate, updateDate));
 					}
 					return results;
@@ -540,7 +539,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 						final long nodeId = rs.getLong(1);
 						final String configStr = rs.getString(2);
 						final String creator = rs.getString(3);
-						final Date creationTime = rs.getTimestamp(4, UTC_CALENDAR);
+						final Date creationTime = data_repo.getTimestamp(rs, 4);
 						final NodeMeta<Long> nodeMeta = new NodeMeta(nodeId, parseConfig(nodeName, configStr), creator != null ? BareJID.bareJIDInstance(creator) : null, creationTime);
 
 
@@ -851,7 +850,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 						String node = rs.getString(1);
 						long nodeId = rs.getLong(2);
 						String itemId = rs.getString(3);
-						Timestamp creationDate = rs.getTimestamp(4, UTC_CALENDAR);
+						Timestamp creationDate = data_repo.getTimestamp(rs, 4);
 						Element itemEl = itemDataToElement(rs.getString(5));
 
 						itemHandler.itemFound(query, new Item(node, nodeId, itemId, creationDate, itemEl));
@@ -868,8 +867,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	protected int setStatementParamsForMAM(PreparedStatement st, Query query, String nodeIds) throws SQLException {
 		int i = 1;
 		st.setString(i++, nodeIds);
-		st.setTimestamp(i++, query.getStart() == null ? null : new Timestamp(query.getStart().getTime()), UTC_CALENDAR);
-		st.setTimestamp(i++, query.getEnd() == null ? null : new Timestamp(query.getEnd().getTime()), UTC_CALENDAR);
+		data_repo.setTimestamp(st, i++, query.getStart() == null ? null : new Timestamp(query.getStart().getTime()));
+		data_repo.setTimestamp(st, i++, query.getEnd() == null ? null : new Timestamp(query.getEnd().getTime()));
 		st.setString(i++, query.getWith() == null ? null : query.getWith().toString());
 //		if (query.getStart() != null) {
 //			st.setTimestamp(i++, new Timestamp(query.getStart().getTime()));
@@ -1164,6 +1163,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 					write_item_sp.setString(2, id);
 					write_item_sp.setString(3, publisher);
 					write_item_sp.setString(4, item.toString());
+					data_repo.setTimestamp(write_item_sp, 5, new Timestamp(System.currentTimeMillis()));
 					write_item_sp.execute();
 				} finally {
 					release(null, rs);

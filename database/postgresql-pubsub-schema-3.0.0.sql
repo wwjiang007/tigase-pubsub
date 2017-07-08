@@ -50,7 +50,7 @@ create table if not exists tig_pubsub_nodes (
 	title varchar(1000),
 	description text,
 	creator_id bigint references tig_pubsub_jids ( jid_id ),
-	creation_date timestamp,
+	creation_date timestamp with time zone,
 	configuration text,
 	collection_id bigint references tig_pubsub_nodes ( node_id ),
 	
@@ -158,9 +158,9 @@ end$$;
 create table if not exists tig_pubsub_items (
 	node_id bigint not null references tig_pubsub_nodes ( node_id ),
 	id varchar(1024) not null,
-	creation_date timestamp,
+	creation_date timestamp with time zone,
 	publisher_id bigint references tig_pubsub_jids ( jid_id ),
-	update_date timestamp,
+	update_date timestamp with time zone,
 	data text,
 
 	primary key ( node_id, id )
@@ -261,38 +261,6 @@ end;
 -- QUERY END:
 
 -- QUERY START:
-create or replace function TigPubSubGetItem(bigint,varchar(1024)) returns table (
-	"data" text, jid varchar(2049), creation_date timestamp, update_date timestamp
-) as $$
-	select "data", p.jid, creation_date, update_date 
-		from tig_pubsub_items pi 
-		inner join tig_pubsub_jids p on p.jid_id = pi.publisher_id 
-		where node_id = $1 and id = $2
-$$ LANGUAGE SQL;
--- QUERY END:
-
--- QUERY START:
-create or replace function TigPubSubWriteItem(bigint,varchar(1024),varchar(2049),text) returns void as '
-declare
-	_node_id alias for $1;
-	_item_id alias for $2;
-	_publisher alias for $3;
-	_item_data alias for $4;
-	_publisher_id bigint;
-begin
-	if exists (select 1 from tig_pubsub_items where node_id = _node_id and id = _item_id) then
-		update tig_pubsub_items set update_date = now(), data = _item_data 
-			where node_id = _node_id and id = _item_id;
-	else
-		select TigPubSubEnsureJid(_publisher) into _publisher_id;
-		insert into tig_pubsub_items (node_id, id, creation_date, update_date, publisher_id, data)
-			values (_node_id, _item_id, now(), now(), _publisher_id, _item_data);
-	end if;
-end;
-' LANGUAGE 'plpgsql';
--- QUERY END:
-
--- QUERY START:
 create or replace function TigPubSubDeleteItem(bigint,varchar(1024)) returns void as $$
 	delete from tig_pubsub_items where node_id = $1 and id = $2
 $$ LANGUAGE SQL;
@@ -309,12 +277,6 @@ $$ LANGUAGE SQL;
 -- QUERY START:
 create or replace function TigPubSubGetNodeItemsIds(bigint) returns table (id varchar(1024)) as $$
 	select id from tig_pubsub_items where node_id = $1 order by creation_date
-$$ LANGUAGE SQL;
--- QUERY END:
-
--- QUERY START:
-create or replace function TigPubSubGetNodeItemsIdsSince(bigint,timestamp) returns table (id varchar(1024)) as $$
-	select id from tig_pubsub_items where node_id = $1 and creation_date >= $2 order by creation_date
 $$ LANGUAGE SQL;
 -- QUERY END:
 
@@ -481,24 +443,5 @@ create or replace function TigPubSubGetUserSubscriptions(varchar(2049),varchar(2
 		inner join tig_pubsub_subscriptions ps on ps.node_id = n.node_id
 		inner join tig_pubsub_jids pj on pj.jid_id = ps.jid_id
 		where pj.jid = $2 and sj.service_jid = $1
-$$ LANGUAGE SQL;
--- QUERY END:
-
--- QUERY START:
-create or replace function TigPubSubGetNodeItemsMeta(bigint)
-		returns table (id varchar(1024), creation_date timestamp, update_date timestamp) as $$
-	select id, creation_date, update_date from tig_pubsub_items where node_id = $1 order by creation_date
-$$ LANGUAGE SQL;
--- QUERY END:
-
--- QUERY START:
-create or replace function TigPubSubFixNode(bigint,timestamp) returns void as $$
-	update tig_pubsub_nodes set creation_date = $2 where node_id = $1
-$$ LANGUAGE SQL;
--- QUERY END:
-
--- QUERY START:
-create or replace function TigPubSubFixItem(bigint,varchar(1024),timestamp,timestamp) returns void as $$
-	update tig_pubsub_items set creation_date = $3, update_date = $4 where node_id = $1 and id = $2
 $$ LANGUAGE SQL;
 -- QUERY END:

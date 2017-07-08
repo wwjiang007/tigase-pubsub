@@ -22,6 +22,15 @@
 -- QUERY START:
 do $$
 begin
+if exists (select 1 where (select to_regclass('public.tig_pubsub_jids_jid')) is null) then
+    create unique index tig_pubsub_jids_jid on tig_pubsub_jids ( jid );
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
 if exists (select 1 where (select pg_get_indexdef(oid) from pg_class i  where i.relname = 'tig_pubsub_service_jids_service_jid') not like '%lower(service_jid)%') then
     drop index tig_pubsub_service_jids_service_jid;
     create unique index tig_pubsub_service_jids_service_jid on tig_pubsub_service_jids ( lower(service_jid) );
@@ -214,12 +223,33 @@ create or replace function TigPubSubRemoveService(varchar(2049)) returns void as
 $$ LANGUAGE SQL;
 -- QUERY END:
 
+-- -- UTC -- 
+-- QUERY START:
+do $$
+begin
+    alter table tig_pubsub_items
+        alter column creation_date type timestamp with time zone,
+        alter column update_date type timestamp with time zone;
+    alter table tig_pubsub_nodes
+        alter column creation_date type timestamp with time zone;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubGetNodeMeta') and pg_get_function_result(oid) = 'TABLE(node_id bigint, configuration text, creator character varying, creation_date timestamp without time zone)') then
+    drop function TigPubSubGetNodeMeta(character varying, character varying);
+end if;
+end$$;
+-- QUERY END:
+
 -- QUERY START:
 create or replace function TigPubSubGetNodeMeta(_service_jid varchar(2049), _node_name varchar(1024)) returns table (
     node_id bigint,
     configuration text,
     creator varchar(2049),
-    creation_date timestamp
+    creation_date timestamp with time zone
 ) as $$
 begin
     return query select n.node_id, n.configuration, cj.jid, n.creation_date
@@ -232,11 +262,20 @@ $$ LANGUAGE 'plpgsql';
 -- QUERY END:
 
 -- QUERY START:
-create or replace function TigPubSubMamQueryItems(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _limit int, _offset int) returns table (
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubMamQueryItems') and pg_get_function_arguments(oid) = '_nodes_ids text, _since timestamp without time zone, _to timestamp without time zone, _publisher character varying, _order integer, _limit integer, _offset integer') then
+    drop function TigPubSubMamQueryItems(_nodes_ids text, _since timestamp without time zone, _to timestamp without time zone, _publisher character varying, _order integer, _limit integer, _offset integer);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubMamQueryItems(_nodes_ids text, _since timestamp with time zone , _to timestamp with time zone, _publisher varchar(2049), _order int, _limit int, _offset int) returns table (
     node_name varchar(1024),
     node_id bigint,
     item_id varchar(1024),
-    creation_date timestamp,
+    creation_date timestamp with time zone,
     payload text
 ) as $$
 declare
@@ -279,7 +318,16 @@ $$ LANGUAGE 'plpgsql';
 -- QUERY END:
 
 -- QUERY START:
-create or replace function TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int, _node_id bigint, _item_id varchar(1024)) returns table (
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubMamQueryItemPosition') and pg_get_function_arguments(oid) = '_nodes_ids text, _since timestamp without time zone, _to timestamp without time zone, _publisher character varying, _order integer, _node_id bigint, _item_id character varying') then
+    drop function TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp without time zone, _to timestamp without time zone, _publisher character varying, _order integer, _node_id bigint, _item_id character varying);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _publisher varchar(2049), _order int, _node_id bigint, _item_id varchar(1024)) returns table (
     "position" bigint
 ) as $$
 declare
@@ -322,7 +370,16 @@ $$ LANGUAGE 'plpgsql';
 -- QUERY END:
 
 -- QUERY START:
-create or replace function TigPubSubMamQueryItemsCount(_nodes_ids text, _since timestamp , _to timestamp, _publisher varchar(2049), _order int) returns table (
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubMamQueryItemsCount') and pg_get_function_arguments(oid) = '_nodes_ids text, _since timestamp without time zone, _to timestamp without time zone, _publisher character varying, _order integer') then
+    drop function TigPubSubMamQueryItemsCount(_nodes_ids text, _since timestamp without time zone, _to timestamp without time zone, _publisher character varying, _order integer);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubMamQueryItemsCount(_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _publisher varchar(2049), _order int) returns table (
     "count" bigint
 ) as $$
 declare
@@ -358,4 +415,134 @@ begin
     end if;
 end;
 $$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- ------------------------------------------------------
+
+-- QUERY START:
+drop function if exists TigPubSubCreateNode(varchar,varchar,int,varchar,text,bigint);
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubCreateNode(_service_jid varchar(2049), _node_name varchar(1024), _node_type int, _node_creator varchar(2049), _node_conf text, _collection_id bigint, _ts timestamp with time zone) returns bigint as $$
+declare
+    _service_id bigint;
+    _node_creator_id bigint;
+    _node_id bigint;
+begin
+	select TigPubSubEnsureServiceJid(_service_jid) into _service_id;
+	select TigPubSubEnsureJid(_node_creator) into _node_creator_id;
+	insert into tig_pubsub_nodes (service_id, name, "type", creator_id, creation_date, configuration, collection_id)
+		values (_service_id, _node_name, _node_type, _node_creator_id, _ts, _node_conf, _collection_id);
+	select currval('tig_pubsub_nodes_node_id_seq') into _node_id;
+	return _node_id;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubGetItem') and pg_get_function_result(oid) = 'TABLE(data text, jid character varying, creation_date timestamp without time zone, update_date timestamp without time zone)') then
+    drop function TigPubSubGetItem(bigint, character varying);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubGetItem(bigint,varchar(1024)) returns table (
+	"data" text, jid varchar(2049), creation_date timestamp with time zone, update_date timestamp with time zone
+) as $$
+	select "data", p.jid, creation_date, update_date
+		from tig_pubsub_items pi
+		inner join tig_pubsub_jids p on p.jid_id = pi.publisher_id
+		where node_id = $1 and id = $2
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+drop function if exists TigPubSubWriteItem(bigint,varchar(1024),varchar(2049),text);
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubWriteItem(bigint,varchar(1024),varchar(2049),text, timestamp with time zone) returns void as $$
+declare
+	_node_id alias for $1;
+	_item_id alias for $2;
+	_publisher alias for $3;
+	_item_data alias for $4;
+	_ts alias for $5;
+	_publisher_id bigint;
+begin
+	if exists (select 1 from tig_pubsub_items where node_id = _node_id and id = _item_id) then
+		update tig_pubsub_items set update_date = _ts, data = _item_data
+			where node_id = _node_id and id = _item_id;
+	else
+		select TigPubSubEnsureJid(_publisher) into _publisher_id;
+		insert into tig_pubsub_items (node_id, id, creation_date, update_date, publisher_id, data)
+			values (_node_id, _item_id, _ts, _ts, _publisher_id, _item_data);
+	end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubGetNodeItemsIdsSince') and pg_get_function_arguments(oid) = 'bigint, timestamp without time zone') then
+    drop function TigPubSubGetNodeItemsIdsSince(bigint, timestamp without time zone);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubGetNodeItemsIdsSince(bigint, timestamp with time zone) returns table (id varchar(1024)) as $$
+	select id from tig_pubsub_items where node_id = $1 and creation_date >= $2 order by creation_date
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubGetNodeItemsMeta') and pg_get_function_result(oid) = 'TABLE(id character varying, creation_date timestamp without time zone, update_date timestamp without time zone)') then
+    drop function TigPubSubGetNodeItemsMeta(bigint);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubGetNodeItemsMeta(bigint)
+		returns table (id varchar(1024), creation_date timestamp with time zone, update_date timestamp with time zone) as $$
+	select id, creation_date, update_date from tig_pubsub_items where node_id = $1 order by creation_date
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubFixNode') and pg_get_function_arguments(oid) = 'bigint, timestamp without time zone') then
+    drop function TigPubSubFixNode(bigint, timestamp without time zone);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubFixNode(bigint,timestamp with time zone) returns void as $$
+	update tig_pubsub_nodes set creation_date = $2 where node_id = $1
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubFixItem') and pg_get_function_arguments(oid) = 'bigint, character varying, timestamp without time zone, timestamp without time zone') then
+    drop function TigPubSubFixItem(bigint, character varying, timestamp without time zone, timestamp without time zone);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubFixItem(bigint,varchar(1024),timestamp with time zone,timestamp with time zone) returns void as $$
+	update tig_pubsub_items set creation_date = $3, update_date = $4 where node_id = $1 and id = $2
+$$ LANGUAGE SQL;
 -- QUERY END:

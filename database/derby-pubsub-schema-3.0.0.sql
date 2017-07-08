@@ -124,7 +124,7 @@ create index tig_pubsub_items_id on tig_pubsub_items ( id );
 -- -----------------------------------------------------------------------------
 -- QUERY START:
 create procedure TigPubSubCreateNode(service_jid varchar(2049), node_name varchar(1024),
-	node_type int, node_creator varchar(2049), node_conf varchar(32672), collection_id bigint)
+	node_type int, node_creator varchar(2049), node_conf varchar(32672), collection_id bigint, ts timestamp)
 	PARAMETER STYLE JAVA
 	LANGUAGE JAVA
 	MODIFIES SQL DATA
@@ -152,7 +152,7 @@ create procedure TigPubSubGetItem(node_id bigint, item_id varchar(1024))
 
 -- QUERY START:
 create procedure TigPubSubWriteItem(node_id bigint, item_id varchar(1024),
-	publisher varchar(2049), item_data varchar(32672))
+	publisher varchar(2049), item_data varchar(32672), ts timestamp)
 	PARAMETER STYLE JAVA
 	LANGUAGE JAVA
 	MODIFIES SQL DATA
