@@ -27,8 +27,10 @@ import tigase.server.Packet;
 import tigase.server.Presence;
 import tigase.server.xmppsession.SessionManager;
 import tigase.util.DNSResolverFactory;
+import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.*;
+import tigase.xmpp.impl.PresenceAbstract;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -41,7 +43,7 @@ import java.util.logging.Logger;
  * @author andrzej
  */
 @Bean(name = "pep", parent = SessionManager.class, active = true)
-public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
+public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPStopListenerIfc  {
 
 	protected static final String PUBSUB_XMLNS = "http://jabber.org/protocol/pubsub";
 	protected static final String PUBSUB_XMLNS_OWNER = PUBSUB_XMLNS + "#owner";
@@ -260,4 +262,22 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc {
 		}
 	}
 
+	@Override
+	public void stopped(XMPPResourceConnection session, Queue<Packet> results, Map<String, Object> settings) {
+
+		synchronized (session) {
+			try {
+				Packet packet = Presence.packetInstance(PresenceAbstract.PRESENCE_ELEMENT_NAME,
+				                                        session.getJID().toString(),
+				                                        session.getJID().copyWithoutResource().toString(),
+				                                        StanzaType.unavailable);
+				processPresence(packet, session, results);
+
+			} catch (NotAuthorizedException | TigaseStringprepException e) {
+				if (log.isLoggable(Level.FINER)) {
+					log.log(Level.FINER, "Problem forwarding unavailable presence to PubSub component");
+				}
+			}
+		}
+	}
 }
