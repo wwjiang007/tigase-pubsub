@@ -21,4 +21,4 @@ include::text/features/REST_API.asciidoc[]
 
 :leveloffset: 3
 
-include::text/components/pubsub/documentation/text/Limitations.asciidoc[]
+include::text/Limitations.asciidoc[]
