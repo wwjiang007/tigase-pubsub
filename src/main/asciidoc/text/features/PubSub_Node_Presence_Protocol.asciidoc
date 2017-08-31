@@ -1,4 +1,10 @@
 == PubSub Node Presence Protocol
+:author: Andrzej Wójcik
+:version: v2.0 August 2017. Reformatted for v7.2.0.
+
+:toc:
+:numbered:
+:website: http://www.tigase.net
 
 *Occupant Use Case*
 

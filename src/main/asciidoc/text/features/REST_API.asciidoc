@@ -1,7 +1,11 @@
-
-== REST API
+= REST API
 :author: Andrzej Wójcik
-:date: 2016-11-12 18:38
+:version: v2.0 November 2016. Reformatted for v7.2.0.
+
+:toc:
+:numbered:
+:website: http://www.tigase.net
+
 
 All example calls to PubSub REST API are prepared for PubSub component running at `pubsub.example.com`. It is required to replace this value with JID of PubSub component from your installation.
 
@@ -10,16 +14,16 @@ It is possible to provide parameters to requests as:
 XML:: All parameters passed in content of HTTP request needs to be wrapped with `<data/>` tag as root tag of XML document, while returned parameters will be wrapped `<result/>` tag as root tag of XML document.
 JSON:: Parameters must be passed as serialized JSON object. Additionally `Content-Type` header of HTTP request needs to be set to `application/json`.
 
-=== Create a node
+== Create a node
 HTTP URI: `/rest/pubsub/pubsub.example.com/create-node`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns example content which contains all required and optional parameters that may be passed to newly created node.
 
-==== POST
+=== POST
 
 Command requires fields `node` and `pubsub#node_type` to be filled with proper values for execution.
 
@@ -29,7 +33,7 @@ Command requires fields `node` and `pubsub#node_type` to be filled with proper v
 
 Example content to create node of id `example` and of type `leaf` and with owner set to `admin@example.com`.
 
-===== Using XML
+==== Using XML
 .Request in XML
 [source,xml]
 ----
@@ -52,7 +56,7 @@ Example content to create node of id `example` and of type `leaf` and with owner
 </result>
 ----
 
-===== Using JSON
+==== Using JSON
 .Request in JSON
 [source,json]
 ----
@@ -71,17 +75,17 @@ Example content to create node of id `example` and of type `leaf` and with owner
 }
 ----
 
-=== Delete a node
+== Delete a node
 
 HTTP URI: `/rest/pubsub/pubsub.example.com/delete-node`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns example content which contains all required and optional parameters that may be passed.
 
-==== POST
+=== POST
 
 Command requires field `node` to be filled.
 
@@ -89,7 +93,7 @@ Command requires field `node` to be filled.
 
 Example content to delete node with id `example`
 
-===== Using XML
+==== Using XML
 .Request in XML
 [source,xml]
 ----
@@ -108,7 +112,7 @@ Example content to delete node with id `example`
 </result>
 ----
 
-===== Using JSON
+==== Using JSON
 .Request in JSON
 [source,json]
 ----
@@ -124,17 +128,17 @@ Example content to delete node with id `example`
 }
 ----
 
-=== Subscribe to a node
+== Subscribe to a node
 
 HTTP URI: `/rest/pubsub/pubsub.example.com/subscribe-node`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns example content which contains all required and optional parameters that may be passed.
 
-==== POST
+=== POST
 
 Command requires fields `node` and `jids` to be filled.
 
@@ -143,7 +147,7 @@ Command requires fields `node` and `jids` to be filled.
 
 Example content to subscribe to node with id `example` users with jid `test1@example.com` and `test2@example.com`
 
-===== Using XML
+==== Using XML
 .Request in XML
 [source,xml]
 ----
@@ -187,17 +191,17 @@ Example content to subscribe to node with id `example` users with jid `test1@exa
 }
 ----
 
-=== Unsubscribe from a node
+== Unsubscribe from a node
 
 HTTP URI: `/rest/pubsub/pubsub.example.com/unsubscribe-node`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns example content which contains all required and optional parameters that may be passed.
 
-==== POST
+=== POST
 
 Command requires fields `node` and `jids` to be filled.
 
@@ -206,7 +210,7 @@ Command requires fields `node` and `jids` to be filled.
 
 Example content to unsubscribe from node with id `example` users `test1@example.com` and `test2@example.com`
 
-===== Using XML
+==== Using XML
 .Request in XML
 [source,xml]
 ----
@@ -229,7 +233,7 @@ Example content to unsubscribe from node with id `example` users `test1@example.
 </result>
 ----
 
-===== Using JSON
+==== Using JSON
 .Request in JSON
 [source,json]
 ----
@@ -250,17 +254,17 @@ Example content to unsubscribe from node with id `example` users `test1@example.
 }
 ----
 
-=== Publish an item to a node
+== Publish an item to a node
 
 HTTP URI: `/rest/pubsub/pubsub.example.com/publish-item`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns example content which contains all required and optional parameters that may be passed.
 
-==== POST
+=== POST
 
 Command requires fields `node` and `entry` to be filled
 
@@ -271,8 +275,8 @@ Command requires fields `node` and `entry` to be filled
 
 Example content to publish item with id `item-1` to node with id `example` and with content in example field. P
 
-===== Using XML
-====== with XML payload
+==== Using XML
+===== with XML payload
 In this example we will use following XML payload:
 
 .Payload
@@ -310,7 +314,7 @@ In this example we will use following XML payload:
 </result>
 ----
 
-====== with JSON payload
+===== with JSON payload
 It is possible to publish JSON payload as value of published XML element. In example below we are publishing following JSON object:
 
 .Payload
@@ -342,8 +346,8 @@ It is possible to publish JSON payload as value of published XML element. In exa
 </result>
 ----
 
-===== Using JSON
-====== with XML payload
+==== Using JSON
+===== with XML payload
 To publish XML using JSON you need to set serialized XML payload as value for `entry` key.
 In this example we will use following XML payload:
 
@@ -378,7 +382,7 @@ In this example we will use following XML payload:
 }
 ----
 
-====== with JSON payload
+===== with JSON payload
 As JSON needs to be set as a value of an XML element it will be wrapped on server side as a value for `<payload/>` element.
 
 .Payload
@@ -415,17 +419,17 @@ As JSON needs to be set as a value of an XML element it will be wrapped on serve
 <payload>{ &quot;key-1&quot; : 2, &quot;key-2&quot; : &quot;value-2&quot; }</payload>
 ----
 
-=== Delete an item from a node
+== Delete an item from a node
 
 HTTP URI: `/rest/pubsub/pubsub.example.com/delete-item`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns example content which contains all required and optional parameters that may be passed.
 
-==== POST
+=== POST
 
 Command requires fields `node` and `item-id` to be filled
 
@@ -434,7 +438,7 @@ Command requires fields `node` and `item-id` to be filled
 
 Example content to delete an item with id `item-1` from node with id `example`.
 
-===== Using XML
+==== Using XML
 .Request in XML
 [source,xml]
 ----
@@ -454,7 +458,7 @@ Example content to delete an item with id `item-1` from node with id `example`.
 </result>
 ----
 
-===== Using JSON
+==== Using JSON
 .Request in JSON
 [source,json]
 ----
@@ -472,13 +476,13 @@ Example content to delete an item with id `item-1` from node with id `example`.
 }
 ----
 
-=== List available nodes
+== List available nodes
 
 HTTP URI: `/rest/pubsub/pubsub.example.com/list-nodes`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns list of available PubSub nodes for domain passed as part of URI (`pubsub.example.com`).
 
@@ -512,17 +516,17 @@ in which we see nodes: `test`, `node_54idf40037` and `node_3ws5lz0037`.
 
 in which we see nodes: `test`, `node_54idf40037` and `node_3ws5lz0037`.
 
-=== List published items on node
+== List published items on node
 
 HTTP URI: `/rest/pubsub/pubsub.example.com/list-items`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns example content which contains all required and optional parameters that may be passed.
 
-==== POST
+=== POST
 
 Command requires field `node` to be filled
 
@@ -530,7 +534,7 @@ Command requires field `node` to be filled
 
 Example content to list of items published on node with id `example`.
 
-===== Using XML
+==== Using XML
 .Request in XML
 [source,xml]
 ----
@@ -556,7 +560,7 @@ Example content to list of items published on node with id `example`.
 
 where `item-1` and `item-2` are identifiers of published items for node `example`.
 
-===== Using JSON
+==== Using JSON
 .Request in JSON
 [source,json]
 ----
@@ -581,17 +585,17 @@ where `item-1` and `item-2` are identifiers of published items for node `example
 where `item-1` and `item-2` are identifiers of published items for node `example`.
 
 
-=== Retrieve item published on node
+== Retrieve item published on node
 
 HTTP URI: `/rest/pubsub/pubsub.example.com/retrieve-item`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns example content which contains all required and optional parameters that may be passed.
 
-==== POST
+=== POST
 
 Command requires fields `node` and `item-id` to be filled
 
@@ -600,7 +604,7 @@ Command requires fields `node` and `item-id` to be filled
 
 Example content to list of items published on node with id `example`.
 
-===== Using XML
+==== Using XML
 .Request in XML
 [source,xml]
 ----
@@ -636,7 +640,7 @@ Example content to list of items published on node with id `example`.
 
 inside item element there is XML encoded element which is published on node `example` with id `item-1`.
 
-===== Using JSON
+==== Using JSON
 .Request in JSON
 [source,json]
 ----
@@ -663,16 +667,16 @@ inside item element there is XML encoded element which is published on node `exa
 }
 ----
 
-=== Retrieve user subscriptions
+== Retrieve user subscriptions
 HTTP URI: `/rest/pubsub/pubsub.example.com/retrieve-user-subscriptions`
 
 Available HTTP methods:
 
-==== GET
+=== GET
 
 Method returns example content which contains all required and optional parameters that may be passed.
 
-==== POST
+=== POST
 
 Command requires field `jid` to be filled.
 
@@ -681,7 +685,7 @@ Command requires field `jid` to be filled.
 
 Example content to retrieve list of nodes to which user `test@example.com` is subscribed at `pubsub.example.com` which starts with `test-` (pattern `test-.*`)
 
-===== Using XML
+==== Using XML
 .Request in XML
 [source,xml]
 ----
@@ -702,7 +706,7 @@ Example content to retrieve list of nodes to which user `test@example.com` is su
 </result>
 ----
 
-===== Using JSON
+==== Using JSON
 .Request in JSON
 [source,json]
 ----

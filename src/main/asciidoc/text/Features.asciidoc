@@ -1,7 +1,10 @@
-
 = Features
 :author: Andrzej Wójcik
-:date: 2016-11-12 18:38
+:version: v2.0 August 2017. Reformatted for v7.2.0.
+
+:toc:
+:numbered:
+:website: http://www.tigase.net
 
 include::features/AdHocCommands.asciidoc[]
 include::features/PubSub_Node_Presence_Protocol.asciidoc[]

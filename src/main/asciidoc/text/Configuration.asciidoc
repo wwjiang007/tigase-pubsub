@@ -1,15 +1,86 @@
-
 = Configuration
 :author: Andrzej Wójcik
-:date: 2016-11-12 18:38
+:version: v2.0 August 2017. Reformatted for v7.2.0.
 
-To enable Tigase PubSub Component you need to add following block to `etc/init.properties` file:
-----
-pubsub () {
+:toc:
+:numbered:
+:website: http://www.tigase.org
+
+== Pubsub naming
+Within Tigase, all pubsub component address MUST be domain-based address and not a JID style address.  This was made to simplify communications structure. Tigase will automatically set component names to pubsub.domain, however any messages send to pubsub@domain will result in a `SERVICE_UNAVAILABLE` error.
+
+Pubsub nodes within Tigase can be found as a combination of JID and node where nodes will be identified akin to service discovery.  For example, to address a friendly node, use the following structure:
+
+[source,xml]
+-----
+<iq to='pubsub.domain'>
+  <query node='friendly node'/>
+</iq>
+-----
+
+[[rosterLimit]]
+== Configure Roster Maxmimum size
+Administrators can configure the maximum allowable roster size per user via the init.properties file.
+[source,dsl]
+-----
+'sess-man' {
+    'jabber:iqa:roster' {
+        max_roster_size = '100'
+    }
 }
-----
-It will enable component and configure it under name `pubsub`.
-By default it will also use database configured as `default` data source to store data.
+-----
+
+This sets the roster limit to 100 entries per user.  It can be set to any integer, however by default no limit is set and no configuration is set in `init.properties` file.
+
+[[storeFullXMLLastPresence]]
+== Store Full XML of Last Presence
+Tigase can store a more detailed `<unavailable/>` presence stanza to include timestamps and other information.
+
+=== Requirements
+Ensure that `presence-offline` plugin is enabled in init.properties.  To do this, add be sure `presence-offline` is listed under `sess-man`
+[source,dsl]
+-----
+'sess-man' {
+    'presence-offline' () {}
+}
+-----
+
+The following two lines in `sess-man` configure options to broadcast probes to offline users.
+[source,dsl]
+-----
+'sess-man' {
+    'skip-offline' = 'false'
+    'skip-offline-sys' = 'false'
+}
+-----
+Without these lines, Tigase will not send presence probes to users that the server knows to be offline.
+
+The full XML presence is stored under the tig_pairs table with a pkey of +last-unavailable-presence+ will look like this:
+[source,xml]
+-----
+<presence from="user@example.com" xmlns="jabber:client" type="unavailable">
+<status>Logged out</status>
+<delay stamp="2015-12-29T16:51:50.748Z" xmlns="urn:xmpp:delay"/></presence>
+-----
+As you can see, the plugin has added a delay stamp which indicates the last time they were seen online. This may be suppressed by using the following line in your init.properties file.
+[source,dsl]
+-----
+'sess-man' {
+    'delay-stamp' = 'false'
+}
+-----
+
+You may also limit probe responses only to newly connected resources.
+[source,dsl]
+-----
+'sess-man' {
+    'probe-full-jid' = 'true'
+}
+-----
+
+When a user logs on, they will receive the same full unavailable presence statements from contacts not logged in.  Also the repository entry containing their last unavailable presence will be removed.
+
+*NOTE: This will increase traffic with users with many people on their rosters.*
 
 == Using separate store
 As mentioned above, by default Tigase PubSub component uses default data source configured for Tigase XMPP Server. It is possible to use separate store by PubSub component. To do so you need to configure new `DataSource` in `dataSource` section. Here we will use `pubsub-store` as name of newly configured data source. Additionally you need to pass name of newly configured data source to `dataSourceName` property of default DAO of PubSub component.
@@ -66,7 +137,7 @@ To use REST API for PubSub component it is required that:
 * Tigase HTTP API component is installed and configured properly. For information about HTTP API component installation please look into xref:compHTTPAPI[HTTP component documentation].
 * Tigase PubSub REST scripts are copied to HTTP API REST scripts directory
 In installation package this is already done and scripts are in proper locations.
-* JID of HTTP API component needs to be added to list of trusted jids of Tigase PubSub component `trusted` property (if `http` is name of HTTP API component)
+dd* JID of HTTP API component needs to be added to list of trusted jids of Tigase PubSub component `trusted` property (if `http` is name of HTTP API component)
 ----
 pubsub () {
     trusted = [ 'http@{clusterNode}' ];

@@ -1,7 +1,10 @@
-
 = Announcement
 :author: Andrzej Wójcik
-:date: 2016-11-12 11:38
+:version: v2.0 November 2016. Reformatted for v7.2.0.
+
+:toc:
+:numbered:
+:website: http://www.tigase.net
 
 == Major changes
 Tigase PubSub component has undergone a few major changes to our code and structure. To continue to use Tigase PubSub component, a few changes may be needed to be made to your systems. Please see them below:

@@ -1,7 +1,10 @@
-
 = Database
 :author: Andrzej Wójcik
-:date: 2016-11-12 18:38
+:version: v2.0 August 2017. Reformatted for v7.2.0.
+
+:toc:
+:numbered:
+:website: http://www.tigase.net
 
 == Preparation of database
 Before you will be able to use Tigase PubSub Component you need to initialize database.

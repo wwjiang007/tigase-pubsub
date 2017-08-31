@@ -1,7 +1,10 @@
-
 = Limitations
 :author: Andrzej Wójcik
-:date: 2016-11-12 18:38
+:version: v2.0 August 2017. Reformatted for v7.2.0.
+
+:toc:
+:numbered:
+:website: http://www.tigase.net
 
 == Addressing
 Within Tigase, all pubsub component address MUST be domain-based address and not a JID style address. This was made to simplify communications structure. Tigase will automatically set component names to `pubsub.domain`, however any messages send to `pubsub@domain` will result in a `SERVICE_UNAVAILABLE` error.

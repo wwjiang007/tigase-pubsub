@@ -1,12 +1,11 @@
-
 == Offline Message Sink
 :author: Bartosz Malkowski
-:version: v1.0, October 2015
-:date: 2015-10-07 09:36
+:version: v2.0 November 2016. Reformatted for v7.2.0.
 
 :toc:
 :numbered:
-:website: http://www.tigase.org
+:website: http://www.tigase.net
+
 
 Messages sent to offline users is published in PubSub node, from where that message is sent to all the node subscribers as a PubSub notification.
 
