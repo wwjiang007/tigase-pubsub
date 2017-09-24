@@ -143,6 +143,7 @@
 						<Implementation-Title>${project.name}</Implementation-Title>
 						<Implementation-Version>${project.version}-b${gitVersion}/${buildNumber}</Implementation-Version>
 						<Implementation-Build>${gitVersion}/${buildNumber} (${maven.build.timestamp})</Implementation-Build>
+						<Tigase-Required-Dependencies>tigase.server=${project.dependencies[1].version}</Tigase-Required-Dependencies>
 						<Bundle-Activator>tigase.pubsub.Activator</Bundle-Activator>
 						<DynamicImport-Package>*</DynamicImport-Package>
 						<Export-Package>tigase.pubsub.*;tigase.component2.*</Export-Package>
