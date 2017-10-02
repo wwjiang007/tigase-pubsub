@@ -40,7 +40,7 @@ import java.util.HashMap;
 public class JDBCPubSubDAOTest extends AbstractPubSubDAOTest<DataRepository> {
 
 	private static final String PROJECT_ID = "pubsub";
-	private static final String VERSION = "3.3.0";
+	private static final String VERSION = "4.0.0";
 
 	// We need at least 2 for SQLServer
 	private static int no_of_connections = 1;
