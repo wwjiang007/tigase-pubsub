@@ -339,3 +339,12 @@ create procedure TigPubSubFixItem(node_id bigint, item_id varchar(1024),
 	MODIFIES SQL DATA
 	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubFixItem';
 -- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubRemoveService(service_jid varchar(2049))
+	PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	MODIFIES SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubRemoveService';
+-- QUERY END:

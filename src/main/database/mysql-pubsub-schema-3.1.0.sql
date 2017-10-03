@@ -76,6 +76,9 @@ drop procedure if exists TigPubSubFixNode;
 -- QUERY START:
 drop procedure if exists TigPubSubFixItem;
 -- QUERY END:
+-- QUERY START:
+drop procedure if exists TigPubSubRemoveService;
+-- QUERY END:
 
 
 -- QUERY START:
@@ -272,17 +275,17 @@ begin
 	DECLARE exit handler for sqlexception
 		BEGIN
 			-- ERROR
-		ROLLBACK;
-		select node_id from tig_pubsub_nodes where node_id = _node_id and service_id = _service_id;
+		select node_id from tig_pubsub_nodes
+			where name = _node_name and service_id = (select service_id from tig_pubsub_service_jids where service_jid = _service_id);
 	END;
 
 	START TRANSACTION;
 	select TigPubSubEnsureServiceJid(_service_jid) into _service_id;
 	select TigPubSubEnsureJid(_node_creator) into _node_creator_id;
 
-	select node_id into _exists from tig_pubsub_nodes where node_id = _node_id and service_id = _service_id;
+	select node_id into _exists from tig_pubsub_nodes where name = _node_name and service_id = _service_id;
 	if _exists is not null then
-		select _node_id as node_id;
+		select _exists as node_id;
 	else
 		insert into tig_pubsub_nodes (service_id,name,name_sha1,`type`,creator_id,configuration,collection_id)
 			values (_service_id, _node_name, SHA1(_node_name), _node_type, _node_creator_id, _node_conf, _collection_id);
@@ -337,8 +340,8 @@ begin
 
 	select TigPubSubEnsureJid(_publisher) into _publisher_id;
 	insert into tig_pubsub_items (node_id, id_sha1, id, creation_date, update_date, publisher_id, data)
-		values (_node_id, SHA1(_item_id), _item_id, now(), now(), _publisher_id, _item_data)
-		on duplicate key update publisher_id = _publisher_id, data = _item_data, update_date = now();
+		values (_node_id, SHA1(_item_id), _item_id, UTC_TIMESTAMP(), UTC_TIMESTAMP(), _publisher_id, _item_data)
+		on duplicate key update publisher_id = _publisher_id, data = _item_data, update_date = UTC_TIMESTAMP();
 	COMMIT;
 end //
 -- QUERY END:
@@ -584,6 +587,34 @@ create procedure TigPubSubFixItem(_node_id bigint, _item_id varchar(1024),
 begin
 	update tig_pubsub_items set creation_date = _creation_date, update_date = _update_date
 		where node_id = _node_id and id_sha1 = SHA1(_item_id) and id = _item_id;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubRemoveService(_service_jid varchar(2049))
+begin
+	declare _service_id bigint;
+	DECLARE exit handler for sqlexception
+		BEGIN
+			-- ERROR
+		ROLLBACK;
+	END;
+
+	START TRANSACTION;
+
+	select service_id into _service_id from tig_pubsub_service_jids
+		where service_jid_sha1 = SHA1(_service_jid) and service_jid = _service_jid;
+	delete from tig_pubsub_items where node_id in (
+		select n.node_id from tig_pubsub_nodes n where n.service_id = _service_id);
+	delete from tig_pubsub_affiliations where node_id in (
+		select n.node_id from tig_pubsub_nodes n where n.service_id = _service_id);
+	delete from tig_pubsub_subscriptions where node_id in (
+		select n.node_id from tig_pubsub_nodes n where n.service_id = _service_id);
+	delete from tig_pubsub_nodes where service_id = _service_id;
+	delete from tig_pubsub_service_jids where service_id = _service_id;
+	delete from tig_pubsub_affiliations where jid_id in (select j.jid_id from tig_pubsub_jids j where j.jid_sha1 = SHA1(_service_jid) and j.jid = _service_jid);
+	delete from tig_pubsub_subscriptions where jid_id in (select j.jid_id from tig_pubsub_jids j where j.jid_sha1 = SHA1(_service_jid) and j.jid = _service_jid);
+	COMMIT;
 end //
 -- QUERY END:
 

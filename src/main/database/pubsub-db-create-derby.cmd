@@ -26,7 +26,7 @@ set PWD="%cd%"
 java -Dij.protocol=jdbc:derby: -Dij.database="%1;create=false" ^
 		-Dderby.system.home=%PWD% ^
 		-classpath jars/* ^
-		org.apache.derby.tools.ij database/derby-pubsub-schema-3.0.0.sql > derby-db-import-pubsub.txt 2>&1
+		org.apache.derby.tools.ij database/derby-pubsub-schema-4.0.0.sql > derby-db-import-pubsub.txt 2>&1
 
 if %errorlevel% neq 0 (
   echo. && echo Error: please check the derby-db-import-pubsub.txt error file for more details && echo. && echo.
