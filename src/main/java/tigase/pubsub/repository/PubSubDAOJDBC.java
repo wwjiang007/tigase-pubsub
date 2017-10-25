@@ -1178,6 +1178,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 
 	public void setDataSource(DataRepository dataSource) {
 		try {
+			dataSource.checkSchemaVersion( this );
+
 			initPreparedStatements(dataSource);
 		} catch (SQLException ex) {
 			new RuntimeException("Failed to initialize access to SQL database for PubSubDAOJDBC", ex);

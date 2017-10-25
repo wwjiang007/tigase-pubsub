@@ -53,3 +53,7 @@ create procedure TigPubSubMamQueryItemsCount(nodes_ids varchar(32672), since tim
 	DYNAMIC RESULT SETS 1
 	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubMamQueryItemsCount';
 -- QUERY END:
+
+-- QUERY START:
+call TigSetComponentVersion('pubsub', '4.0.0');
+-- QUERY END:

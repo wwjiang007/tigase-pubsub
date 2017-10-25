@@ -469,3 +469,7 @@ create or replace function TigPubSubRemoveService(varchar(2049)) returns void as
 	delete from tig_pubsub_subscriptions where jid_id in (select j.jid_id from tig_pubsub_jids j where j.jid = $1);
 $$ LANGUAGE SQL;
 -- QUERY END:
+
+-- QUERY START:
+select TigSetComponentVersion('pubsub', '3.1.0');
+-- QUERY END:

@@ -19,3 +19,6 @@
 
 -- LOAD FILE: database/postgresql-pubsub-schema-3.1.0.sql
 
+-- QUERY START:
+select TigSetComponentVersion('pubsub', '3.2.0');
+-- QUERY END:

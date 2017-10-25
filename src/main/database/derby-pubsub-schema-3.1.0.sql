@@ -348,3 +348,7 @@ create procedure TigPubSubRemoveService(service_jid varchar(2049))
 	DYNAMIC RESULT SETS 1
 	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubRemoveService';
 -- QUERY END:
+
+-- QUERY START:
+call TigSetComponentVersion('pubsub', '3.1.0');
+-- QUERY END:

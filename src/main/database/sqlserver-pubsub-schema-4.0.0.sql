@@ -613,3 +613,8 @@ begin
 end
 -- QUERY END:
 GO
+
+-- QUERY START:
+exec TigSetComponentVersion('pubsub', '4.0.0');
+-- QUERY END:
+GO
