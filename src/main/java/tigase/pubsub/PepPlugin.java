@@ -26,11 +26,12 @@ import tigase.server.Iq;
 import tigase.server.Packet;
 import tigase.server.Presence;
 import tigase.server.xmppsession.SessionManager;
-import tigase.util.DNSResolverFactory;
-import tigase.util.TigaseStringprepException;
+import tigase.util.dns.DNSResolverFactory;
+import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.*;
 import tigase.xmpp.impl.PresenceAbstract;
+import tigase.xmpp.jid.JID;
 
 import java.util.*;
 import java.util.logging.Level;

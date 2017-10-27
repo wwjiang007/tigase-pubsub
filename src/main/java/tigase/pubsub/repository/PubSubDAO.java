@@ -18,10 +18,10 @@ import tigase.xml.DomBuilderHandler;
 import tigase.xml.Element;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
-import tigase.xmpp.BareJID;
-import tigase.xmpp.RSM;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.impl.roster.RosterFlat;
+import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.rsm.RSM;
 import tigase.xmpp.mam.Query;
 
 import java.lang.reflect.Constructor;

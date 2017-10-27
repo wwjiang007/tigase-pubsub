@@ -8,7 +8,7 @@ import java.util.Set;
 import tigase.pubsub.Subscription;
 import tigase.pubsub.Utils;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscriptions {
 

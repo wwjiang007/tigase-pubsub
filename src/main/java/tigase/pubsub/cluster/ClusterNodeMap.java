@@ -1,15 +1,10 @@
 package tigase.pubsub.cluster;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
+import tigase.xmpp.jid.JID;
 
-import tigase.xmpp.JID;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class ClusterNodeMap {
 

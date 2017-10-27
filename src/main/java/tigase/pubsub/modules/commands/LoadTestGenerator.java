@@ -1,12 +1,12 @@
 package tigase.pubsub.modules.commands;
 
-import java.util.logging.Logger;
-
 import tigase.server.AbstractMessageReceiver;
 import tigase.server.Packet;
 import tigase.xml.Element;
-import tigase.xmpp.BareJID;
-import tigase.xmpp.JID;
+import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.jid.JID;
+
+import java.util.logging.Logger;
 
 public class LoadTestGenerator extends AbstractLoadRunner {
 

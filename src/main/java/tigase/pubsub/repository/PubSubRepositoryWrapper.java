@@ -8,7 +8,7 @@ import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticsList;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
 
 import java.util.Map;

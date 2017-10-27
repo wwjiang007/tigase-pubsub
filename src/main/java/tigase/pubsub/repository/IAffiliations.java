@@ -2,7 +2,7 @@ package tigase.pubsub.repository;
 
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 public interface IAffiliations {
 

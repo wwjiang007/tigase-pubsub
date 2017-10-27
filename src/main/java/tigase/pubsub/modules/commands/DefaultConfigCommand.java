@@ -36,7 +36,7 @@ import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.modules.NodeConfigModule;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
-import tigase.xmpp.JID;
+import tigase.xmpp.jid.JID;
 
 import java.util.Arrays;
 import java.util.logging.Logger;

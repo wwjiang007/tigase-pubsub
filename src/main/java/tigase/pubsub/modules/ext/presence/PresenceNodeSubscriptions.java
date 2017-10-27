@@ -8,8 +8,8 @@ import tigase.pubsub.Subscription;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Packet;
-import tigase.xmpp.BareJID;
-import tigase.xmpp.JID;
+import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.jid.JID;
 import tigase.xmpp.StanzaType;
 
 public class PresenceNodeSubscriptions implements ISubscriptions {

@@ -23,7 +23,7 @@ package tigase.pubsub.repository.cached;
 
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.repository.INodeMeta;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 import java.util.Date;
 import java.util.List;

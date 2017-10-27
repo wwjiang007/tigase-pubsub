@@ -6,15 +6,14 @@
 
 package tigase.pubsub;
 
-import java.util.UUID;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 import tigase.server.Packet;
-import tigase.util.TigaseStringprepException;
+import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
-import tigase.xmpp.JID;
+import tigase.xmpp.jid.JID;
+
+import java.util.UUID;
 
 /**
  *

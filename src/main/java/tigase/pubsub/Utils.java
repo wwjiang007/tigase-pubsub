@@ -21,13 +21,13 @@
  */
 package tigase.pubsub;
 
+import tigase.xmpp.jid.BareJID;
+
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Random;
 import java.util.logging.Logger;
-
-import tigase.xmpp.BareJID;
 
 public class Utils {
 

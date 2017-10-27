@@ -45,7 +45,7 @@ import tigase.server.Iq
 import tigase.server.Packet
 import tigase.xml.Element
 import tigase.xmpp.Authorization
-import tigase.xmpp.BareJID
+import tigase.xmpp.jid.BareJID
 
 Kernel kernel = (Kernel) kernel;
 PubSubComponent component = (PubSubComponent) component

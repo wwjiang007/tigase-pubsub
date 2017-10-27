@@ -38,7 +38,7 @@ import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.BasicComponent;
 import tigase.xml.Element;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.mam.MAMRepository;
 

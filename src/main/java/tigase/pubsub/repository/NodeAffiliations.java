@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 import java.util.Arrays;
 import java.util.logging.Level;

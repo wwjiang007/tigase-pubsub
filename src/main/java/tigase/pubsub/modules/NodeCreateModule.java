@@ -35,7 +35,7 @@ import tigase.pubsub.repository.ISubscriptions;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 import java.util.UUID;
 

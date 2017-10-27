@@ -8,7 +8,7 @@ import java.util.Set;
 
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 public class NodeAffiliations extends tigase.pubsub.repository.NodeAffiliations {
 

@@ -1,10 +1,10 @@
 package tigase.pubsub.repository;
 
-import java.util.Map;
-
 import tigase.pubsub.Subscription;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
+
+import java.util.Map;
 
 public interface ISubscriptions {
 

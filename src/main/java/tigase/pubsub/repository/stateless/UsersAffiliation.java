@@ -1,7 +1,7 @@
 package tigase.pubsub.repository.stateless;
 
 import tigase.pubsub.Affiliation;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 public class UsersAffiliation implements Cloneable {
 

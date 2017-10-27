@@ -2,8 +2,8 @@ package tigase.pubsub.repository;
 
 import org.junit.Test;
 import tigase.pubsub.repository.cached.CachedPubSubRepository;
-import tigase.util.TigaseStringprepException;
-import tigase.xmpp.BareJID;
+import tigase.util.stringprep.TigaseStringprepException;
+import tigase.xmpp.jid.BareJID;
 
 import java.util.HashMap;
 import java.util.Map;

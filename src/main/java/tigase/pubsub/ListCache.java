@@ -1,6 +1,6 @@
 package tigase.pubsub;
 
-import tigase.util.SimpleCache;
+import tigase.util.cache.SimpleCache;
 
 public class ListCache<K, V> extends SimpleCache<K, V> {
 

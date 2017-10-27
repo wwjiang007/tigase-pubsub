@@ -43,7 +43,7 @@ import tigase.pubsub.repository.IPubSubRepository
 import tigase.server.Command
 import tigase.server.Iq
 import tigase.server.Packet
-import tigase.util.DateTimeFormatter
+import tigase.util.datetime.DateTimeFormatter
 import tigase.xml.DomBuilderHandler
 import tigase.xml.Element
 import tigase.xml.SingletonFactory

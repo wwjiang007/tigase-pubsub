@@ -11,7 +11,7 @@ import tigase.form.Field;
 import tigase.form.Form;
 import tigase.pubsub.PubSubConfig;
 import tigase.xmpp.Authorization;
-import tigase.xmpp.JID;
+import tigase.xmpp.jid.JID;
 
 public class ViewNodeLoadCommand implements AdHocCommand {
 

@@ -22,7 +22,7 @@
 package tigase.pubsub.repository;
 
 import tigase.pubsub.AbstractNodeConfig;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 import java.util.Date;
 

@@ -23,7 +23,7 @@ package tigase.pubsub.repository.stateless;
 
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.repository.INodeMeta;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 import java.util.Date;
 

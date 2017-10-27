@@ -1,13 +1,13 @@
 package tigase.pubsub.repository.stateless;
 
-import java.util.Date;
-import java.util.List;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.xml.Element;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
+
+import java.util.Date;
+import java.util.List;
 
 class Items implements IItems {
 

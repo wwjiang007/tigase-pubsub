@@ -23,7 +23,7 @@
 package tigase.pubsub.repository.stateless;
 
 import tigase.pubsub.Subscription;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 /**
  * Class description
