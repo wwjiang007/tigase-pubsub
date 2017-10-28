@@ -1,12 +1,8 @@
-package tigase.rest.pubsub
-
-import tigase.http.coders.JsonCoder
-import tigase.http.rest.Service
-import tigase.server.Iq
-
 /*
- * Tigase HTTP API
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * PubSubAdHocActions.groovy
+ *
+ * Tigase Jabber/XMPP Publish Subscribe Component
+ * Copyright (C) 2004-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,11 +16,14 @@ import tigase.server.Iq
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
- *
- * $Rev$
- * Last modified by $Author$
- * $Date$
  */
+
+package tigase.rest.pubsub
+
+import tigase.http.coders.JsonCoder
+import tigase.http.rest.Service
+import tigase.server.Iq
+
 import tigase.server.Packet
 import tigase.xml.DomBuilderHandler
 import tigase.xml.Element
