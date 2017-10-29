@@ -25,15 +25,14 @@ import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 
 /**
- *
- * <p>
- * Created: 2007-05-25 11:55:48
- * </p>
+ * <p> Created: 2007-05-25 11:55:48 </p>
  *
  * @author bmalkow
  * @version $Rev$
  */
-public class PubSubException extends ComponentException {
+public class PubSubException
+		extends ComponentException {
+
 	private static final long serialVersionUID = 1L;
 
 	private Authorization errorCondition;
@@ -45,7 +44,6 @@ public class PubSubException extends ComponentException {
 	/**
 	 * Constructs ...
 	 *
-	 *
 	 * @param errorCondition
 	 */
 	public PubSubException(final Authorization errorCondition) {
@@ -54,7 +52,6 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 *
 	 *
 	 * @param errorCondition
 	 * @param pubSubErrorConditions
@@ -65,7 +62,6 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 *
 	 *
 	 * @param errorCondition
 	 * @param pubSubErrorConditions
@@ -79,7 +75,6 @@ public class PubSubException extends ComponentException {
 	/**
 	 * Constructs ...
 	 *
-	 *
 	 * @param errorCondition
 	 * @param message
 	 */
@@ -89,7 +84,6 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Constructs ...
-	 *
 	 *
 	 * @param errorCondition
 	 * @param message
@@ -101,7 +95,6 @@ public class PubSubException extends ComponentException {
 	/**
 	 * Constructs ...
 	 *
-	 *
 	 * @param item
 	 * @param errorCondition
 	 */
@@ -112,19 +105,18 @@ public class PubSubException extends ComponentException {
 	/**
 	 * Constructs ...
 	 *
-	 *
 	 * @param item
 	 * @param errorCondition
 	 * @param pubSubErrorConditions
 	 */
-	public PubSubException(final Element item, final Authorization errorCondition, PubSubErrorCondition pubSubErrorConditions) {
+	public PubSubException(final Element item, final Authorization errorCondition,
+						   PubSubErrorCondition pubSubErrorConditions) {
 		this(item, errorCondition, (String) null);
 		this.pubSubErrorCondition = pubSubErrorConditions;
 	}
 
 	/**
 	 * Constructs ...
-	 *
 	 *
 	 * @param item
 	 * @param errorCondition
@@ -134,7 +126,8 @@ public class PubSubException extends ComponentException {
 		this(item, errorCondition, message, null);
 	}
 
-	public PubSubException(final Element item, final Authorization errorCondition, final String message, final Exception ex) {
+	public PubSubException(final Element item, final Authorization errorCondition, final String message,
+						   final Exception ex) {
 		super(errorCondition);
 		this.item = item;
 		this.errorCondition = errorCondition;
@@ -152,7 +145,6 @@ public class PubSubException extends ComponentException {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
@@ -169,7 +161,6 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -201,7 +192,6 @@ public class PubSubException extends ComponentException {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	public Element makeElement() {
@@ -210,7 +200,6 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param insertOriginal
 	 *
@@ -224,8 +213,8 @@ public class PubSubException extends ComponentException {
 		answer.addAttribute("to", item.getAttributeStaticStr("from"));
 		answer.addAttribute("from", item.getAttributeStaticStr("to"));
 		if (this.message != null) {
-			Element text = new Element("text", this.message, new String[] { "xmlns" },
-					new String[] { "urn:ietf:params:xml:ns:xmpp-stanzas" });
+			Element text = new Element("text", this.message, new String[]{"xmlns"},
+									   new String[]{"urn:ietf:params:xml:ns:xmpp-stanzas"});
 
 			answer.addChild(text);
 		}
@@ -239,7 +228,6 @@ public class PubSubException extends ComponentException {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param sourceElement
 	 *
@@ -259,7 +247,7 @@ public class PubSubException extends ComponentException {
 
 		error.setAttribute("code", String.valueOf(this.errorCondition.getErrorCode()));
 		error.setAttribute("type", this.errorCondition.getErrorType());
-		error.addChild(new Element(this.errorCondition.getCondition(), new String[] { "xmlns" }, new String[] { xmlns }));
+		error.addChild(new Element(this.errorCondition.getCondition(), new String[]{"xmlns"}, new String[]{xmlns}));
 
 		return error;
 	}

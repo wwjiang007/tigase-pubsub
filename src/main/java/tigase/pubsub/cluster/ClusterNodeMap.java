@@ -28,14 +28,8 @@ import java.util.Map.Entry;
 
 public class ClusterNodeMap {
 
-	private class NodeInfo {
-		private String clusterNodeId;
-	}
-
 	private final Set<JID> clusterNodes;
-
 	private final Map<String, NodeInfo> nodesMap = new HashMap<String, NodeInfo>();
-
 	private final Random random = new SecureRandom();
 
 	public ClusterNodeMap(Set<JID> cluster_nodes) {
@@ -81,8 +75,9 @@ public class ClusterNodeMap {
 
 		// counting
 		for (Entry<String, NodeInfo> entry : this.nodesMap.entrySet()) {
-			if (entry.getValue().clusterNodeId == null)
+			if (entry.getValue().clusterNodeId == null) {
 				continue;
+			}
 			Integer a = nodeLoad.get(entry.getValue().clusterNodeId);
 			if (a != null) {
 				a++;
@@ -117,6 +112,11 @@ public class ClusterNodeMap {
 		int r = this.random.nextInt(shortList.size());
 
 		return shortList.get(r);
+	}
+
+	private class NodeInfo {
+
+		private String clusterNodeId;
 	}
 
 }

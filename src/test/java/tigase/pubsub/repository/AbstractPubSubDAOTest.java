@@ -47,8 +47,9 @@ import static org.junit.Assert.*;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
-	protected static String uri = System.getProperty("testDbUri");
 
+	protected static String emoji = "\uD83D\uDE97\uD83D\uDCA9\uD83D\uDE21";
+	protected static String uri = System.getProperty("testDbUri");
 	@ClassRule
 	public static TestRule rule = new TestRule() {
 		@Override
@@ -64,25 +65,14 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 			return stmnt;
 		}
 	};
-
-	protected static String emoji = "\uD83D\uDE97\uD83D\uDCA9\uD83D\uDE21";
-
 	protected boolean checkEmoji = true;
-
-	protected DS dataSource;
 	protected IPubSubDAO dao;
-
+	protected DS dataSource;
 	private String nodeNameWithoutEmoji = "test-node";
 	private String nodeName = nodeNameWithoutEmoji;
 	private JID senderJid = JID.jidInstanceNS("owner@tigase/tigase-1");
 	private BareJID serviceJid = BareJID.bareJIDInstanceNS("pubsub.tigase");
 	private JID subscriberJid = JID.jidInstanceNS("subscriber@tigase/tigase-1");
-
-	protected DS prepareDataSource() throws DBInitException, IllegalAccessException, InstantiationException {
-		DataSource dataSource = RepositoryFactory.getRepoClass(DataSource.class, uri).newInstance();
-		dataSource.initRepository(uri, new HashMap<>());
-		return (DS) dataSource;
-	}
 
 	@Before
 	public void setup() throws RepositoryException, DBInitException, IllegalAccessException, InstantiationException {
@@ -219,109 +209,6 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 		test08_queryNodeItems(CollectionItemsOrdering.byUpdateDate);
 	}
 
-	protected void test08_queryNodeItems(CollectionItemsOrdering order) throws RepositoryException, InterruptedException, ComponentException {
-		List<Element> publishedItems = new ArrayList<>();
-
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not fined nodeId", nodeId);
-
-		for (int i=0; i<20; i++) {
-			String itemId = "item-" + i;
-			String payloadCData = "test-payload";
-			if (checkEmoji) {
-				payloadCData += emoji;
-				itemId += emoji;
-			}
-
-			Element item = new Element("item", new String[]{"id"}, new String[]{itemId});
-			item.addChild(new Element("payload", payloadCData + "-" + i, new String[]{"xmlns"}, new String[]{"test-xmlns"}));
-
-			dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), itemId, senderJid.getBareJID().toString(), item);
-
-			publishedItems.add(item);
-
-			Thread.sleep(1500);
-		}
-
-		String[] publishedItemIds = publishedItems.stream()
-				.map(el -> el.getAttributeStaticStr("id"))
-				.toArray(value -> new String[value]);
-
-		List<IPubSubRepository.Item> results = new ArrayList<>();
-
-		Query query = new Query();
-		query.setOrder(order);
-		query.setComponentJID(JID.jidInstance(serviceJid));
-		query.setQuestionerJID(senderJid);
-		query.getRsm().setMax(10);
-		results.clear();
-		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
-			results.add((IPubSubRepository.Item) item);
-		});
-
-		assertEquals(10, results.size());
-		for (int i=0; i<10; i++) {
-			IPubSubRepository.Item item = results.get(i);
-			assertEquals(getMAMID(nodeId, publishedItemIds[i]), item.getId());
-			assertEquals(publishedItems.get(i), item.getMessage());
-		}
-
-		query.setWith(senderJid.copyWithoutResource());
-		results.clear();
-		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
-			results.add((IPubSubRepository.Item) item);
-		});
-
-		assertEquals(10, results.size());
-		for (int i=0; i<10; i++) {
-			IPubSubRepository.Item item = results.get(i);
-			assertEquals(getMAMID(nodeId, publishedItemIds[i]), item.getId());
-			assertEquals(publishedItems.get(i), item.getMessage());
-		}
-		query.setWith(null);
-
-		String after = results.get(4).getId();
-		query.getRsm().setAfter(after);
-		results.clear();
-		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
-			results.add((IPubSubRepository.Item) item);
-		});
-
-		assertEquals(10, results.size());
-		for (int i=0; i<10; i++) {
-			IPubSubRepository.Item item = results.get(i);
-			assertEquals(getMAMID(nodeId,publishedItemIds[i+5]), item.getId());
-			assertEquals(publishedItems.get(i+5), item.getMessage());
-		}
-
-		query.getRsm().setAfter(null);
-		query.getRsm().setHasBefore(true);
-		results.clear();
-		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
-			results.add((IPubSubRepository.Item) item);
-		});
-
-		assertEquals(10, results.size());
-		for (int i=0; i<10; i++) {
-			IPubSubRepository.Item item = results.get(i);
-			assertEquals(getMAMID(nodeId, publishedItemIds[i+10]), item.getId());
-			assertEquals(publishedItems.get(i+10), item.getMessage());
-		}
-
-		String[] itemsIds = dao.getItemsIds(serviceJid, nodeId);
-		Arrays.sort(itemsIds);
-		String[] tmp = Arrays.copyOf(publishedItemIds, publishedItemIds.length);
-		Arrays.sort(tmp);
-		Assert.assertArrayEquals("Added item id not listed in list of item ids", tmp, itemsIds);
-
-
-		for (String itemId : publishedItemIds) {
-			dao.deleteItem(serviceJid, nodeId, itemId);
-			Element el = dao.getItem(serviceJid, nodeId, itemId);
-			assertNull("Element still available in store after removal", el);
-		}
-	}
-
 	@Test
 	public void test09_subscribeNodeRemoval() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
@@ -354,6 +241,117 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 		dao.deleteNode(serviceJid, nodeId);
 		nodeId = dao.getNodeId(serviceJid, nodeName);
 		assertNull("Node not removed", nodeId);
+	}
+
+	protected DS prepareDataSource() throws DBInitException, IllegalAccessException, InstantiationException {
+		DataSource dataSource = RepositoryFactory.getRepoClass(DataSource.class, uri).newInstance();
+		dataSource.initRepository(uri, new HashMap<>());
+		return (DS) dataSource;
+	}
+
+	protected void test08_queryNodeItems(CollectionItemsOrdering order)
+			throws RepositoryException, InterruptedException, ComponentException {
+		List<Element> publishedItems = new ArrayList<>();
+
+		Object nodeId = dao.getNodeId(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", nodeId);
+
+		for (int i = 0; i < 20; i++) {
+			String itemId = "item-" + i;
+			String payloadCData = "test-payload";
+			if (checkEmoji) {
+				payloadCData += emoji;
+				itemId += emoji;
+			}
+
+			Element item = new Element("item", new String[]{"id"}, new String[]{itemId});
+			item.addChild(
+					new Element("payload", payloadCData + "-" + i, new String[]{"xmlns"}, new String[]{"test-xmlns"}));
+
+			dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), itemId, senderJid.getBareJID().toString(),
+						  item);
+
+			publishedItems.add(item);
+
+			Thread.sleep(1500);
+		}
+
+		String[] publishedItemIds = publishedItems.stream()
+				.map(el -> el.getAttributeStaticStr("id"))
+				.toArray(value -> new String[value]);
+
+		List<IPubSubRepository.Item> results = new ArrayList<>();
+
+		Query query = new Query();
+		query.setOrder(order);
+		query.setComponentJID(JID.jidInstance(serviceJid));
+		query.setQuestionerJID(senderJid);
+		query.getRsm().setMax(10);
+		results.clear();
+		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
+			results.add((IPubSubRepository.Item) item);
+		});
+
+		assertEquals(10, results.size());
+		for (int i = 0; i < 10; i++) {
+			IPubSubRepository.Item item = results.get(i);
+			assertEquals(getMAMID(nodeId, publishedItemIds[i]), item.getId());
+			assertEquals(publishedItems.get(i), item.getMessage());
+		}
+
+		query.setWith(senderJid.copyWithoutResource());
+		results.clear();
+		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
+			results.add((IPubSubRepository.Item) item);
+		});
+
+		assertEquals(10, results.size());
+		for (int i = 0; i < 10; i++) {
+			IPubSubRepository.Item item = results.get(i);
+			assertEquals(getMAMID(nodeId, publishedItemIds[i]), item.getId());
+			assertEquals(publishedItems.get(i), item.getMessage());
+		}
+		query.setWith(null);
+
+		String after = results.get(4).getId();
+		query.getRsm().setAfter(after);
+		results.clear();
+		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
+			results.add((IPubSubRepository.Item) item);
+		});
+
+		assertEquals(10, results.size());
+		for (int i = 0; i < 10; i++) {
+			IPubSubRepository.Item item = results.get(i);
+			assertEquals(getMAMID(nodeId, publishedItemIds[i + 5]), item.getId());
+			assertEquals(publishedItems.get(i + 5), item.getMessage());
+		}
+
+		query.getRsm().setAfter(null);
+		query.getRsm().setHasBefore(true);
+		results.clear();
+		dao.queryItems(query, Collections.singletonList(nodeId), (query1, item) -> {
+			results.add((IPubSubRepository.Item) item);
+		});
+
+		assertEquals(10, results.size());
+		for (int i = 0; i < 10; i++) {
+			IPubSubRepository.Item item = results.get(i);
+			assertEquals(getMAMID(nodeId, publishedItemIds[i + 10]), item.getId());
+			assertEquals(publishedItems.get(i + 10), item.getMessage());
+		}
+
+		String[] itemsIds = dao.getItemsIds(serviceJid, nodeId);
+		Arrays.sort(itemsIds);
+		String[] tmp = Arrays.copyOf(publishedItemIds, publishedItemIds.length);
+		Arrays.sort(tmp);
+		Assert.assertArrayEquals("Added item id not listed in list of item ids", tmp, itemsIds);
+
+		for (String itemId : publishedItemIds) {
+			dao.deleteItem(serviceJid, nodeId, itemId);
+			Element el = dao.getItem(serviceJid, nodeId, itemId);
+			assertNull("Element still available in store after removal", el);
+		}
 	}
 
 	protected abstract String getMAMID(Object nodeId, String itemId);

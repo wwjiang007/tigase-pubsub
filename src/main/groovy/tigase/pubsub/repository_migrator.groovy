@@ -20,14 +20,12 @@
  */
 
 #!/usr/bin/env groovy
-
+import tigase.conf.Configurable
 
 def tigase_config = "/home/smoku/workspace/tigase-server/etc/tigase-mysql.xml"
 def component_name = "pubsub"
 
-
-import tigase.db.*
-import tigase.conf.*
+import tigase.db.RepositoryFactory
 import tigase.pubsub.NodeType
 import tigase.pubsub.PubSubComponent
 import tigase.pubsub.PubSubConfig
@@ -35,15 +33,16 @@ import tigase.pubsub.repository.PubSubDAO
 import tigase.pubsub.repository.PubSubDAOJDBC
 import tigase.pubsub.repository.RepositoryException
 
-
 def conf_repo = new ConfigRepository(false, tigase_config)
 def user_repo = RepositoryFactory.getUserRepository("util",
-			conf_repo.get("basic-conf", null, Configurable.USER_REPO_CLASS_PROP_KEY, null),
-			conf_repo.get("basic-conf", null, Configurable.USER_REPO_URL_PROP_KEY, null),
-			null)
+													conf_repo.get("basic-conf", null,
+																  Configurable.USER_REPO_CLASS_PROP_KEY, null),
+													conf_repo.get("basic-conf", null,
+																  Configurable.USER_REPO_URL_PROP_KEY, null),
+													null)
 
 def cls_name = conf_repo.get(component_name, null, PubSubComponent.PUBSUB_REPO_CLASS_PROP_KEY, null)
-def res_uri  = conf_repo.get(component_name, null, PubSubComponent.PUBSUB_REPO_URL_PROP_KEY, null)
+def res_uri = conf_repo.get(component_name, null, PubSubComponent.PUBSUB_REPO_URL_PROP_KEY, null)
 
 if (cls_name != "tigase.pubsub.repository.PubSubDAOJDBC") {
 	println "You need to use 'tigase.pubsub.repository.PubSubDAOJDBC' as PubSub data repository"
@@ -53,7 +52,7 @@ if (cls_name != "tigase.pubsub.repository.PubSubDAOJDBC") {
 	config.setServiceName("tigase-pubsub")
 	def sourceDAO = new PubSubDAO(user_repo, config)
 	def destDAO = new PubSubDAOJDBC(user_repo, config, res_uri)
-	
+
 	println "... BEGIN ..."
 	sourceDAO.getNodesList().each { nodeName ->
 		println "Node: $nodeName"
@@ -63,24 +62,25 @@ if (cls_name != "tigase.pubsub.repository.PubSubDAOJDBC") {
 		} catch (RepositoryException e) {
 			println e
 		}
-		
+
 		sourceDAO.getItemsIds(nodeName).each { id ->
 			println "  ItemID: $id"
 			destDAO.writeItem(nodeName, sourceDAO.getItemCreationDate(nodeName, id).getTime(), id,
-					sourceDAO.getItemPublisher(nodeName, id), sourceDAO.getItem(nodeName, id))
+							  sourceDAO.getItemPublisher(nodeName, id), sourceDAO.getItem(nodeName, id))
 		}
-	
+
 		int index = 0;
 		while (true) {
 			final String key = "subscriptions" + (index == 0 ? "" : ("." + index));
 			String cnfData = user_repo.getData(config.getServiceName(), PubSubDAO.NODES_KEY + nodeName, key);
-			if (cnfData == null || cnfData.length() == 0)
-				break;
+			if (cnfData == null || cnfData.length() == 0) {
+				break
+			};
 			destDAO.updateSubscriptions(nodeName, index, cnfData)
 			println "  Sub[$index]: $cnfData"
 			++index;
 		}
 	}
-	
+
 	println "... DONE ..."
 }

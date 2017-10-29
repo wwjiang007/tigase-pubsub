@@ -75,7 +75,7 @@ public class CachedPubSubRepositoryTest {
 
 		BareJID serviceJid = BareJID.bareJIDInstanceNS("pubsub." + UUID.randomUUID() + ".local");
 		String[] nodes = new String[10];
-		for (int i=0; i<10; i++) {
+		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
 			dao.addToRootCollection(serviceJid, node);
@@ -88,7 +88,7 @@ public class CachedPubSubRepositoryTest {
 			assertTrue(true);
 		}
 
-		for (int i=0; i<2; i++) {
+		for (int i = 0; i < 2; i++) {
 			dao.rootCollections.get(serviceJid).remove(nodes[i]);
 			cachedPubSubRepository.removeFromRootCollection(serviceJid, nodes[i]);
 			String node = "node-" + UUID.randomUUID().toString();
@@ -105,7 +105,6 @@ public class CachedPubSubRepositoryTest {
 		assertArrayEquals(nodes, result);
 	}
 
-
 	@Test
 	public void test_eagerLoadingOfRootCollections() throws Exception {
 		DummyPubSubDAO dao = new DummyPubSubDAO();
@@ -114,7 +113,7 @@ public class CachedPubSubRepositoryTest {
 
 		BareJID serviceJid = BareJID.bareJIDInstanceNS("pubsub." + UUID.randomUUID() + ".local");
 		String[] nodes = new String[10];
-		for (int i=0; i<10; i++) {
+		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
 			dao.addToRootCollection(serviceJid, node);
@@ -130,7 +129,7 @@ public class CachedPubSubRepositoryTest {
 				assertFalse(true);
 			}
 		});
-		
+
 		String[] result = cachedPubSubRepository.getRootCollection(serviceJid);
 		Arrays.sort(result);
 
@@ -146,7 +145,7 @@ public class CachedPubSubRepositoryTest {
 
 		BareJID serviceJid = BareJID.bareJIDInstanceNS("pubsub." + UUID.randomUUID() + ".local");
 		String[] nodes = new String[10];
-		for (int i=0; i<10; i++) {
+		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
 			dao.addToRootCollection(serviceJid, node);
@@ -178,7 +177,7 @@ public class CachedPubSubRepositoryTest {
 
 		BareJID serviceJid = BareJID.bareJIDInstanceNS("pubsub." + UUID.randomUUID() + ".local");
 		String[] nodes = new String[10];
-		for (int i=0; i<10; i++) {
+		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
 			dao.addToRootCollection(serviceJid, node);
@@ -199,7 +198,7 @@ public class CachedPubSubRepositoryTest {
 			@Override
 			public void checkAccessPermission(BareJID serviceJid, String nodeName, JID senderJid)
 					throws PubSubException, RepositoryException {
-				
+
 			}
 
 			@Override
@@ -240,11 +239,11 @@ public class CachedPubSubRepositoryTest {
 		f.set(cachedPubSubRepository, value);
 	}
 
-	public static class DummyPubSubDAO extends PubSubDAO {
+	public static class DummyPubSubDAO
+			extends PubSubDAO {
 
+		protected Map<BareJID, Set<String>> rootCollections = new ConcurrentHashMap<>();
 		protected boolean withDelay;
-
-		protected Map<BareJID,Set<String>> rootCollections = new ConcurrentHashMap<>();
 
 		@Override
 		public void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
@@ -406,7 +405,7 @@ public class CachedPubSubRepositoryTest {
 
 		@Override
 		public void setDataSource(DataSource dataSource) {
-			
+
 		}
 
 		protected void sleep() {

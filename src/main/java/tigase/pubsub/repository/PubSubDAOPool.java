@@ -35,8 +35,8 @@ import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.BasicComponent;
 import tigase.xml.Element;
-import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.mam.MAMRepository;
 
 import java.util.Date;
@@ -45,16 +45,16 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Bean(name="dao", parent = PubSubComponent.class, active = true)
-public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.Query> extends MDRepositoryBeanWithStatistics<IPubSubDAO<T, S, Q>>
-		implements IPubSubDAO<T, S, Q>  {
+@Bean(name = "dao", parent = PubSubComponent.class, active = true)
+public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.Query>
+		extends MDRepositoryBeanWithStatistics<IPubSubDAO<T, S, Q>>
+		implements IPubSubDAO<T, S, Q> {
 
 	private static final Logger log = Logger.getLogger(PubSubDAOPool.class.getName());
 
 	/**
-	 * Variable destroyed is set to true to ensure that all JDBC connections
-	 * will be closed and even if some of them were taken for execution in
-	 * moment of pool being destroyed.
+	 * Variable destroyed is set to true to ensure that all JDBC connections will be closed and even if some of them
+	 * were taken for execution in moment of pool being destroyed.
 	 */
 	private boolean destroyed = false;
 
@@ -85,8 +85,8 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig, NodeType nodeType,
-			T collectionId) throws RepositoryException {
+	public T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
+						NodeType nodeType, T collectionId) throws RepositoryException {
 		IPubSubDAO<T, DataSource, Q> dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -245,7 +245,8 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, T nodeId, String nodeName) throws RepositoryException {
+	public List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, T nodeId, String nodeName)
+			throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -364,13 +365,9 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 		return null;
 	}
 
-	@Deprecated
-	protected String getPoolDetails(BareJID serviceJid) {
-		return "";
-	}
-
 	@Override
-	public Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid) throws RepositoryException {
+	public Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid)
+			throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -394,7 +391,8 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID jid) throws RepositoryException {
+	public Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID jid)
+			throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -425,24 +423,6 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 		}
 	}
 
-	@Deprecated
-	protected void offerDao(BareJID serviceJid, IPubSubDAO dao) {
-		if (destroyed) {
-			dao.destroy();
-			return;
-		}
-	}
-
-	/*
-	 * //@Override protected String readNodeConfigFormData(BareJID serviceJid,
-	 * final long nodeId) throws TigaseDBException { IPubSubDAO dao =
-	 * takeDao(serviceJid); if (dao != null) { try { return
-	 * dao.readNodeConfigFormData(serviceJid, nodeName); } finally {
-	 * offerDao(serviceJid, dao); } } else { log.warning(
-	 * "dao is NULL, pool empty? - " + getPoolDetails(serviceJid)); } return
-	 * null; }
-	 */
-
 	@Override
 	public void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
@@ -470,6 +450,16 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
 		}
 	}
+
+	/*
+	 * //@Override protected String readNodeConfigFormData(BareJID serviceJid,
+	 * final long nodeId) throws TigaseDBException { IPubSubDAO dao =
+	 * takeDao(serviceJid); if (dao != null) { try { return
+	 * dao.readNodeConfigFormData(serviceJid, nodeName); } finally {
+	 * offerDao(serviceJid, dao); } } else { log.warning(
+	 * "dao is NULL, pool empty? - " + getPoolDetails(serviceJid)); } return
+	 * null; }
+	 */
 
 	@Override
 	public void removeNodeSubscription(BareJID serviceJid, T nodeId, BareJID jid) throws RepositoryException {
@@ -517,8 +507,8 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public void updateNodeConfig(final BareJID serviceJid, final T nodeId, final String serializedData, final T collectionId)
-			throws RepositoryException {
+	public void updateNodeConfig(final BareJID serviceJid, final T nodeId, final String serializedData,
+								 final T collectionId) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -548,7 +538,7 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 
 	@Override
 	public void writeItem(final BareJID serviceJid, T nodeId, long timeInMilis, final String id, final String publisher,
-			final Element item) throws RepositoryException {
+						  final Element item) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -572,17 +562,12 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 			}
 		} else {
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
-		}	}
-
-	@Override
-	public void setDataSource(DataSource dataSource) {
-	   	// This is pool so there is nothing to do here
+		}
 	}
 
 	@Override
-	protected Class<? extends IPubSubDAO<T, S, Q>> findClassForDataSource(DataSource dataSource) throws DBInitException {
-		Class cls = DataSourceHelper.getDefaultClass(PubSubDAO.class, dataSource.getResourceUri());
-		return (Class<PubSubDAO<T, S, Q>>) cls;
+	public void setDataSource(DataSource dataSource) {
+		// This is pool so there is nothing to do here
 	}
 
 	@Override
@@ -590,7 +575,28 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 		return PubSubDAOConfigBean.class;
 	}
 
-	public static class PubSubDAOConfigBean extends MDRepositoryConfigBean<IPubSubDAO> {
+	@Deprecated
+	protected String getPoolDetails(BareJID serviceJid) {
+		return "";
+	}
+
+	@Deprecated
+	protected void offerDao(BareJID serviceJid, IPubSubDAO dao) {
+		if (destroyed) {
+			dao.destroy();
+			return;
+		}
+	}
+
+	@Override
+	protected Class<? extends IPubSubDAO<T, S, Q>> findClassForDataSource(DataSource dataSource)
+			throws DBInitException {
+		Class cls = DataSourceHelper.getDefaultClass(PubSubDAO.class, dataSource.getResourceUri());
+		return (Class<PubSubDAO<T, S, Q>>) cls;
+	}
+
+	public static class PubSubDAOConfigBean
+			extends MDRepositoryConfigBean<IPubSubDAO> {
 
 	}
 }

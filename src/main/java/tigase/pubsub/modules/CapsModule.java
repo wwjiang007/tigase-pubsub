@@ -36,25 +36,26 @@ import tigase.pubsub.PubSubComponent;
 import tigase.server.Packet;
 import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
-import tigase.xmpp.jid.JID;
 import tigase.xmpp.impl.PresenceCapabilitiesManager;
+import tigase.xmpp.jid.JID;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Queue;
 
 /**
- *
  * @author andrzej
  */
 @Bean(name = "capsModule", parent = PubSubComponent.class, active = true)
-public class CapsModule extends AbstractPubSubModule {
+public class CapsModule
+		extends AbstractPubSubModule {
 
-	private static final Criteria CRIT = new Or(
-			ElementCriteria.nameType("iq", "result").add(
-					ElementCriteria.name("query", "http://jabber.org/protocol/disco#info")),
-			ElementCriteria.nameType("iq", "error").add(
-					ElementCriteria.name("query", "http://jabber.org/protocol/disco#info")));
+	private static final Criteria CRIT = new Or(ElementCriteria.nameType("iq", "result")
+														.add(ElementCriteria.name("query",
+																				  "http://jabber.org/protocol/disco#info")),
+												ElementCriteria.nameType("iq", "error")
+														.add(ElementCriteria.name("query",
+																				  "http://jabber.org/protocol/disco#info")));
 
 	private static String[] FEATURES = {};
 
@@ -80,6 +81,7 @@ public class CapsModule extends AbstractPubSubModule {
 	 * Processes presence packet and send disco#info queries when needed
 	 *
 	 * @param packet
+	 *
 	 * @return
 	 */
 	public String[] processPresence(Packet packet) {

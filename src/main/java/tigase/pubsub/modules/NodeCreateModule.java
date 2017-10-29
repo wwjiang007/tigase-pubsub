@@ -41,32 +41,17 @@ import java.util.UUID;
  * Case 8.1.2
  *
  * @author bmalkow
- *
  */
 @Bean(name = "nodeCreateModule", parent = PubSubComponent.class, active = true)
-public class NodeCreateModule extends AbstractConfigCreateNode {
+public class NodeCreateModule
+		extends AbstractConfigCreateNode {
 
-	public static class NodeCreatedEvent {
-
-		public final BareJID serviceJid;
-
-		public final String node;
-
-		public NodeCreatedEvent(BareJID serviceJid, String node) {
-			this.serviceJid = serviceJid;
-			this.node = node;
-		}
-
-	}
-
-	private static final Criteria CRIT_CREATE = ElementCriteria.nameType("iq", "set").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("create"));
-
+	private static final Criteria CRIT_CREATE = ElementCriteria.nameType("iq", "set")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
+			.add(ElementCriteria.name("create"));
 	private final LeafNodeConfig defaultPepNodeConfig;
-
 	@Inject
 	private EventBus eventBus;
-
 	@Inject
 	private PublishItemModule publishModule;
 
@@ -81,22 +66,24 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#create-and-configure",
-				"http://jabber.org/protocol/pubsub#collections", "http://jabber.org/protocol/pubsub#create-nodes",
-				"http://jabber.org/protocol/pubsub#instant-nodes", "http://jabber.org/protocol/pubsub#multi-collection",
-				"http://jabber.org/protocol/pubsub#access-authorize", "http://jabber.org/protocol/pubsub#access-open",
-				"http://jabber.org/protocol/pubsub#access-presence", "http://jabber.org/protocol/pubsub#access-roster",
-				"http://jabber.org/protocol/pubsub#access-whitelist", };
+		return new String[]{"http://jabber.org/protocol/pubsub#create-and-configure",
+							"http://jabber.org/protocol/pubsub#collections",
+							"http://jabber.org/protocol/pubsub#create-nodes",
+							"http://jabber.org/protocol/pubsub#instant-nodes",
+							"http://jabber.org/protocol/pubsub#multi-collection",
+							"http://jabber.org/protocol/pubsub#access-authorize",
+							"http://jabber.org/protocol/pubsub#access-open",
+							"http://jabber.org/protocol/pubsub#access-presence",
+							"http://jabber.org/protocol/pubsub#access-roster",
+							"http://jabber.org/protocol/pubsub#access-whitelist",};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -108,8 +95,8 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @return
 	 *
 	 * @throws PubSubException
@@ -132,14 +119,16 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 			if (getRepository().getNodeConfig(toJid, nodeName) != null) {
 				throw new PubSubException(element, Authorization.CONFLICT);
 			}
-			if (toJid.getLocalpart() != null && !toJid.equals(packet.getStanzaFrom().getBareJID()))
+			if (toJid.getLocalpart() != null && !toJid.equals(packet.getStanzaFrom().getBareJID())) {
 				throw new PubSubException(Authorization.FORBIDDEN);
+			}
 
 			NodeType nodeType = NodeType.leaf;
 			String collection = null;
 			AbstractNodeConfig defaultNodeConfig = this.defaultNodeConfig;
-			if (toJid.getLocalpart() != null)
+			if (toJid.getLocalpart() != null) {
 				defaultNodeConfig = this.defaultPepNodeConfig;
+			}
 
 			AbstractNodeConfig nodeConfig = new LeafNodeConfig(nodeName, defaultNodeConfig);
 
@@ -162,11 +151,11 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 								collection = val;
 							}
 							if (val != null) {
-								if (!config.isSendLastPublishedItemOnPresence()
-										&& "pubsub#send_last_published_item".equals(var)) {
+								if (!config.isSendLastPublishedItemOnPresence() &&
+										"pubsub#send_last_published_item".equals(var)) {
 									if (SendLastPublishedItem.on_sub_and_presence.name().equals(val)) {
 										throw new PubSubException(Authorization.NOT_ACCEPTABLE,
-												"Requested on_sub_and_presence mode for sending last published item is disabled.");
+																  "Requested on_sub_and_presence mode for sending last published item is disabled.");
 									}
 								}
 							}
@@ -199,7 +188,7 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 				throw new PubSubException(Authorization.NOT_ALLOWED);
 			}
 			getRepository().createNode(toJid, nodeName, packet.getStanzaFrom().getBareJID(), nodeConfig, nodeType,
-					(collection == null) ? "" : collection);
+									   (collection == null) ? "" : collection);
 
 			ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(toJid, nodeName);
 			IAffiliations nodeaAffiliations = getRepository().getNodeAffiliations(toJid, nodeName);
@@ -221,16 +210,16 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 			if (collection != null) {
 				ISubscriptions colNodeSubscriptions = this.getRepository().getNodeSubscriptions(toJid, collection);
 				IAffiliations colNodeAffiliations = this.getRepository().getNodeAffiliations(toJid, collection);
-				Element colE = new Element("collection", new String[] { "node" }, new String[] { collection });
+				Element colE = new Element("collection", new String[]{"node"}, new String[]{collection});
 
-				colE.addChild(new Element("associate", new String[] { "node" }, new String[] { nodeName }));
+				colE.addChild(new Element("associate", new String[]{"node"}, new String[]{nodeName}));
 				publishModule.sendNotifications(colE, packet.getStanzaTo(), collection, nodeConfig, colNodeAffiliations,
-						colNodeSubscriptions);
+												colNodeSubscriptions);
 			}
 			if (instantNode) {
-				Element ps = new Element("pubsub", new String[] { "xmlns" },
-						new String[] { "http://jabber.org/protocol/pubsub" });
-				Element cr = new Element("create", new String[] { "node" }, new String[] { nodeName });
+				Element ps = new Element("pubsub", new String[]{"xmlns"},
+										 new String[]{"http://jabber.org/protocol/pubsub"});
+				Element cr = new Element("create", new String[]{"node"}, new String[]{nodeName});
 
 				ps.addChild(cr);
 				result.getElement().addChild(ps);
@@ -245,6 +234,18 @@ public class NodeCreateModule extends AbstractConfigCreateNode {
 
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static class NodeCreatedEvent {
+
+		public final String node;
+		public final BareJID serviceJid;
+
+		public NodeCreatedEvent(BareJID serviceJid, String node) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+		}
+
 	}
 
 }

@@ -30,8 +30,8 @@ import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xml.Element;
-import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.mam.MAMRepository;
 
 import java.util.Date;
@@ -41,15 +41,14 @@ import java.util.Map;
 /**
  * Interface description
  *
- *
- * @version 5.0.0, 2010.03.27 at 05:16:25 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.0.0, 2010.03.27 at 05:16:25 GMT
  */
-public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends DataSourceAware<S> {
+public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
+		extends DataSourceAware<S> {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 *
@@ -60,7 +59,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 * @param ownerJid
 	 * @param nodeConfig
@@ -70,11 +68,10 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	 * @throws RepositoryException
 	 */
 	public abstract T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-			NodeType nodeType, T collectionId) throws RepositoryException;
+								 NodeType nodeType, T collectionId) throws RepositoryException;
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 * @param id
@@ -86,7 +83,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 *
 	 * @throws RepositoryException
@@ -95,7 +91,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 
 	/**
 	 * Method description
-	 *
 	 */
 	public void destroy();
 
@@ -110,7 +105,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 *
 	 * @throws RepositoryException
@@ -121,7 +115,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 * @param id
@@ -141,7 +134,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 * @param id
 	 *
@@ -154,7 +146,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 *
 	 * @return
@@ -165,7 +156,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 *
@@ -180,10 +170,9 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	public T getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	public INodeMeta<T> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException;
-	
+
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 *
@@ -216,12 +205,11 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 			throws RepositoryException, ComponentException;
 
 	public void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException;
-	
+
 	void removeService(BareJID serviceJid) throws RepositoryException;
-	
+
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 *
@@ -234,7 +222,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 * @param affiliations
 	 *
@@ -246,21 +233,19 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 * @param nodeConfig
 	 *
 	 * @throws RepositoryException
 	 */
-	public abstract void updateNodeConfig(BareJID serviceJid, final T nodeId, final String serializedData, T collectionId)
-			throws RepositoryException;
+	public abstract void updateNodeConfig(BareJID serviceJid, final T nodeId, final String serializedData,
+										  T collectionId) throws RepositoryException;
 
-	public void updateNodeSubscription(BareJID serviceJid, T nodeId, String nodeName, UsersSubscription userSubscription)
-			throws RepositoryException;
+	public void updateNodeSubscription(BareJID serviceJid, T nodeId, String nodeName,
+									   UsersSubscription userSubscription) throws RepositoryException;
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 * @param timeInMilis
@@ -271,6 +256,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query> extends Da
 	 * @throws RepositoryException
 	 */
 	public abstract void writeItem(BareJID serviceJid, T nodeId, long timeInMilis, final String id,
-			final String publisher, final Element item) throws RepositoryException;
-	
+								   final String publisher, final Element item) throws RepositoryException;
+
 }

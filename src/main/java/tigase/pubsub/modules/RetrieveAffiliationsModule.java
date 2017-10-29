@@ -37,31 +37,30 @@ import java.util.Map;
 
 /**
  * Class description
- *
- *
  */
 @Bean(name = "retrieveAffiliationsModule", parent = PubSubComponent.class, active = true)
-public class RetrieveAffiliationsModule extends AbstractPubSubModule {
-	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("affiliations"));
+public class RetrieveAffiliationsModule
+		extends AbstractPubSubModule {
+
+	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
+			.add(ElementCriteria.name("affiliations"));
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#retrieve-affiliations",
-				"http://jabber.org/protocol/pubsub#publisher-affiliation",
-				"http://jabber.org/protocol/pubsub#outcast-affiliation",
-				"http://jabber.org/protocol/pubsub#member-affiliation" };
+		return new String[]{"http://jabber.org/protocol/pubsub#retrieve-affiliations",
+							"http://jabber.org/protocol/pubsub#publisher-affiliation",
+							"http://jabber.org/protocol/pubsub#outcast-affiliation",
+							"http://jabber.org/protocol/pubsub#member-affiliation"};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -73,8 +72,8 @@ public class RetrieveAffiliationsModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @return
 	 *
 	 * @throws PubSubException
@@ -86,8 +85,8 @@ public class RetrieveAffiliationsModule extends AbstractPubSubModule {
 			final Element pubsub = packet.getElement().getChild("pubsub", "http://jabber.org/protocol/pubsub");
 			final Element affiliations = pubsub.getChild("affiliations");
 			final BareJID senderBareJid = packet.getStanzaFrom().getBareJID();
-			final Element pubsubResult = new Element("pubsub", new String[] { "xmlns" },
-					new String[] { "http://jabber.org/protocol/pubsub" });
+			final Element pubsubResult = new Element("pubsub", new String[]{"xmlns"},
+													 new String[]{"http://jabber.org/protocol/pubsub"});
 
 			final Packet result = packet.okResult(pubsubResult, 0);
 
@@ -99,8 +98,8 @@ public class RetrieveAffiliationsModule extends AbstractPubSubModule {
 			Map<String, UsersAffiliation> userAffiliations = directRepo.getUserAffiliations(serviceJid, senderBareJid);
 			for (Map.Entry<String, UsersAffiliation> entry : userAffiliations.entrySet()) {
 				Affiliation affiliation = entry.getValue().getAffiliation();
-				Element a = new Element("affiliation", new String[] { "node", "affiliation" },
-						new String[] { entry.getKey(), affiliation.name() });
+				Element a = new Element("affiliation", new String[]{"node", "affiliation"},
+										new String[]{entry.getKey(), affiliation.name()});
 
 				affiliationsResult.addChild(a);
 			}

@@ -28,28 +28,20 @@ import tigase.xmpp.jid.JID;
 
 import java.util.logging.Logger;
 
-public class LoadTestGenerator extends AbstractLoadRunner {
-
-	private final AbstractMessageReceiver component;
-
+public class LoadTestGenerator
+		extends AbstractLoadRunner {
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
-
+	private final AbstractMessageReceiver component;
+	private final boolean useBlockingMethod;
 	private String nodeName;
-
 	private JID packetFromJid;
-
 	private Element payload;
-
 	private BareJID publisher;
-
 	private BareJID serviceJid;
 
-
-	private final boolean useBlockingMethod;
-
-	public LoadTestGenerator(AbstractMessageReceiver component, BareJID serviceJid, String node, BareJID publisher, long time,
-			long frequency, int messageLength, boolean useBlockingMethod) {
+	public LoadTestGenerator(AbstractMessageReceiver component, BareJID serviceJid, String node, BareJID publisher,
+							 long time, long frequency, int messageLength, boolean useBlockingMethod) {
 		super(time, frequency);
 		this.component = component;
 		this.serviceJid = serviceJid;
@@ -67,18 +59,19 @@ public class LoadTestGenerator extends AbstractLoadRunner {
 
 	}
 
-
 	protected void doWork() throws Exception {
-		Element item = new Element("item", new String[] { "id" }, new String[] { getCounter() + "-" + getTestEndTime() });
+		Element item = new Element("item", new String[]{"id"}, new String[]{getCounter() + "-" + getTestEndTime()});
 		item.addChild(payload);
 
-		Element iq = new Element("iq", new String[] { "type", "from", "to", "id" }, new String[] { "set", publisher.toString(),
-				serviceJid.toString(), "pub-" + getCounter() + "-" + getTestEndTime() });
+		Element iq = new Element("iq", new String[]{"type", "from", "to", "id"},
+								 new String[]{"set", publisher.toString(), serviceJid.toString(),
+											  "pub-" + getCounter() + "-" + getTestEndTime()});
 
-		Element pubsub = new Element("pubsub", new String[] { "xmlns" }, new String[] { "http://jabber.org/protocol/pubsub" });
+		Element pubsub = new Element("pubsub", new String[]{"xmlns"},
+									 new String[]{"http://jabber.org/protocol/pubsub"});
 		iq.addChild(pubsub);
 
-		Element publish = new Element("publish", new String[] { "node" }, new String[] { nodeName });
+		Element publish = new Element("publish", new String[]{"node"}, new String[]{nodeName});
 		pubsub.addChild(publish);
 
 		publish.addChild(item);
@@ -88,12 +81,12 @@ public class LoadTestGenerator extends AbstractLoadRunner {
 		p.setPacketFrom(packetFromJid);
 
 		if (component != null) {
-			if (useBlockingMethod)
+			if (useBlockingMethod) {
 				component.addPacket(p);
-			else
+			} else {
 				component.addPacketNB(p);
+			}
 		}
 	}
-
 
 }

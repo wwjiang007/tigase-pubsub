@@ -23,11 +23,11 @@ package tigase.pubsub.repository.stateless;
 import tigase.pubsub.Affiliation;
 import tigase.xmpp.jid.BareJID;
 
-public class UsersAffiliation implements Cloneable {
-
-	private Affiliation affiliation;
+public class UsersAffiliation
+		implements Cloneable {
 
 	private final BareJID jid;
+	private Affiliation affiliation;
 
 	public UsersAffiliation(final BareJID jid) {
 		this.affiliation = Affiliation.none;
@@ -49,12 +49,12 @@ public class UsersAffiliation implements Cloneable {
 		return affiliation;
 	}
 
-	public BareJID getJid() {
-		return jid;
-	}
-
 	public void setAffiliation(Affiliation affiliation) {
 		this.affiliation = affiliation;
+	}
+
+	public BareJID getJid() {
+		return jid;
 	}
 
 	@Override

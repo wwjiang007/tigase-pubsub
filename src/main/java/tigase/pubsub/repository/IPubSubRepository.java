@@ -20,29 +20,28 @@
 
 package tigase.pubsub.repository;
 
-import java.util.Map;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.mam.MAMRepository;
+
+import java.util.Map;
 
 /**
  * Interface description
  *
- *
- * @version 5.0.0, 2010.03.27 at 05:20:15 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.0.0, 2010.03.27 at 05:20:15 GMT
  */
-public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepository.Item> {
+public interface IPubSubRepository
+		extends MAMRepository<Query, IPubSubRepository.Item> {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 *
@@ -53,7 +52,6 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 * @param ownerJid
 	 * @param nodeConfig
@@ -62,12 +60,12 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 	 *
 	 * @throws RepositoryException
 	 */
-	public abstract void createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-			NodeType nodeType, String collection) throws RepositoryException;
+	public abstract void createNode(BareJID serviceJid, String nodeName, BareJID ownerJid,
+									AbstractNodeConfig nodeConfig, NodeType nodeType, String collection)
+			throws RepositoryException;
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 *
@@ -77,13 +75,11 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 
 	/**
 	 * Method description
-	 *
 	 */
 	public void destroy();
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 *
@@ -93,7 +89,6 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param owner
 	 * @param bareJid
@@ -107,7 +102,6 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param owner
 	 * @param buddy
@@ -124,7 +118,6 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 *
 	 * @return
@@ -136,7 +129,6 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 *
 	 * @return
@@ -147,7 +139,6 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 *
@@ -162,7 +153,6 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 *
 	 * @return
@@ -174,14 +164,12 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	public abstract IPubSubDAO getPubSubDAO();
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 *
@@ -191,7 +179,6 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param owner
 	 *
@@ -206,13 +193,11 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 
 	/**
 	 * Method description
-	 *
 	 */
 	public abstract void init();
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 *
@@ -223,17 +208,16 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 * @param nodeConfig
 	 *
 	 * @throws RepositoryException
 	 */
-	public abstract void update(BareJID serviceJid, String nodeName, AbstractNodeConfig nodeConfig) throws RepositoryException;
+	public abstract void update(BareJID serviceJid, String nodeName, AbstractNodeConfig nodeConfig)
+			throws RepositoryException;
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param nodeName
 	 * @param affiliations
@@ -245,17 +229,17 @@ public interface IPubSubRepository extends MAMRepository<Query, IPubSubRepositor
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 * @param subscriptions
 	 *
 	 * @throws RepositoryException
 	 */
 	public void update(BareJID serviceJid, String nodeName, ISubscriptions subscriptions) throws RepositoryException;
-	
+
 	public void onUserRemoved(BareJID userJid) throws RepositoryException;
 
-	interface Item extends MAMRepository.Item {
+	interface Item
+			extends MAMRepository.Item {
 
 		String getItemId();
 

@@ -49,47 +49,53 @@ eventBus = (EventBus) eventBus
 @CompileStatic
 Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus, Set admins) {
 
-    def componentConfig = kernel.getInstance(PubSubConfig.class)
+	def componentConfig = kernel.getInstance(PubSubConfig.class)
 
-    IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
+	IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 
-    def stanzaFromBare = p.getStanzaFrom().getBareJID()
-    def isServiceAdmin = admins.contains(stanzaFromBare)
+	def stanzaFromBare = p.getStanzaFrom().getBareJID()
+	def isServiceAdmin = admins.contains(stanzaFromBare)
 
-    def result = p.commandResult(Command.DataType.result);
-    Command.addTitle(result, "List of available nodes");
+	def result = p.commandResult(Command.DataType.result);
+	Command.addTitle(result, "List of available nodes");
 
-    try {
-        if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
-            def serviceJid = p.getStanzaTo().getBareJID();
+	try {
+		if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
+			def serviceJid = p.getStanzaTo().getBareJID();
 			try {
-            	def nodes = pubsubRepository.getRootCollection(serviceJid);
+				def nodes = pubsubRepository.getRootCollection(serviceJid);
 
-            	Command.addFieldMultiValue(result, "nodes", nodes as List);
-            	result.getElement().getChild('command').getChild('x').getChildren().find { e -> e.getAttribute("var") == "nodes" }?.setAttribute("label", "Nodes");
+				Command.addFieldMultiValue(result, "nodes", nodes as List);
+				result.getElement().
+						getChild('command').
+						getChild('x').
+						getChildren().
+						find { e -> e.getAttribute("var") == "nodes" }?.
+						setAttribute("label", "Nodes");
 			} catch (tigase.pubsub.repository.cached.CachedPubSubRepository.RootCollectionSet.IllegalStateException ex) {
 				throw new PubSubException(Authorization.RESOURCE_CONSTRAINT);
 			}
 		} else {
-            throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
-                    "permissions to list available nodes.");
-        }
-    } catch (PubSubException ex) {
-        Command.addTextField(result, "Error", ex.getMessage())
-        if (ex.getErrorCondition()) {
-            def error = ex.getErrorCondition();
-            Element errorEl = new Element("error");
-            errorEl.setAttribute("type", error.getErrorType());
-            Element conditionEl = new Element(error.getCondition(), ex.getMessage());
-            conditionEl.setXMLNS(Packet.ERROR_NS);
-            errorEl.addChild(conditionEl);
-            Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
-            if (pubsubCondition)
-                errorEl.addChild(pubsubCondition);
-            result.getElement().addChild(errorEl);
-        }
-    }
-    return result;
+			throw new PubSubException(Authorization.FORBIDDEN,
+									  "You do not have enough " + "permissions to list available nodes.");
+		}
+	} catch (PubSubException ex) {
+		Command.addTextField(result, "Error", ex.getMessage())
+		if (ex.getErrorCondition()) {
+			def error = ex.getErrorCondition();
+			Element errorEl = new Element("error");
+			errorEl.setAttribute("type", error.getErrorType());
+			Element conditionEl = new Element(error.getCondition(), ex.getMessage());
+			conditionEl.setXMLNS(Packet.ERROR_NS);
+			errorEl.addChild(conditionEl);
+			Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
+			if (pubsubCondition) {
+				errorEl.addChild(pubsubCondition)
+			};
+			result.getElement().addChild(errorEl);
+		}
+	}
+	return result;
 }
 
 return process(kernel, component, packet, eventBus, (Set) adminsSet)

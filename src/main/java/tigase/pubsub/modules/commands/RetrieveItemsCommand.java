@@ -44,7 +44,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 @Bean(name = "retrieveItemsCommand", parent = PubSubComponent.class, active = true)
-public class RetrieveItemsCommand implements AdHocCommand {
+public class RetrieveItemsCommand
+		implements AdHocCommand {
 
 	public static final String TIGASE_PUBSUB_INTERNAL_KEY = "tigase-pubsub#internal";
 
@@ -55,12 +56,9 @@ public class RetrieveItemsCommand implements AdHocCommand {
 	public static final String TIGASE_PUBSUB_SERVICE_KEY = "tigase-pubsub#service-name";
 
 	public static final String TIGASE_PUBSUB_TIMESTAMP_KEY = "tigase-pubsub#timestamp";
-
+	private final DateTimeFormatter dtf = new DateTimeFormatter();
 	@Inject
 	private PubSubConfig config;
-
-	private final DateTimeFormatter dtf = new DateTimeFormatter();
-
 	@Inject
 	private IPubSubRepository repository;
 
@@ -81,8 +79,8 @@ public class RetrieveItemsCommand implements AdHocCommand {
 					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_SERVICE_KEY, "", "Service name"));
 					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_NODENAME_KEY, "", "Node name"));
 					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_ITEMID_KEY, "", "Item ID"));
-					form.addField(
-							Field.fieldTextSingle(TIGASE_PUBSUB_TIMESTAMP_KEY, dtf.formatDateTime(new Date()), "Items since"));
+					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_TIMESTAMP_KEY, dtf.formatDateTime(new Date()),
+														"Items since"));
 					form.addField(Field.fieldHidden(TIGASE_PUBSUB_INTERNAL_KEY, ""));
 
 					response.getElements().add(form.getElement());
@@ -96,8 +94,8 @@ public class RetrieveItemsCommand implements AdHocCommand {
 						String nodeName = form.getAsString(TIGASE_PUBSUB_NODENAME_KEY);
 						String nodeId = form.getAsString(TIGASE_PUBSUB_ITEMID_KEY);
 						String timeStr = form.getAsString(TIGASE_PUBSUB_TIMESTAMP_KEY);
-						final Calendar timestamp = timeStr == null || timeStr.trim().length() == 0 ? null
-								: dtf.parseDateTime(timeStr);
+						final Calendar timestamp =
+								timeStr == null || timeStr.trim().length() == 0 ? null : dtf.parseDateTime(timeStr);
 						String internalId = form.getAsString(TIGASE_PUBSUB_INTERNAL_KEY);
 
 						final JID sender = request.getSender();
@@ -116,14 +114,14 @@ public class RetrieveItemsCommand implements AdHocCommand {
 
 						// ==================
 
-						Element f = new Element("x", new String[] { "xmlns" }, new String[] { "jabber:x:data" });
+						Element f = new Element("x", new String[]{"xmlns"}, new String[]{"jabber:x:data"});
 						IItems nodeItems;
 						if (null != serviceName) {
 							nodeItems = repository.getNodeItems(BareJID.bareJIDInstance(serviceName), nodeName);
 						} else {
 							f.addChild(new Element("title", "Items"));
 							Element reported = new Element("reported");
-							reported.addChild(new Element("field", new String[] { "var" }, new String[] { "id" }));
+							reported.addChild(new Element("field", new String[]{"var"}, new String[]{"id"}));
 							f.addChild(reported);
 
 							nodeItems = repository.getNodeItems(request.getIq().getTo().getBareJID(), nodeName);
@@ -132,8 +130,8 @@ public class RetrieveItemsCommand implements AdHocCommand {
 							final String[] itemsIds = nodeItems.getItemsIds();
 							if (null != itemsIds && Arrays.asList(itemsIds).contains(nodeId)) {
 								Element i = nodeItems.getItem(nodeId);
-								Element field = new Element("field", new String[] { "var" }, new String[] { "item" });
-								field.addChild(new Element("value", new Element[] { i }, null, null));
+								Element field = new Element("field", new String[]{"var"}, new String[]{"item"});
+								field.addChild(new Element("value", new Element[]{i}, null, null));
 
 								f.addChild(field);
 							}
@@ -141,7 +139,7 @@ public class RetrieveItemsCommand implements AdHocCommand {
 							String[] allItems = nodeItems.getItemsIdsSince(timestamp.getTime());
 							for (String id : allItems) {
 								Element i = new Element("item");
-								Element fi = new Element("field", new String[] { "var" }, new String[] { "id" });
+								Element fi = new Element("field", new String[]{"var"}, new String[]{"id"});
 								fi.addChild(new Element("value", id));
 								i.addChild(fi);
 								f.addChild(i);

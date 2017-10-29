@@ -25,7 +25,8 @@ import tigase.kernel.beans.Bean;
  * Created by andrzej on 10.07.2016.
  */
 @Bean(name = "defaultNodeConfig", parent = PubSubComponent.class, active = true)
-public class DefaultNodeConfig extends LeafNodeConfig {
+public class DefaultNodeConfig
+		extends LeafNodeConfig {
 
 	public DefaultNodeConfig() {
 		super("default");

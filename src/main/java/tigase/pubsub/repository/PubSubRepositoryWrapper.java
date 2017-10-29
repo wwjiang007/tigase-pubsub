@@ -28,12 +28,13 @@ import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticsList;
-import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.impl.roster.RosterElement;
+import tigase.xmpp.jid.BareJID;
 
 import java.util.Map;
 
-public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHolder {
+public class PubSubRepositoryWrapper
+		implements IPubSubRepository, StatisticHolder {
 
 	private IPubSubRepository repo;
 
@@ -48,7 +49,7 @@ public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHold
 
 	@Override
 	public void createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-			NodeType nodeType, String collection) throws RepositoryException {
+						   NodeType nodeType, String collection) throws RepositoryException {
 		repo.createNode(serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collection);
 	}
 
@@ -118,15 +119,16 @@ public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHold
 	}
 
 	@Override
-	public Map<BareJID,RosterElement> getUserRoster(BareJID owner) throws RepositoryException {
+	public Map<BareJID, RosterElement> getUserRoster(BareJID owner) throws RepositoryException {
 		return repo.getUserRoster(owner);
 	}
 
 	@Override
-	public Map<String,UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID userJid) throws RepositoryException {
+	public Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID userJid)
+			throws RepositoryException {
 		return repo.getUserSubscriptions(serviceJid, userJid);
 	}
-	
+
 	@Override
 	public void init() {
 		repo.init();
@@ -147,7 +149,7 @@ public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHold
 	public void removeFromRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
 		repo.removeFromRootCollection(serviceJid, nodeName);
 	}
-	
+
 	@Override
 	public void update(BareJID serviceJid, String nodeName, AbstractNodeConfig nodeConfig) throws RepositoryException {
 		repo.update(serviceJid, nodeName, nodeConfig);
@@ -165,7 +167,7 @@ public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHold
 
 	@Override
 	public void onUserRemoved(BareJID userJid) throws RepositoryException {
-		
+
 	}
 
 	@Override
@@ -179,14 +181,15 @@ public class PubSubRepositoryWrapper implements IPubSubRepository, StatisticHold
 	public void everyHour() {
 		if (repo instanceof StatisticHolder) {
 			((StatisticHolder) repo).everyHour();
-		}	
+		}
 	}
 
 	@Override
 	public void everyMinute() {
 		if (repo instanceof StatisticHolder) {
 			((StatisticHolder) repo).everyMinute();
-		}	}
+		}
+	}
 
 	@Override
 	public void everySecond() {

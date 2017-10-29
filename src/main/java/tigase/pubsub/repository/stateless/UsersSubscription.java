@@ -26,18 +26,18 @@ import tigase.xmpp.jid.BareJID;
 /**
  * Class description
  *
- *
- * @version 5.0.0, 2010.03.27 at 05:23:47 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.0.0, 2010.03.27 at 05:23:47 GMT
  */
-public class UsersSubscription implements Cloneable {
+public class UsersSubscription
+		implements Cloneable {
+
 	private final BareJID jid;
 	private final String subid;
 	private Subscription subscription;
 
 	/**
 	 * Constructs ...
-	 *
 	 *
 	 * @param jid
 	 * @param subid
@@ -53,7 +53,6 @@ public class UsersSubscription implements Cloneable {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 *
 	 * @throws CloneNotSupportedException
@@ -68,7 +67,6 @@ public class UsersSubscription implements Cloneable {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	public BareJID getJid() {
@@ -77,7 +75,6 @@ public class UsersSubscription implements Cloneable {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -88,7 +85,6 @@ public class UsersSubscription implements Cloneable {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	public Subscription getSubscription() {
@@ -97,7 +93,6 @@ public class UsersSubscription implements Cloneable {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param subscriptionType
 	 */

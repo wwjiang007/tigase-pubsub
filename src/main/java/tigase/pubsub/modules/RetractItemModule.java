@@ -36,53 +36,37 @@ import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Class description
- *
- *
  */
 @Bean(name = "retractItemModule", parent = PubSubComponent.class, active = true)
-public class RetractItemModule extends AbstractPubSubModule {
+public class RetractItemModule
+		extends AbstractPubSubModule {
 
-	public static class ItemRetractedEvent {
-
-		public final BareJID serviceJid;
-		public final String node;
-		public final Element notification;
-
-		public ItemRetractedEvent(BareJID serviceJid, String node, Element notification) {
-			this.serviceJid = serviceJid;
-			this.node = node;
-			this.notification = notification;
-		}
-
-	}
-
-	private static final Criteria CRIT_RETRACT = ElementCriteria.nameType("iq", "set").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("retract"));
-
+	private static final Criteria CRIT_RETRACT = ElementCriteria.nameType("iq", "set")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
+			.add(ElementCriteria.name("retract"));
 	@Inject
 	private EventBus eventBus;
-
 	@Inject
 	private PublishItemModule publishModule;
 
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#retract-items" };
+		return new String[]{"http://jabber.org/protocol/pubsub#retract-items"};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -94,8 +78,8 @@ public class RetractItemModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @return
 	 *
 	 * @throws PubSubException
@@ -118,11 +102,12 @@ public class RetractItemModule extends AbstractPubSubModule {
 				throw new PubSubException(packet.getElement(), Authorization.ITEM_NOT_FOUND);
 			} else if (nodeConfig.getNodeType() == NodeType.collection) {
 				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
-						new PubSubErrorCondition("unsupported", "retract-items"));
+										  new PubSubErrorCondition("unsupported", "retract-items"));
 			}
 
 			IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(toJid, nodeName);
-			UsersAffiliation affiliation = nodeAffiliations.getSubscriberAffiliation(packet.getStanzaFrom().getBareJID());
+			UsersAffiliation affiliation = nodeAffiliations.getSubscriberAffiliation(
+					packet.getStanzaFrom().getBareJID());
 
 			if (!affiliation.getAffiliation().isDeleteItem()) {
 				throw new PubSubException(Authorization.FORBIDDEN);
@@ -132,7 +117,7 @@ public class RetractItemModule extends AbstractPubSubModule {
 
 			if (!leafNodeConfig.isPersistItem()) {
 				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
-						new PubSubErrorCondition("unsupported", "persistent-items"));
+										  new PubSubErrorCondition("unsupported", "persistent-items"));
 			}
 
 			List<String> itemsToDelete = new ArrayList<String>();
@@ -165,7 +150,8 @@ public class RetractItemModule extends AbstractPubSubModule {
 
 						Element notification = new Element("retract", new String[]{"id"}, new String[]{id});
 
-						eventBus.fire(new ItemRetractedEvent(packet.getStanzaTo().getBareJID(), nodeName, notification));
+						eventBus.fire(
+								new ItemRetractedEvent(packet.getStanzaTo().getBareJID(), nodeName, notification));
 						itemsToSend.add(notification);
 					}
 				}
@@ -181,5 +167,19 @@ public class RetractItemModule extends AbstractPubSubModule {
 
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static class ItemRetractedEvent {
+
+		public final String node;
+		public final Element notification;
+		public final BareJID serviceJid;
+
+		public ItemRetractedEvent(BareJID serviceJid, String node, Element notification) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+			this.notification = notification;
+		}
+
 	}
 }

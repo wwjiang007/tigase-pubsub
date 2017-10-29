@@ -37,9 +37,9 @@ import tigase.server.Message;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
+import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
-import tigase.xmpp.StanzaType;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,26 +49,28 @@ import java.util.logging.Level;
 
 /**
  * Class description
- *
- *
  */
 @Bean(name = "manageAffiliationsModule", parent = PubSubComponent.class, active = true)
-public class ManageAffiliationsModule extends AbstractPubSubModule {
-	private static final Criteria CRIT = ElementCriteria.name("iq").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(
-					ElementCriteria.name("affiliations"));
+public class ManageAffiliationsModule
+		extends AbstractPubSubModule {
 
-	private static Packet createAffiliationNotification(JID fromJid, JID toJid, String nodeName, Affiliation affilation) {
+	private static final Criteria CRIT = ElementCriteria.name("iq")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner"))
+			.add(ElementCriteria.name("affiliations"));
+
+	private static Packet createAffiliationNotification(JID fromJid, JID toJid, String nodeName,
+														Affiliation affilation) {
 		Packet message = Message.getMessage(fromJid, toJid, null, null, null, null, null);
-		Element pubsub = new Element("pubsub", new String[] { "xmlns" }, new String[] { "http://jabber.org/protocol/pubsub" });
+		Element pubsub = new Element("pubsub", new String[]{"xmlns"},
+									 new String[]{"http://jabber.org/protocol/pubsub"});
 
 		message.getElement().addChild(pubsub);
 
-		Element affilations = new Element("affiliations", new String[] { "node" }, new String[] { nodeName });
+		Element affilations = new Element("affiliations", new String[]{"node"}, new String[]{nodeName});
 
 		pubsub.addChild(affilations);
-		affilations.addChild(new Element("affilation", new String[] { "jid", "affiliation" },
-				new String[] { toJid.toString(), affilation.name() }));
+		affilations.addChild(new Element("affilation", new String[]{"jid", "affiliation"},
+										 new String[]{toJid.toString(), affilation.name()}));
 
 		return message;
 	}
@@ -76,17 +78,15 @@ public class ManageAffiliationsModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#modify-affiliations" };
+		return new String[]{"http://jabber.org/protocol/pubsub#modify-affiliations"};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -98,8 +98,8 @@ public class ManageAffiliationsModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @return
 	 *
 	 * @throws PubSubException
@@ -153,13 +153,13 @@ public class ManageAffiliationsModule extends AbstractPubSubModule {
 	}
 
 	private void processGet(Packet packet, Element affiliations, String nodeName, final IAffiliations nodeAffiliations,
-			PacketWriter packetWriter) throws RepositoryException {
-		Element ps = new Element("pubsub", new String[] { "xmlns" },
-				new String[] { "http://jabber.org/protocol/pubsub#owner" });
+							PacketWriter packetWriter) throws RepositoryException {
+		Element ps = new Element("pubsub", new String[]{"xmlns"},
+								 new String[]{"http://jabber.org/protocol/pubsub#owner"});
 
 		Packet iq = packet.okResult(ps, 0);
 
-		Element afr = new Element("affiliations", new String[] { "node" }, new String[] { nodeName });
+		Element afr = new Element("affiliations", new String[]{"node"}, new String[]{nodeName});
 
 		ps.addChild(afr);
 
@@ -175,8 +175,8 @@ public class ManageAffiliationsModule extends AbstractPubSubModule {
 					continue;
 				}
 
-				Element affiliation = new Element("affiliation", new String[] { "jid", "affiliation" },
-						new String[] { affi.getJid().toString(), affi.getAffiliation().name() });
+				Element affiliation = new Element("affiliation", new String[]{"jid", "affiliation"},
+												  new String[]{affi.getJid().toString(), affi.getAffiliation().name()});
 
 				afr.addChild(affiliation);
 			}
@@ -190,8 +190,8 @@ public class ManageAffiliationsModule extends AbstractPubSubModule {
 	}
 
 	private void processSet(final Packet packet, final Element affiliations, final String nodeName,
-			final AbstractNodeConfig nodeConfig, final IAffiliations nodeAffiliations, PacketWriter packetWriter)
-					throws PubSubException, RepositoryException {
+							final AbstractNodeConfig nodeConfig, final IAffiliations nodeAffiliations,
+							PacketWriter packetWriter) throws PubSubException, RepositoryException {
 		List<Element> affs = affiliations.getChildren();
 
 		for (Element a : affs) {
@@ -230,8 +230,8 @@ public class ManageAffiliationsModule extends AbstractPubSubModule {
 
 		for (Map.Entry<JID, Affiliation> entry : changedAffiliations.entrySet()) {
 			if (nodeConfig.isTigaseNotifyChangeSubscriptionAffiliationState()) {
-				packetWriter.write(
-						createAffiliationNotification(packet.getStanzaTo(), entry.getKey(), nodeName, entry.getValue()));
+				packetWriter.write(createAffiliationNotification(packet.getStanzaTo(), entry.getKey(), nodeName,
+																 entry.getValue()));
 			}
 		}
 

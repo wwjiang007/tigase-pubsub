@@ -20,19 +20,20 @@
 
 package tigase.pubsub.modules.ext.presence;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import tigase.pubsub.Subscription;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Packet;
+import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
-import tigase.xmpp.StanzaType;
 
-public class PresenceNodeSubscriptions implements ISubscriptions {
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+public class PresenceNodeSubscriptions
+		implements ISubscriptions {
 
 	private final PresencePerNodeExtension extension;
 	private final String nodeName;
@@ -40,7 +41,7 @@ public class PresenceNodeSubscriptions implements ISubscriptions {
 	private final ISubscriptions subscriptions;
 
 	public PresenceNodeSubscriptions(BareJID serviceJid, String nodeName, ISubscriptions subscriptions,
-			PresenceNotifierModule presenceExtensionModule) {
+									 PresenceNotifierModule presenceExtensionModule) {
 		this.serviceJID = serviceJid;
 		this.nodeName = nodeName;
 		this.subscriptions = subscriptions;
@@ -103,13 +104,15 @@ public class PresenceNodeSubscriptions implements ISubscriptions {
 		for (JID jid : occupants) {
 			if (!result.containsKey(jid.getBareJID())) {
 				Packet pr = extension.getPresence(serviceJID, nodeName, jid);
-				if (pr.getType() == null || pr.getType() == StanzaType.available)
-					result.put(jid.getBareJID(), new UsersSubscription(jid.getBareJID(), "pr:" + jid.getBareJID().hashCode(),
-							Subscription.subscribed));
+				if (pr.getType() == null || pr.getType() == StanzaType.available) {
+					result.put(jid.getBareJID(),
+							   new UsersSubscription(jid.getBareJID(), "pr:" + jid.getBareJID().hashCode(),
+													 Subscription.subscribed));
+				}
 			}
 		}
 
-		return result.values().toArray(new UsersSubscription[] {});
+		return result.values().toArray(new UsersSubscription[]{});
 	}
 
 	@Override
@@ -129,8 +132,8 @@ public class PresenceNodeSubscriptions implements ISubscriptions {
 
 	@Override
 	public String toString() {
-		return "PresenceNodeSubscriptions{" + "extension=" + extension + ", nodeName=" + nodeName + ", serviceJID=" + serviceJID
-				+ ", subscriptions=" + subscriptions + '}';
+		return "PresenceNodeSubscriptions{" + "extension=" + extension + ", nodeName=" + nodeName + ", serviceJID=" +
+				serviceJID + ", subscriptions=" + subscriptions + '}';
 	}
 
 }

@@ -41,8 +41,8 @@ import tigase.xml.SingletonFactory;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.impl.roster.RosterFlat;
 import tigase.xmpp.jid.BareJID;
-import tigase.xmpp.rsm.RSM;
 import tigase.xmpp.mam.Query;
+import tigase.xmpp.rsm.RSM;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -50,10 +50,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author andrzej
  */
-public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.Query> implements IPubSubDAO<T, S, Q> {
+public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.Query>
+		implements IPubSubDAO<T, S, Q> {
 
 	protected static final Logger log = Logger.getLogger(PubSubDAO.class.getCanonicalName());
 
@@ -61,141 +61,8 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 	@Inject
 	private UserRepository repository;
 
-	protected PubSubDAO() {
-	}
-
-	@Override
-	public void destroy() {
-
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param owner
-	 * @param buddy
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	@Override
-	public String[] getBuddyGroups(BareJID owner, BareJID buddy) throws RepositoryException {
-		try {
-			return this.repository.getDataList(owner, "roster/" + buddy, "groups");
-		} catch (Exception e) {
-			throw new RepositoryException("Getting buddy groups error", e);
-		}
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param owner
-	 * @param buddy
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	@Override
-	public String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException {
-		try {
-			return this.repository.getData(owner, "roster/" + buddy, "subscription");
-		} catch (Exception e) {
-			throw new RepositoryException("Getting buddy subscription status error", e);
-		}
-	}
-
-	protected <T extends AbstractNodeConfig> T getNodeConfig(final Class<T> nodeConfigClass, final String nodeName,
-			final Form configForm) throws RepositoryException {
-		try {
-			Constructor<T> constructor = nodeConfigClass.getConstructor(String.class);
-			T nodeConfig = constructor.newInstance(nodeName);
-
-			nodeConfig.copyFromForm(configForm);
-
-			return nodeConfig;
-		} catch (Exception e) {
-			throw new RepositoryException("Node configuration reading error", e);
-		}
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param owner
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	@Override
-	public Map<BareJID, RosterElement> getUserRoster(BareJID owner) throws RepositoryException {
-		try {
-			String tmp = this.repository.getData(owner, "roster");
-			Map<BareJID, RosterElement> roster = new HashMap<BareJID, RosterElement>();
-			if (tmp != null) RosterFlat.parseRosterUtil(tmp, roster, null);
-			return roster;
-		} catch (UserNotFoundException ex) {
-			if (log.isLoggable(Level.FINER)) {
-				log.log(Level.FINER, "Cannot find roster of user {0}. Probably anonymous user.", new Object[] { owner });
-			}
-			return Collections.emptyMap();
-		} catch (Exception e) {
-			throw new RepositoryException("Getting user roster error", e);
-		}
-	}
-
-	protected Element itemDataToElement(String data) {
-		return itemDataToElement(data.toCharArray());
-	}
-
-	protected Element itemDataToElement(char[] data) {
-		DomBuilderHandler domHandler = new DomBuilderHandler();
-		parser.parse(domHandler, data, 0, data.length);
-		Queue<Element> q = domHandler.getParsedElements();
-
-		return q.element();
-	}
-
-	@Override
-	public AbstractNodeConfig parseConfig(String nodeName, String data) throws RepositoryException {
-
-		try {
-			Form cnfForm = parseConfigForm(data);
-
-			if (cnfForm == null) {
-				return null;
-			}
-
-			NodeType type = NodeType.valueOf(cnfForm.getAsString("pubsub#node_type"));
-			Class<? extends AbstractNodeConfig> cl = null;
-
-			switch (type) {
-			case collection:
-				cl = CollectionNodeConfig.class;
-				break;
-			case leaf:
-				cl = LeafNodeConfig.class;
-				break;
-			default:
-				throw new RepositoryException("Unknown node type " + type);
-			}
-
-			AbstractNodeConfig nc = getNodeConfig(cl, nodeName, cnfForm);
-			return nc;
-		} catch (RepositoryException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RepositoryException("Node configuration reading error", e);
-		}
-	}
-
-	protected static <Q extends Query> void calculateOffsetAndPosition(Q query, int count, Integer before, Integer after) {
+	protected static <Q extends Query> void calculateOffsetAndPosition(Q query, int count, Integer before,
+																	   Integer after) {
 		RSM rsm = query.getRsm();
 		int index = rsm.getIndex() == null ? 0 : rsm.getIndex();
 		int limit = rsm.getMax();
@@ -222,9 +89,143 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 		rsm.setCount(count);
 	}
 
+	protected PubSubDAO() {
+	}
+
+	@Override
+	public void destroy() {
+
+	}
+
+	/**
+	 * Method description
+	 *
+	 * @param owner
+	 * @param buddy
+	 *
+	 * @return
+	 *
+	 * @throws RepositoryException
+	 */
+	@Override
+	public String[] getBuddyGroups(BareJID owner, BareJID buddy) throws RepositoryException {
+		try {
+			return this.repository.getDataList(owner, "roster/" + buddy, "groups");
+		} catch (Exception e) {
+			throw new RepositoryException("Getting buddy groups error", e);
+		}
+	}
+
+	/**
+	 * Method description
+	 *
+	 * @param owner
+	 * @param buddy
+	 *
+	 * @return
+	 *
+	 * @throws RepositoryException
+	 */
+	@Override
+	public String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException {
+		try {
+			return this.repository.getData(owner, "roster/" + buddy, "subscription");
+		} catch (Exception e) {
+			throw new RepositoryException("Getting buddy subscription status error", e);
+		}
+	}
+
+	/**
+	 * Method description
+	 *
+	 * @param owner
+	 *
+	 * @return
+	 *
+	 * @throws RepositoryException
+	 */
+	@Override
+	public Map<BareJID, RosterElement> getUserRoster(BareJID owner) throws RepositoryException {
+		try {
+			String tmp = this.repository.getData(owner, "roster");
+			Map<BareJID, RosterElement> roster = new HashMap<BareJID, RosterElement>();
+			if (tmp != null) {
+				RosterFlat.parseRosterUtil(tmp, roster, null);
+			}
+			return roster;
+		} catch (UserNotFoundException ex) {
+			if (log.isLoggable(Level.FINER)) {
+				log.log(Level.FINER, "Cannot find roster of user {0}. Probably anonymous user.", new Object[]{owner});
+			}
+			return Collections.emptyMap();
+		} catch (Exception e) {
+			throw new RepositoryException("Getting user roster error", e);
+		}
+	}
+
+	@Override
+	public AbstractNodeConfig parseConfig(String nodeName, String data) throws RepositoryException {
+
+		try {
+			Form cnfForm = parseConfigForm(data);
+
+			if (cnfForm == null) {
+				return null;
+			}
+
+			NodeType type = NodeType.valueOf(cnfForm.getAsString("pubsub#node_type"));
+			Class<? extends AbstractNodeConfig> cl = null;
+
+			switch (type) {
+				case collection:
+					cl = CollectionNodeConfig.class;
+					break;
+				case leaf:
+					cl = LeafNodeConfig.class;
+					break;
+				default:
+					throw new RepositoryException("Unknown node type " + type);
+			}
+
+			AbstractNodeConfig nc = getNodeConfig(cl, nodeName, cnfForm);
+			return nc;
+		} catch (RepositoryException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RepositoryException("Node configuration reading error", e);
+		}
+	}
+
+	protected <T extends AbstractNodeConfig> T getNodeConfig(final Class<T> nodeConfigClass, final String nodeName,
+															 final Form configForm) throws RepositoryException {
+		try {
+			Constructor<T> constructor = nodeConfigClass.getConstructor(String.class);
+			T nodeConfig = constructor.newInstance(nodeName);
+
+			nodeConfig.copyFromForm(configForm);
+
+			return nodeConfig;
+		} catch (Exception e) {
+			throw new RepositoryException("Node configuration reading error", e);
+		}
+	}
+
+	protected Element itemDataToElement(String data) {
+		return itemDataToElement(data.toCharArray());
+	}
+
+	protected Element itemDataToElement(char[] data) {
+		DomBuilderHandler domHandler = new DomBuilderHandler();
+		parser.parse(domHandler, data, 0, data.length);
+		Queue<Element> q = domHandler.getParsedElements();
+
+		return q.element();
+	}
+
 	protected Form parseConfigForm(String cnfData) {
-		if (cnfData == null)
+		if (cnfData == null) {
 			return null;
+		}
 
 		char[] data = cnfData.toCharArray();
 		DomBuilderHandler domHandler = new DomBuilderHandler();
@@ -242,11 +243,11 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 	public static class Item<T>
 			implements IPubSubRepository.Item {
 
-		private Element item;
 		private final String itemId;
-		private final String nodeName;
 		private final T nodeId;
+		private final String nodeName;
 		private final Date ts;
+		private Element item;
 
 		public Item(String nodeName, T nodeId, String itemId, Date ts, Element item) {
 			this.nodeName = nodeName;
@@ -271,6 +272,10 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 			return item;
 		}
 
+		public void setMessage(Element item) {
+			this.item = item;
+		}
+
 		@Override
 		public Date getTimestamp() {
 			return ts;
@@ -279,10 +284,6 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 		@Override
 		public String getNode() {
 			return nodeName;
-		}
-
-		public void setMessage(Element item) {
-			this.item = item;
 		}
 	}
 

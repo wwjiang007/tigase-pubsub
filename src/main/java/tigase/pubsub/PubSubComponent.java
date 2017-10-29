@@ -53,43 +53,38 @@ import java.util.logging.Level;
 /**
  * Class description
  *
- *
- * @version 5.1.0, 2010.11.02 at 01:05:02 MDT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.1.0, 2010.11.02 at 01:05:02 MDT
  */
 @Bean(name = "pubsub", parent = Kernel.class, active = true)
 @ConfigType(ConfigTypeEnum.DefaultMode)
 @ClusterModeRequired(active = false)
-public class PubSubComponent extends AbstractKernelBasedComponent implements Configurable, DisableDisco {
-
-	/** Field description */
-	private static final String COMPONENT = "component";
+public class PubSubComponent
+		extends AbstractKernelBasedComponent
+		implements Configurable, DisableDisco {
 
 	/** Field description */
 	public static final String DEFAULT_LEAF_NODE_CONFIG_KEY = "default-node-config";
 	public static final String EVENT_XMLNS = "tigase:events:pubsub";
+	/** Field description */
+	private static final String COMPONENT = "component";
 
 	// ~--- fields
 	// ---------------------------------------------------------------
-
 	/** Field description */
 	@Inject(bean = "defaultNodeConfig")
 	protected LeafNodeConfig defaultNodeConfig;
-
+	/** Field description */
+	protected Integer maxRepositoryCacheSize;
 	@Inject
 	private IPubSubRepository pubsubRepository;
 
-	/** Field description */
-	protected Integer maxRepositoryCacheSize;
-
 	// ~--- methods
 	// --------------------------------------------------------------
-
 	private XsltTool xslTransformer;
 
 	/**
 	 * Constructs ...
-	 *
 	 */
 	public PubSubComponent() {
 	}
@@ -158,9 +153,7 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	/**
 	 * Method description
 	 *
-	 *
-	 * @param binds
-	 *            is a <code>Bindings</code>
+	 * @param binds is a <code>Bindings</code>
 	 */
 	@Override
 	public void initBindings(Bindings binds) {
@@ -178,7 +171,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
@@ -188,7 +180,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 
 	/**
 	 * Method description
-	 *
 	 */
 	@HandleEvent
 	public void onChangeDefaultNodeConfig(DefaultConfigCommand.DefaultNodeConfigurationChangedEvent event) {
@@ -209,9 +200,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	/**
 	 * Method description
 	 *
-	 *
-	 *
-	 *
 	 * @return a value of <code>int</code>
 	 */
 	@Override
@@ -225,9 +213,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 	/**
 	 * Method description
 	 *
-	 *
-	 *
-	 *
 	 * @return a value of <code>int</code>
 	 */
 	@Override
@@ -240,22 +225,45 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 
 	@Override
 	public void processPacket(Packet packet) {
-		if (!checkPubSubServiceJid(packet))
+		if (!checkPubSubServiceJid(packet)) {
 			return;
+		}
 
 		super.processPacket(packet);
 	}
 
 	@Override
 	public boolean processScriptCommand(Packet pc, Queue<Packet> results) {
-		if (!checkPubSubServiceJid(pc))
+		if (!checkPubSubServiceJid(pc)) {
 			return true;
+		}
 		return super.processScriptCommand(pc, results);
 	}
 
-
 	// ~--- inner classes
 	// --------------------------------------------------------
+
+	@Override
+	public void start() {
+		super.start();
+		eventBus.registerAll(this);
+	}
+
+	@Override
+	public void stop() {
+		super.stop();
+		eventBus.unregisterAll(this);
+	}
+
+	@HandleEvent
+	public void onUserRemoved(UserRepository.UserRemovedEvent event) {
+		try {
+			IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
+			pubsubRepository.onUserRemoved(event.jid);
+		} catch (RepositoryException ex) {
+			log.log(Level.WARNING, "could not remove PubSub data for removed user " + event.jid, ex);
+		}
+	}
 
 	@Override
 	protected void registerModules(final Kernel kernel) {
@@ -302,31 +310,20 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 		kernel.registerBean(GetFormModule.class).exec();
 	}
 
-	@Override
-	public void start() {
-		super.start();
-		eventBus.registerAll(this);
-	}
-
-	@Override
-	public void stop() {
-		super.stop();
-		eventBus.unregisterAll(this);
-	}
-
 	/**
-	 * Method checks if packet is sent to pubsub@xxx and if so then it returns error
-	 * as we no longer allow usage of pubsub@xxx address as pubsub service jid 
-	 * since we added support to use PEP and we have multiple domains support
+	 * Method checks if packet is sent to pubsub@xxx and if so then it returns error as we no longer allow usage of
+	 * pubsub@xxx address as pubsub service jid since we added support to use PEP and we have multiple domains support
 	 * with separated nodes.
-	 * 
+	 *
 	 * @param packet
+	 *
 	 * @return true - if packet service jid is ok and should be processed
 	 */
 	protected boolean checkPubSubServiceJid(Packet packet) {
 		// if stanza is addressed to getName()@domain then we need to return
 		// SERVICE_UNAVAILABLE error
-		if (packet.getStanzaTo() != null && getName().equals(packet.getStanzaTo().getLocalpart()) && packet.getType() != StanzaType.result) {
+		if (packet.getStanzaTo() != null && getName().equals(packet.getStanzaTo().getLocalpart()) &&
+				packet.getType() != StanzaType.result) {
 			try {
 				Packet result = Authorization.SERVICE_UNAVAILABLE.getResponseMessage(packet, null, true);
 				addOutPacket(result);
@@ -336,16 +333,6 @@ public class PubSubComponent extends AbstractKernelBasedComponent implements Con
 			return false;
 		}
 		return true;
-	}
-
-	@HandleEvent
-	public void onUserRemoved(UserRepository.UserRemovedEvent event) {
-		try {
-			IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
-			pubsubRepository.onUserRemoved(event.jid);
-		} catch (RepositoryException ex) {
-			log.log(Level.WARNING, "could not remove PubSub data for removed user " + event.jid, ex);
-		}
 	}
 
 }

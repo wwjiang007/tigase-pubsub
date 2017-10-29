@@ -40,20 +40,15 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 @Bean(name = "default-config-adhoc", parent = PubSubComponent.class, active = true)
-public class DefaultConfigCommand implements AdHocCommand {
+public class DefaultConfigCommand
+		implements AdHocCommand {
 
-	public static class DefaultNodeConfigurationChangedEvent {
-
-	}
-
+	protected Logger log = Logger.getLogger(this.getClass().getName());
 	@Inject
 	private PubSubConfig config;
 
 	@Inject
 	private EventBus eventbus;
-
-	protected Logger log = Logger.getLogger(this.getClass().getName());
-
 	@Inject
 	private UserRepository userRepository;
 
@@ -111,6 +106,10 @@ public class DefaultConfigCommand implements AdHocCommand {
 	@Override
 	public boolean isAllowedFor(JID jid) {
 		return Arrays.asList(config.getAdmins()).contains(jid.toString());
+	}
+
+	public static class DefaultNodeConfigurationChangedEvent {
+
 	}
 
 }

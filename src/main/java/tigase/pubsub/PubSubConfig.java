@@ -34,9 +34,8 @@ import java.util.logging.Logger;
 /**
  * Class description
  *
- *
- * @version 5.0.0, 2010.03.27 at 05:10:54 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.0.0, 2010.03.27 at 05:10:54 GMT
  */
 @Bean(name = "pubsubConfig", parent = PubSubComponent.class, active = true)
 public class PubSubConfig {
@@ -54,12 +53,10 @@ public class PubSubConfig {
 	@ConfigField(desc = "List of admins", alias = "admins")
 	protected String[] admins;
 	protected BareJID serviceBareJID = BareJID.bareJIDInstanceNS("tigase-pubsub");
-	@Inject
-	private PubSubComponent component;
-
 	@ConfigField(desc = "Automatically subscribe creator to node", alias = AUTO_SUBSCRIBE_NODE_CREATOR)
 	private boolean autoSubscribeNodeCreator = true;
-
+	@Inject
+	private PubSubComponent component;
 	@ConfigField(desc = "High memory usage level", alias = PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY)
 	private float highMemoryUsageLevel = 90;
 
@@ -78,8 +75,7 @@ public class PubSubConfig {
 	@ConfigField(desc = "Send Last Published Item on Presence", alias = PUBSUB_SEND_LAST_PUBLISHED_ITEM_ON_PRESECE_KEY)
 	private boolean sendLastPublishedItemOnPresence = true;
 
-	@ConfigField(desc = "Subscribe to open nodes with presence based filtered notifications to non-PEP services like in PEP",
-			alias = "subscribe-by-presence-filtered-notifications")
+	@ConfigField(desc = "Subscribe to open nodes with presence based filtered notifications to non-PEP services like in PEP", alias = "subscribe-by-presence-filtered-notifications")
 	private boolean subscribeByPresenceFilteredNotifications = false;
 
 	@ConfigField(desc = "Trust every XMPP entity", alias = "trust-every-entity")
@@ -87,7 +83,6 @@ public class PubSubConfig {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -97,7 +92,6 @@ public class PubSubConfig {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param strings
 	 */
@@ -124,20 +118,19 @@ public class PubSubConfig {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	public BareJID getServiceBareJID() {
 		return serviceBareJID;
 	}
-	
+
 	public void setProperties(Map<String, Object> props) {
 		if (props.containsKey(ADMINS_KEY)) {
 			admins = (String[]) props.get(ADMINS_KEY);
 		} else if (props.get(Configurable.GEN_ADMINS) != null) {
 			admins = ((String) props.get(Configurable.GEN_ADMINS)).split(",");
 		} else {
-			admins = new String[] { "admin@" + component.getDefHostName() };
+			admins = new String[]{"admin@" + component.getDefHostName()};
 		}
 	}
 
@@ -148,7 +141,6 @@ public class PubSubConfig {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param jid
 	 *
 	 * @return
@@ -157,7 +149,7 @@ public class PubSubConfig {
 		if (trustEveryEntity) {
 			return true;
 		}
-		
+
 		if ((jid == null) || (this.admins == null)) {
 			return false;
 		}
@@ -175,10 +167,6 @@ public class PubSubConfig {
 		return isAdmin(jid.getBareJID());
 	}
 
-	private boolean isHighMemoryUsage() {
-		return TigaseRuntime.getTigaseRuntime().getHeapMemUsage() > highMemoryUsageLevel;
-	}
-
 	public boolean isPepPeristent() {
 		return persistentPep;
 	}
@@ -193,6 +181,10 @@ public class PubSubConfig {
 
 	public boolean isSubscribeByPresenceFilteredNotifications() {
 		return subscribeByPresenceFilteredNotifications;
+	}
+
+	private boolean isHighMemoryUsage() {
+		return TigaseRuntime.getTigaseRuntime().getHeapMemUsage() > highMemoryUsageLevel;
 	}
 
 }

@@ -41,16 +41,21 @@ import java.util.List;
 
 /**
  * Class description
- *
- *
  */
 @Bean(name = "subscribeNodeModule", parent = PubSubComponent.class, active = true)
-public class SubscribeNodeModule extends AbstractPubSubModule {
-	private static final Criteria CRIT_SUBSCRIBE = ElementCriteria.nameType("iq", "set").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("subscribe"));
+public class SubscribeNodeModule
+		extends AbstractPubSubModule {
+
+	private static final Criteria CRIT_SUBSCRIBE = ElementCriteria.nameType("iq", "set")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
+			.add(ElementCriteria.name("subscribe"));
+	@Inject
+	private PendingSubscriptionModule pendingSubscriptionModule;
+	@Inject
+	private PublishItemModule publishItemModule;
 
 	private static Affiliation calculateNewOwnerAffiliation(final Affiliation ownerAffiliation,
-			final Affiliation newAffiliation) {
+															final Affiliation newAffiliation) {
 		if (ownerAffiliation.getWeight() > newAffiliation.getWeight()) {
 			return ownerAffiliation;
 		} else {
@@ -61,7 +66,6 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 * @param subscriberJid
 	 * @param newSubscription
@@ -69,9 +73,10 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 	 *
 	 * @return
 	 */
-	public static Element makeSubscription(String nodeName, BareJID subscriberJid, Subscription newSubscription, String subid) {
-		Element resPubSub = new Element("pubsub", new String[] { "xmlns" },
-				new String[] { "http://jabber.org/protocol/pubsub" });
+	public static Element makeSubscription(String nodeName, BareJID subscriberJid, Subscription newSubscription,
+										   String subid) {
+		Element resPubSub = new Element("pubsub", new String[]{"xmlns"},
+										new String[]{"http://jabber.org/protocol/pubsub"});
 		Element resSubscription = new Element("subscription");
 
 		resPubSub.addChild(resSubscription);
@@ -85,28 +90,21 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 		return resPubSub;
 	}
 
-	@Inject
-	private PendingSubscriptionModule pendingSubscriptionModule;
-
-	@Inject
-	private PublishItemModule publishItemModule;
-
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#manage-subscriptions",
-				"http://jabber.org/protocol/pubsub#auto-subscribe", "http://jabber.org/protocol/pubsub#subscribe",
-				"http://jabber.org/protocol/pubsub#subscription-notifications" };
+		return new String[]{"http://jabber.org/protocol/pubsub#manage-subscriptions",
+							"http://jabber.org/protocol/pubsub#auto-subscribe",
+							"http://jabber.org/protocol/pubsub#subscribe",
+							"http://jabber.org/protocol/pubsub#subscription-notifications"};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -118,8 +116,8 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @return
 	 *
 	 * @throws PubSubException
@@ -139,17 +137,18 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 			if (nodeConfig == null) {
 				throw new PubSubException(packet.getElement(), Authorization.ITEM_NOT_FOUND);
 			}
-			if ((nodeConfig.getNodeAccessModel() == AccessModel.open)
-					&& !Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains())) {
+			if ((nodeConfig.getNodeAccessModel() == AccessModel.open) &&
+					!Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains())) {
 				throw new PubSubException(Authorization.FORBIDDEN, "User blocked by domain");
 			}
 
 			IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJid, nodeName);
 			UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(senderJid.getBareJID());
 
-			if (!this.config.isAdmin(senderJid) && (senderAffiliation.getAffiliation() != Affiliation.owner)
-					&& !jid.equals((senderJid.getBareJID()))) {
-				throw new PubSubException(packet.getElement(), Authorization.BAD_REQUEST, PubSubErrorCondition.INVALID_JID);
+			if (!this.config.isAdmin(senderJid) && (senderAffiliation.getAffiliation() != Affiliation.owner) &&
+					!jid.equals((senderJid.getBareJID()))) {
+				throw new PubSubException(packet.getElement(), Authorization.BAD_REQUEST,
+										  PubSubErrorCondition.INVALID_JID);
 			}
 
 			ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(serviceJid, nodeName);
@@ -172,15 +171,15 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 			AccessModel accessModel = nodeConfig.getNodeAccessModel();
 
 			if (subscription != null) {
-				if ((subscription == Subscription.pending)
-						&& !(this.config.isAdmin(senderJid) || (senderAffiliation.getAffiliation() == Affiliation.owner))) {
+				if ((subscription == Subscription.pending) && !(this.config.isAdmin(senderJid) ||
+						(senderAffiliation.getAffiliation() == Affiliation.owner))) {
 					throw new PubSubException(Authorization.FORBIDDEN, PubSubErrorCondition.PENDING_SUBSCRIPTION,
-							"Subscription is pending");
+											  "Subscription is pending");
 				}
 			}
-			if ((accessModel == AccessModel.whitelist)
-					&& ((senderAffiliation == null) || (senderAffiliation.getAffiliation() == Affiliation.none)
-							|| (senderAffiliation.getAffiliation() == Affiliation.outcast))) {
+			if ((accessModel == AccessModel.whitelist) &&
+					((senderAffiliation == null) || (senderAffiliation.getAffiliation() == Affiliation.none) ||
+							(senderAffiliation.getAffiliation() == Affiliation.outcast))) {
 				throw new PubSubException(Authorization.NOT_ALLOWED, PubSubErrorCondition.CLOSED_NODE);
 			}
 
@@ -202,7 +201,7 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 
 				if (!allowed) {
 					throw new PubSubException(Authorization.NOT_AUTHORIZED,
-							PubSubErrorCondition.PRESENCE_SUBSCRIPTION_REQUIRED);
+											  PubSubErrorCondition.PRESENCE_SUBSCRIPTION_REQUIRED);
 				}
 				newSubscription = Subscription.subscribed;
 				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
@@ -219,7 +218,7 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
 			} else {
 				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
-						"AccessModel '" + accessModel.name() + "' is not implemented yet");
+										  "AccessModel '" + accessModel.name() + "' is not implemented yet");
 			}
 
 			String subid = nodeSubscriptions.getSubscriptionId(jid);
@@ -229,13 +228,14 @@ public class SubscribeNodeModule extends AbstractPubSubModule {
 			if (subid == null) {
 				subid = nodeSubscriptions.addSubscriberJid(jid, newSubscription);
 				nodeAffiliations.addAffiliation(jid, affiliation);
-				if ((accessModel == AccessModel.authorize)
-						&& !(this.config.isAdmin(senderJid) || (senderAffiliation.getAffiliation() == Affiliation.owner))) {
-					results.addAll(this.pendingSubscriptionModule.sendAuthorizationRequest(nodeName, packet.getStanzaTo(),
-							subid, jid, nodeAffiliations));
+				if ((accessModel == AccessModel.authorize) && !(this.config.isAdmin(senderJid) ||
+						(senderAffiliation.getAffiliation() == Affiliation.owner))) {
+					results.addAll(
+							this.pendingSubscriptionModule.sendAuthorizationRequest(nodeName, packet.getStanzaTo(),
+																					subid, jid, nodeAffiliations));
 				}
-				sendLastPublishedItem = nodeConfig.getSendLastPublishedItem() == SendLastPublishedItem.on_sub
-						|| nodeConfig.getSendLastPublishedItem() == SendLastPublishedItem.on_sub_and_presence;
+				sendLastPublishedItem = nodeConfig.getSendLastPublishedItem() == SendLastPublishedItem.on_sub ||
+						nodeConfig.getSendLastPublishedItem() == SendLastPublishedItem.on_sub_and_presence;
 			} else {
 				nodeSubscriptions.changeSubscription(jid, newSubscription);
 				nodeAffiliations.changeAffiliation(jid, affiliation);

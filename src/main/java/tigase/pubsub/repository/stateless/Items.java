@@ -29,7 +29,8 @@ import tigase.xmpp.jid.BareJID;
 import java.util.Date;
 import java.util.List;
 
-class Items implements IItems {
+class Items
+		implements IItems {
 
 	private final IPubSubDAO dao;
 

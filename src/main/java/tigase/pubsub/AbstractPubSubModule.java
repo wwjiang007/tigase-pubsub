@@ -43,21 +43,26 @@ import java.util.logging.Logger;
 /**
  * Class description
  *
- *
- * @version 5.0.0, 2010.03.27 at 05:24:03 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.0.0, 2010.03.27 at 05:24:03 GMT
  */
-public abstract class AbstractPubSubModule extends StatisticHolderImpl implements Module {
+public abstract class AbstractPubSubModule
+		extends StatisticHolderImpl
+		implements Module {
 
 	/** Field description */
 	protected final static Logger log = Logger.getLogger(AbstractPubSubModule.class.getName());
-
+	@Inject
+	protected PubSubConfig config;
 	@Inject
 	protected Logic logic;
+	@Inject
+	protected PacketWriter packetWriter;
+	@Inject(nullAllowed = false)
+	private IPubSubRepository repository;
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param iq
 	 *
@@ -87,7 +92,6 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param iq
 	 *
 	 * @return
@@ -98,7 +102,6 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param allSubscribers
 	 * @param jid
@@ -126,7 +129,6 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeConfig
 	 * @param jids
 	 * @param affiliations
@@ -135,13 +137,14 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 	 * @return
 	 */
 	public static Collection<BareJID> getActiveSubscribers(final AbstractNodeConfig nodeConfig, final BareJID[] jids,
-			final IAffiliations affiliations, final ISubscriptions subscriptions) {
+														   final IAffiliations affiliations,
+														   final ISubscriptions subscriptions) {
 		Set<BareJID> result = new HashSet<BareJID>();
 		final boolean presenceExpired = nodeConfig.isPresenceExpired();
 
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "getActiveSubscribers[2,1] subscriptions: {0}, jids: {1}, presenceExpired: {2}",
-					new Object[] { subscriptions, Arrays.asList(jids), presenceExpired });
+					new Object[]{subscriptions, Arrays.asList(jids), presenceExpired});
 		}
 
 		if (jids != null) {
@@ -153,7 +156,7 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 
 				if (log.isLoggable(Level.FINEST)) {
 					log.log(Level.FINEST, "getActiveSubscribers[2,2] jid: {0}, affiliation: {1}",
-							new Object[] { jid, affiliation });
+							new Object[]{jid, affiliation});
 				}
 
 				// /* && affiliation.getAffiliation() != Affiliation.none */
@@ -161,7 +164,7 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 					Subscription subscription = subscriptions.getSubscription(jid);
 					if (log.isLoggable(Level.FINEST)) {
 						log.log(Level.FINEST, "getActiveSubscribers[2,2] jid: {0}, subscription: {1}}",
-								new Object[] { jid, subscription });
+								new Object[]{jid, subscription});
 					}
 
 					if (subscription == Subscription.subscribed) {
@@ -177,7 +180,6 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeConfig
 	 * @param affiliations
 	 * @param subscriptions
@@ -187,12 +189,14 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 	 * @throws RepositoryException
 	 */
 	public static Collection<BareJID> getActiveSubscribers(final AbstractNodeConfig nodeConfig,
-			final IAffiliations affiliations, final ISubscriptions subscriptions) throws RepositoryException {
+														   final IAffiliations affiliations,
+														   final ISubscriptions subscriptions)
+			throws RepositoryException {
 		UsersSubscription[] subscribers = subscriptions.getSubscriptionsForPublish();
 
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "getActiveSubscribers[1] subscriptions: {0}, subscribers: {1}",
-					new Object[] { subscriptions, Arrays.asList(subscribers) });
+					new Object[]{subscriptions, Arrays.asList(subscribers)});
 		}
 
 		if (subscribers == null) {
@@ -211,7 +215,6 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param elements
 	 *
 	 * @return
@@ -229,7 +232,6 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param elements
 	 *
 	 * @return
@@ -244,23 +246,12 @@ public abstract class AbstractPubSubModule extends StatisticHolderImpl implement
 		return result;
 	}
 
-	@Inject
-	protected PubSubConfig config;
-
-	@Inject
-	protected PacketWriter packetWriter;
-
-	@Inject(nullAllowed = false)
-	private IPubSubRepository repository;
-
 	/**
 	 * Constructs ...
 	 *
-	 *
 	 * @param config
 	 * @param pubsubRepository
-	 * @param packetWriter
-	 *            TODO
+	 * @param packetWriter TODO
 	 */
 	public AbstractPubSubModule() {
 		this.setStatisticsPrefix(getClass().getSimpleName());

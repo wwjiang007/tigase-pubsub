@@ -23,7 +23,6 @@ package tigase.rest.pubsub
 import tigase.http.coders.JsonCoder
 import tigase.http.rest.Service
 import tigase.server.Iq
-
 import tigase.server.Packet
 import tigase.xml.DomBuilderHandler
 import tigase.xml.Element
@@ -31,6 +30,7 @@ import tigase.xml.SingletonFactory
 import tigase.xml.XMLUtils
 
 import javax.servlet.http.HttpServletRequest
+
 /**
  * Class implements generic support for PubSub ad-hoc commands*/
 class PubSubActionsHandler
@@ -98,15 +98,15 @@ For a content of a HTTP POST request you need to pass filled XML data retrieved 
 							fieldEl.addChild(new Element("value", XMLUtils.escape((String) it)));
 						}
 					} else {
-					   if (v instanceof String) {
-						   fieldEl.addChild(new Element("value", XMLUtils.escape((String) v)));
-					   } else if (v instanceof Element) {
-						   fieldEl.addChild(new Element("value", XMLUtils.escape(((Element) v).toString())));
-					   } else {
-						   Element payload = new Element("payload");
-						   payload.setCData(new JsonCoder().encode(v));
-						   fieldEl.addChild(new Element("value", XMLUtils.escape(payload.toString())));
-					   }
+						if (v instanceof String) {
+							fieldEl.addChild(new Element("value", XMLUtils.escape((String) v)));
+						} else if (v instanceof Element) {
+							fieldEl.addChild(new Element("value", XMLUtils.escape(((Element) v).toString())));
+						} else {
+							Element payload = new Element("payload");
+							payload.setCData(new JsonCoder().encode(v));
+							fieldEl.addChild(new Element("value", XMLUtils.escape(payload.toString())));
+						}
 					}
 				}
 			}
@@ -124,17 +124,19 @@ For a content of a HTTP POST request you need to pass filled XML data retrieved 
 			return new JsonCoder().encode([ error: error.getChildren().first?.getName() ?: "internal-server-error" ])
 		}
 
-		def results = [:];
+		def results = [ : ];
 
 		Element command = result.getElement().getChild("command", COMMAND_XMLNS);
 		def data = command.getChild("x", DATA_XMLNS);
 		data.getChildren().each { el ->
 			if (el.getName() == "field") {
 				def var = el.getAttributeStaticStr("var");
-				def values = el.getChildren().findAll { c -> c.getName() == "value" }.collect { XMLUtils.unescape(it.getCData()) };
-				results[var] = el.getAttributeStaticStr("type")?.contains("-multi") ? values : (values.isEmpty() ? "" : values?.first())
-			}
-			else if (["title", "instructions", "note"].contains(el.getName())) {
+				def values = el.getChildren().
+						findAll { c -> c.getName() == "value" }.
+						collect { XMLUtils.unescape(it.getCData()) };
+				results[var] = el.getAttributeStaticStr("type")?.contains("-multi") ? values :
+							   (values.isEmpty() ? "" : values?.first())
+			} else if ([ "title", "instructions", "note" ].contains(el.getName())) {
 				results[el.getName()] = el.getCData();
 			}
 		}
@@ -154,7 +156,7 @@ For a content of a HTTP POST request you need to pass filled XML data retrieved 
 
 		Element results = new Element("result");
 
-		["title", "instructions", "note"].each { name ->
+		[ "title", "instructions", "note" ].each { name ->
 			def el = data.getChild(name);
 			if (el) {
 				data.removeChild(el);
@@ -195,7 +197,10 @@ For a content of a HTTP POST request you need to pass filled XML data retrieved 
 
 			def valueElems = fieldEl.getChildren().findAll({ it.getName() == "value" });
 			if (valueElems != null) {
-				valueElems.each { val -> elem.addChild(new Element("value", var == "item" ? XMLUtils.unescape(val.getCData()) : val.getCData())) }
+				valueElems.each { val ->
+					elem.addChild(
+							new Element("value", var == "item" ? XMLUtils.unescape(val.getCData()) : val.getCData()))
+				}
 			}
 
 			def optionElems = fieldEl.getChildren().findAll({ it.getName() == "option" });
@@ -242,13 +247,12 @@ For a content of a HTTP POST request you need to pass filled XML data retrieved 
 		parser.parse(handler, chars, 0, chars.length);
 
 		Element data = handler.getParsedElements().get(0);
-		def result = [:];
+		def result = [ : ];
 
 		if (data && data.getName() == "data") {
 			data.getChildren().each { child ->
 				if (child.getAttribute("prefix") == "true") {
-					child.getChildren().each { sub ->
-						result[child.name + "#" + sub.name] = sub.getCData();
+					child.getChildren().each { sub -> result[child.name + "#" + sub.name] = sub.getCData();
 					}
 				} else {
 					def values = child.getChildren().findAll { it.getName() == "value" }

@@ -28,12 +28,13 @@ import java.util.Date;
 /**
  * Class implements INodeMeta interfaces and holds PubSub node metadata
  */
-public class NodeMeta<T> implements INodeMeta<T> {
+public class NodeMeta<T>
+		implements INodeMeta<T> {
 
-	private final T id;
+	private final AbstractNodeConfig config;
 	private final Date creationTime;
 	private final BareJID creator;
-	private final AbstractNodeConfig config;
+	private final T id;
 
 	public NodeMeta(T id, AbstractNodeConfig config, BareJID creator, Date creationTime) {
 		this.id = id;

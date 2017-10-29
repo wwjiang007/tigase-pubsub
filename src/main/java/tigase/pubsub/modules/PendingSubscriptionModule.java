@@ -44,32 +44,29 @@ import java.util.List;
 
 /**
  * Class description
- *
- *
  */
 @Bean(name = "pendingSubscriptionModule", parent = PubSubComponent.class, active = true)
-public class PendingSubscriptionModule extends AbstractPubSubModule {
+public class PendingSubscriptionModule
+		extends AbstractPubSubModule {
 
-	private static final Criteria CRIT = ElementCriteria.name("message").add(
-			ElementCriteria.name("x", new String[] { "xmlns", "type" }, new String[] { "jabber:x:data", "submit" })).add(
-					ElementCriteria.name("field", new String[] { "var" }, new String[] { "FORM_TYPE" })).add(
-							ElementCriteria.name("value", "http://jabber.org/protocol/pubsub#subscribe_authorization", null,
-									null));
+	private static final Criteria CRIT = ElementCriteria.name("message")
+			.add(ElementCriteria.name("x", new String[]{"xmlns", "type"}, new String[]{"jabber:x:data", "submit"}))
+			.add(ElementCriteria.name("field", new String[]{"var"}, new String[]{"FORM_TYPE"}))
+			.add(ElementCriteria.name("value", "http://jabber.org/protocol/pubsub#subscribe_authorization", null,
+									  null));
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#get-pending" };
+		return new String[]{"http://jabber.org/protocol/pubsub#get-pending"};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -82,7 +79,6 @@ public class PendingSubscriptionModule extends AbstractPubSubModule {
 	 * Method description
 	 *
 	 * @param message
-	 *
 	 *
 	 * @return
 	 *
@@ -151,8 +147,8 @@ public class PendingSubscriptionModule extends AbstractPubSubModule {
 				this.getRepository().update(toJid, node, nodeAffiliations);
 			}
 
-			Packet msg = Message.getMessage(message.getStanzaTo(), JID.jidInstance(subscriberJid), null, null, null, null,
-					Utils.createUID(subscriberJid));
+			Packet msg = Message.getMessage(message.getStanzaTo(), JID.jidInstance(subscriberJid), null, null, null,
+											null, Utils.createUID(subscriberJid));
 
 			msg.getElement().addChild(SubscribeNodeModule.makeSubscription(node, subscriberJid, subscription, null));
 
@@ -169,7 +165,6 @@ public class PendingSubscriptionModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeName
 	 * @param fromJid
 	 * @param subID
@@ -181,15 +176,18 @@ public class PendingSubscriptionModule extends AbstractPubSubModule {
 	 * @throws RepositoryException
 	 */
 	public List<Packet> sendAuthorizationRequest(final String nodeName, final JID fromJid, final String subID,
-			final BareJID subscriberJid, IAffiliations nodeAffiliations) throws RepositoryException {
+												 final BareJID subscriberJid, IAffiliations nodeAffiliations)
+			throws RepositoryException {
 		Form x = new Form("form", "PubSub subscriber request",
-				"To approve this entity's subscription request, click the OK button. To deny the request, click the cancel button.");
+						  "To approve this entity's subscription request, click the OK button. To deny the request, click the cancel button.");
 
 		x.addField(Field.fieldHidden("FORM_TYPE", "http://jabber.org/protocol/pubsub#subscribe_authorization"));
 		x.addField(Field.fieldHidden("pubsub#subid", subID));
 		x.addField(Field.fieldTextSingle("pubsub#node", nodeName, "Node ID"));
-		x.addField(Field.fieldJidSingle("pubsub#subscriber_jid", subscriberJid.toString(), "UsersSubscription Address"));
-		x.addField(Field.fieldBoolean("pubsub#allow", Boolean.FALSE, "Allow this JID to subscribe to this pubsub node?"));
+		x.addField(
+				Field.fieldJidSingle("pubsub#subscriber_jid", subscriberJid.toString(), "UsersSubscription Address"));
+		x.addField(
+				Field.fieldBoolean("pubsub#allow", Boolean.FALSE, "Allow this JID to subscribe to this pubsub node?"));
 
 		List<Packet> result = new ArrayList<Packet>();
 		UsersAffiliation[] affiliations = nodeAffiliations.getAffiliations();
@@ -197,8 +195,8 @@ public class PendingSubscriptionModule extends AbstractPubSubModule {
 		if (affiliations != null) {
 			for (UsersAffiliation affiliation : affiliations) {
 				if (affiliation.getAffiliation() == Affiliation.owner) {
-					Packet message = Message.getMessage(fromJid, JID.jidInstance(affiliation.getJid()), null, null, null, null,
-							Utils.createUID(affiliation.getJid()));
+					Packet message = Message.getMessage(fromJid, JID.jidInstance(affiliation.getJid()), null, null,
+														null, null, Utils.createUID(affiliation.getJid()));
 
 					message.getElement().addChild(x.getElement());
 					result.add(message);

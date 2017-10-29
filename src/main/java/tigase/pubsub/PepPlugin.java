@@ -39,49 +39,43 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Implements PubSub support for every local user account on it's bare jid using
- * local version of PubSub component.
+ * Implements PubSub support for every local user account on it's bare jid using local version of PubSub component.
  *
  * @author andrzej
  */
 @Bean(name = "pep", parent = SessionManager.class, active = true)
-public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPStopListenerIfc  {
+public class PepPlugin
+		extends XMPPProcessor
+		implements XMPPProcessorIfc, XMPPStopListenerIfc {
 
 	protected static final String PUBSUB_XMLNS = "http://jabber.org/protocol/pubsub";
 	protected static final String PUBSUB_XMLNS_OWNER = PUBSUB_XMLNS + "#owner";
-
-	private static final String CAPS_XMLNS = "http://jabber.org/protocol/caps";
 	protected static final Element[] DISCO_FEATURES = {
-			new Element("feature", new String[] { "var" }, new String[] { PUBSUB_XMLNS }),
-			new Element("feature", new String[] { "var" }, new String[] { PUBSUB_XMLNS + "#owner" }),
-			new Element("feature", new String[] { "var" }, new String[] { PUBSUB_XMLNS + "#publish" }),
-			new Element("identity", new String[] { "category", "type" }, new String[] { "pubsub", "pep" }), };
-
+			new Element("feature", new String[]{"var"}, new String[]{PUBSUB_XMLNS}),
+			new Element("feature", new String[]{"var"}, new String[]{PUBSUB_XMLNS + "#owner"}),
+			new Element("feature", new String[]{"var"}, new String[]{PUBSUB_XMLNS + "#publish"}),
+			new Element("identity", new String[]{"category", "type"}, new String[]{"pubsub", "pep"}),};
 	protected static final String DISCO_INFO_XMLNS = "http://jabber.org/protocol/disco#info";
 	protected static final String DISCO_ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
-	protected static final String[][] ELEMENTS = { Iq.IQ_PUBSUB_PATH, Iq.IQ_PUBSUB_PATH, new String[] { Presence.ELEM_NAME }, Iq.IQ_QUERY_PATH, Iq.IQ_QUERY_PATH };
-
+	protected static final String[][] ELEMENTS = {Iq.IQ_PUBSUB_PATH, Iq.IQ_PUBSUB_PATH,
+												  new String[]{Presence.ELEM_NAME}, Iq.IQ_QUERY_PATH, Iq.IQ_QUERY_PATH};
+	protected static final String[] XMLNSS = {PUBSUB_XMLNS_OWNER, PUBSUB_XMLNS, Presence.CLIENT_XMLNS,
+											  DISCO_ITEMS_XMLNS, DISCO_INFO_XMLNS};
+	private static final String CAPS_XMLNS = "http://jabber.org/protocol/caps";
 	private static final String ID = "pep";
-
 	private static final Logger log = Logger.getLogger(PepPlugin.class.getCanonicalName());
-
-	private static final String[]   PRESENCE_C_PATH         = { Presence.ELEM_NAME, "c" };
-	protected static final String[] XMLNSS = { PUBSUB_XMLNS_OWNER, PUBSUB_XMLNS, Presence.CLIENT_XMLNS, DISCO_ITEMS_XMLNS, DISCO_INFO_XMLNS };
-
+	private static final String[] PRESENCE_C_PATH = {Presence.ELEM_NAME, "c"};
 	private static final Set<StanzaType> TYPES = new HashSet<StanzaType>(Arrays.asList(
 			// stanza types for presences
-			null, StanzaType.available, StanzaType.unavailable, 
+			null, StanzaType.available, StanzaType.unavailable,
 			// stanza types for iq
 			StanzaType.get, StanzaType.set, StanzaType.result, StanzaType.error));
-
-	@ConfigField(desc = "PubSub Component JID", alias = "pubsub-jid")
-	protected JID pubsubJid = JID.jidInstanceNS("pubsub", DNSResolverFactory.getInstance().getDefaultHost(), null);
-
 	protected final Set<String> simpleNodes = new HashSet<String>(
 			Arrays.asList("http://jabber.org/protocol/tune", "http://jabber.org/protocol/mood",
 						  "http://jabber.org/protocol/activity", "http://jabber.org/protocol/geoloc",
 						  "urn:xmpp:avatar:data", "urn:xmpp:avatar:metadata"));
-
+	@ConfigField(desc = "PubSub Component JID", alias = "pubsub-jid")
+	protected JID pubsubJid = JID.jidInstanceNS("pubsub", DNSResolverFactory.getInstance().getDefaultHost(), null);
 	@ConfigField(desc = "Enable simple PEP", alias = "simple-pep-enabled")
 	protected boolean simplePepEnabled = false;
 
@@ -89,9 +83,9 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPSt
 	public Authorization canHandle(Packet packet, XMPPResourceConnection conn) {
 		if (packet.isServiceDisco()) {
 			try {
-				if (packet.getStanzaTo() != null && packet.getStanzaTo().getLocalpart() != null
-						&& packet.getStanzaTo().getResource() == null
-						&& (conn == null || conn.isUserId(packet.getStanzaTo().getBareJID()))) {
+				if (packet.getStanzaTo() != null && packet.getStanzaTo().getLocalpart() != null &&
+						packet.getStanzaTo().getResource() == null &&
+						(conn == null || conn.isUserId(packet.getStanzaTo().getBareJID()))) {
 					return super.canHandle(packet, conn);
 				}
 			} catch (NotAuthorizedException ex) {
@@ -111,7 +105,8 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPSt
 	}
 
 	@Override
-	public void process(Packet packet, XMPPResourceConnection session, NonAuthUserRepository repo, Queue<Packet> results, Map<String, Object> settings) throws XMPPException {
+	public void process(Packet packet, XMPPResourceConnection session, NonAuthUserRepository repo,
+						Queue<Packet> results, Map<String, Object> settings) throws XMPPException {
 		switch (packet.getElemName()) {
 			case Iq.ELEM_NAME:
 				processIq(packet, session, results);
@@ -126,7 +121,7 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPSt
 	public Element[] supDiscoFeatures(final XMPPResourceConnection session) {
 		return DISCO_FEATURES;
 	}
-	
+
 	@Override
 	public String[][] supElementNamePaths() {
 		return ELEMENTS;
@@ -136,13 +131,33 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPSt
 	public String[] supNamespaces() {
 		return XMLNSS;
 	}
-	
+
 	@Override
 	public Set<StanzaType> supTypes() {
 		return TYPES;
 	}
 
-	protected void processIq(Packet packet, XMPPResourceConnection session, Queue<Packet> results) throws XMPPException {
+	@Override
+	public void stopped(XMPPResourceConnection session, Queue<Packet> results, Map<String, Object> settings) {
+
+		synchronized (session) {
+			try {
+				Packet packet = Presence.packetInstance(PresenceAbstract.PRESENCE_ELEMENT_NAME,
+														session.getJID().toString(),
+														session.getJID().copyWithoutResource().toString(),
+														StanzaType.unavailable);
+				processPresence(packet, session, results);
+
+			} catch (NotAuthorizedException | TigaseStringprepException e) {
+				if (log.isLoggable(Level.FINER)) {
+					log.log(Level.FINER, "Problem forwarding unavailable presence to PubSub component");
+				}
+			}
+		}
+	}
+
+	protected void processIq(Packet packet, XMPPResourceConnection session, Queue<Packet> results)
+			throws XMPPException {
 		if (session != null && session.isServerSession()) {
 			return;
 		}
@@ -160,13 +175,12 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPSt
 
 		// forwarding packet to particular resource
 		if (packet.getStanzaTo() != null && packet.getStanzaTo().getResource() != null) {
-			if ( pubsubEl != null
-					 && ( pubsubEl.getXMLNS() == PUBSUB_XMLNS
-								|| pubsubEl.getXMLNS() == PUBSUB_XMLNS_OWNER ) ){
+			if (pubsubEl != null &&
+					(pubsubEl.getXMLNS() == PUBSUB_XMLNS || pubsubEl.getXMLNS() == PUBSUB_XMLNS_OWNER)) {
 				Packet result = null;
 				if (session != null) {
-					XMPPResourceConnection con = session.getParentSession().getResourceForResource(
-							packet.getStanzaTo().getResource());
+					XMPPResourceConnection con = session.getParentSession()
+							.getResourceForResource(packet.getStanzaTo().getResource());
 
 					if (con != null) {
 						result = packet.copyElementOnly();
@@ -190,7 +204,8 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPSt
 				// specification
 				if (result == null) {
 					result = Authorization.RECIPIENT_UNAVAILABLE.getResponseMessage(packet,
-							"The recipient is no longer available.", true);
+																					"The recipient is no longer available.",
+																					true);
 				}
 				results.offer(result);
 			}
@@ -207,15 +222,14 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPSt
 			// we should not forward disco#info or disco#items with no "to" set
 			// as they
 			// need to be processed only by server
-			if ( pubsubEl == null
-					 || (pubsubEl.getXMLNS() != PUBSUB_XMLNS
-					 && pubsubEl.getXMLNS() != PUBSUB_XMLNS_OWNER) ){
+			if (pubsubEl == null ||
+					(pubsubEl.getXMLNS() != PUBSUB_XMLNS && pubsubEl.getXMLNS() != PUBSUB_XMLNS_OWNER)) {
 				// ignoring - disco#info or disco#items to server
 				log.log(Level.FINEST, "got <iq/> packet with no 'to' attribute = {0}", packet);
 				return;
 			}
-		} else if (packet.getStanzaTo().getResource() == null && packet.getType() == StanzaType.error
-				&& packet.getType() == StanzaType.result) {
+		} else if (packet.getStanzaTo().getResource() == null && packet.getType() == StanzaType.error &&
+				packet.getType() == StanzaType.result) {
 			// we are dropping packet of type error or result if they are sent
 			// in from user
 			return;
@@ -235,23 +249,26 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPSt
 		results.offer(result);
 	}
 
-	protected void processPresence(Packet packet, XMPPResourceConnection session, Queue<Packet> results) throws NotAuthorizedException {
+	protected void processPresence(Packet packet, XMPPResourceConnection session, Queue<Packet> results)
+			throws NotAuthorizedException {
 		boolean forward = false;
 		if (packet.getType() == null || packet.getType() == StanzaType.available) {
 			// forward only available packets with CAPS as without there is no point in doing this
-			forward = packet.getElement().getXMLNSStaticStr(PRESENCE_C_PATH) == CAPS_XMLNS;	
+			forward = packet.getElement().getXMLNSStaticStr(PRESENCE_C_PATH) == CAPS_XMLNS;
 		} else if (packet.getType() == StanzaType.unavailable) {
 			forward = true;
 		}
-		
+
 		// is there a point in forwarding <presence/> of type error? we should forward only online/offline
-		if (!forward) 
+		if (!forward) {
 			return;
+		}
 
 		// if presence is to local user then forward it to PubSub component
-		if ((packet.getStanzaTo() == null && session != null && session.isAuthorized()) || (packet.getStanzaTo() != null
-				&& packet.getStanzaTo().getResource() == null
-				&& (session == null || !session.isAuthorized() || session.isUserId(packet.getStanzaTo().getBareJID())))) {
+		if ((packet.getStanzaTo() == null && session != null && session.isAuthorized()) ||
+				(packet.getStanzaTo() != null && packet.getStanzaTo().getResource() == null &&
+						(session == null || !session.isAuthorized() ||
+								session.isUserId(packet.getStanzaTo().getBareJID())))) {
 
 			Packet result = packet.copyElementOnly();
 			if (packet.getStanzaTo() == null) {
@@ -261,25 +278,6 @@ public class PepPlugin extends XMPPProcessor implements XMPPProcessorIfc, XMPPSt
 			}
 			result.setPacketTo(pubsubJid);
 			results.offer(result);
-		}
-	}
-
-	@Override
-	public void stopped(XMPPResourceConnection session, Queue<Packet> results, Map<String, Object> settings) {
-
-		synchronized (session) {
-			try {
-				Packet packet = Presence.packetInstance(PresenceAbstract.PRESENCE_ELEMENT_NAME,
-				                                        session.getJID().toString(),
-				                                        session.getJID().copyWithoutResource().toString(),
-				                                        StanzaType.unavailable);
-				processPresence(packet, session, results);
-
-			} catch (NotAuthorizedException | TigaseStringprepException e) {
-				if (log.isLoggable(Level.FINER)) {
-					log.log(Level.FINER, "Problem forwarding unavailable presence to PubSub component");
-				}
-			}
 		}
 	}
 }

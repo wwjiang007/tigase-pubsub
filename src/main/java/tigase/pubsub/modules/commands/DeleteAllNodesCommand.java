@@ -44,25 +44,24 @@ import java.util.Arrays;
 /**
  * Class description
  *
- *
- * @version 5.0.0, 2010.03.27 at 05:11:57 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.0.0, 2010.03.27 at 05:11:57 GMT
  */
 @Bean(name = "deleteAllNodesCommand", active = true)
-public class DeleteAllNodesCommand implements AdHocCommand {
+public class DeleteAllNodesCommand
+		implements AdHocCommand {
 
 	@Inject
 	private PubSubConfig config;
 
 	@Inject
-	private IPubSubDAO<?,?,?> dao;
+	private IPubSubDAO<?, ?, ?> dao;
 
 	@Inject
 	private UserRepository userRepo;
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param request
 	 * @param response
@@ -81,7 +80,7 @@ public class DeleteAllNodesCommand implements AdHocCommand {
 					Form form = new Form("result", "Delete all nodes", "To DELETE ALL NODES please check checkbox.");
 
 					form.addField(Field.fieldBoolean("tigase-pubsub#delete-all", Boolean.FALSE,
-							"YES! I'm sure! I want to delete all nodes"));
+													 "YES! I'm sure! I want to delete all nodes"));
 					response.getElements().add(form.getElement());
 					response.startSession();
 				} else {
@@ -116,7 +115,6 @@ public class DeleteAllNodesCommand implements AdHocCommand {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
@@ -126,7 +124,6 @@ public class DeleteAllNodesCommand implements AdHocCommand {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -140,7 +137,8 @@ public class DeleteAllNodesCommand implements AdHocCommand {
 		return Arrays.asList(config.getAdmins()).contains(jid.toString());
 	}
 
-	private void startRemoving(BareJID serviceJid) throws RepositoryException, UserNotFoundException, TigaseDBException {
+	private void startRemoving(BareJID serviceJid)
+			throws RepositoryException, UserNotFoundException, TigaseDBException {
 		dao.removeAllFromRootCollection(serviceJid);
 		userRepo.removeSubnode(config.getServiceBareJID(), "nodes");
 	}

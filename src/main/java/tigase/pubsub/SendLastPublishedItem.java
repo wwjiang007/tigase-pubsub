@@ -25,10 +25,11 @@ public enum SendLastPublishedItem {
 	/** When a new subscription is processed */
 	on_sub("When a new subscription is processed"),
 	/**
-	 * When a new subscription is processed and whenever a subscriber comes
-	 * online
+	 * When a new subscription is processed and whenever a subscriber comes online
 	 */
 	on_sub_and_presence("When a new subscription is processed and whenever a subscriber comes online");
+
+	private final String description;
 
 	public static String[] descriptions() {
 		String[] result = new String[values().length];
@@ -38,8 +39,6 @@ public enum SendLastPublishedItem {
 		}
 		return result;
 	}
-
-	private final String description;
 
 	private SendLastPublishedItem(String description) {
 		this.description = description;

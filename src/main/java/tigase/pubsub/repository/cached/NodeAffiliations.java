@@ -20,17 +20,14 @@
 
 package tigase.pubsub.repository.cached;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.xmpp.jid.BareJID;
 
-public class NodeAffiliations extends tigase.pubsub.repository.NodeAffiliations {
+import java.util.*;
+
+public class NodeAffiliations
+		extends tigase.pubsub.repository.NodeAffiliations {
 
 	protected final ThreadLocal<Map<BareJID, UsersAffiliation>> changedAffs = new ThreadLocal<Map<BareJID, UsersAffiliation>>();
 
@@ -60,17 +57,6 @@ public class NodeAffiliations extends tigase.pubsub.repository.NodeAffiliations 
 		}
 	}
 
-	private Map<BareJID, UsersAffiliation> changedAffs() {
-		Map<BareJID, UsersAffiliation> changedAffs = this.changedAffs.get();
-
-		if (changedAffs == null) {
-			changedAffs = new HashMap<BareJID, UsersAffiliation>();
-			this.changedAffs.set(changedAffs);
-		}
-
-		return changedAffs;
-	}
-
 	@Override
 	public NodeAffiliations clone() throws CloneNotSupportedException {
 		NodeAffiliations clone = new NodeAffiliations();
@@ -86,28 +72,11 @@ public class NodeAffiliations extends tigase.pubsub.repository.NodeAffiliations 
 	}
 
 	@Override
-	protected UsersAffiliation get(BareJID bareJid) {
-		Map<BareJID, UsersAffiliation> changedAffs = changedAffs();
-		UsersAffiliation us = changedAffs.get(bareJid);
-		if (us == null) {
-			us = affs.get(bareJid);
-			if (us != null)
-				try {
-					return us.clone();
-				} catch (Exception e) {
-					e.printStackTrace();
-					return null;
-				}
-		}
-		return us;
-	}
-
-	@Override
 	public UsersAffiliation[] getAffiliations() {
 		final Set<UsersAffiliation> result = new HashSet<UsersAffiliation>();
 		result.addAll(this.affs.values());
 		result.addAll(this.changedAffs().values());
-		return result.toArray(new UsersAffiliation[] {});
+		return result.toArray(new UsersAffiliation[]{});
 	}
 
 	public Map<BareJID, UsersAffiliation> getChanged() {
@@ -142,5 +111,34 @@ public class NodeAffiliations extends tigase.pubsub.repository.NodeAffiliations 
 	@Override
 	public void resetChangedFlag() {
 		changedAffs().clear();
+	}
+
+	@Override
+	protected UsersAffiliation get(BareJID bareJid) {
+		Map<BareJID, UsersAffiliation> changedAffs = changedAffs();
+		UsersAffiliation us = changedAffs.get(bareJid);
+		if (us == null) {
+			us = affs.get(bareJid);
+			if (us != null) {
+				try {
+					return us.clone();
+				} catch (Exception e) {
+					e.printStackTrace();
+					return null;
+				}
+			}
+		}
+		return us;
+	}
+
+	private Map<BareJID, UsersAffiliation> changedAffs() {
+		Map<BareJID, UsersAffiliation> changedAffs = this.changedAffs.get();
+
+		if (changedAffs == null) {
+			changedAffs = new HashMap<BareJID, UsersAffiliation>();
+			this.changedAffs.set(changedAffs);
+		}
+
+		return changedAffs;
 	}
 }

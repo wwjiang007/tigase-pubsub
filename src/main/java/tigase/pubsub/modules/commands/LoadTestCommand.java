@@ -48,7 +48,8 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 @Bean(name = "loadTestCommand", parent = PubSubComponent.class, active = true)
-public class LoadTestCommand implements AdHocCommand {
+public class LoadTestCommand
+		implements AdHocCommand {
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
@@ -110,23 +111,25 @@ public class LoadTestCommand implements AdHocCommand {
 								if (owner == null && a.getAffiliation() == Affiliation.owner) {
 									owner = a;
 								}
-								if (owner != null && publisher != null)
+								if (owner != null && publisher != null) {
 									break;
+								}
 							}
 
 							if (owner == null && publisher == null) {
 								Form f = new Form(null, "Info", "Can't find publisher!");
 								response.getElements().add(f.getElement());
 							} else {
-								startLoadTest(service, nodeName, owner != null ? owner.getJid() : publisher.getJid(), time,
-										frequency, length, nonBlocking == null ? true : !nonBlocking);
+								startLoadTest(service, nodeName, owner != null ? owner.getJid() : publisher.getJid(),
+											  time, frequency, length, nonBlocking == null ? true : !nonBlocking);
 
 								Form f = new Form(null, "Info", "Load Test started");
 
 								response.getElements().add(f.getElement());
 							}
 						} else {
-							Form f = new Form(null, "Info", "Load Test cancelled. Node " + nodeName + " doesn't exists.");
+							Form f = new Form(null, "Info",
+											  "Load Test cancelled. Node " + nodeName + " doesn't exists.");
 							response.getElements().add(f.getElement());
 						}
 					}
@@ -159,14 +162,15 @@ public class LoadTestCommand implements AdHocCommand {
 	}
 
 	private void startLoadTest(BareJID serviceJid, String nodeName, BareJID publisher, Long time, Long frequency,
-							   Integer length, boolean useBlockingMethod) throws RepositoryException, UserNotFoundException, TigaseDBException {
+							   Integer length, boolean useBlockingMethod)
+			throws RepositoryException, UserNotFoundException, TigaseDBException {
 
-		final LoadTestGenerator r = new LoadTestGenerator(component, serviceJid, nodeName, publisher, time, frequency, length,
-				useBlockingMethod) {
+		final LoadTestGenerator r = new LoadTestGenerator(component, serviceJid, nodeName, publisher, time, frequency,
+														  length, useBlockingMethod) {
 			@Override
 			protected void onTestFinish() {
-				LoadTestCommand.this.log.info("Test finished. Published " + getCounter() + " items in "
-						+ ((getTestEndTime() - getTestStartTime()) / 1000) + " seconds.");
+				LoadTestCommand.this.log.info("Test finished. Published " + getCounter() + " items in " +
+													  ((getTestEndTime() - getTestStartTime()) / 1000) + " seconds.");
 			}
 		};
 		log.info("Staring load test.");

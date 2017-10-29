@@ -33,7 +33,7 @@ import java.util.Map;
 
 /**
  * Interface of a bean which implements PubSub logic.
- *
+ * <p>
  * Created by andrzej on 25.12.2016.
  */
 public interface Logic {
@@ -51,6 +51,6 @@ public interface Logic {
 	boolean isSenderInRosterGroup(BareJID bareJid, AbstractNodeConfig nodeConfig, IAffiliations affiliations,
 								  final ISubscriptions subscriptions) throws RepositoryException;
 
-	Element prepareNotificationMessage(JID from, JID to, String id, Element itemToSend, Map<String,String> headers);
+	Element prepareNotificationMessage(JID from, JID to, String id, Element itemToSend, Map<String, String> headers);
 
 }

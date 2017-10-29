@@ -37,9 +37,9 @@ import tigase.server.Message;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
+import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
-import tigase.xmpp.StanzaType;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,95 +51,47 @@ import java.util.logging.Logger;
 /**
  * Class description
  *
- *
- * @version 5.0.0, 2010.03.27 at 05:25:49 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.0.0, 2010.03.27 at 05:25:49 GMT
  */
 @Bean(name = "manageSubscriptionModule", parent = PubSubComponent.class, active = true)
-public class ManageSubscriptionModule extends AbstractPubSubModule {
+public class ManageSubscriptionModule
+		extends AbstractPubSubModule {
 
-	private class SubscriptionFilter {
+	private static final Criteria CRIT = ElementCriteria.name("iq")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner"))
+			.add(ElementCriteria.name("subscriptions"));
+	private Logger log = Logger.getLogger(this.getClass().getName());
 
-		private String jidContains;
-
-		public SubscriptionFilter(Element f) throws PubSubException {
-			for (Element e : f.getChildren()) {
-				if ("jid".equals(e.getName())) {
-					this.jidContains = e.getAttributeStaticStr("contains");
-				} else
-					throw new PubSubException(Authorization.BAD_REQUEST, "Unknown filter '" + e.getName() + "'");
-			}
-		}
-
-		public boolean match(UsersSubscription usersSubscription) {
-			boolean match = true;
-
-			if (jidContains != null)
-				match = match && usersSubscription.getJid().toString().contains(jidContains);
-
-			return match;
-		}
-
-	}
-
-	private static final Criteria CRIT = ElementCriteria.name("iq").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(
-					ElementCriteria.name("subscriptions"));
-
-	private static Packet createSubscriptionNotification(JID fromJid, JID toJid, String nodeName, Subscription subscription) {
+	private static Packet createSubscriptionNotification(JID fromJid, JID toJid, String nodeName,
+														 Subscription subscription) {
 		Packet message = Message.getMessage(fromJid, toJid, null, null, null, null, null);
-		Element pubsub = new Element("pubsub", new String[] { "xmlns" }, new String[] { "http://jabber.org/protocol/pubsub" });
+		Element pubsub = new Element("pubsub", new String[]{"xmlns"},
+									 new String[]{"http://jabber.org/protocol/pubsub"});
 
 		message.getElement().addChild(pubsub);
 
-		Element affilations = new Element("subscriptions", new String[] { "node" }, new String[] { nodeName });
+		Element affilations = new Element("subscriptions", new String[]{"node"}, new String[]{nodeName});
 
 		pubsub.addChild(affilations);
-		affilations.addChild(new Element("subscription", new String[] { "jid", "subscription" },
-				new String[] { toJid.toString(), subscription.name() }));
+		affilations.addChild(new Element("subscription", new String[]{"jid", "subscription"},
+										 new String[]{toJid.toString(), subscription.name()}));
 
 		return message;
 	}
 
-	private Logger log = Logger.getLogger(this.getClass().getName());
-
-	private void checkPrivileges(StanzaType type, Element element, JID senderJid, AbstractNodeConfig nodeConfig,
-			IAffiliations nodeAffiliations, ISubscriptions nodeSubscriptions) throws PubSubException {
-		boolean allowed = false;
-
-		// for "tigase:pubsub:1"
-		if (!allowed && type == StanzaType.get && nodeConfig.isAllowToViewSubscribers()) {
-			Subscription senderSubscription = nodeSubscriptions.getSubscription(senderJid.getBareJID());
-			allowed = senderSubscription == Subscription.subscribed;
-		}
-
-		if (!allowed) {
-			UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(senderJid.getBareJID());
-			allowed = senderAffiliation.getAffiliation() == Affiliation.owner;
-		}
-
-		if (!allowed && this.config.isAdmin(senderJid)) {
-			allowed = true;
-		}
-
-		if (!allowed)
-			throw new PubSubException(element, Authorization.FORBIDDEN);
-	}
-
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#manage-subscriptions" };
+		return new String[]{"http://jabber.org/protocol/pubsub#manage-subscriptions"};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -151,8 +103,8 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @return
 	 *
 	 * @throws PubSubException
@@ -187,8 +139,9 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 				processGet(packet, subscriptions, nodeName, nodeSubscriptions, packetWriter);
 			} else if (type == StanzaType.set) {
 				processSet(packet, subscriptions, nodeName, nodeConfig, nodeSubscriptions, packetWriter);
-			} else
+			} else {
 				throw new PubSubException(Authorization.BAD_REQUEST);
+			}
 
 		} catch (PubSubException e1) {
 			throw e1;
@@ -199,14 +152,40 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 		}
 	}
 
-	private void processGet(Packet packet, Element subscriptions, String nodeName, final ISubscriptions nodeSubscriptions,
-			PacketWriter packetWriter) throws RepositoryException, PubSubException {
-		Element ps = new Element("pubsub", new String[] { "xmlns" },
-				new String[] { "http://jabber.org/protocol/pubsub#owner" });
+	private void checkPrivileges(StanzaType type, Element element, JID senderJid, AbstractNodeConfig nodeConfig,
+								 IAffiliations nodeAffiliations, ISubscriptions nodeSubscriptions)
+			throws PubSubException {
+		boolean allowed = false;
+
+		// for "tigase:pubsub:1"
+		if (!allowed && type == StanzaType.get && nodeConfig.isAllowToViewSubscribers()) {
+			Subscription senderSubscription = nodeSubscriptions.getSubscription(senderJid.getBareJID());
+			allowed = senderSubscription == Subscription.subscribed;
+		}
+
+		if (!allowed) {
+			UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(senderJid.getBareJID());
+			allowed = senderAffiliation.getAffiliation() == Affiliation.owner;
+		}
+
+		if (!allowed && this.config.isAdmin(senderJid)) {
+			allowed = true;
+		}
+
+		if (!allowed) {
+			throw new PubSubException(element, Authorization.FORBIDDEN);
+		}
+	}
+
+	private void processGet(Packet packet, Element subscriptions, String nodeName,
+							final ISubscriptions nodeSubscriptions, PacketWriter packetWriter)
+			throws RepositoryException, PubSubException {
+		Element ps = new Element("pubsub", new String[]{"xmlns"},
+								 new String[]{"http://jabber.org/protocol/pubsub#owner"});
 
 		Packet iq = packet.okResult(ps, 0);
 
-		Element afr = new Element("subscriptions", new String[] { "node" }, new String[] { nodeName });
+		Element afr = new Element("subscriptions", new String[]{"node"}, new String[]{nodeName});
 
 		SubscriptionFilter subscriptionFilter = null;
 		Element filterE = subscriptions.getChild("filter", PresencePerNodeExtension.XMLNS_EXTENSION);
@@ -232,8 +211,9 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 					continue;
 				}
 
-				Element subscription = new Element("subscription", new String[] { "jid", "subscription" },
-						new String[] { usersSubscription.getJid().toString(), usersSubscription.getSubscription().name() });
+				Element subscription = new Element("subscription", new String[]{"jid", "subscription"},
+												   new String[]{usersSubscription.getJid().toString(),
+																usersSubscription.getSubscription().name()});
 
 				afr.addChild(subscription);
 			}
@@ -247,7 +227,8 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 	}
 
 	private void processSet(Packet packet, Element subscriptions, String nodeName, final AbstractNodeConfig nodeConfig,
-			final ISubscriptions nodeSubscriptions, PacketWriter packetWriter) throws PubSubException, RepositoryException {
+							final ISubscriptions nodeSubscriptions, PacketWriter packetWriter)
+			throws PubSubException, RepositoryException {
 		List<Element> subss = subscriptions.getChildren();
 
 		for (Element a : subss) {
@@ -286,12 +267,38 @@ public class ManageSubscriptionModule extends AbstractPubSubModule {
 
 		for (Map.Entry<JID, Subscription> entry : changedSubscriptions.entrySet()) {
 			if (nodeConfig.isTigaseNotifyChangeSubscriptionAffiliationState()) {
-				packetWriter.write(
-						createSubscriptionNotification(packet.getStanzaTo(), entry.getKey(), nodeName, entry.getValue()));
+				packetWriter.write(createSubscriptionNotification(packet.getStanzaTo(), entry.getKey(), nodeName,
+																  entry.getValue()));
 			}
 		}
 
 		Packet iq = packet.okResult((Element) null, 0);
 		packetWriter.write(iq);
+	}
+
+	private class SubscriptionFilter {
+
+		private String jidContains;
+
+		public SubscriptionFilter(Element f) throws PubSubException {
+			for (Element e : f.getChildren()) {
+				if ("jid".equals(e.getName())) {
+					this.jidContains = e.getAttributeStaticStr("contains");
+				} else {
+					throw new PubSubException(Authorization.BAD_REQUEST, "Unknown filter '" + e.getName() + "'");
+				}
+			}
+		}
+
+		public boolean match(UsersSubscription usersSubscription) {
+			boolean match = true;
+
+			if (jidContains != null) {
+				match = match && usersSubscription.getJid().toString().contains(jidContains);
+			}
+
+			return match;
+		}
+
 	}
 }

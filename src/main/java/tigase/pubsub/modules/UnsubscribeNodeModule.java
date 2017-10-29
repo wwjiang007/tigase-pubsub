@@ -37,17 +37,17 @@ import tigase.xmpp.jid.JID;
 
 /**
  * Class description
- *
- *
  */
 @Bean(name = "unsubscribeNodeModule", parent = PubSubComponent.class, active = true)
-public class UnsubscribeNodeModule extends AbstractPubSubModule {
-	private static final Criteria CRIT_UNSUBSCRIBE = ElementCriteria.nameType("iq", "set").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("unsubscribe"));
+public class UnsubscribeNodeModule
+		extends AbstractPubSubModule {
+
+	private static final Criteria CRIT_UNSUBSCRIBE = ElementCriteria.nameType("iq", "set")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
+			.add(ElementCriteria.name("unsubscribe"));
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -59,7 +59,6 @@ public class UnsubscribeNodeModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
@@ -70,8 +69,8 @@ public class UnsubscribeNodeModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @return
 	 *
 	 * @throws PubSubException
@@ -98,8 +97,8 @@ public class UnsubscribeNodeModule extends AbstractPubSubModule {
 			UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(senderJid.getBareJID());
 			UsersAffiliation affiliation = nodeAffiliations.getSubscriberAffiliation(jid);
 
-			if (!this.config.isAdmin(senderJid) && (senderAffiliation.getAffiliation() != Affiliation.owner)
-					&& !jid.equals(senderJid.getBareJID())) {
+			if (!this.config.isAdmin(senderJid) && (senderAffiliation.getAffiliation() != Affiliation.owner) &&
+					!jid.equals(senderJid.getBareJID())) {
 				throw new PubSubException(element, Authorization.BAD_REQUEST, PubSubErrorCondition.INVALID_JID);
 			}
 			if (affiliation != null) {
@@ -114,7 +113,8 @@ public class UnsubscribeNodeModule extends AbstractPubSubModule {
 				String s = nodeSubscriptions.getSubscriptionId(jid);
 
 				if (!subid.equals(s)) {
-					throw new PubSubException(element, Authorization.NOT_ACCEPTABLE, PubSubErrorCondition.INVALID_SUBID);
+					throw new PubSubException(element, Authorization.NOT_ACCEPTABLE,
+											  PubSubErrorCondition.INVALID_SUBID);
 				}
 			}
 

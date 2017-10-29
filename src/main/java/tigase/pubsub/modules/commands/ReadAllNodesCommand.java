@@ -40,12 +40,13 @@ import tigase.xmpp.jid.JID;
 import java.util.Arrays;
 
 @Bean(name = "readAllNodesCommand", parent = PubSubComponent.class, active = true)
-public class ReadAllNodesCommand implements AdHocCommand {
+public class ReadAllNodesCommand
+		implements AdHocCommand {
 
 	@Inject
 	private PubSubConfig config;
 	@Inject
-	private IPubSubDAO<?,?,?> dao;
+	private IPubSubDAO<?, ?, ?> dao;
 	@Inject
 	private IPubSubRepository repository;
 

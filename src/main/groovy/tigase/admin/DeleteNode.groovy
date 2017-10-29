@@ -54,108 +54,109 @@ eventBus = (EventBus) eventBus
 @CompileStatic
 Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus, Set admins) {
 
-    def componentConfig = kernel.getInstance(PubSubConfig.class)
+	def componentConfig = kernel.getInstance(PubSubConfig.class)
 
 
-    def NODE = "node"
+	def NODE = "node"
 
-    IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
+	IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 
-    def stanzaFromBare = p.getStanzaFrom().getBareJID()
-    def isServiceAdmin = admins.contains(stanzaFromBare)
+	def stanzaFromBare = p.getStanzaFrom().getBareJID()
+	def isServiceAdmin = admins.contains(stanzaFromBare)
 
-    def node = Command.getFieldValue(p, NODE)
+	def node = Command.getFieldValue(p, NODE)
 
-    if (node == null) {
-        def result = p.commandResult(Command.DataType.form);
+	if (node == null) {
+		def result = p.commandResult(Command.DataType.form);
 
-        Command.addTitle(result, "Deleting a node")
-        Command.addInstructions(result, "Fill out this form to delete a node.")
+		Command.addTitle(result, "Deleting a node")
+		Command.addInstructions(result, "Fill out this form to delete a node.")
 
-        Command.addFieldValue(result, NODE, node ?: "", "text-single",
-                "The node to delete")
+		Command.addFieldValue(result, NODE, node ?: "", "text-single",
+							  "The node to delete")
 
-        return result
-    }
+		return result
+	}
 
-    def result = p.commandResult(Command.DataType.result)
-    try {
-        if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
-            def toJid = p.getStanzaTo().getBareJID();
+	def result = p.commandResult(Command.DataType.result)
+	try {
+		if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
+			def toJid = p.getStanzaTo().getBareJID();
 
-            AbstractNodeConfig nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
+			AbstractNodeConfig nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
 
-            if (nodeConfig == null) {
-                throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Node " + node + " cannot " +
-                        "be deleted as it not exists yet.");
-            }
+			if (nodeConfig == null) {
+				throw new PubSubException(Authorization.ITEM_NOT_FOUND,
+										  "Node " + node + " cannot " + "be deleted as it not exists yet.");
+			}
 
-            if (nodeConfig.isNotify_config()) {
-                def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
-                def nodeAffiliations = pubsubRepository.getNodeAffiliations(toJid, node);
-                Element del = new Element("delete");
-                del.setAttribute("node", node);
+			if (nodeConfig.isNotify_config()) {
+				def nodeSubscriptions = pubsubRepository.getNodeSubscriptions(toJid, node);
+				def nodeAffiliations = pubsubRepository.getNodeAffiliations(toJid, node);
+				Element del = new Element("delete");
+				del.setAttribute("node", node);
 
-                def publishNodeModule = kernel.getInstance(PublishItemModule.class);
-                publishNodeModule.sendNotifications(del, p.getStanzaTo(), node,
-                        nodeConfig, nodeAffiliations, nodeSubscriptions);
-            }
+				def publishNodeModule = kernel.getInstance(PublishItemModule.class);
+				publishNodeModule.sendNotifications(del, p.getStanzaTo(), node,
+													nodeConfig, nodeAffiliations, nodeSubscriptions);
+			}
 
 
-            final String parentNodeName = nodeConfig.getCollection();
+			final String parentNodeName = nodeConfig.getCollection();
 
-            if (parentNodeName == null || "".equals(parentNodeName)) {
-                pubsubRepository.removeFromRootCollection(toJid, node);
-            }
-            if (nodeConfig instanceof CollectionNodeConfig) {
-                CollectionNodeConfig cnc = (CollectionNodeConfig) nodeConfig;
-                final String[] childrenNodes = pubsubRepository.getChildNodes(toJid, node);
+			if (parentNodeName == null || "".equals(parentNodeName)) {
+				pubsubRepository.removeFromRootCollection(toJid, node);
+			}
+			if (nodeConfig instanceof CollectionNodeConfig) {
+				CollectionNodeConfig cnc = (CollectionNodeConfig) nodeConfig;
+				final String[] childrenNodes = pubsubRepository.getChildNodes(toJid, node);
 
-                if ((childrenNodes != null) && (childrenNodes.length > 0)) {
-                    for (String childNodeName : childrenNodes) {
-                        AbstractNodeConfig childNodeConfig = pubsubRepository.getNodeConfig(toJid, childNodeName);
+				if ((childrenNodes != null) && (childrenNodes.length > 0)) {
+					for (String childNodeName : childrenNodes) {
+						AbstractNodeConfig childNodeConfig = pubsubRepository.getNodeConfig(toJid, childNodeName);
 
-                        if (childNodeConfig != null) {
-                            childNodeConfig.setCollection(parentNodeName);
-                            pubsubRepository.update(toJid, childNodeName, childNodeConfig);
-                        }
-                        if (parentNodeName == null || "".equals(parentNodeName)) {
-                            pubsubRepository.addToRootCollection(toJid, childNodeName);
-                        }
-                    }
-                }
-            }
+						if (childNodeConfig != null) {
+							childNodeConfig.setCollection(parentNodeName);
+							pubsubRepository.update(toJid, childNodeName, childNodeConfig);
+						}
+						if (parentNodeName == null || "".equals(parentNodeName)) {
+							pubsubRepository.addToRootCollection(toJid, childNodeName);
+						}
+					}
+				}
+			}
 
-            pubsubRepository.deleteNode(toJid, node);
+			pubsubRepository.deleteNode(toJid, node);
 
-            NodeDeleteModule.NodeDeletedEvent event = new NodeDeleteModule.NodeDeletedEvent(toJid, node);
-            eventBus.fire(event);
+			NodeDeleteModule.NodeDeletedEvent event = new NodeDeleteModule.NodeDeletedEvent(toJid, node);
+			eventBus.fire(event);
 
-            Command.addTextField(result, "Note", "Operation successful");
-        } else {
-            //Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
-            throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
-                    "permissions to publish item to a node.");
-        }
-    } catch (PubSubException ex) {
-        Command.addTextField(result, "Error", ex.getMessage())
-        if (ex.getErrorCondition()) {
-            def error = ex.getErrorCondition();
-            Element errorEl = new Element("error");
-            errorEl.setAttribute("type", error.getErrorType());
-            Element conditionEl = new Element(error.getCondition(), ex.getMessage());
-            conditionEl.setXMLNS(Packet.ERROR_NS);
-            errorEl.addChild(conditionEl);
-            Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
-            if (pubsubCondition)
-                errorEl.addChild(pubsubCondition);
-            result.getElement().addChild(errorEl);
-        }
-    } catch (TigaseDBException ex) {
-        Command.addTextField(result, "Note", "Problem accessing database, node not deleted.");
-    }
+			Command.addTextField(result, "Note", "Operation successful");
+		} else {
+			//Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
+			throw new PubSubException(Authorization.FORBIDDEN,
+									  "You do not have enough " + "permissions to publish item to a node.");
+		}
+	} catch (PubSubException ex) {
+		Command.addTextField(result, "Error", ex.getMessage())
+		if (ex.getErrorCondition()) {
+			def error = ex.getErrorCondition();
+			Element errorEl = new Element("error");
+			errorEl.setAttribute("type", error.getErrorType());
+			Element conditionEl = new Element(error.getCondition(), ex.getMessage());
+			conditionEl.setXMLNS(Packet.ERROR_NS);
+			errorEl.addChild(conditionEl);
+			Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
+			if (pubsubCondition) {
+				errorEl.addChild(pubsubCondition)
+			};
+			result.getElement().addChild(errorEl);
+		}
+	} catch (TigaseDBException ex) {
+		Command.addTextField(result, "Note", "Problem accessing database, node not deleted.");
+	}
 
-    return result
+	return result
 }
 
 return process(kernel, component, packet, eventBus, (Set) adminsSet)

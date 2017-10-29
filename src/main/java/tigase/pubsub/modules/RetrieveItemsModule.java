@@ -43,17 +43,141 @@ import java.util.stream.Collectors;
 
 /**
  * Class description
- *
- *
  */
 @Bean(name = "retrieveItemsModule", parent = PubSubComponent.class, active = true)
-public class RetrieveItemsModule extends AbstractPubSubModule {
+public class RetrieveItemsModule
+		extends AbstractPubSubModule {
 
-
-	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("items"));
+	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
+			.add(ElementCriteria.name("items"));
 
 	private final TimestampHelper timestampHelper = new TimestampHelper();
+
+	/**
+	 * Method description
+	 *
+	 * @return
+	 */
+	@Override
+	public String[] getFeatures() {
+		return new String[]{"http://jabber.org/protocol/pubsub#retrieve-items"};
+	}
+
+	/**
+	 * Method description
+	 *
+	 * @return
+	 */
+	@Override
+	public Criteria getModuleCriteria() {
+		return CRIT;
+	}
+
+	/**
+	 * Method description
+	 *
+	 * @param packet
+	 *
+	 * @return
+	 *
+	 * @throws PubSubException
+	 */
+	@Override
+	public void process(final Packet packet) throws PubSubException {
+		try {
+			final BareJID toJid = packet.getStanzaTo().getBareJID();
+			final Element pubsub = packet.getElement().getChild("pubsub", "http://jabber.org/protocol/pubsub");
+			final Element items = pubsub.getChild("items");
+			final String nodeName = items.getAttributeStaticStr("node");
+			final JID senderJid = packet.getStanzaFrom();
+
+			if (nodeName == null) {
+				throw new PubSubException(Authorization.BAD_REQUEST, PubSubErrorCondition.NODEID_REQUIRED);
+			}
+
+			// XXX CHECK RIGHTS AUTH ETC
+			logic.checkAccessPermission(toJid, nodeName, senderJid);
+
+			final Element rpubsub = new Element("pubsub", new String[]{"xmlns"},
+												new String[]{"http://jabber.org/protocol/pubsub"});
+
+			List<String> requestedId = extractItemsIds(items);
+			if (requestedId != null) {
+				final Element ritems = new Element("items", new String[]{"node"}, new String[]{nodeName});
+				IItems nodeItems = getRepository().getNodeItems(toJid, nodeName);
+				for (String id : requestedId) {
+					Element payload = nodeItems.getItem(id);
+					if (payload != null) {
+						ritems.addChild(payload);
+					}
+				}
+				rpubsub.addChild(ritems);
+			} else {
+				Query query = getRepository().newQuery();
+				query.setComponentJID(packet.getStanzaTo());
+				query.setQuestionerJID(senderJid);
+				query.setPubsubNode(nodeName);
+
+				final Integer maxItems = asInteger(items.getAttributeStaticStr("max_items"));
+				final Element rsmGet = pubsub.getChild("set", "http://jabber.org/protocol/rsm");
+				if (rsmGet != null) {
+					query.getRsm().fromElement(rsmGet);
+					Element m = rsmGet.getChild("dt_after", "http://tigase.org/pubsub");
+					if (m != null) {
+						query.setStart(timestampHelper.parseTimestamp(m.getCData()));
+					}
+					m = rsmGet.getChild("dt_before", "http://tigase.org/pubsub");
+					if (m != null) {
+						query.setEnd(timestampHelper.parseTimestamp(m.getCData()));
+					}
+				} else {
+					if (maxItems != null) {
+						query.getRsm().setHasBefore(true);
+						query.getRsm().setMax(maxItems);
+					}
+				}
+
+				List<IPubSubRepository.Item> queryResults = new ArrayList<>();
+				getRepository().queryItems(query, (query1, item) -> {
+					queryResults.add(item);
+					if (query.getRsm().getFirst() == null) {
+						query.getRsm().setFirst(item.getId());
+					}
+					query.getRsm().setLast(item.getId());
+				});
+
+				queryResults.stream()
+						.collect(Collectors.groupingBy(item -> item.getNode()))
+						.forEach((rnodeName, rnodeItems) -> {
+							final Element ritems = new Element("items", new String[]{"node"}, new String[]{rnodeName});
+							for (IPubSubRepository.Item ritem : rnodeItems) {
+								ritems.addChild(ritem.getMessage());
+							}
+							rpubsub.addChild(ritems);
+						});
+
+				if (query.getRsm().getCount() > 0) {
+					if (maxItems == null) {
+						rpubsub.addChild(query.getRsm().toElement());
+					}
+				} else {
+					rpubsub.addChild(new Element("items", new String[]{"node"}, new String[]{nodeName}));
+				}
+			}
+
+			final Packet iq = packet.okResult(rpubsub, 0);
+			iq.setXMLNS(Packet.CLIENT_XMLNS);
+			packetWriter.write(iq);
+
+		} catch (PubSubException e1) {
+			throw e1;
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			throw new RuntimeException(e);
+		}
+	}
 
 	private Integer asInteger(String attribute) {
 		if (attribute == null) {
@@ -82,132 +206,5 @@ public class RetrieveItemsModule extends AbstractPubSubModule {
 		}
 
 		return result;
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @return
-	 */
-	@Override
-	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#retrieve-items" };
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @return
-	 */
-	@Override
-	public Criteria getModuleCriteria() {
-		return CRIT;
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param packet
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
-	@Override
-	public void process(final Packet packet) throws PubSubException {
-		try {
-			final BareJID toJid = packet.getStanzaTo().getBareJID();
-			final Element pubsub = packet.getElement().getChild("pubsub", "http://jabber.org/protocol/pubsub");
-			final Element items = pubsub.getChild("items");
-			final String nodeName = items.getAttributeStaticStr("node");
-			final JID senderJid = packet.getStanzaFrom();
-
-			if (nodeName == null) {
-				throw new PubSubException(Authorization.BAD_REQUEST, PubSubErrorCondition.NODEID_REQUIRED);
-			}
-
-			// XXX CHECK RIGHTS AUTH ETC
-			logic.checkAccessPermission(toJid, nodeName, senderJid);
-
-			final Element rpubsub = new Element("pubsub", new String[] { "xmlns" },
-												new String[] { "http://jabber.org/protocol/pubsub" });
-
-			List<String> requestedId = extractItemsIds(items);
-			if (requestedId != null) {
-				final Element ritems = new Element("items", new String[]{"node"}, new String[]{nodeName});
-				IItems nodeItems = getRepository().getNodeItems(toJid, nodeName);
-				for (String id : requestedId) {
-					Element payload = nodeItems.getItem(id);
-					if (payload != null) {
-						ritems.addChild(payload);
-					}
-				}
-				rpubsub.addChild(ritems);
-			} else {
-				Query query = getRepository().newQuery();
-				query.setComponentJID(packet.getStanzaTo());
-				query.setQuestionerJID(senderJid);
-				query.setPubsubNode(nodeName);
-
-				final Integer maxItems = asInteger(items.getAttributeStaticStr("max_items"));
-				final Element rsmGet = pubsub.getChild("set", "http://jabber.org/protocol/rsm");
-				if (rsmGet != null) {
-					query.getRsm().fromElement(rsmGet);
-					Element m = rsmGet.getChild("dt_after", "http://tigase.org/pubsub");
-					if (m  != null) {
-						query.setStart(timestampHelper.parseTimestamp(m.getCData()));
-					}
-					m = rsmGet.getChild("dt_before", "http://tigase.org/pubsub");
-					if (m  != null) {
-						query.setEnd(timestampHelper.parseTimestamp(m.getCData()));
-					}
-				} else {
-					if (maxItems != null) {
-						query.getRsm().setHasBefore(true);
-						query.getRsm().setMax(maxItems);
-					}
-				}
-
-				List<IPubSubRepository.Item> queryResults = new ArrayList<>();
-				getRepository().queryItems(query, (query1, item) -> {
-					queryResults.add(item);
-					if (query.getRsm().getFirst() == null) {
-						query.getRsm().setFirst(item.getId());
-					}
-					query.getRsm().setLast(item.getId());
-				});
-
-				queryResults.stream()
-						.collect(Collectors.groupingBy(item -> item.getNode()))
-						.forEach((rnodeName, rnodeItems) -> {
-					final Element ritems = new Element("items", new String[]{"node"}, new String[]{rnodeName});
-					for (IPubSubRepository.Item ritem : rnodeItems) {
-						ritems.addChild(ritem.getMessage());
-					}
-					rpubsub.addChild(ritems);
-				});
-
-				if (query.getRsm().getCount() > 0) {
-					if (maxItems == null) {
-						rpubsub.addChild(query.getRsm().toElement());
-					}
-				} else {
-					rpubsub.addChild(new Element("items", new String[] { "node" }, new String[] { nodeName }));
-				}
-			}
-
-			final Packet iq = packet.okResult(rpubsub, 0);
-			iq.setXMLNS( Packet.CLIENT_XMLNS );
-			packetWriter.write(iq);
-
-		} catch (PubSubException e1) {
-			throw e1;
-		} catch (Exception e) {
-			e.printStackTrace();
-
-			throw new RuntimeException(e);
-		}
 	}
 }

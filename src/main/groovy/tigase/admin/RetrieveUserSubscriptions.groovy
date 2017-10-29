@@ -45,7 +45,6 @@ import tigase.xmpp.jid.BareJID
 
 import java.util.regex.Pattern
 
-
 Kernel kernel = (Kernel) kernel;
 PubSubComponent component = (PubSubComponent) component
 packet = (Iq) packet

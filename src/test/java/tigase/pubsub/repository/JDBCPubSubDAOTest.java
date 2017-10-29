@@ -35,14 +35,11 @@ import java.util.HashMap;
 /**
  * Created by andrzej on 23.02.2016.
  */
-public class JDBCPubSubDAOTest extends AbstractPubSubDAOTest<DataRepository> {
+public class JDBCPubSubDAOTest
+		extends AbstractPubSubDAOTest<DataRepository> {
 
 	private static final String PROJECT_ID = "pubsub";
 	private static final String VERSION = "4.0.0";
-
-	// We need at least 2 for SQLServer
-	private static int no_of_connections = 1;
-
 	@ClassRule
 	public static TestRule rule = new TestRule() {
 		@Override
@@ -58,24 +55,8 @@ public class JDBCPubSubDAOTest extends AbstractPubSubDAOTest<DataRepository> {
 			return stmnt;
 		}
 	};
-
-	@BeforeClass
-	public static void loadSchema() {
-		if (uri.startsWith("jdbc:")) {
-			SchemaLoader loader = SchemaLoader.newInstance("jdbc");
-			SchemaLoader.Parameters params = loader.createParameters();
-			params.parseUri(uri);
-			params.setDbRootCredentials(null, null);
-			loader.init(params);
-			loader.validateDBConnection();
-			loader.validateDBExists();
-			Assert.assertEquals(SchemaLoader.Result.ok, loader.loadSchema(PROJECT_ID, VERSION));
-			loader.shutdown();
-			if (uri.contains(":sqlserver:")) {
-				no_of_connections = 2;
-			}
-		}
-	}
+	// We need at least 2 for SQLServer
+	private static int no_of_connections = 1;
 
 	@AfterClass
 	public static void cleanDerby() {
@@ -95,16 +76,35 @@ public class JDBCPubSubDAOTest extends AbstractPubSubDAOTest<DataRepository> {
 		}
 	}
 
+	@BeforeClass
+	public static void loadSchema() {
+		if (uri.startsWith("jdbc:")) {
+			SchemaLoader loader = SchemaLoader.newInstance("jdbc");
+			SchemaLoader.Parameters params = loader.createParameters();
+			params.parseUri(uri);
+			params.setDbRootCredentials(null, null);
+			loader.init(params);
+			loader.validateDBConnection();
+			loader.validateDBExists();
+			Assert.assertEquals(SchemaLoader.Result.ok, loader.loadSchema(PROJECT_ID, VERSION));
+			loader.shutdown();
+			if (uri.contains(":sqlserver:")) {
+				no_of_connections = 2;
+			}
+		}
+	}
+
 	@Override
 	protected String getMAMID(Object nodeId, String itemId) {
 		return nodeId.toString() + "," + itemId;
 	}
 
 	@Override
-	protected DataRepository prepareDataSource() throws DBInitException, IllegalAccessException, InstantiationException {
+	protected DataRepository prepareDataSource()
+			throws DBInitException, IllegalAccessException, InstantiationException {
 		DataRepositoryPool pool = new DataRepositoryPool();
 		pool.initRepository(uri, new HashMap());
-		for (int i=0; i<no_of_connections; i++) {
+		for (int i = 0; i < no_of_connections; i++) {
 			pool.addRepo(super.prepareDataSource());
 		}
 		return pool;

@@ -20,16 +20,16 @@
 
 package tigase.pubsub.utils;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import junit.framework.Assert;
 import junit.framework.TestCase;
-
 import org.junit.Before;
 import org.junit.Test;
 
-public class FragmentedMapTest extends TestCase {
+import java.util.HashMap;
+import java.util.Map;
+
+public class FragmentedMapTest
+		extends TestCase {
 
 	private Map<String, String> f1;
 

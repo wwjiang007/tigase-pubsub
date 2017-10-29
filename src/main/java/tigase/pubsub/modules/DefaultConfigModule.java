@@ -33,10 +33,12 @@ import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 
 @Bean(name = "defaultConfigModule", parent = PubSubComponent.class, active = true)
-public class DefaultConfigModule extends AbstractPubSubModule {
+public class DefaultConfigModule
+		extends AbstractPubSubModule {
 
-	private static final Criteria CRIT_DEFAULT = ElementCriteria.nameType("iq", "get").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(ElementCriteria.name("default"));
+	private static final Criteria CRIT_DEFAULT = ElementCriteria.nameType("iq", "get")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner"))
+			.add(ElementCriteria.name("default"));
 
 	@Inject(bean = "defaultNodeConfig")
 	protected LeafNodeConfig defaultNodeConfig;
@@ -46,7 +48,7 @@ public class DefaultConfigModule extends AbstractPubSubModule {
 
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#retrieve-default" };
+		return new String[]{"http://jabber.org/protocol/pubsub#retrieve-default"};
 	}
 
 	@Override
@@ -57,13 +59,13 @@ public class DefaultConfigModule extends AbstractPubSubModule {
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		try {
-			Element pubsub = new Element("pubsub", new String[] { "xmlns" },
-					new String[] { "http://jabber.org/protocol/pubsub#owner" });
+			Element pubsub = new Element("pubsub", new String[]{"xmlns"},
+										 new String[]{"http://jabber.org/protocol/pubsub#owner"});
 			Element def = new Element("default");
 			Element x = defaultNodeConfig.getFormElement();
 			if (x == null) {
 				throw new PubSubException(packet.getElement(), Authorization.FEATURE_NOT_IMPLEMENTED,
-						new PubSubErrorCondition("unsupported", "config-node"));
+										  new PubSubErrorCondition("unsupported", "config-node"));
 			}
 			def.addChild(x);
 			pubsub.addChild(def);

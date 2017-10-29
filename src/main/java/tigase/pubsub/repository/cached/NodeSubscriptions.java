@@ -20,17 +20,18 @@
 
 package tigase.pubsub.repository.cached;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import tigase.pubsub.Subscription;
 import tigase.pubsub.Utils;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xmpp.jid.BareJID;
 
-public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscriptions {
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+public class NodeSubscriptions
+		extends tigase.pubsub.repository.NodeSubscriptions {
 
 	protected final ThreadLocal<Map<BareJID, UsersSubscription>> changedSubs = new ThreadLocal<Map<BareJID, UsersSubscription>>();
 
@@ -40,7 +41,6 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 	/**
 	 * Constructs ...
 	 *
-	 *
 	 * @param nodeSubscriptions
 	 */
 	public NodeSubscriptions(tigase.pubsub.repository.NodeSubscriptions nodeSubscriptions) {
@@ -49,7 +49,6 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param jid
 	 * @param subscription
@@ -66,18 +65,8 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 		return subid;
 	}
 
-	private Map<BareJID, UsersSubscription> changedSubs() {
-		Map<BareJID, UsersSubscription> changedSubs = this.changedSubs.get();
-		if (changedSubs == null) {
-			changedSubs = new HashMap<BareJID, UsersSubscription>();
-			this.changedSubs.set(changedSubs);
-		}
-		return changedSubs;
-	}
-
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param jid
 	 * @param subscription
@@ -91,6 +80,60 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 
 			changedSubs().put(s.getJid(), s);
 		}
+	}
+
+	public Map<BareJID, UsersSubscription> getChanged() {
+		return changedSubs();
+	}
+
+	/**
+	 * Method description
+	 *
+	 * @return
+	 */
+	@Override
+	public UsersSubscription[] getSubscriptions() {
+		final Set<UsersSubscription> result = new HashSet<UsersSubscription>();
+
+		result.addAll(this.subs.values());
+
+		result.addAll(this.changedSubs().values());
+
+		return result.toArray(new UsersSubscription[]{});
+	}
+
+	/**
+	 * Method description
+	 *
+	 * @return
+	 */
+	@Override
+	public boolean isChanged() {
+		return this.changedSubs().size() > 0;
+	}
+
+	/**
+	 * Method description
+	 */
+	public void merge() {
+		Map<BareJID, UsersSubscription> changedSubs = changedSubs();
+		for (Map.Entry<BareJID, UsersSubscription> entry : changedSubs.entrySet()) {
+			if (entry.getValue().getSubscription() == Subscription.none) {
+				subs.remove(entry.getKey());
+			} else {
+				subs.put(entry.getKey(), entry.getValue());
+			}
+		}
+		// subs.putAll(changedSubs);
+		changedSubs.clear();
+	}
+
+	/**
+	 * Method description
+	 */
+	@Override
+	public void resetChangedFlag() {
+		changedSubs().clear();
 	}
 
 	@Override
@@ -116,61 +159,12 @@ public class NodeSubscriptions extends tigase.pubsub.repository.NodeSubscription
 		return us;
 	}
 
-	public Map<BareJID, UsersSubscription> getChanged() {
-		return changedSubs();
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @return
-	 */
-	@Override
-	public UsersSubscription[] getSubscriptions() {
-		final Set<UsersSubscription> result = new HashSet<UsersSubscription>();
-
-		result.addAll(this.subs.values());
-
-		result.addAll(this.changedSubs().values());
-
-		return result.toArray(new UsersSubscription[] {});
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @return
-	 */
-	@Override
-	public boolean isChanged() {
-		return this.changedSubs().size() > 0;
-	}
-
-	/**
-	 * Method description
-	 *
-	 */
-	public void merge() {
-		Map<BareJID, UsersSubscription> changedSubs = changedSubs();
-		for (Map.Entry<BareJID, UsersSubscription> entry : changedSubs.entrySet()) {
-			if (entry.getValue().getSubscription() == Subscription.none) {
-				subs.remove(entry.getKey());
-			} else {
-				subs.put(entry.getKey(), entry.getValue());
-			}
+	private Map<BareJID, UsersSubscription> changedSubs() {
+		Map<BareJID, UsersSubscription> changedSubs = this.changedSubs.get();
+		if (changedSubs == null) {
+			changedSubs = new HashMap<BareJID, UsersSubscription>();
+			this.changedSubs.set(changedSubs);
 		}
-		// subs.putAll(changedSubs);
-		changedSubs.clear();
-	}
-
-	/**
-	 * Method description
-	 *
-	 */
-	@Override
-	public void resetChangedFlag() {
-		changedSubs().clear();
+		return changedSubs;
 	}
 }

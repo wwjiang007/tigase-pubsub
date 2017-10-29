@@ -36,32 +36,25 @@ import tigase.xmpp.jid.JID;
 import java.util.UUID;
 
 /**
- *
  * @author andrzej
  */
 public class PubSubComponentTest {
-	
-	String name = null;
-	PubSubComponent pubsub = null;
+
 	String from = null;
-	String to = null;
+	String name = null;
 	Packet packet = null;
-	
+	PubSubComponent pubsub = null;
+	String to = null;
+
 	@Before
 	public void setup() throws TigaseStringprepException {
 		name = "pubsub";
-		pubsub =  new PubSubComponent();
+		pubsub = new PubSubComponent();
 		pubsub.setName(name);
 
 		from = "test@test/" + UUID.randomUUID();
 	}
-	
-	private void createPacket() throws TigaseStringprepException {
-		packet = Packet.packetInstance(new Element("iq", new String[] { "from", "to", "type", Packet.XMLNS_ATT }, new String[] { from, to, "set", Packet.CLIENT_XMLNS }));
-		packet.setPacketFrom(JID.jidInstanceNS(from));
-		packet.setPacketTo(null);
-	}
-	
+
 	@After
 	public void teardown() {
 		pubsub = null;
@@ -69,7 +62,14 @@ public class PubSubComponentTest {
 		to = null;
 		packet = null;
 	}
-	
+
+	private void createPacket() throws TigaseStringprepException {
+		packet = Packet.packetInstance(new Element("iq", new String[]{"from", "to", "type", Packet.XMLNS_ATT},
+												   new String[]{from, to, "set", Packet.CLIENT_XMLNS}));
+		packet.setPacketFrom(JID.jidInstanceNS(from));
+		packet.setPacketTo(null);
+	}
+
 //	@Test
 //	public void testHashCodeForPacketTo1() throws TigaseStringprepException {	
 //		to = name + ".example.com";		
@@ -106,5 +106,5 @@ public class PubSubComponentTest {
 //		// I know I'm checking with from but packet in okResult swaps from with to!
 //		Assert.assertEquals("'from' used as source for packet hash code, should use 'to'", from.hashCode(), pubsub.hashCodeForPacket(packet));
 //	}
-	
+
 }

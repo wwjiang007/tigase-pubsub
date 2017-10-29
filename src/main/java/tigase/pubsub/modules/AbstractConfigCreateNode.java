@@ -23,7 +23,8 @@ import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.LeafNodeConfig;
 
-public abstract class AbstractConfigCreateNode extends AbstractPubSubModule {
+public abstract class AbstractConfigCreateNode
+		extends AbstractPubSubModule {
 
 	@Inject(bean = "defaultNodeConfig")
 	protected LeafNodeConfig defaultNodeConfig;

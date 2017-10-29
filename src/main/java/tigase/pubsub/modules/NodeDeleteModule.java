@@ -41,48 +41,31 @@ import tigase.xmpp.jid.JID;
 
 /**
  * Class description
- *
- *
  */
 @Bean(name = "nodeDeleteModule", parent = PubSubComponent.class, active = true)
-public class NodeDeleteModule extends AbstractPubSubModule {
+public class NodeDeleteModule
+		extends AbstractPubSubModule {
 
-	public static class NodeDeletedEvent {
-
-		public final BareJID serviceJid;
-
-		public final String node;
-
-		public NodeDeletedEvent(BareJID serviceJid, String node) {
-			this.serviceJid = serviceJid;
-			this.node = node;
-		}
-
-	}
-
-	private static final Criteria CRIT_DELETE = ElementCriteria.nameType("iq", "set").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner")).add(ElementCriteria.name("delete"));
-
+	private static final Criteria CRIT_DELETE = ElementCriteria.nameType("iq", "set")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner"))
+			.add(ElementCriteria.name("delete"));
 	@Inject
 	private EventBus eventBus;
-
 	@Inject
 	private PublishItemModule publishModule;
 
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#delete-nodes" };
+		return new String[]{"http://jabber.org/protocol/pubsub#delete-nodes"};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -94,8 +77,8 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @return
 	 *
 	 * @throws PubSubException
@@ -134,10 +117,10 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 
 			if (nodeConfig.isNotify_config()) {
 				ISubscriptions nodeSubscriptions = this.getRepository().getNodeSubscriptions(toJid, nodeName);
-				Element del = new Element("delete", new String[] { "node" }, new String[] { nodeName });
+				Element del = new Element("delete", new String[]{"node"}, new String[]{nodeName});
 
 				this.publishModule.sendNotifications(del, packet.getStanzaTo(), nodeName, nodeConfig, nodeAffiliations,
-						nodeSubscriptions);
+													 nodeSubscriptions);
 			}
 
 			final String parentNodeName = nodeConfig.getCollection();
@@ -176,6 +159,18 @@ public class NodeDeleteModule extends AbstractPubSubModule {
 
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static class NodeDeletedEvent {
+
+		public final String node;
+		public final BareJID serviceJid;
+
+		public NodeDeletedEvent(BareJID serviceJid, String node) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+		}
+
 	}
 
 }

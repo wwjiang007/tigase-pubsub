@@ -54,7 +54,8 @@ public class XsltTool {
 
 	}
 
-	public List<Element> transform(final Element item, AbstractNodeConfig nodeConfig) throws TransformerException, IOException {
+	public List<Element> transform(final Element item, AbstractNodeConfig nodeConfig)
+			throws TransformerException, IOException {
 		Source xsltSource;
 		final String bodyXsltUrl = nodeConfig.getBodyXslt();
 		final String bodyXsltEmbedded = nodeConfig.getBodyXsltEmbedded();

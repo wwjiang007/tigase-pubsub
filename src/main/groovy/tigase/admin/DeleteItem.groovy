@@ -55,97 +55,98 @@ eventBus = (EventBus) eventBus
 @CompileStatic
 Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus, Set admins) {
 
-    try {
-        def NODE = "node"
-        def ID = "item-id";
+	try {
+		def NODE = "node"
+		def ID = "item-id";
 
-        def componentConfig = kernel.getInstance(PubSubConfig.class)
-        IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
+		def componentConfig = kernel.getInstance(PubSubConfig.class)
+		IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 
-        def stanzaFromBare = p.getStanzaFrom().getBareJID()
-        def isServiceAdmin = admins.contains(stanzaFromBare)
+		def stanzaFromBare = p.getStanzaFrom().getBareJID()
+		def isServiceAdmin = admins.contains(stanzaFromBare)
 
-        def node = Command.getFieldValue(p, NODE);
-        def id = Command.getFieldValue(p, ID);
+		def node = Command.getFieldValue(p, NODE);
+		def id = Command.getFieldValue(p, ID);
 
-        if (!node || !id) {
-            def result = p.commandResult(Command.DataType.form);
+		if (!node || !id) {
+			def result = p.commandResult(Command.DataType.form);
 
-            Command.addTitle(result, "Delete item from a node")
-            Command.addInstructions(result, "Fill out this form to delete item from a node.")
+			Command.addTitle(result, "Delete item from a node")
+			Command.addInstructions(result, "Fill out this form to delete item from a node.")
 
-            Command.addFieldValue(result, NODE, node ?: "", "text-single",
-                    "The node to delete from")
-            Command.addFieldValue(result, ID, id ?: "", "text-single",
-                    "ID of item")
-            return result
-        }
+			Command.addFieldValue(result, NODE, node ?: "", "text-single",
+								  "The node to delete from")
+			Command.addFieldValue(result, ID, id ?: "", "text-single",
+								  "ID of item")
+			return result
+		}
 
-        def result = p.commandResult(Command.DataType.result)
-        try {
-            if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
-                def toJid = p.getStanzaTo().getBareJID();
+		def result = p.commandResult(Command.DataType.result)
+		try {
+			if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
+				def toJid = p.getStanzaTo().getBareJID();
 
-                def nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
-                if (nodeConfig == null) {
-                    throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Node " + node + " needs " +
-                            "to be created before an item can be published.");
-                }
-                if (nodeConfig.getNodeType() == NodeType.collection) {
-                    throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
-                            new PubSubErrorCondition("unsupported", "publish"));
-                }
+				def nodeConfig = pubsubRepository.getNodeConfig(toJid, node);
+				if (nodeConfig == null) {
+					throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Node " + node + " needs " +
+							"to be created before an item can be published.");
+				}
+				if (nodeConfig.getNodeType() == NodeType.collection) {
+					throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
+											  new PubSubErrorCondition("unsupported", "publish"));
+				}
 
-                def removed = false;
-                if (((LeafNodeConfig) nodeConfig).isPersistItem()) {
-                    def nodeItems = pubsubRepository.getNodeItems(toJid, node);
-                    if (nodeItems.getItemCreationDate(id)) {
-                        Element notification = new Element("retract", ["id"] as String[], [id] as String[]);
+				def removed = false;
+				if (((LeafNodeConfig) nodeConfig).isPersistItem()) {
+					def nodeItems = pubsubRepository.getNodeItems(toJid, node);
+					if (nodeItems.getItemCreationDate(id)) {
+						Element notification = new Element("retract", [ "id" ] as String[], [ id ] as String[]);
 
-                        removed = true;
-                        nodeItems.deleteItem(id);
-                        eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, node, notification));
+						removed = true;
+						nodeItems.deleteItem(id);
+						eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, node, notification));
 
-                        def publishNodeModule = kernel.getInstance(PublishItemModule.class);
-                        publishNodeModule.sendNotifications(p.getStanzaTo().getBareJID(), node, [notification]);
-                    }
-                }
+						def publishNodeModule = kernel.getInstance(PublishItemModule.class);
+						publishNodeModule.sendNotifications(p.getStanzaTo().getBareJID(), node, [ notification ]);
+					}
+				}
 
-                if (removed) {
-                    Command.addTextField(result, "Note", "Operation successful");
-                    Command.addFieldValue(result, "item-id", "" + id, "fixed", "Item ID");
-                } else {
-                    throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Item with ID " + id + " was not found");
-                }
-            } else {
-                //Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
-                throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
-                        "permissions to publish item to a node.");
-            }
-        } catch (PubSubException ex) {
-            Command.addTextField(result, "Error", ex.getMessage())
-            if (ex.getErrorCondition()) {
-                def error = ex.getErrorCondition();
-                Element errorEl = new Element("error");
-                errorEl.setAttribute("type", error.getErrorType());
-                Element conditionEl = new Element(error.getCondition(), ex.getMessage());
-                conditionEl.setXMLNS(Packet.ERROR_NS);
-                errorEl.addChild(conditionEl);
-                Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
-                if (pubsubCondition)
-                    errorEl.addChild(pubsubCondition);
-                result.getElement().addChild(errorEl);
-            }
-        } catch (TigaseDBException ex) {
-            Command.addTextField(result, "Note", "Problem accessing database, item not published to node.");
-        }
+				if (removed) {
+					Command.addTextField(result, "Note", "Operation successful");
+					Command.addFieldValue(result, "item-id", "" + id, "fixed", "Item ID");
+				} else {
+					throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Item with ID " + id + " was not found");
+				}
+			} else {
+				//Command.addTextField(result, "Error", "You do not have enough permissions to publish item to a node.");
+				throw new PubSubException(Authorization.FORBIDDEN,
+										  "You do not have enough " + "permissions to publish item to a node.");
+			}
+		} catch (PubSubException ex) {
+			Command.addTextField(result, "Error", ex.getMessage())
+			if (ex.getErrorCondition()) {
+				def error = ex.getErrorCondition();
+				Element errorEl = new Element("error");
+				errorEl.setAttribute("type", error.getErrorType());
+				Element conditionEl = new Element(error.getCondition(), ex.getMessage());
+				conditionEl.setXMLNS(Packet.ERROR_NS);
+				errorEl.addChild(conditionEl);
+				Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
+                if (pubsubCondition) {
+                    errorEl.addChild(pubsubCondition)
+                };
+				result.getElement().addChild(errorEl);
+			}
+		} catch (TigaseDBException ex) {
+			Command.addTextField(result, "Note", "Problem accessing database, item not published to node.");
+		}
 
-        return result
+		return result
 
-    } catch (Exception ex) {
-        ex.printStackTrace();
-        return null;
-    }
+	} catch (Exception ex) {
+		ex.printStackTrace();
+		return null;
+	}
 }
 
 return process(kernel, component, packet, eventBus, (Set) adminsSet)

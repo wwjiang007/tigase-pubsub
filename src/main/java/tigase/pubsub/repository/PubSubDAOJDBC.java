@@ -46,9 +46,10 @@ import java.util.Date;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 
-@Repository.Meta(supportedUris = { "jdbc:[^:]+:.*" })
+@Repository.Meta(supportedUris = {"jdbc:[^:]+:.*"})
 @Repository.SchemaId(id = Schema.PUBSUB_SCHEMA_ID, name = Schema.PUBSUB_SCHEMA_NAME)
-public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
+public class PubSubDAOJDBC
+		extends PubSubDAO<Long, DataRepository, Query> {
 
 	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?) }";
 	private static final String REMOVE_NODE_QUERY = "{ call TigPubSubRemoveNode(?) }";
@@ -74,16 +75,13 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	private static final String DELETE_NODE_SUBSCRIPTIONS_QUERY = "{ call TigPubSubDeleteNodeSubscription(?, ?) }";
 	private static final String GET_USER_AFFILIATIONS_QUERY = "{ call TigPubSubGetUserAffiliations(?, ?) }";
 	private static final String GET_USER_SUBSCRIPTIONS_QUERY = "{ call TigPubSubGetUserSubscriptions(?, ?) }";
-
-	@ConfigField(desc = "Retrieve items from repository", alias="mam-query-items-query")
-	private String mamQueryItems = "{ call TigPubSubMamQueryItems(?,?,?,?,?,?,?) }";
-	@ConfigField(desc = "Find item position in result set from repository", alias="mam-query-item-position-query")
-	private String mamQueryItemPosition= "{ call TigPubSubMamQueryItemPosition(?,?,?,?,?,?,?) }";
-	@ConfigField(desc = "Count number of items from repository", alias="mam-query-items-count-query")
-	private String mamQueryItemsCount = "{ call TigPubSubMamQueryItemsCount(?,?,?,?,?) }";
-
 	private DataRepository data_repo;
-
+	@ConfigField(desc = "Find item position in result set from repository", alias = "mam-query-item-position-query")
+	private String mamQueryItemPosition = "{ call TigPubSubMamQueryItemPosition(?,?,?,?,?,?,?) }";
+	@ConfigField(desc = "Retrieve items from repository", alias = "mam-query-items-query")
+	private String mamQueryItems = "{ call TigPubSubMamQueryItems(?,?,?,?,?,?,?) }";
+	@ConfigField(desc = "Count number of items from repository", alias = "mam-query-items-count-query")
+	private String mamQueryItemsCount = "{ call TigPubSubMamQueryItemsCount(?,?,?,?,?) }";
 	private LinkedBlockingDeque<HashCode> pool_hashCodes = new LinkedBlockingDeque<>();
 
 	public PubSubDAOJDBC() {
@@ -141,7 +139,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 
 	@Override
 	public Long createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-			NodeType nodeType, Long collectionId) throws RepositoryException {
+						   NodeType nodeType, Long collectionId) throws RepositoryException {
 		Long nodeId = null;
 		HashCode hash = null;
 		try {
@@ -204,7 +202,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	public void deleteItem(BareJID serviceJid, Long nodeId, String id) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "deleting Item: serviceJid: {0}, nodeId: {1}, id: {2}",
-					new Object[] { serviceJid, nodeId, id });
+					new Object[]{serviceJid, nodeId, id});
 		}
 		HashCode hash = null;
 		try {
@@ -227,7 +225,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	@Override
 	public void deleteNode(BareJID serviceJid, Long nodeId) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "deleting Node: serviceJid: {0}, nodeId: {1}", new Object[] { serviceJid, nodeId });
+			log.log(Level.FINEST, "deleting Node: serviceJid: {0}, nodeId: {1}", new Object[]{serviceJid, nodeId});
 		}
 		HashCode hash = null;
 		try {
@@ -247,7 +245,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	@Override
 	public String[] getAllNodesList(BareJID serviceJid) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "get all nodes list: serviceJid: {0}", new Object[] { serviceJid });
+			log.log(Level.FINEST, "get all nodes list: serviceJid: {0}", new Object[]{serviceJid});
 		}
 		HashCode hash = null;
 		try {
@@ -279,43 +277,13 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 		return getNodesList(serviceJid, nodeName);
 	}
 
-	protected Date getDateFromItem(BareJID serviceJid, long nodeId, String id, int field) throws RepositoryException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "getting date from item: serviceJid: {0}, nodeId: {1}, id: {2}, field: {3}",
-					new Object[] { serviceJid, nodeId, id, field });
+	@Override
+	public Element getItem(BareJID serviceJid, Long nodeId, String id) throws RepositoryException {
+		String data = getStringFromItem(serviceJid, nodeId, id, 1);
+		if (data == null) {
+			return null;
 		}
-		HashCode hash = null;
-		try {
-			ResultSet rs = null;
-			hash = takeDao();
-			PreparedStatement get_item_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_ITEM_QUERY);
-			synchronized (get_item_sp) {
-				try {
-					get_item_sp.setLong(1, nodeId);
-					get_item_sp.setString(2, id);
-					rs = get_item_sp.executeQuery();
-					if (rs.next()) {
-						// String date = rs.getString( field );
-						// if ( date == null ) {
-						// return null;
-						// }
-						// -- why do we need this?
-						// return DateFormat.getDateInstance().parse( date );
-						return data_repo.getTimestamp(rs, field);
-					}
-				} finally {
-					release(null, rs);
-				}
-				return null;
-			}
-		} catch (SQLException e) {
-			throw new RepositoryException("Item field " + field + " reading error", e);
-			// } catch ( ParseException e ) {
-			// throw new RepositoryException( "Item field " + field + " parsing
-			// error", e );
-		} finally {
-			offerDao(hash);
-		}
+		return itemDataToElement(data.toCharArray());
 	}
 
 	// @Override
@@ -325,29 +293,23 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	// }
 
 	@Override
-	public Element getItem( BareJID serviceJid, Long nodeId, String id ) throws RepositoryException {
-		String data = getStringFromItem( serviceJid, nodeId, id, 1 );
-		if (data == null)
-			return null;
-		return itemDataToElement( data.toCharArray() );
-	}
-
-	@Override
-	public Date getItemCreationDate(final BareJID serviceJid, final Long nodeId, final String id) throws RepositoryException {
+	public Date getItemCreationDate(final BareJID serviceJid, final Long nodeId, final String id)
+			throws RepositoryException {
 		return getDateFromItem(serviceJid, nodeId, id, 3);
 	}
 
 	@Override
 	public String[] getItemsIds(BareJID serviceJid, Long nodeId) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "getting items IDs: serviceJid: {0}, nodeId: {1}", new Object[] { serviceJid, nodeId });
+			log.log(Level.FINEST, "getting items IDs: serviceJid: {0}, nodeId: {1}", new Object[]{serviceJid, nodeId});
 		}
 		if (null != nodeId) {
 			HashCode hash = null;
 			try {
 				ResultSet rs = null;
 				hash = takeDao();
-				PreparedStatement get_node_items_ids_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_NODE_ITEM_IDS_QUERY);
+				PreparedStatement get_node_items_ids_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						 GET_NODE_ITEM_IDS_QUERY);
 				synchronized (get_node_items_ids_sp) {
 					try {
 						get_node_items_ids_sp.setLong(1, nodeId);
@@ -375,14 +337,15 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	public String[] getItemsIdsSince(BareJID serviceJid, Long nodeId, Date since) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Getting items since: serviceJid: {0}, nodeId: {1}, since: {2}",
-					new Object[] { serviceJid, nodeId, since });
+					new Object[]{serviceJid, nodeId, since});
 		}
 		HashCode hash = null;
 		try {
 			ResultSet rs = null;
 			Timestamp sinceTs = new Timestamp(since.getTime());
 			hash = takeDao();
-			PreparedStatement get_node_items_ids_since_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_NODE_ITEM_IDS_SINCE_QUERY);
+			PreparedStatement get_node_items_ids_since_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						   GET_NODE_ITEM_IDS_SINCE_QUERY);
 			synchronized (get_node_items_ids_since_sp) {
 				try {
 					get_node_items_ids_since_sp.setLong(1, nodeId);
@@ -405,16 +368,18 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	}
 
 	@Override
-	public List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, Long nodeId, String nodeName) throws RepositoryException {
+	public List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, Long nodeId, String nodeName)
+			throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Getting items meta: serviceJid: {0}, nodeId: {1}, nodeName: {2}",
-					new Object[] { serviceJid, nodeId, nodeName });
+					new Object[]{serviceJid, nodeId, nodeName});
 		}
 		HashCode hash = null;
 		try {
 			ResultSet rs = null;
 			hash = takeDao();
-			PreparedStatement get_node_items_meta_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_NODE_ITEMS_META_QUERY);
+			PreparedStatement get_node_items_meta_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																					  GET_NODE_ITEMS_META_QUERY);
 			synchronized (get_node_items_meta_sp) {
 				try {
 					get_node_items_meta_sp.setLong(1, nodeId);
@@ -444,16 +409,17 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	}
 
 	@Override
-	public NodeAffiliations getNodeAffiliations( BareJID serviceJid, Long nodeId ) throws RepositoryException {
-		if ( log.isLoggable( Level.FINEST ) ){
-			log.log( Level.FINEST, "Getting node affiliation: serviceJid: {0}, nodeId: {1}",
-					new Object[] { serviceJid, nodeId } );
+	public NodeAffiliations getNodeAffiliations(BareJID serviceJid, Long nodeId) throws RepositoryException {
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "Getting node affiliation: serviceJid: {0}, nodeId: {1}",
+					new Object[]{serviceJid, nodeId});
 		}
 		HashCode hash = null;
 		try {
 			ResultSet rs = null;
 			hash = takeDao();
-			PreparedStatement get_node_affiliations_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_NODE_AFFILIATIONS_QUERY);
+			PreparedStatement get_node_affiliations_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						GET_NODE_AFFILIATIONS_QUERY);
 			synchronized (get_node_affiliations_sp) {
 				try {
 					get_node_affiliations_sp.setLong(1, nodeId);
@@ -469,8 +435,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 					release(null, rs);
 				}
 			}
-		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node subscribers reading error", e );
+		} catch (SQLException e) {
+			throw new RepositoryException("Node subscribers reading error", e);
 		} finally {
 			offerDao(hash);
 		}
@@ -482,10 +448,10 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	}
 
 	@Override
-	public Long getNodeId( BareJID serviceJid, String nodeName ) throws RepositoryException {
-		if ( log.isLoggable( Level.FINEST ) ){
-			log.log( Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}",
-							 new Object[] { serviceJid, nodeName } );
+	public Long getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}",
+					new Object[]{serviceJid, nodeName});
 		}
 		HashCode hash = null;
 		try {
@@ -499,9 +465,10 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 					rs = get_node_id_sp.executeQuery();
 					if (rs.next()) {
 						final long nodeId = rs.getLong(1);
-						if ( log.isLoggable( Level.FINEST ) ){
-							log.log( Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}, nodeId: {2}, get_node_id_sp: {3}",
-											 new Object[] { serviceJid, nodeName, nodeId, get_node_id_sp } );
+						if (log.isLoggable(Level.FINEST)) {
+							log.log(Level.FINEST,
+									"Getting Node ID: serviceJid: {0}, nodeName: {1}, nodeId: {2}, get_node_id_sp: {3}",
+									new Object[]{serviceJid, nodeName, nodeId, get_node_id_sp});
 						}
 						return nodeId;
 					}
@@ -510,8 +477,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 					release(null, rs);
 				}
 			}
-		} catch ( SQLException e ) {
-			throw new RepositoryException( "Retrieving node id error", e );
+		} catch (SQLException e) {
+			throw new RepositoryException("Retrieving node id error", e);
 		} finally {
 			offerDao(hash);
 		}
@@ -519,9 +486,9 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 
 	@Override
 	public NodeMeta<Long> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException {
-		if ( log.isLoggable( Level.FINEST ) ){
-			log.log( Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}",
-					new Object[] { serviceJid, nodeName } );
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}",
+					new Object[]{serviceJid, nodeName});
 		}
 		HashCode hash = null;
 		try {
@@ -538,12 +505,15 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 						final String configStr = rs.getString(2);
 						final String creator = rs.getString(3);
 						final Date creationTime = data_repo.getTimestamp(rs, 4);
-						final NodeMeta<Long> nodeMeta = new NodeMeta(nodeId, parseConfig(nodeName, configStr), creator != null ? BareJID.bareJIDInstance(creator) : null, creationTime);
+						final NodeMeta<Long> nodeMeta = new NodeMeta(nodeId, parseConfig(nodeName, configStr),
+																	 creator != null
+																	 ? BareJID.bareJIDInstance(creator)
+																	 : null, creationTime);
 
-
-						if ( log.isLoggable( Level.FINEST ) ){
-							log.log( Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}, nodeId: {2}, get_node_id_sp: {3}",
-									new Object[] { serviceJid, nodeName, nodeId, GET_NODE_META_QUERY } );
+						if (log.isLoggable(Level.FINEST)) {
+							log.log(Level.FINEST,
+									"Getting Node ID: serviceJid: {0}, nodeName: {1}, nodeId: {2}, get_node_id_sp: {3}",
+									new Object[]{serviceJid, nodeName, nodeId, GET_NODE_META_QUERY});
 						}
 						return nodeMeta;
 					}
@@ -553,7 +523,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 				}
 			}
 		} catch (TigaseStringprepException | SQLException e) {
-			throw new RepositoryException( "Retrieving node meta data error", e );
+			throw new RepositoryException("Retrieving node meta data error", e);
 		} finally {
 			offerDao(hash);
 		}
@@ -562,14 +532,16 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	@Override
 	public String[] getNodesList(BareJID serviceJid, String nodeName) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "Getting nodes list: serviceJid: {0}, nodeName: {1}", new Object[] { serviceJid, nodeName });
+			log.log(Level.FINEST, "Getting nodes list: serviceJid: {0}, nodeName: {1}",
+					new Object[]{serviceJid, nodeName});
 		}
 		HashCode hash = null;
 		try {
 			ResultSet rs = null;
 			hash = takeDao();
 			if (nodeName == null) {
-				PreparedStatement get_root_nodes_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_ROOT_NODES_QUERY);
+				PreparedStatement get_root_nodes_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																					 GET_ROOT_NODES_QUERY);
 				synchronized (get_root_nodes_sp) {
 					try {
 						get_root_nodes_sp.setString(1, serviceJid.toString());
@@ -584,7 +556,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 					}
 				}
 			} else {
-				PreparedStatement get_child_nodes_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_CHILD_NODES_QUERY);
+				PreparedStatement get_child_nodes_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																					  GET_CHILD_NODES_QUERY);
 				synchronized (get_child_nodes_sp) {
 					try {
 						get_child_nodes_sp.setString(1, serviceJid.toString());
@@ -611,14 +584,15 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	public NodeSubscriptions getNodeSubscriptions(BareJID serviceJid, Long nodeId) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Getting node subscriptions: serviceJid: {0}, nodeId: {1}",
-					new Object[] { serviceJid, nodeId });
+					new Object[]{serviceJid, nodeId});
 		}
 		HashCode hash = null;
 		try {
 			ResultSet rs = null;
 			final NodeSubscriptions ns = NodeSubscriptions.create();
 			hash = takeDao();
-			PreparedStatement get_node_subscriptions_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_NODE_SUBSCRIPTIONS_QUERY);
+			PreparedStatement get_node_subscriptions_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						 GET_NODE_SUBSCRIPTIONS_QUERY);
 			synchronized (get_node_subscriptions_sp) {
 				try {
 					get_node_subscriptions_sp.setLong(1, nodeId);
@@ -643,47 +617,19 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 		}
 	}
 
-	protected String getStringFromItem(BareJID serviceJid, long nodeId, String id, int field) throws RepositoryException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "Getting string from item: serviceJid: {0}, nodeId: {1}",
-					new Object[] { serviceJid, nodeId });
-		}
-		HashCode hash = null;
-		try {
-			ResultSet rs = null;
-			hash = takeDao();
-			PreparedStatement get_item_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_ITEM_QUERY);
-			synchronized (get_item_sp) {
-				try {
-					get_item_sp.setLong(1, nodeId);
-					get_item_sp.setString(2, id);
-					rs = get_item_sp.executeQuery();
-					if (rs.next()) {
-						return rs.getString(field);
-					}
-					return null;
-				} finally {
-					release(null, rs);
-				}
-			}
-		} catch (SQLException e) {
-			throw new RepositoryException("Item field " + field + " reading error", e);
-		} finally {
-			offerDao(hash);
-		}
-	}
-
 	@Override
-	public Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid) throws RepositoryException {
+	public Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid)
+			throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "Getting user affiliation: serviceJid: {0}, jid: {1}", new Object[] { serviceJid, jid });
+			log.log(Level.FINEST, "Getting user affiliation: serviceJid: {0}, jid: {1}", new Object[]{serviceJid, jid});
 		}
 		HashCode hash = null;
 		try {
 			ResultSet rs = null;
 			Map<String, UsersAffiliation> result = new HashMap<String, UsersAffiliation>();
 			hash = takeDao();
-			PreparedStatement get_user_affiliations_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_USER_AFFILIATIONS_QUERY);
+			PreparedStatement get_user_affiliations_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						GET_USER_AFFILIATIONS_QUERY);
 			synchronized (get_user_affiliations_sp) {
 				try {
 					get_user_affiliations_sp.setString(1, serviceJid.toString());
@@ -707,15 +653,17 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	}
 
 	@Override
-	public Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID jid) throws RepositoryException {
+	public Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID jid)
+			throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "Getting user subs: serviceJid: {0}, jid: {1}", new Object[] { serviceJid, jid });
+			log.log(Level.FINEST, "Getting user subs: serviceJid: {0}, jid: {1}", new Object[]{serviceJid, jid});
 		}
 		HashCode hash = null;
 		try {
 			ResultSet rs = null;
 			hash = takeDao();
-			PreparedStatement get_user_subscriptions_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_USER_SUBSCRIPTIONS_QUERY);
+			PreparedStatement get_user_subscriptions_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						 GET_USER_SUBSCRIPTIONS_QUERY);
 			Map<String, UsersSubscription> result = new HashMap<String, UsersSubscription>();
 			synchronized (get_user_subscriptions_sp) {
 				try {
@@ -740,80 +688,12 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 		}
 	}
 
-	protected Integer countItems(Query query, String nodeIds) throws TigaseDBException {
-		try {
-			PreparedStatement st = this.data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
-																	   mamQueryItemsCount);
-			synchronized (st) {
-				ResultSet rs = null;
-				try {
-					setStatementParamsForMAM(st, query, nodeIds);
-
-					rs = st.executeQuery();
-					if (rs.next()) {
-						return rs.getInt(1);
-					} else {
-						return null;
-					}
-				} finally {
-					data_repo.release(null, rs);
-				}
-			}
-		} catch (SQLException ex) {
-			throw new TigaseDBException("Failed to retrieve number of items for nodes at " + query.getComponentJID(),
-										ex);
-		}
-	}
-
-
-	protected Integer getItemPosition(Query query, String nodeIds, String itemId)
-			throws RepositoryException, ComponentException {
-		if (itemId == null) {
-			return null;
-		}
-
-
-		try {
-			String[] parts = itemId.split(",");
-			if (parts.length != 2) {
-				throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
-			}
-			long itemNodeId = Long.parseLong(parts[0]);
-			String id = parts[1];
-
-			PreparedStatement st = this.data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
-																	   mamQueryItemPosition);
-			synchronized (st) {
-				ResultSet rs = null;
-				try {
-					int i = setStatementParamsForMAM(st, query, nodeIds);
-					st.setLong(i++, itemNodeId);
-					st.setString(i++, id);
-
-					rs = st.executeQuery();
-					if (rs.next()) {
-						return rs.getInt(1) - 1;
-					} else {
-						throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
-					}
-				} finally {
-					data_repo.release(null, rs);
-				}
-			}
-		} catch (NumberFormatException ex) {
-			throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
-		} catch (SQLException ex) {
-			throw new TigaseDBException("Can't find position for item with id " + itemId + " in archive for room " +
-												query.getComponentJID(), ex);
-		}
-	}
-
-
 	@Override
 	public void queryItems(Query query, List<Long> nodesIds,
-						   MAMRepository.ItemHandler<Query, IPubSubRepository.Item> itemHandler) throws RepositoryException, ComponentException {
+						   MAMRepository.ItemHandler<Query, IPubSubRepository.Item> itemHandler)
+			throws RepositoryException, ComponentException {
 		StringBuilder sb = new StringBuilder();
-		for (int i=0; i<nodesIds.size(); i++) {
+		for (int i = 0; i < nodesIds.size(); i++) {
 			if (i != 0) {
 				sb.append(',');
 			}
@@ -862,122 +742,14 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 		}
 	}
 
-	protected int setStatementParamsForMAM(PreparedStatement st, Query query, String nodeIds) throws SQLException {
-		int i = 1;
-		st.setString(i++, nodeIds);
-		data_repo.setTimestamp(st, i++, query.getStart() == null ? null : new Timestamp(query.getStart().getTime()));
-		data_repo.setTimestamp(st, i++, query.getEnd() == null ? null : new Timestamp(query.getEnd().getTime()));
-		st.setString(i++, query.getWith() == null ? null : query.getWith().toString());
-//		if (query.getStart() != null) {
-//			st.setTimestamp(i++, new Timestamp(query.getStart().getTime()));
-//		} else {
-//			st.setObject(i++, null);
-//		}
-//		if (query.getEnd() != null) {
-//			st.setTimestamp(i++, new Timestamp(query.getEnd().getTime()));
-//		} else {
-//			st.setObject(i++, null);
-//		}
-//		if (query.getWith() != null) {
-//			st.setString(i++, query.getWith().toString());
-//		} else {
-//			st.setObject(i++, null);
-//		}
-		st.setInt(i++, query.getOrder().ordinal());
-
-		return i;
-	}
-
-	/**
-	 * <code>initPreparedStatements</code> method initializes internal database
-	 * connection variables such as prepared statements.
-	 *
-	 * @exception SQLException
-	 *                if an error occurs on database query.
-	 */
-	private void initPreparedStatements(DataRepository data_repo) throws SQLException {
-		String query;
-
-		data_repo.initPreparedStatement(CREATE_NODE_QUERY, CREATE_NODE_QUERY);
-		data_repo.initPreparedStatement(REMOVE_NODE_QUERY, REMOVE_NODE_QUERY);
-		data_repo.initPreparedStatement(REMOVE_SERVICE_QUERY, REMOVE_SERVICE_QUERY);
-		data_repo.initPreparedStatement(GET_NODE_ID_QUERY, GET_NODE_ID_QUERY);
-		data_repo.initPreparedStatement(GET_NODE_META_QUERY, GET_NODE_META_QUERY);
-		data_repo.initPreparedStatement(GET_ITEM_QUERY, GET_ITEM_QUERY);
-		data_repo.initPreparedStatement(WRITE_ITEM_QUERY, WRITE_ITEM_QUERY);
-		data_repo.initPreparedStatement(DELETE_ITEM_QUERY, DELETE_ITEM_QUERY);
-		data_repo.initPreparedStatement(GET_NODE_ITEM_IDS_QUERY, GET_NODE_ITEM_IDS_QUERY);
-		data_repo.initPreparedStatement(GET_NODE_ITEM_IDS_SINCE_QUERY, GET_NODE_ITEM_IDS_SINCE_QUERY);
-		data_repo.initPreparedStatement(GET_NODE_ITEMS_META_QUERY, GET_NODE_ITEMS_META_QUERY);
-		data_repo.initPreparedStatement(GET_ALL_NODES_QUERY, GET_ALL_NODES_QUERY);
-		data_repo.initPreparedStatement(GET_ROOT_NODES_QUERY, GET_ROOT_NODES_QUERY);
-		data_repo.initPreparedStatement(GET_CHILD_NODES_QUERY, GET_CHILD_NODES_QUERY);
-		data_repo.initPreparedStatement(DELETE_ALL_NODES_QUERY, DELETE_ALL_NODES_QUERY);
-		data_repo.initPreparedStatement(SET_NODE_CONFIGURATION_QUERY, SET_NODE_CONFIGURATION_QUERY);
-		data_repo.initPreparedStatement(SET_NODE_AFFILIATION_QUERY, SET_NODE_AFFILIATION_QUERY);
-		data_repo.initPreparedStatement(GET_NODE_CONFIGURATION_QUERY, GET_NODE_CONFIGURATION_QUERY);
-		data_repo.initPreparedStatement(GET_NODE_AFFILIATIONS_QUERY, GET_NODE_AFFILIATIONS_QUERY);
-		data_repo.initPreparedStatement(GET_NODE_SUBSCRIPTIONS_QUERY, GET_NODE_SUBSCRIPTIONS_QUERY);
-		data_repo.initPreparedStatement(SET_NODE_SUBSCRIPTION_QUERY, SET_NODE_SUBSCRIPTION_QUERY);
-		data_repo.initPreparedStatement(DELETE_NODE_SUBSCRIPTIONS_QUERY, DELETE_NODE_SUBSCRIPTIONS_QUERY);
-		data_repo.initPreparedStatement(GET_USER_AFFILIATIONS_QUERY, GET_USER_AFFILIATIONS_QUERY);
-		data_repo.initPreparedStatement(GET_USER_SUBSCRIPTIONS_QUERY, GET_USER_SUBSCRIPTIONS_QUERY);
-
-		data_repo.initPreparedStatement(mamQueryItems, mamQueryItems);
-		data_repo.initPreparedStatement(mamQueryItemPosition, mamQueryItemPosition);
-		data_repo.initPreparedStatement(mamQueryItemsCount, mamQueryItemsCount);
-	}
-
-	protected String readNodeConfigFormData(final BareJID serviceJid, final long nodeId) throws RepositoryException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "reding node config: serviceJid: {0}, nodeId: {1}", new Object[] { serviceJid, nodeId });
-		}
-		HashCode hash = null;
-		try {
-			ResultSet rs = null;
-			hash = takeDao();
-			PreparedStatement get_node_configuration_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_NODE_CONFIGURATION_QUERY);
-			synchronized (get_node_configuration_sp) {
-				try {
-					get_node_configuration_sp.setLong(1, nodeId);
-					rs = get_node_configuration_sp.executeQuery();
-					if (rs.next()) {
-						return rs.getString(1);
-					}
-					return null;
-				} finally {
-					release(null, rs);
-				}
-			}
-		} catch (SQLException e) {
-			throw new RepositoryException("Node subscribers reading error", e);
-		} finally {
-			offerDao(hash);
-		}
-	}
-
-	private void release(Statement stmt, ResultSet rs) {
-		if (rs != null) {
-			try {
-				rs.close();
-			} catch (SQLException sqlEx) {
-			}
-		}
-		if (stmt != null) {
-			try {
-				stmt.close();
-			} catch (SQLException sqlEx) {
-			}
-		}
-	}
-
 	@Override
 	public void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException {
 		// TODO check it
 		HashCode hash = null;
 		try {
 			hash = takeDao();
-			PreparedStatement delete_all_nodes_sp = data_repo.getPreparedStatement(hash.hashCode(), DELETE_ALL_NODES_QUERY);
+			PreparedStatement delete_all_nodes_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																				   DELETE_ALL_NODES_QUERY);
 			synchronized (delete_all_nodes_sp) {
 				delete_all_nodes_sp.setString(1, serviceJid.toString());
 				delete_all_nodes_sp.execute();
@@ -1000,7 +772,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 		HashCode hash = null;
 		try {
 			hash = takeDao();
-			PreparedStatement delete_node_subscriptions_sp = data_repo.getPreparedStatement(hash.hashCode(), DELETE_NODE_SUBSCRIPTIONS_QUERY);
+			PreparedStatement delete_node_subscriptions_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																							DELETE_NODE_SUBSCRIPTIONS_QUERY);
 			synchronized (delete_node_subscriptions_sp) {
 				delete_node_subscriptions_sp.setLong(1, nodeId);
 				delete_node_subscriptions_sp.setString(2, jid.toString());
@@ -1014,24 +787,25 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	}
 
 	@Override
-	public void removeService( BareJID serviceJid ) throws RepositoryException {
+	public void removeService(BareJID serviceJid) throws RepositoryException {
 		HashCode hash = null;
 		try {
 			hash = takeDao();
 			PreparedStatement remove_service_sp = data_repo.getPreparedStatement(hash.hashCode(), REMOVE_SERVICE_QUERY);
-			synchronized ( remove_service_sp ) {
-				remove_service_sp.setString( 1, serviceJid.toString() );
+			synchronized (remove_service_sp) {
+				remove_service_sp.setString(1, serviceJid.toString());
 				remove_service_sp.execute();
 			}
-		} catch ( SQLException e ) {
-			throw new RepositoryException( "Node subscribers fragment removing error", e );
+		} catch (SQLException e) {
+			throw new RepositoryException("Node subscribers fragment removing error", e);
 		} finally {
 			offerDao(hash);
 		}
 	}
-	
+
 	@Override
-	public void updateNodeAffiliation( BareJID serviceJid, Long nodeId, String nodeName, UsersAffiliation affiliation ) throws RepositoryException {
+	public void updateNodeAffiliation(BareJID serviceJid, Long nodeId, String nodeName, UsersAffiliation affiliation)
+			throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.finest("Updating node affiliation[1]: " + nodeName + " / " + affiliation);
 		}
@@ -1040,7 +814,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 		try {
 			ResultSet rs = null;
 			hash = takeDao();
-			PreparedStatement set_node_affiliations_sp = data_repo.getPreparedStatement(hash.hashCode(), SET_NODE_AFFILIATION_QUERY);
+			PreparedStatement set_node_affiliations_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						SET_NODE_AFFILIATION_QUERY);
 			synchronized (set_node_affiliations_sp) {
 				try {
 					set_node_affiliations_sp.setLong(1, nodeId);
@@ -1071,12 +846,13 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 
 	@Override
 	public void updateNodeConfig(final BareJID serviceJid, final Long nodeId, final String serializedData,
-			final Long collectionId) throws RepositoryException {
+								 final Long collectionId) throws RepositoryException {
 		HashCode hash = null;
 		try {
 			hash = takeDao();
 			ResultSet rs = null;
-			PreparedStatement set_node_configuration_sp = data_repo.getPreparedStatement(hash.hashCode(), SET_NODE_CONFIGURATION_QUERY);
+			PreparedStatement set_node_configuration_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						 SET_NODE_CONFIGURATION_QUERY);
 			synchronized (set_node_configuration_sp) {
 				try {
 					set_node_configuration_sp.setLong(1, nodeId);
@@ -1116,7 +892,8 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 		try {
 			ResultSet rs = null;
 			hash = takeDao();
-			PreparedStatement set_node_subscriptions_sp = data_repo.getPreparedStatement(hash.hashCode(), SET_NODE_SUBSCRIPTION_QUERY);
+			PreparedStatement set_node_subscriptions_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						 SET_NODE_SUBSCRIPTION_QUERY);
 			synchronized (set_node_subscriptions_sp) {
 				try {
 					set_node_subscriptions_sp.setLong(1, nodeId);
@@ -1144,12 +921,11 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 			log.finest("Updating node subscriptions[2]");
 		}
 
-
 	}
 
 	@Override
 	public void writeItem(final BareJID serviceJid, final Long nodeId, long timeInMilis, final String id,
-			final String publisher, final Element item) throws RepositoryException {
+						  final String publisher, final Element item) throws RepositoryException {
 		HashCode hash = null;
 		try {
 			hash = takeDao();
@@ -1176,7 +952,7 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 
 	public void setDataSource(DataRepository dataSource) {
 		try {
-			dataSource.checkSchemaVersion( this );
+			dataSource.checkSchemaVersion(this);
 
 			initPreparedStatements(dataSource);
 		} catch (SQLException ex) {
@@ -1184,8 +960,200 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 		}
 		this.data_repo = dataSource;
 		int poolSize = dataSource.getPoolSize();
-		for (int i=0; i<poolSize; i++) {
+		for (int i = 0; i < poolSize; i++) {
 			pool_hashCodes.offer(new HashCode(dataSource, i));
+		}
+	}
+
+	protected Date getDateFromItem(BareJID serviceJid, long nodeId, String id, int field) throws RepositoryException {
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "getting date from item: serviceJid: {0}, nodeId: {1}, id: {2}, field: {3}",
+					new Object[]{serviceJid, nodeId, id, field});
+		}
+		HashCode hash = null;
+		try {
+			ResultSet rs = null;
+			hash = takeDao();
+			PreparedStatement get_item_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_ITEM_QUERY);
+			synchronized (get_item_sp) {
+				try {
+					get_item_sp.setLong(1, nodeId);
+					get_item_sp.setString(2, id);
+					rs = get_item_sp.executeQuery();
+					if (rs.next()) {
+						// String date = rs.getString( field );
+						// if ( date == null ) {
+						// return null;
+						// }
+						// -- why do we need this?
+						// return DateFormat.getDateInstance().parse( date );
+						return data_repo.getTimestamp(rs, field);
+					}
+				} finally {
+					release(null, rs);
+				}
+				return null;
+			}
+		} catch (SQLException e) {
+			throw new RepositoryException("Item field " + field + " reading error", e);
+			// } catch ( ParseException e ) {
+			// throw new RepositoryException( "Item field " + field + " parsing
+			// error", e );
+		} finally {
+			offerDao(hash);
+		}
+	}
+
+	protected String getStringFromItem(BareJID serviceJid, long nodeId, String id, int field)
+			throws RepositoryException {
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "Getting string from item: serviceJid: {0}, nodeId: {1}",
+					new Object[]{serviceJid, nodeId});
+		}
+		HashCode hash = null;
+		try {
+			ResultSet rs = null;
+			hash = takeDao();
+			PreparedStatement get_item_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_ITEM_QUERY);
+			synchronized (get_item_sp) {
+				try {
+					get_item_sp.setLong(1, nodeId);
+					get_item_sp.setString(2, id);
+					rs = get_item_sp.executeQuery();
+					if (rs.next()) {
+						return rs.getString(field);
+					}
+					return null;
+				} finally {
+					release(null, rs);
+				}
+			}
+		} catch (SQLException e) {
+			throw new RepositoryException("Item field " + field + " reading error", e);
+		} finally {
+			offerDao(hash);
+		}
+	}
+
+	protected Integer countItems(Query query, String nodeIds) throws TigaseDBException {
+		try {
+			PreparedStatement st = this.data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
+																	   mamQueryItemsCount);
+			synchronized (st) {
+				ResultSet rs = null;
+				try {
+					setStatementParamsForMAM(st, query, nodeIds);
+
+					rs = st.executeQuery();
+					if (rs.next()) {
+						return rs.getInt(1);
+					} else {
+						return null;
+					}
+				} finally {
+					data_repo.release(null, rs);
+				}
+			}
+		} catch (SQLException ex) {
+			throw new TigaseDBException("Failed to retrieve number of items for nodes at " + query.getComponentJID(),
+										ex);
+		}
+	}
+
+	protected Integer getItemPosition(Query query, String nodeIds, String itemId)
+			throws RepositoryException, ComponentException {
+		if (itemId == null) {
+			return null;
+		}
+
+		try {
+			String[] parts = itemId.split(",");
+			if (parts.length != 2) {
+				throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
+			}
+			long itemNodeId = Long.parseLong(parts[0]);
+			String id = parts[1];
+
+			PreparedStatement st = this.data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
+																	   mamQueryItemPosition);
+			synchronized (st) {
+				ResultSet rs = null;
+				try {
+					int i = setStatementParamsForMAM(st, query, nodeIds);
+					st.setLong(i++, itemNodeId);
+					st.setString(i++, id);
+
+					rs = st.executeQuery();
+					if (rs.next()) {
+						return rs.getInt(1) - 1;
+					} else {
+						throw new ComponentException(Authorization.ITEM_NOT_FOUND,
+													 "Not found item with id = " + itemId);
+					}
+				} finally {
+					data_repo.release(null, rs);
+				}
+			}
+		} catch (NumberFormatException ex) {
+			throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
+		} catch (SQLException ex) {
+			throw new TigaseDBException("Can't find position for item with id " + itemId + " in archive for room " +
+												query.getComponentJID(), ex);
+		}
+	}
+
+	protected int setStatementParamsForMAM(PreparedStatement st, Query query, String nodeIds) throws SQLException {
+		int i = 1;
+		st.setString(i++, nodeIds);
+		data_repo.setTimestamp(st, i++, query.getStart() == null ? null : new Timestamp(query.getStart().getTime()));
+		data_repo.setTimestamp(st, i++, query.getEnd() == null ? null : new Timestamp(query.getEnd().getTime()));
+		st.setString(i++, query.getWith() == null ? null : query.getWith().toString());
+//		if (query.getStart() != null) {
+//			st.setTimestamp(i++, new Timestamp(query.getStart().getTime()));
+//		} else {
+//			st.setObject(i++, null);
+//		}
+//		if (query.getEnd() != null) {
+//			st.setTimestamp(i++, new Timestamp(query.getEnd().getTime()));
+//		} else {
+//			st.setObject(i++, null);
+//		}
+//		if (query.getWith() != null) {
+//			st.setString(i++, query.getWith().toString());
+//		} else {
+//			st.setObject(i++, null);
+//		}
+		st.setInt(i++, query.getOrder().ordinal());
+
+		return i;
+	}
+
+	protected String readNodeConfigFormData(final BareJID serviceJid, final long nodeId) throws RepositoryException {
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "reding node config: serviceJid: {0}, nodeId: {1}", new Object[]{serviceJid, nodeId});
+		}
+		HashCode hash = null;
+		try {
+			ResultSet rs = null;
+			hash = takeDao();
+			PreparedStatement get_node_configuration_sp = data_repo.getPreparedStatement(hash.hashCode(),
+																						 GET_NODE_CONFIGURATION_QUERY);
+			synchronized (get_node_configuration_sp) {
+				try {
+					get_node_configuration_sp.setLong(1, nodeId);
+					rs = get_node_configuration_sp.executeQuery();
+					if (rs.next()) {
+						return rs.getString(1);
+					}
+					return null;
+				} finally {
+					release(null, rs);
+				}
+			}
+		} catch (SQLException e) {
+			throw new RepositoryException("Node subscribers reading error", e);
+		} finally {
+			offerDao(hash);
 		}
 	}
 
@@ -1201,6 +1169,60 @@ public class PubSubDAOJDBC extends PubSubDAO<Long, DataRepository, Query> {
 	protected void offerDao(HashCode hash) {
 		if (hash != null && hash.canOffer()) {
 			pool_hashCodes.offer(hash);
+		}
+	}
+
+	/**
+	 * <code>initPreparedStatements</code> method initializes internal database connection variables such as prepared
+	 * statements.
+	 *
+	 * @throws SQLException if an error occurs on database query.
+	 */
+	private void initPreparedStatements(DataRepository data_repo) throws SQLException {
+		String query;
+
+		data_repo.initPreparedStatement(CREATE_NODE_QUERY, CREATE_NODE_QUERY);
+		data_repo.initPreparedStatement(REMOVE_NODE_QUERY, REMOVE_NODE_QUERY);
+		data_repo.initPreparedStatement(REMOVE_SERVICE_QUERY, REMOVE_SERVICE_QUERY);
+		data_repo.initPreparedStatement(GET_NODE_ID_QUERY, GET_NODE_ID_QUERY);
+		data_repo.initPreparedStatement(GET_NODE_META_QUERY, GET_NODE_META_QUERY);
+		data_repo.initPreparedStatement(GET_ITEM_QUERY, GET_ITEM_QUERY);
+		data_repo.initPreparedStatement(WRITE_ITEM_QUERY, WRITE_ITEM_QUERY);
+		data_repo.initPreparedStatement(DELETE_ITEM_QUERY, DELETE_ITEM_QUERY);
+		data_repo.initPreparedStatement(GET_NODE_ITEM_IDS_QUERY, GET_NODE_ITEM_IDS_QUERY);
+		data_repo.initPreparedStatement(GET_NODE_ITEM_IDS_SINCE_QUERY, GET_NODE_ITEM_IDS_SINCE_QUERY);
+		data_repo.initPreparedStatement(GET_NODE_ITEMS_META_QUERY, GET_NODE_ITEMS_META_QUERY);
+		data_repo.initPreparedStatement(GET_ALL_NODES_QUERY, GET_ALL_NODES_QUERY);
+		data_repo.initPreparedStatement(GET_ROOT_NODES_QUERY, GET_ROOT_NODES_QUERY);
+		data_repo.initPreparedStatement(GET_CHILD_NODES_QUERY, GET_CHILD_NODES_QUERY);
+		data_repo.initPreparedStatement(DELETE_ALL_NODES_QUERY, DELETE_ALL_NODES_QUERY);
+		data_repo.initPreparedStatement(SET_NODE_CONFIGURATION_QUERY, SET_NODE_CONFIGURATION_QUERY);
+		data_repo.initPreparedStatement(SET_NODE_AFFILIATION_QUERY, SET_NODE_AFFILIATION_QUERY);
+		data_repo.initPreparedStatement(GET_NODE_CONFIGURATION_QUERY, GET_NODE_CONFIGURATION_QUERY);
+		data_repo.initPreparedStatement(GET_NODE_AFFILIATIONS_QUERY, GET_NODE_AFFILIATIONS_QUERY);
+		data_repo.initPreparedStatement(GET_NODE_SUBSCRIPTIONS_QUERY, GET_NODE_SUBSCRIPTIONS_QUERY);
+		data_repo.initPreparedStatement(SET_NODE_SUBSCRIPTION_QUERY, SET_NODE_SUBSCRIPTION_QUERY);
+		data_repo.initPreparedStatement(DELETE_NODE_SUBSCRIPTIONS_QUERY, DELETE_NODE_SUBSCRIPTIONS_QUERY);
+		data_repo.initPreparedStatement(GET_USER_AFFILIATIONS_QUERY, GET_USER_AFFILIATIONS_QUERY);
+		data_repo.initPreparedStatement(GET_USER_SUBSCRIPTIONS_QUERY, GET_USER_SUBSCRIPTIONS_QUERY);
+
+		data_repo.initPreparedStatement(mamQueryItems, mamQueryItems);
+		data_repo.initPreparedStatement(mamQueryItemPosition, mamQueryItemPosition);
+		data_repo.initPreparedStatement(mamQueryItemsCount, mamQueryItemsCount);
+	}
+
+	private void release(Statement stmt, ResultSet rs) {
+		if (rs != null) {
+			try {
+				rs.close();
+			} catch (SQLException sqlEx) {
+			}
+		}
+		if (stmt != null) {
+			try {
+				stmt.close();
+			} catch (SQLException sqlEx) {
+			}
 		}
 	}
 

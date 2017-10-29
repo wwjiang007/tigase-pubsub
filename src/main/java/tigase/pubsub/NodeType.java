@@ -21,14 +21,13 @@ package tigase.pubsub;
 
 public enum NodeType {
 	/**
-	 * A node that contains nodes and/or other collections but no published
-	 * items. Collections make it possible to represent hierarchial node
-	 * structures.
+	 * A node that contains nodes and/or other collections but no published items. Collections make it possible to
+	 * represent hierarchial node structures.
 	 */
 	collection,
 	/**
-	 * A node that contains published items only. It is NOT a container for
-	 * other nodes. This is the most common node type.
+	 * A node that contains published items only. It is NOT a container for other nodes. This is the most common node
+	 * type.
 	 */
 	leaf,
 }

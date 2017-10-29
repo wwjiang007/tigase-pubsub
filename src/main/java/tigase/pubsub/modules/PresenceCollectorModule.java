@@ -31,10 +31,10 @@ import tigase.pubsub.exceptions.PubSubException;
 import tigase.server.Packet;
 import tigase.server.Presence;
 import tigase.xml.Element;
-import tigase.xmpp.jid.BareJID;
-import tigase.xmpp.jid.JID;
 import tigase.xmpp.StanzaType;
 import tigase.xmpp.impl.PresenceCapabilitiesManager;
+import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.jid.JID;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -43,73 +43,25 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * Class description
- *
- *
  */
 @Bean(name = "presenceCollectorModule", parent = PubSubComponent.class, active = true)
-public class PresenceCollectorModule extends AbstractPubSubModule {
-
-	public static class BuddyVisibilityEvent {
-
-		public final boolean becomeOnline;
-		public final BareJID buddyJID;
-
-		public BuddyVisibilityEvent(BareJID buddyJID, boolean becomeOnline) {
-			this.buddyJID = buddyJID;
-			this.becomeOnline = becomeOnline;
-		}
-
-	}
-
-
-	public static class CapsChangeEvent {
-
-		public final BareJID serviceJid;
-		public final JID buddyJid;
-		public final String[] newCaps;
-		public final String[] oldCaps;
-		public final Set<String> newFeatures;
-
-		public CapsChangeEvent(BareJID serviceJid, JID buddyJid, String[] newCaps, String[] oldCaps, Set<String> newFeatures) {
-			this.serviceJid = serviceJid;
-			this.buddyJid = buddyJid;
-			this.newCaps = newCaps;
-			this.oldCaps = oldCaps;
-			this.newFeatures = newFeatures;
-		}
-
-	}
-
-	public static class PresenceChangeEvent {
-
-		public final Packet packet;
-
-		public PresenceChangeEvent(Packet packet) {
-			this.packet = packet;
-		}
-
-	}
+public class PresenceCollectorModule
+		extends AbstractPubSubModule {
 
 	private static final ConcurrentMap<String, String[]> CAPS_MAP = new ConcurrentHashMap<String, String[]>();
-
 	private static final Criteria CRIT = ElementCriteria.name("presence");
-
 	private static final String[] EMPTY_CAPS = {};
+	private final ConcurrentMap<BareJID, ConcurrentMap<BareJID, Map<String, String[]>>> presenceByService = new ConcurrentHashMap<>();
+	@Inject
+	private CapsModule capsModule;
+	@Inject
+	private EventBus eventBus;
 
 	// private final Map<BareJID, Set<String>> resources = new HashMap<BareJID,
 	// Set<String>>();
 
-	@Inject
-	private CapsModule capsModule;
-
-	@Inject
-	private EventBus eventBus;
-
-	private final ConcurrentMap<BareJID, ConcurrentMap<BareJID, Map<String, String[]>>> presenceByService = new ConcurrentHashMap<>();
-
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param serviceJid
 	 * @param jid
@@ -157,8 +109,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 			if (resources == null) {
 				Map<String, String[]> tmp = new HashMap<>();
 				resources = presenceByUser.putIfAbsent(bareJid, tmp);
-				if (resources == null)
+				if (resources == null) {
 					resources = tmp;
+				}
 			}
 
 			String[] oldCaps;
@@ -169,15 +122,16 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 			log.finest("for service " + serviceJid + " - Contact " + jid + " is collected.");
 
 			// we are firing CapsChangeEvent only for PEP services
-			if (this.config.isPepPeristent() && this.config.isSendLastPublishedItemOnPresence()
-					&& serviceJid.getLocalpart() != null && oldCaps != caps && caps != null) {
+			if (this.config.isPepPeristent() && this.config.isSendLastPublishedItemOnPresence() &&
+					serviceJid.getLocalpart() != null && oldCaps != caps && caps != null) {
 				// calculating new features and firing event
 				Set<String> newFeatures = new HashSet<String>();
 				for (String node : caps) {
 					// ignore searching for features if same node exists in old
 					// caps
-					if (oldCaps != null && Arrays.binarySearch(oldCaps, node) >= 0)
+					if (oldCaps != null && Arrays.binarySearch(oldCaps, node) >= 0) {
 						continue;
+					}
 
 					String[] features = PresenceCapabilitiesManager.getNodeFeatures(node);
 					if (features != null) {
@@ -190,8 +144,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 					for (String node : oldCaps) {
 						// ignore searching for features if same node exists in
 						// new caps
-						if (Arrays.binarySearch(caps, node) >= 0)
+						if (Arrays.binarySearch(caps, node) >= 0) {
 							continue;
+						}
 						String[] features = PresenceCapabilitiesManager.getNodeFeatures(node);
 						if (features != null) {
 							for (String feature : features) {
@@ -211,21 +166,8 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 		return added;
 	}
 
-	private void fireBuddyVisibilityEvent(BareJID bareJid, boolean b) {
-		eventBus.fire(new BuddyVisibilityEvent(bareJid, b));
-	}
-
-	private void fireCapsChangeEvent(BareJID serviceJid, JID jid, String[] caps, String[] oldCaps, Set<String> newFeatures) {
-		eventBus.fire(new CapsChangeEvent(serviceJid, jid, caps, oldCaps, newFeatures));
-	}
-
-	private void firePresenceChangeEvent(Packet packet) {
-		eventBus.fire(new PresenceChangeEvent(packet));
-	}
-
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -237,8 +179,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 			for (Entry<BareJID, Map<String, String[]>> entry : presenceByUser.entrySet()) {
 				for (String reource : entry.getValue().keySet()) {
 					JID jid = JID.jidInstanceNS(entry.getKey(), reource);
-					if (isAvailableLocally(jid))
+					if (isAvailableLocally(jid)) {
 						result.add(jid);
+					}
 				}
 			}
 		}
@@ -249,9 +192,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param serviceJid
 	 * @param feature
+	 *
 	 * @return
 	 */
 	public List<JID> getAllAvailableJidsWithFeature(final BareJID serviceJid, final String feature) {
@@ -274,8 +217,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 						}
 						if (match) {
 							JID jid = JID.jidInstanceNS(pe.getKey(), e.getKey());
-							if (isAvailableLocally(jid))
+							if (isAvailableLocally(jid)) {
 								result.add(jid);
+							}
 						}
 					}
 				}
@@ -288,8 +232,8 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param bareJid
+	 *
 	 * @return
 	 */
 	public List<JID> getAllAvailableResources(final BareJID serviceJid, final BareJID bareJid) {
@@ -304,8 +248,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 		if (jid_resources != null) {
 			for (String reource : jid_resources.keySet()) {
 				JID jid = JID.jidInstanceNS(bareJid, reource);
-				if (isAvailableLocally(jid))
+				if (isAvailableLocally(jid)) {
 					result.add(jid);
+				}
 			}
 		}
 
@@ -315,17 +260,15 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#presence-notifications" };
+		return new String[]{"http://jabber.org/protocol/pubsub#presence-notifications"};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -334,15 +277,11 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 		return CRIT;
 	}
 
-	protected boolean isAvailableLocally(JID jid) {
-		return true;
-	}
-
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param bareJid
+	 *
 	 * @return
 	 */
 	public boolean isJidAvailable(final BareJID serviceJid, final BareJID bareJid) {
@@ -355,30 +294,11 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 		return (resources != null) && (resources.size() > 0);
 	}
 
-	private Packet preparePresence(final Packet presence, StanzaType type) {
-		JID to = presence.getTo();
-		JID from = presence.getStanzaFrom();
-
-		if (from != null && to != null && !((from.getBareJID()).equals(to.getBareJID()))) {
-			JID jid = from.copyWithoutResource();
-			Element p = new Element("presence", new String[] { "to", "from", Packet.XMLNS_ATT },
-					new String[] { jid.toString(), to.toString(), Packet.CLIENT_XMLNS });
-
-			if (type != null) {
-				p.setAttribute("type", type.toString());
-			}
-
-			return new Presence(p, to, from);
-		}
-
-		return null;
-	}
-
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @throws PubSubException
 	 */
 	@Override
@@ -395,8 +315,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 			boolean added = addJid(toJid.getBareJID(), jid, caps);
 			firePresenceChangeEvent(packet);
 			if (added && packet.getStanzaTo().getLocalpart() == null) {
-				Packet p = new Presence(new Element("presence", new String[] { "to", "from", Packet.XMLNS_ATT },
-						new String[] { jid.toString(), toJid.toString(), Packet.CLIENT_XMLNS }), toJid, jid);
+				Packet p = new Presence(new Element("presence", new String[]{"to", "from", Packet.XMLNS_ATT},
+													new String[]{jid.toString(), toJid.toString(),
+																 Packet.CLIENT_XMLNS}), toJid, jid);
 
 				packetWriter.write(p);
 			}
@@ -404,11 +325,10 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 			removeJid(toJid.getBareJID(), jid);
 			firePresenceChangeEvent(packet);
 			if (packet.getStanzaTo().getLocalpart() == null) {
-				Packet p = new Presence(
-						new Element("presence",
-								new String[] { "to", "from", "type", Packet.XMLNS_ATT }, new String[] { jid.toString(),
-										toJid.toString(), StanzaType.unavailable.toString(), Packet.CLIENT_XMLNS }),
-						toJid, jid);
+				Packet p = new Presence(new Element("presence", new String[]{"to", "from", "type", Packet.XMLNS_ATT},
+													new String[]{jid.toString(), toJid.toString(),
+																 StanzaType.unavailable.toString(),
+																 Packet.CLIENT_XMLNS}), toJid, jid);
 
 				packetWriter.write(p);
 			}
@@ -440,9 +360,12 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 
 	}
 
+	protected boolean isAvailableLocally(JID jid) {
+		return true;
+	}
+
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param jid
 	 *
@@ -458,8 +381,9 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 		boolean removed = false;
 
 		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null)
+		if (presenceByUser == null) {
 			return false;
+		}
 
 		// onlineUsers.remove(jid);
 		if (resource == null) {
@@ -481,6 +405,79 @@ public class PresenceCollectorModule extends AbstractPubSubModule {
 		}
 
 		return removed;
+	}
+
+	private void fireBuddyVisibilityEvent(BareJID bareJid, boolean b) {
+		eventBus.fire(new BuddyVisibilityEvent(bareJid, b));
+	}
+
+	private void fireCapsChangeEvent(BareJID serviceJid, JID jid, String[] caps, String[] oldCaps,
+									 Set<String> newFeatures) {
+		eventBus.fire(new CapsChangeEvent(serviceJid, jid, caps, oldCaps, newFeatures));
+	}
+
+	private void firePresenceChangeEvent(Packet packet) {
+		eventBus.fire(new PresenceChangeEvent(packet));
+	}
+
+	private Packet preparePresence(final Packet presence, StanzaType type) {
+		JID to = presence.getTo();
+		JID from = presence.getStanzaFrom();
+
+		if (from != null && to != null && !((from.getBareJID()).equals(to.getBareJID()))) {
+			JID jid = from.copyWithoutResource();
+			Element p = new Element("presence", new String[]{"to", "from", Packet.XMLNS_ATT},
+									new String[]{jid.toString(), to.toString(), Packet.CLIENT_XMLNS});
+
+			if (type != null) {
+				p.setAttribute("type", type.toString());
+			}
+
+			return new Presence(p, to, from);
+		}
+
+		return null;
+	}
+
+	public static class BuddyVisibilityEvent {
+
+		public final boolean becomeOnline;
+		public final BareJID buddyJID;
+
+		public BuddyVisibilityEvent(BareJID buddyJID, boolean becomeOnline) {
+			this.buddyJID = buddyJID;
+			this.becomeOnline = becomeOnline;
+		}
+
+	}
+
+	public static class CapsChangeEvent {
+
+		public final JID buddyJid;
+		public final String[] newCaps;
+		public final Set<String> newFeatures;
+		public final String[] oldCaps;
+		public final BareJID serviceJid;
+
+		public CapsChangeEvent(BareJID serviceJid, JID buddyJid, String[] newCaps, String[] oldCaps,
+							   Set<String> newFeatures) {
+			this.serviceJid = serviceJid;
+			this.buddyJid = buddyJid;
+			this.newCaps = newCaps;
+			this.oldCaps = oldCaps;
+			this.newFeatures = newFeatures;
+		}
+
+	}
+
+	public static class PresenceChangeEvent {
+
+		public final Packet packet;
+
+		public PresenceChangeEvent(Packet packet) {
+			this.packet = packet;
+		}
+
 	}
 
 }

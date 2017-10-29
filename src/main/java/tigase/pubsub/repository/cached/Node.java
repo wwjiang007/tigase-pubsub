@@ -29,16 +29,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Node<T> implements INodeMeta<T> {
+public class Node<T>
+		implements INodeMeta<T> {
 
 	private static final Logger log = Logger.getLogger(Node.class.getName());
-
-	// private boolean affNeedsWriting = false;
-	private boolean conNeedsWriting = false;
 	private final Date creationTime;
 	private final BareJID creator;
 	private CopyOnWriteArrayList<String> childNodes;
-
+	// private boolean affNeedsWriting = false;
+	private boolean conNeedsWriting = false;
 	private boolean deleted = false;
 	private String name;
 	private NodeAffiliations nodeAffiliations;
@@ -57,11 +56,11 @@ public class Node<T> implements INodeMeta<T> {
 	// private Long nodeSubscriptionsChangeTimestamp;
 
 	public Node(T nodeId, BareJID serviceJid, AbstractNodeConfig nodeConfig, NodeAffiliations nodeAffiliations,
-			NodeSubscriptions nodeSubscriptions, BareJID creator, Date creationTime) {
-		if ( log.isLoggable( Level.FINEST ) ){
-			log.log( Level.FINEST,
-							 "Constructing Node, serviceJid: {0}, nodeConfig: {1}, nodeId: {2}, nodeAffiliations: {3}, nodeSubscriptions: {4}",
-							 new Object[] { serviceJid, nodeConfig, nodeId, nodeAffiliations, nodeSubscriptions } );
+				NodeSubscriptions nodeSubscriptions, BareJID creator, Date creationTime) {
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST,
+					"Constructing Node, serviceJid: {0}, nodeConfig: {1}, nodeId: {2}, nodeAffiliations: {3}, nodeSubscriptions: {4}",
+					new Object[]{serviceJid, nodeConfig, nodeId, nodeAffiliations, nodeSubscriptions});
 		}
 
 		this.nodeId = nodeId;
@@ -113,6 +112,17 @@ public class Node<T> implements INodeMeta<T> {
 		return childNodes.toArray(new String[0]);
 	}
 
+	protected void setChildNodes(List<String> childNodes) {
+		synchronized (this) {
+			if (this.childNodes == null) {
+				this.childNodes = new CopyOnWriteArrayList<>(childNodes);
+			} else {
+				this.childNodes.addAllAbsent(childNodes);
+				this.childNodes.retainAll(childNodes);
+			}
+		}
+	}
+
 	public Date getCreationTime() {
 		return creationTime;
 	}
@@ -133,13 +143,13 @@ public class Node<T> implements INodeMeta<T> {
 		return nodeConfig;
 	}
 
-	public T getNodeId() {
-		return nodeId;
-	}
-
 	// public Long getNodeConfigChangeTimestamp() {
 	// return nodeConfigChangeTimestamp;
 	// }
+
+	public T getNodeId() {
+		return nodeId;
+	}
 
 	public NodeSubscriptions getNodeSubscriptions() {
 		return nodeSubscriptions;
@@ -153,21 +163,16 @@ public class Node<T> implements INodeMeta<T> {
 		return deleted;
 	}
 
-	public boolean needsWriting() {
-		return affiliationsNeedsWriting() || subscriptionsNeedsWriting() || conNeedsWriting;
-	}
-
-	public void resetChanges() {
-		nodeAffiliations.resetChangedFlag();
-		nodeSubscriptions.resetChangedFlag();
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 
 	// public Long getNodeSubscriptionsChangeTimestamp() {
 	// return nodeSubscriptionsChangeTimestamp;
 	// }
 
-	public void setDeleted(boolean deleted) {
-		this.deleted = deleted;
+	public boolean needsWriting() {
+		return affiliationsNeedsWriting() || subscriptionsNeedsWriting() || conNeedsWriting;
 	}
 
 	// public void resetNodeAffiliationsChangeTimestamp() {
@@ -182,12 +187,13 @@ public class Node<T> implements INodeMeta<T> {
 	// this.nodeSubscriptionsChangeTimestamp = null;
 	// }
 
-	public void subscriptionsMerge() {
-		nodeSubscriptions.merge();
+	public void resetChanges() {
+		nodeAffiliations.resetChangedFlag();
+		nodeSubscriptions.resetChangedFlag();
 	}
 
-	public boolean subscriptionsNeedsWriting() {
-		return nodeSubscriptions.isChanged();
+	public void subscriptionsMerge() {
+		nodeSubscriptions.merge();
 	}
 
 	// public void setNodeAffiliationsChangeTimestamp() {
@@ -205,6 +211,10 @@ public class Node<T> implements INodeMeta<T> {
 	// nodeSubscriptionsChangeTimestamp = System.currentTimeMillis();
 	// }
 
+	public boolean subscriptionsNeedsWriting() {
+		return nodeSubscriptions.isChanged();
+	}
+
 	public void subscriptionsSaved() {
 		// subNeedsWriting = false;
 		this.subscriptionsMerge();
@@ -212,22 +222,9 @@ public class Node<T> implements INodeMeta<T> {
 
 	@Override
 	public String toString() {
-		return "Node{" + "creationTime=" + creationTime + ", deleted=" + deleted + ", name=" + name + ", nodeId=" + nodeId
-					 + ", nodeAffiliations=" + nodeAffiliations + ", nodeSubscriptions=" + nodeSubscriptions
-					 + ", serviceJid=" + serviceJid
-					 + ", creator=" + creator +
-					 '}';
-	}
-
-	protected void setChildNodes(List<String> childNodes) {
-		synchronized (this) {
-			if (this.childNodes == null) {
-				this.childNodes = new CopyOnWriteArrayList<>(childNodes);
-			} else {
-				this.childNodes.addAllAbsent(childNodes);
-				this.childNodes.retainAll(childNodes);
-			}
-		}
+		return "Node{" + "creationTime=" + creationTime + ", deleted=" + deleted + ", name=" + name + ", nodeId=" +
+				nodeId + ", nodeAffiliations=" + nodeAffiliations + ", nodeSubscriptions=" + nodeSubscriptions +
+				", serviceJid=" + serviceJid + ", creator=" + creator + '}';
 	}
 
 	public void childNodeAdded(String childNode) {

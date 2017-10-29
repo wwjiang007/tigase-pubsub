@@ -20,15 +20,33 @@
 
 package tigase.pubsub.repository;
 
-import java.util.Date;
-import java.util.List;
-
 import tigase.component.exceptions.RepositoryException;
 import tigase.xml.Element;
 
+import java.util.Date;
+import java.util.List;
+
 public interface IItems {
 
+	public abstract void deleteItem(String id) throws RepositoryException;
+
+	public abstract Element getItem(String id) throws RepositoryException;
+
+	public abstract Date getItemCreationDate(String id) throws RepositoryException;
+
+	public abstract String[] getItemsIds() throws RepositoryException;
+
+	public abstract String[] getItemsIdsSince(Date since) throws RepositoryException;
+
+	public abstract List<ItemMeta> getItemsMeta() throws RepositoryException;
+
+	public abstract Date getItemUpdateDate(String id) throws RepositoryException;
+
+	public abstract void writeItem(long timeInMilis, String id, String publisher, Element item)
+			throws RepositoryException;
+
 	public static class ItemMeta {
+
 		private final Date creationDate;
 		private final String id;
 		private final String node;
@@ -64,21 +82,5 @@ public interface IItems {
 			return node;
 		}
 	}
-
-	public abstract void deleteItem(String id) throws RepositoryException;
-
-	public abstract Element getItem(String id) throws RepositoryException;
-
-	public abstract Date getItemCreationDate(String id) throws RepositoryException;
-
-	public abstract String[] getItemsIds() throws RepositoryException;
-
-	public abstract String[] getItemsIdsSince(Date since) throws RepositoryException;
-
-	public abstract List<ItemMeta> getItemsMeta() throws RepositoryException;
-
-	public abstract Date getItemUpdateDate(String id) throws RepositoryException;
-
-	public abstract void writeItem(long timeInMilis, String id, String publisher, Element item) throws RepositoryException;
 
 }

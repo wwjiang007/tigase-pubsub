@@ -19,7 +19,8 @@
  */
 package tigase.pubsub;
 
-public class LeafNodeConfig extends AbstractNodeConfig {
+public class LeafNodeConfig
+		extends AbstractNodeConfig {
 
 	public LeafNodeConfig(final String nodeName) {
 		super(nodeName);
@@ -29,24 +30,24 @@ public class LeafNodeConfig extends AbstractNodeConfig {
 		super(nodeName, config);
 	}
 
-	@Override
-	protected AbstractNodeConfig getInstance(String nodeName) {
-		return new LeafNodeConfig(nodeName);
-	}
-
 	public Integer getMaxItems() {
 		Integer x = form.getAsInteger("pubsub#max_items");
 		return x;
 	}
 
-	@Override
-	protected void init() {
-		super.init();
-	}
-
 	public boolean isPersistItem() {
 		Boolean x = form.getAsBoolean("pubsub#persist_items");
 		return x == null ? false : x;
+	}
+
+	@Override
+	protected AbstractNodeConfig getInstance(String nodeName) {
+		return new LeafNodeConfig(nodeName);
+	}
+
+	@Override
+	protected void init() {
+		super.init();
 	}
 
 }

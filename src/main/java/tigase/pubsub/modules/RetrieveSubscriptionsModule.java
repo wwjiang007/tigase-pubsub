@@ -41,29 +41,29 @@ import java.util.logging.Level;
 /**
  * Class description
  *
- *
- * @version 5.0.0, 2010.03.27 at 05:27:10 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.0.0, 2010.03.27 at 05:27:10 GMT
  */
 @Bean(name = "retrieveSubscriptionsModule", parent = PubSubComponent.class, active = true)
-public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
-	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get").add(
-			ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub")).add(ElementCriteria.name("subscriptions"));
+public class RetrieveSubscriptionsModule
+		extends AbstractPubSubModule {
+
+	private static final Criteria CRIT = ElementCriteria.nameType("iq", "get")
+			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
+			.add(ElementCriteria.name("subscriptions"));
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/pubsub#retrieve-subscriptions" };
+		return new String[]{"http://jabber.org/protocol/pubsub#retrieve-subscriptions"};
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -75,8 +75,8 @@ public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
+	 *
 	 * @return
 	 *
 	 * @throws PubSubException
@@ -90,43 +90,47 @@ public class RetrieveSubscriptionsModule extends AbstractPubSubModule {
 			final String nodeName = subscriptions.getAttributeStaticStr("node");
 			final String senderJid = packet.getStanzaFrom().toString();
 			final BareJID senderBareJid = packet.getStanzaFrom().getBareJID();
-			final Element pubsubResult = new Element("pubsub", new String[] { "xmlns" },
-					new String[] { "http://jabber.org/protocol/pubsub" });
+			final Element pubsubResult = new Element("pubsub", new String[]{"xmlns"},
+													 new String[]{"http://jabber.org/protocol/pubsub"});
 
 			final Element subscriptionsResult = new Element("subscriptions");
 
 			pubsubResult.addChild(subscriptionsResult);
 			if (nodeName == null) {
 				IPubSubDAO directRepo = this.getRepository().getPubSubDAO();
-				Map<String, UsersSubscription> usersSubscriptions = directRepo.getUserSubscriptions(serviceJid, senderBareJid);
+				Map<String, UsersSubscription> usersSubscriptions = directRepo.getUserSubscriptions(serviceJid,
+																									senderBareJid);
 				for (Map.Entry<String, UsersSubscription> entry : usersSubscriptions.entrySet()) {
 					UsersSubscription subscription = entry.getValue();
-					Element a = new Element("subscription", new String[] { "node", "jid", "subscription" },
-							new String[] { entry.getKey(), senderBareJid.toString(), subscription.getSubscription().name() });
+					Element a = new Element("subscription", new String[]{"node", "jid", "subscription"},
+											new String[]{entry.getKey(), senderBareJid.toString(),
+														 subscription.getSubscription().name()});
 
 					subscriptionsResult.addChild(a);
 				}
 			} else {
-				AbstractNodeConfig nodeConfig = getRepository().getNodeConfig( serviceJid, nodeName );
+				AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
 
-				if ( nodeConfig == null ){
-					throw new PubSubException( packet.getElement(), Authorization.ITEM_NOT_FOUND );
+				if (nodeConfig == null) {
+					throw new PubSubException(packet.getElement(), Authorization.ITEM_NOT_FOUND);
 				}
 
 				ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(serviceJid, nodeName);
 
-				if ( log.isLoggable( Level.FINEST ) ){
-					log.log( Level.FINEST, "Getting node subscription, serviceJid: {0}, nodeName: {1}, nodeConfig: {2}, nodeSubscriptions: {3}",
-							 new Object[] { serviceJid, nodeName, nodeConfig, nodeSubscriptions } );
+				if (log.isLoggable(Level.FINEST)) {
+					log.log(Level.FINEST,
+							"Getting node subscription, serviceJid: {0}, nodeName: {1}, nodeConfig: {2}, nodeSubscriptions: {3}",
+							new Object[]{serviceJid, nodeName, nodeConfig, nodeSubscriptions});
 				}
 				subscriptionsResult.addAttribute("node", nodeName);
 
 				UsersSubscription[] subscribers = nodeSubscriptions.getSubscriptions();
 
 				for (final UsersSubscription usersSubscription : subscribers) {
-					Element s = new Element("subscription", new String[] { "jid", "subscription", "subid" },
-							new String[] { usersSubscription.getJid().toString(), usersSubscription.getSubscription().name(),
-									usersSubscription.getSubid() });
+					Element s = new Element("subscription", new String[]{"jid", "subscription", "subid"},
+											new String[]{usersSubscription.getJid().toString(),
+														 usersSubscription.getSubscription().name(),
+														 usersSubscription.getSubid()});
 
 					subscriptionsResult.addChild(s);
 				}

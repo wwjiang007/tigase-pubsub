@@ -49,7 +49,8 @@ import java.util.List;
 import java.util.TimeZone;
 
 @Bean(name = DiscoveryModule.ID, parent = PubSubComponent.class, active = true)
-public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModule {
+public class DiscoveryModule
+		extends tigase.component.modules.impl.DiscoveryModule {
 
 	private final SimpleDateFormat formatter;
 
@@ -57,8 +58,8 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 	private IPubSubRepository repository;
 
 	public DiscoveryModule() {
-		this.formatter = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" );
-		this.formatter.setTimeZone( TimeZone.getTimeZone( "UTC" ) );
+		this.formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		this.formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 
 	@Override
@@ -69,8 +70,8 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 		} else {
 			final JID senderJid = packet.getStanzaFrom();
 
-			Element resultQuery = new Element("query", new String[] { "xmlns" },
-					new String[] { "http://jabber.org/protocol/disco#info" });
+			Element resultQuery = new Element("query", new String[]{"xmlns"},
+											  new String[]{"http://jabber.org/protocol/disco#info"});
 
 			Packet resultIq = packet.okResult(resultQuery, 0);
 
@@ -86,16 +87,17 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 				throw new RepositoryException("Exception retrieving node configuration", ex);
 			}
 
-			boolean allowed = ((senderJid == null) || (nodeConfigClone == null)) ? true : Utils.isAllowedDomain(
-					senderJid.getBareJID(), nodeConfigClone.getDomains());
+			boolean allowed = ((senderJid == null) || (nodeConfigClone == null))
+							  ? true
+							  : Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfigClone.getDomains());
 
 			if (!allowed) {
 				throw new PubSubException(Authorization.FORBIDDEN);
 			}
-			resultQuery.addChild(new Element("identity", new String[] { "category", "type" }, new String[] { "pubsub",
-					nodeConfigClone.getNodeType().name() }));
-			resultQuery.addChild(new Element("feature", new String[] { "var" },
-					new String[] { "http://jabber.org/protocol/pubsub" }));
+			resultQuery.addChild(new Element("identity", new String[]{"category", "type"},
+											 new String[]{"pubsub", nodeConfigClone.getNodeType().name()}));
+			resultQuery.addChild(
+					new Element("feature", new String[]{"var"}, new String[]{"http://jabber.org/protocol/pubsub"}));
 
 			Form form = nodeConfigClone.getForm();
 
@@ -121,8 +123,10 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 						break;
 				}
 			}
-			form.addField(Field.fieldJidMulti("pubsub#owner", owners.toArray(new String[owners.size()]), "Node owners"));
-			form.addField(Field.fieldJidMulti("pubsub#publisher", publishers.toArray(new String[publishers.size()]), "Publishers to this node"));
+			form.addField(
+					Field.fieldJidMulti("pubsub#owner", owners.toArray(new String[owners.size()]), "Node owners"));
+			form.addField(Field.fieldJidMulti("pubsub#publisher", publishers.toArray(new String[publishers.size()]),
+											  "Publishers to this node"));
 
 			BareJID creator = nodeMeta.getCreator();
 			String creationDateStr = "";
@@ -131,11 +135,11 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 					creationDateStr = formatter.format(nodeMeta.getCreationTime());
 				}
 			}
-			form.addField(Field.fieldJidSingle("pubsub#creator", creator != null ? creator.toString() : "", "Node creator"));
+			form.addField(
+					Field.fieldJidSingle("pubsub#creator", creator != null ? creator.toString() : "", "Node creator"));
 			form.addField(Field.fieldTextSingle("pubsub#creation_date", creationDateStr, "Creation date"));
 
 			resultQuery.addChild(form.getElement());
-
 
 			write(resultIq);
 		}
@@ -150,12 +154,14 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 		final JID toJid = packet.getStanzaTo();
 		final Element element = packet.getElement();
 
-		Element resultQuery = new Element("query", new String[] { "xmlns" },
-				new String[] { "http://jabber.org/protocol/disco#items" });
+		Element resultQuery = new Element("query", new String[]{"xmlns"},
+										  new String[]{"http://jabber.org/protocol/disco#items"});
 
 		Packet resultIq = packet.okResult(resultQuery, 0);
 
-		AbstractNodeConfig nodeConfig = (nodeName == null) ? null : repository.getNodeConfig(toJid.getBareJID(), nodeName);
+		AbstractNodeConfig nodeConfig = (nodeName == null)
+										? null
+										: repository.getNodeConfig(toJid.getBareJID(), nodeName);
 		String[] nodes;
 
 		if (nodeName != null && nodeConfig == null) {
@@ -183,8 +189,9 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 					AbstractNodeConfig childNodeConfig = this.repository.getNodeConfig(toJid.getBareJID(), node);
 
 					if (childNodeConfig != null) {
-						boolean allowed = ((senderJid == null) || (childNodeConfig == null)) ? true
-								: Utils.isAllowedDomain(senderJid.getBareJID(), childNodeConfig.getDomains());
+						boolean allowed = ((senderJid == null) || (childNodeConfig == null))
+										  ? true
+										  : Utils.isAllowedDomain(senderJid.getBareJID(), childNodeConfig.getDomains());
 						String collection = childNodeConfig.getCollection();
 
 						if (allowed) {
@@ -192,8 +199,8 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 
 							name = ((name == null) || (name.length() == 0)) ? node : name;
 
-							Element item = new Element("item", new String[] { "jid", "node", "name" },
-									new String[] { element.getAttributeStaticStr("to"), node, name });
+							Element item = new Element("item", new String[]{"jid", "node", "name"},
+													   new String[]{element.getAttributeStaticStr("to"), node, name});
 
 							if (parentName.equals(collection)) {
 								resultQuery.addChild(item);
@@ -205,8 +212,9 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 				}
 			}
 		} else {
-			boolean allowed = ((senderJid == null) || (nodeConfig == null)) ? true
-					: Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains());
+			boolean allowed = ((senderJid == null) || (nodeConfig == null))
+							  ? true
+							  : Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains());
 
 			if (!allowed) {
 				throw new PubSubException(Authorization.FORBIDDEN);
@@ -218,8 +226,8 @@ public class DiscoveryModule extends tigase.component.modules.impl.DiscoveryModu
 
 			if (itemsId != null) {
 				for (String itemId : itemsId) {
-					resultQuery.addChild(new Element("item", new String[] { "jid", "name" },
-							new String[] { element.getAttributeStaticStr("to"), itemId }));
+					resultQuery.addChild(new Element("item", new String[]{"jid", "name"},
+													 new String[]{element.getAttributeStaticStr("to"), itemId}));
 				}
 			}
 		}

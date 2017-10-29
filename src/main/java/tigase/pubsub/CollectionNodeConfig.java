@@ -21,7 +21,8 @@ package tigase.pubsub;
 
 import tigase.form.Field;
 
-public class CollectionNodeConfig extends AbstractNodeConfig {
+public class CollectionNodeConfig
+		extends AbstractNodeConfig {
 
 	public CollectionNodeConfig(String nodeName) {
 		super(nodeName);
@@ -38,16 +39,13 @@ public class CollectionNodeConfig extends AbstractNodeConfig {
 //		setChildren(list.toArray(new String[] {}));
 //	}
 
-	@Override
-	protected AbstractNodeConfig getInstance(String nodeName) {
-		return new CollectionNodeConfig(nodeName);
+	public void setChildren(String[] children) {
+		setValue("pubsub#children", children);
 	}
 
 	@Override
-	protected void init() {
-		super.init();
-		Field f = Field.fieldTextMulti("pubsub#children", "", null);
-		add(f);
+	protected AbstractNodeConfig getInstance(String nodeName) {
+		return new CollectionNodeConfig(nodeName);
 	}
 
 //	public void removeChildren(String nodeName) {
@@ -59,8 +57,11 @@ public class CollectionNodeConfig extends AbstractNodeConfig {
 //		setChildren(list.toArray(new String[] {}));
 //	}
 
-	public void setChildren(String[] children) {
-		setValue("pubsub#children", children);
+	@Override
+	protected void init() {
+		super.init();
+		Field f = Field.fieldTextMulti("pubsub#children", "", null);
+		add(f);
 	}
 
 }

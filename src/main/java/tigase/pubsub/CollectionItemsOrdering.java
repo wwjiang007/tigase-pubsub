@@ -19,9 +19,9 @@
  */
 package tigase.pubsub;
 
-import java.util.Comparator;
-
 import tigase.pubsub.repository.IItems;
+
+import java.util.Comparator;
 
 public enum CollectionItemsOrdering {
 
@@ -41,6 +41,9 @@ public enum CollectionItemsOrdering {
 		}
 	}),;
 
+	private final Comparator<IItems.ItemMeta> comparator;
+	private final String description;
+
 	public static String[] descriptions() {
 		String[] result = new String[values().length];
 		int i = 0;
@@ -49,10 +52,6 @@ public enum CollectionItemsOrdering {
 		}
 		return result;
 	}
-
-	private final Comparator<IItems.ItemMeta> comparator;
-
-	private final String description;
 
 	private CollectionItemsOrdering(String description, Comparator<IItems.ItemMeta> cmp) {
 		this.description = description;

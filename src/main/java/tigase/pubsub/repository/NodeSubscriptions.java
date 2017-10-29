@@ -20,6 +20,11 @@
 
 package tigase.pubsub.repository;
 
+import tigase.pubsub.Subscription;
+import tigase.pubsub.Utils;
+import tigase.pubsub.repository.stateless.UsersSubscription;
+import tigase.xmpp.jid.BareJID;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,25 +34,28 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.pubsub.Subscription;
-import tigase.pubsub.Utils;
-import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.xmpp.jid.BareJID;
-
 /**
  * Class description
  *
- *
- * @version 5.0.0, 2010.03.27 at 05:27:46 GMT
  * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @version 5.0.0, 2010.03.27 at 05:27:46 GMT
  */
-public abstract class NodeSubscriptions implements ISubscriptions {
+public abstract class NodeSubscriptions
+		implements ISubscriptions {
 
 	protected final static String DELIMITER = ";";
+	protected final Logger log = Logger.getLogger(this.getClass().getName());
+	// protected final FragmentedMap<BareJID, UsersSubscription> subs = new
+	// FragmentedMap<BareJID, UsersSubscription>(
+	// MAX_FRAGMENT_SIZE);
+	protected final ConcurrentMap<BareJID, UsersSubscription> subs = new ConcurrentHashMap<BareJID, UsersSubscription>();
+	/** Field description */
+	// public final static int MAX_FRAGMENT_SIZE = 10000;
+
+	private boolean changed = false;
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -57,24 +65,11 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 		return s;
 	}
 
-	/** Field description */
-	// public final static int MAX_FRAGMENT_SIZE = 10000;
-
-	private boolean changed = false;
-
-	protected final Logger log = Logger.getLogger(this.getClass().getName());
-
-	// protected final FragmentedMap<BareJID, UsersSubscription> subs = new
-	// FragmentedMap<BareJID, UsersSubscription>(
-	// MAX_FRAGMENT_SIZE);
-	protected final ConcurrentMap<BareJID, UsersSubscription> subs = new ConcurrentHashMap<BareJID, UsersSubscription>();
-
 	protected NodeSubscriptions() {
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param jid
 	 * @param subscription
@@ -96,7 +91,6 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param jid
 	 * @param subscription
 	 */
@@ -110,13 +104,8 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 		}
 	}
 
-	protected UsersSubscription get(final BareJID bareJid) {
-		return this.subs.get(bareJid);
-	}
-
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param jid
 	 *
@@ -136,7 +125,6 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param jid
 	 *
 	 * @return
@@ -155,15 +143,15 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
 	public UsersSubscription[] getSubscriptions() {
 		synchronized (this.subs) {
-			final UsersSubscription[] toArray = this.subs.values().toArray(new UsersSubscription[] {});
+			final UsersSubscription[] toArray = this.subs.values().toArray(new UsersSubscription[]{});
 			if (log.isLoggable(Level.FINEST)) {
-				log.log(Level.FINEST, "getSubscriptions: {0}, toArray:{1}", new Object[] { subs, Arrays.toString(toArray) });
+				log.log(Level.FINEST, "getSubscriptions: {0}, toArray:{1}",
+						new Object[]{subs, Arrays.toString(toArray)});
 			}
 			return toArray;
 		}
@@ -176,7 +164,7 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "getSubscriptionsForPublish, subs: {0}, subscriptions: {1}",
-					new Object[] { subs, Arrays.toString(subscriptions) });
+					new Object[]{subs, Arrays.toString(subscriptions)});
 		}
 
 		return subscriptions;
@@ -184,7 +172,6 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 */
@@ -202,7 +189,6 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 */
 	@Override
@@ -212,7 +198,6 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param data
 	 */
@@ -255,7 +240,6 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param nodeSubscriptions
 	 */
 	public void replaceBy(final ISubscriptions nodeSubscriptions) {
@@ -277,7 +261,6 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 
 	/**
 	 * Method description
-	 *
 	 */
 	public void resetChangedFlag() {
 		this.changed = false;
@@ -285,7 +268,6 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param fragment
 	 *
@@ -312,5 +294,9 @@ public abstract class NodeSubscriptions implements ISubscriptions {
 	@Override
 	public String toString() {
 		return "NodeSubscriptions: " + subs;
+	}
+
+	protected UsersSubscription get(final BareJID bareJid) {
+		return this.subs.get(bareJid);
 	}
 }

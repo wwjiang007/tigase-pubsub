@@ -20,38 +20,15 @@
 
 package tigase.pubsub.utils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class FragmentedMap<KEY, VALUE> {
 
-	private static class XMap<K, V> extends HashMap<K, V> {
-
-		private static final long serialVersionUID = 1L;
-
-		private final Object X = new Object();
-
-		@Override
-		public boolean equals(Object o) {
-			if (o instanceof XMap) {
-				return X == ((XMap<?, ?>) o).X;
-			} else
-				return super.equals(o);
-		}
-
-		@Override
-		public int hashCode() {
-			return X.hashCode();
-		}
-
-	}
+	private final Set<Map<KEY, VALUE>> changedFragments = new HashSet<Map<KEY, VALUE>>();
+	private final ArrayList<Map<KEY, VALUE>> fragments = new ArrayList<Map<KEY, VALUE>>();
+	private final int maxFragmentSize;
+	private final Set<Integer> removedFragmentsIndexes = new HashSet<Integer>();
 
 	public static void main(String[] args) {
 		Map<String, String> x;
@@ -73,14 +50,6 @@ public class FragmentedMap<KEY, VALUE> {
 		System.out.println(fm.getAllValues().size());
 
 	}
-
-	private final Set<Map<KEY, VALUE>> changedFragments = new HashSet<Map<KEY, VALUE>>();
-
-	private final ArrayList<Map<KEY, VALUE>> fragments = new ArrayList<Map<KEY, VALUE>>();
-
-	private final int maxFragmentSize;
-
-	private final Set<Integer> removedFragmentsIndexes = new HashSet<Integer>();
 
 	public FragmentedMap(int maxFragmentSize) {
 		this.maxFragmentSize = maxFragmentSize;
@@ -150,6 +119,52 @@ public class FragmentedMap<KEY, VALUE> {
 		return this.fragments.size();
 	}
 
+	public synchronized Map<KEY, VALUE> getMap() {
+		Map<KEY, VALUE> result = new HashMap<KEY, VALUE>();
+		for (Map<KEY, VALUE> f : this.fragments) {
+			result.putAll(f);
+		}
+		return Collections.unmodifiableMap(result);
+	}
+
+	public synchronized Set<Integer> getRemovedFragmentIndexes() {
+		return Collections.unmodifiableSet(this.removedFragmentsIndexes);
+	}
+
+	public synchronized VALUE put(KEY key, VALUE value) {
+		Map<KEY, VALUE> fragment = getFragmentWithKey(key);
+		if (fragment == null) {
+			fragment = getFragmentToNewData();
+			if (fragment == null) {
+				fragment = new XMap<KEY, VALUE>();
+				this.fragments.add(fragment);
+				int index = this.fragments.indexOf(fragment);
+				this.removedFragmentsIndexes.remove(index);
+			}
+		}
+
+		if (!this.changedFragments.contains(fragment)) {
+			this.changedFragments.add(fragment);
+		}
+		return fragment.put(key, value);
+	}
+
+	public synchronized void putAll(Map<KEY, VALUE> fragment) {
+		for (Entry<KEY, VALUE> e : fragment.entrySet()) {
+			put(e.getKey(), e.getValue());
+		}
+	}
+
+	public synchronized VALUE remove(KEY key) {
+		Map<KEY, VALUE> f = getFragmentWithKey(key);
+		if (f != null) {
+			VALUE value = f.remove(key);
+			this.changedFragments.add(f);
+			return value;
+		}
+		return null;
+	}
+
 	protected Map<KEY, VALUE> getFragmentToNewData() {
 		for (Map<KEY, VALUE> f : this.changedFragments) {
 			if (f.size() < maxFragmentSize) {
@@ -188,18 +203,6 @@ public class FragmentedMap<KEY, VALUE> {
 		}
 	}
 
-	public synchronized Map<KEY, VALUE> getMap() {
-		Map<KEY, VALUE> result = new HashMap<KEY, VALUE>();
-		for (Map<KEY, VALUE> f : this.fragments) {
-			result.putAll(f);
-		}
-		return Collections.unmodifiableMap(result);
-	}
-
-	public synchronized Set<Integer> getRemovedFragmentIndexes() {
-		return Collections.unmodifiableSet(this.removedFragmentsIndexes);
-	}
-
 	private void intDefragment() {
 		final int size = this.fragments.size();
 		Iterator<Map<KEY, VALUE>> iterator = this.fragments.iterator();
@@ -228,39 +231,6 @@ public class FragmentedMap<KEY, VALUE> {
 		}
 	}
 
-	public synchronized VALUE put(KEY key, VALUE value) {
-		Map<KEY, VALUE> fragment = getFragmentWithKey(key);
-		if (fragment == null) {
-			fragment = getFragmentToNewData();
-			if (fragment == null) {
-				fragment = new XMap<KEY, VALUE>();
-				this.fragments.add(fragment);
-				int index = this.fragments.indexOf(fragment);
-				this.removedFragmentsIndexes.remove(index);
-			}
-		}
-
-		if (!this.changedFragments.contains(fragment))
-			this.changedFragments.add(fragment);
-		return fragment.put(key, value);
-	}
-
-	public synchronized void putAll(Map<KEY, VALUE> fragment) {
-		for (Entry<KEY, VALUE> e : fragment.entrySet()) {
-			put(e.getKey(), e.getValue());
-		}
-	}
-
-	public synchronized VALUE remove(KEY key) {
-		Map<KEY, VALUE> f = getFragmentWithKey(key);
-		if (f != null) {
-			VALUE value = f.remove(key);
-			this.changedFragments.add(f);
-			return value;
-		}
-		return null;
-	}
-
 	private void showDebug() {
 		for (int i = 0; i < getFragmentsCount(); i++) {
 			System.out.println(i + ": " + getFragment(i));
@@ -268,6 +238,29 @@ public class FragmentedMap<KEY, VALUE> {
 		System.out.println("C: " + getChangedFragmentIndexes());
 		System.out.println("R: " + removedFragmentsIndexes);
 		System.out.println();
+	}
+
+	private static class XMap<K, V>
+			extends HashMap<K, V> {
+
+		private static final long serialVersionUID = 1L;
+
+		private final Object X = new Object();
+
+		@Override
+		public boolean equals(Object o) {
+			if (o instanceof XMap) {
+				return X == ((XMap<?, ?>) o).X;
+			} else {
+				return super.equals(o);
+			}
+		}
+
+		@Override
+		public int hashCode() {
+			return X.hashCode();
+		}
+
 	}
 
 }

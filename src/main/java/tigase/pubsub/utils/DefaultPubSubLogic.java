@@ -33,10 +33,10 @@ import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
-import tigase.xmpp.jid.BareJID;
-import tigase.xmpp.jid.JID;
 import tigase.xmpp.impl.roster.RosterAbstract;
 import tigase.xmpp.impl.roster.RosterElement;
+import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.jid.JID;
 
 import java.util.Map;
 
@@ -44,11 +44,12 @@ import static tigase.pubsub.modules.PublishItemModule.AMP_XMLNS;
 
 /**
  * Helper bean containing PubSub logic
- *
+ * <p>
  * Created by andrzej on 25.12.2016.
  */
 @Bean(name = "logic", parent = PubSubComponent.class, active = true)
-public class DefaultPubSubLogic implements Logic {
+public class DefaultPubSubLogic
+		implements Logic {
 
 	@Inject
 	private PubSubConfig pubSubConfig;
@@ -59,8 +60,9 @@ public class DefaultPubSubLogic implements Logic {
 	@Override
 	public void checkAccessPermission(BareJID serviceJid, String nodeName, JID senderJid)
 			throws PubSubException, RepositoryException {
-		if (pubSubConfig.isAdmin(senderJid))
+		if (pubSubConfig.isAdmin(senderJid)) {
 			return;
+		}
 
 		checkAccessPermission(serviceJid, repository.getNodeConfig(serviceJid, nodeName),
 							  repository.getNodeAffiliations(serviceJid, nodeName),
@@ -69,14 +71,14 @@ public class DefaultPubSubLogic implements Logic {
 
 	@Override
 	public void checkAccessPermission(BareJID serviceJid, AbstractNodeConfig nodeConfig, IAffiliations nodeAffiliations,
-										 ISubscriptions nodeSubscriptions, JID senderJid)
+									  ISubscriptions nodeSubscriptions, JID senderJid)
 			throws PubSubException, RepositoryException {
 		//AbstractNodeConfig nodeConfig = node.getNodeConfig();
 		if (nodeConfig == null) {
 			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
 		}
-		if ((nodeConfig.getNodeAccessModel() == AccessModel.open)
-				&& !Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains())) {
+		if ((nodeConfig.getNodeAccessModel() == AccessModel.open) &&
+				!Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains())) {
 			throw new PubSubException(Authorization.FORBIDDEN);
 		}
 
@@ -90,20 +92,23 @@ public class DefaultPubSubLogic implements Logic {
 		//ISubscriptions nodeSubscriptions = node.getNodeSubscriptions();
 		Subscription senderSubscription = nodeSubscriptions.getSubscription(senderJid.getBareJID());
 
-		if ((nodeConfig.getNodeAccessModel() == AccessModel.whitelist)
-				&& !senderAffiliation.getAffiliation().isRetrieveItem()) {
+		if ((nodeConfig.getNodeAccessModel() == AccessModel.whitelist) &&
+				!senderAffiliation.getAffiliation().isRetrieveItem()) {
 			throw new PubSubException(Authorization.NOT_ALLOWED, PubSubErrorCondition.CLOSED_NODE);
-		} else if ((nodeConfig.getNodeAccessModel() == AccessModel.authorize)
-				&& ((senderSubscription != Subscription.subscribed) || !senderAffiliation.getAffiliation().isRetrieveItem())) {
+		} else if ((nodeConfig.getNodeAccessModel() == AccessModel.authorize) &&
+				((senderSubscription != Subscription.subscribed) ||
+						!senderAffiliation.getAffiliation().isRetrieveItem())) {
 			throw new PubSubException(Authorization.NOT_AUTHORIZED, PubSubErrorCondition.NOT_SUBSCRIBED);
 		} else if (nodeConfig.getNodeAccessModel() == AccessModel.presence) {
 			boolean allowed = hasSenderSubscription(senderJid.getBareJID(), nodeAffiliations, nodeSubscriptions);
 
 			if (!allowed) {
-				throw new PubSubException(Authorization.NOT_AUTHORIZED, PubSubErrorCondition.PRESENCE_SUBSCRIPTION_REQUIRED);
+				throw new PubSubException(Authorization.NOT_AUTHORIZED,
+										  PubSubErrorCondition.PRESENCE_SUBSCRIPTION_REQUIRED);
 			}
 		} else if (nodeConfig.getNodeAccessModel() == AccessModel.roster) {
-			boolean allowed = isSenderInRosterGroup(senderJid.getBareJID(), nodeConfig, nodeAffiliations, nodeSubscriptions);
+			boolean allowed = isSenderInRosterGroup(senderJid.getBareJID(), nodeConfig, nodeAffiliations,
+													nodeSubscriptions);
 
 			if (!allowed) {
 				throw new PubSubException(Authorization.NOT_AUTHORIZED, PubSubErrorCondition.NOT_IN_ROSTER_GROUP);
@@ -145,11 +150,12 @@ public class DefaultPubSubLogic implements Logic {
 	}
 
 	public boolean hasSenderSubscription(final BareJID bareJid, final IAffiliations affiliations,
-											final ISubscriptions subscriptions) throws RepositoryException {
+										 final ISubscriptions subscriptions) throws RepositoryException {
 
 		for (UsersAffiliation affiliation : affiliations.getAffiliations()) {
-			if (affiliation.getAffiliation() != Affiliation.owner)
+			if (affiliation.getAffiliation() != Affiliation.owner) {
 				continue;
+			}
 
 			if (bareJid.equals(affiliation.getJid())) {
 				return true;
@@ -158,9 +164,11 @@ public class DefaultPubSubLogic implements Logic {
 			Map<BareJID, RosterElement> buddies = repository.getUserRoster(affiliation.getJid());
 			RosterElement re = buddies.get(bareJid);
 			if (re != null) {
-				if (re.getSubscription() == RosterAbstract.SubscriptionType.both || re.getSubscription() == RosterAbstract.SubscriptionType.from
-						|| re.getSubscription() == RosterAbstract.SubscriptionType.from_pending_out)
+				if (re.getSubscription() == RosterAbstract.SubscriptionType.both ||
+						re.getSubscription() == RosterAbstract.SubscriptionType.from ||
+						re.getSubscription() == RosterAbstract.SubscriptionType.from_pending_out) {
 					return true;
+				}
 			}
 		}
 
@@ -168,7 +176,7 @@ public class DefaultPubSubLogic implements Logic {
 	}
 
 	public boolean isSenderInRosterGroup(BareJID bareJid, AbstractNodeConfig nodeConfig, IAffiliations affiliations,
-											final ISubscriptions subscriptions) throws RepositoryException {
+										 final ISubscriptions subscriptions) throws RepositoryException {
 		final UsersSubscription[] subscribers = subscriptions.getSubscriptions();
 		final String[] groupsAllowed = nodeConfig.getRosterGroupsAllowed();
 

@@ -38,10 +38,14 @@ public class NodeKeyTest {
 
 	@Test
 	public void testEquality() throws TigaseStringprepException {
-		CachedPubSubRepository.NodeKey key1 = new CachedPubSubRepository.NodeKey(BareJID.bareJIDInstance("TeSt@example.com"), "Test");
-		CachedPubSubRepository.NodeKey key2 = new CachedPubSubRepository.NodeKey(BareJID.bareJIDInstance("test@example.com"), "Test");
-		CachedPubSubRepository.NodeKey key3 = new CachedPubSubRepository.NodeKey(BareJID.bareJIDInstance("test@example.com"), "test");
-		CachedPubSubRepository.NodeKey key4 = new CachedPubSubRepository.NodeKey(BareJID.bareJIDInstance("test1@example.com"), "Test");
+		CachedPubSubRepository.NodeKey key1 = new CachedPubSubRepository.NodeKey(
+				BareJID.bareJIDInstance("TeSt@example.com"), "Test");
+		CachedPubSubRepository.NodeKey key2 = new CachedPubSubRepository.NodeKey(
+				BareJID.bareJIDInstance("test@example.com"), "Test");
+		CachedPubSubRepository.NodeKey key3 = new CachedPubSubRepository.NodeKey(
+				BareJID.bareJIDInstance("test@example.com"), "test");
+		CachedPubSubRepository.NodeKey key4 = new CachedPubSubRepository.NodeKey(
+				BareJID.bareJIDInstance("test1@example.com"), "Test");
 
 		assertEquals(key1.hashCode(), key2.hashCode());
 		assertTrue(key1.equals(key2));
@@ -55,12 +59,16 @@ public class NodeKeyTest {
 
 	@Test
 	public void testMapKeyUsage() throws TigaseStringprepException {
-		CachedPubSubRepository.NodeKey key1 = new CachedPubSubRepository.NodeKey(BareJID.bareJIDInstance("TeSt@example.com"), "Test");
-		CachedPubSubRepository.NodeKey key2 = new CachedPubSubRepository.NodeKey(BareJID.bareJIDInstance("test@example.com"), "Test");
-		CachedPubSubRepository.NodeKey key3 = new CachedPubSubRepository.NodeKey(BareJID.bareJIDInstance("test@example.com"), "test");
-		CachedPubSubRepository.NodeKey key4 = new CachedPubSubRepository.NodeKey(BareJID.bareJIDInstance("test1@example.com"), "Test");
+		CachedPubSubRepository.NodeKey key1 = new CachedPubSubRepository.NodeKey(
+				BareJID.bareJIDInstance("TeSt@example.com"), "Test");
+		CachedPubSubRepository.NodeKey key2 = new CachedPubSubRepository.NodeKey(
+				BareJID.bareJIDInstance("test@example.com"), "Test");
+		CachedPubSubRepository.NodeKey key3 = new CachedPubSubRepository.NodeKey(
+				BareJID.bareJIDInstance("test@example.com"), "test");
+		CachedPubSubRepository.NodeKey key4 = new CachedPubSubRepository.NodeKey(
+				BareJID.bareJIDInstance("test1@example.com"), "Test");
 
-		Map<CachedPubSubRepository.NodeKey,UUID> map = new HashMap<>();
+		Map<CachedPubSubRepository.NodeKey, UUID> map = new HashMap<>();
 		UUID uid1 = UUID.randomUUID();
 		map.put(key1, uid1);
 		assertEquals(uid1, map.get(key1));
@@ -76,6 +84,5 @@ public class NodeKeyTest {
 		assertEquals(uid3, map.get(key3));
 		assertEquals(uid4, map.get(key4));
 	}
-
 
 }

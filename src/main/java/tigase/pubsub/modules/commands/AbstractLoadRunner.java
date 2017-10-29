@@ -23,7 +23,8 @@ package tigase.pubsub.modules.commands;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class AbstractLoadRunner implements Runnable {
+public abstract class AbstractLoadRunner
+		implements Runnable {
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 	private final long delay;
@@ -33,17 +34,15 @@ public abstract class AbstractLoadRunner implements Runnable {
 	 */
 	private final long testTime;
 	private int counter = 0;
-	private long testStartTime;
 	private long testEndTime;
+	private long testStartTime;
 
 	public AbstractLoadRunner(long time, long frequency) {
 		this.delay = (long) ((1.0 / frequency) * 1000.0);
 		this.testTime = time;
-		log.info("Preparing load test: testTime=" + testTime + ", frequency=" + frequency + "/sec; calculatedDelay=" + delay
-				+ " ms");
+		log.info("Preparing load test: testTime=" + testTime + ", frequency=" + frequency + "/sec; calculatedDelay=" +
+						 delay + " ms");
 	}
-
-	protected abstract void doWork() throws Exception;
 
 	public int getCounter() {
 		return counter;
@@ -60,8 +59,6 @@ public abstract class AbstractLoadRunner implements Runnable {
 	public long getTestStartTime() {
 		return testStartTime;
 	}
-
-	protected void onTestFinish(){}
 
 	@Override
 	public void run() {
@@ -90,5 +87,10 @@ public abstract class AbstractLoadRunner implements Runnable {
 			log.log(Level.WARNING, "LoadTest generator stopped", e);
 		}
 		onTestFinish();
+	}
+
+	protected abstract void doWork() throws Exception;
+
+	protected void onTestFinish() {
 	}
 }

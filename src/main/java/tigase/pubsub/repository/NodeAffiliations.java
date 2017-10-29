@@ -20,30 +20,33 @@
 
 package tigase.pubsub.repository;
 
+import tigase.pubsub.Affiliation;
+import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.xmpp.jid.BareJID;
+
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
-
-import tigase.xmpp.jid.BareJID;
-
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class NodeAffiliations implements IAffiliations {
-
-	private static final Logger LOG = Logger.getLogger( NodeAffiliations.class.getName() );
+public abstract class NodeAffiliations
+		implements IAffiliations {
 
 	protected final static String DELIMITER = ";";
+	private static final Logger LOG = Logger.getLogger(NodeAffiliations.class.getName());
+	protected final ConcurrentMap<BareJID, UsersAffiliation> affs = new ConcurrentHashMap<BareJID, UsersAffiliation>(16,
+																													 0.9f,
+																													 8);
+	private boolean changed = false;
 
 	public static tigase.pubsub.repository.cached.NodeAffiliations create(Queue<UsersAffiliation> data) {
 		tigase.pubsub.repository.cached.NodeAffiliations a = new tigase.pubsub.repository.cached.NodeAffiliations();
-		if (data == null)
+		if (data == null) {
 			return a;
+		}
 
 		a.init(data);
 		return a;
@@ -59,11 +62,6 @@ public abstract class NodeAffiliations implements IAffiliations {
 		}
 	}
 
-	protected final ConcurrentMap<BareJID, UsersAffiliation> affs = new ConcurrentHashMap<BareJID, UsersAffiliation>(16, 0.9f,
-			8);
-
-	private boolean changed = false;
-
 	protected NodeAffiliations() {
 	}
 
@@ -72,8 +70,8 @@ public abstract class NodeAffiliations implements IAffiliations {
 		UsersAffiliation a = new UsersAffiliation(bareJid, affiliation);
 		affs.put(bareJid, a);
 		changed = true;
-		if ( LOG.isLoggable( Level.FINEST ) ){
-			LOG.log( Level.FINEST, "Added affiliation for {0} as {1} (changed: {2})", new Object[] { bareJid, a, changed } );
+		if (LOG.isLoggable(Level.FINEST)) {
+			LOG.log(Level.FINEST, "Added affiliation for {0} as {1} (changed: {2})", new Object[]{bareJid, a, changed});
 		}
 	}
 
@@ -88,8 +86,9 @@ public abstract class NodeAffiliations implements IAffiliations {
 			affs.put(bareJid, a);
 			changed = true;
 		}
-		if (LOG.isLoggable( Level.FINEST )) {
-			LOG.log( Level.FINEST, "Changed affiliation for {0} as {1} (changed: {2})", new Object[] {bareJid, a, changed});
+		if (LOG.isLoggable(Level.FINEST)) {
+			LOG.log(Level.FINEST, "Changed affiliation for {0} as {1} (changed: {2})",
+					new Object[]{bareJid, a, changed});
 		}
 	}
 
@@ -103,19 +102,11 @@ public abstract class NodeAffiliations implements IAffiliations {
 		return clone;
 	}
 
-	protected UsersAffiliation get(final BareJID bareJid) {
-		final UsersAffiliation a = this.affs.get(bareJid);
-		if (LOG.isLoggable( Level.FINEST )) {
-			LOG.log( Level.FINEST, "Affiliation for {0} is {1}", new Object[] {bareJid, a});
-		}
-		return a;
-	}
-
 	@Override
 	public UsersAffiliation[] getAffiliations() {
-		final UsersAffiliation[] a = this.affs.values().toArray(new UsersAffiliation[] {});
-		if (LOG.isLoggable( Level.FINEST )) {
-			LOG.log( Level.FINEST, "Affiliation for {0} is {1}", new Object[] {Arrays.asList( a ) });
+		final UsersAffiliation[] a = this.affs.values().toArray(new UsersAffiliation[]{});
+		if (LOG.isLoggable(Level.FINEST)) {
+			LOG.log(Level.FINEST, "Affiliation for {0} is {1}", new Object[]{Arrays.asList(a)});
 		}
 		return a;
 	}
@@ -131,7 +122,7 @@ public abstract class NodeAffiliations implements IAffiliations {
 			a = new UsersAffiliation(bareJid, Affiliation.none);
 		}
 
-		LOG.log( Level.FINEST, "Affiliation for {0} is {1}", new Object[] {bareJid, a});
+		LOG.log(Level.FINEST, "Affiliation for {0} is {1}", new Object[]{bareJid, a});
 
 		return a;
 	}
@@ -202,6 +193,14 @@ public abstract class NodeAffiliations implements IAffiliations {
 	@Override
 	public String toString() {
 		return "NodeAffiliations:" + affs;
+	}
+
+	protected UsersAffiliation get(final BareJID bareJid) {
+		final UsersAffiliation a = this.affs.get(bareJid);
+		if (LOG.isLoggable(Level.FINEST)) {
+			LOG.log(Level.FINEST, "Affiliation for {0} is {1}", new Object[]{bareJid, a});
+		}
+		return a;
 	}
 
 }

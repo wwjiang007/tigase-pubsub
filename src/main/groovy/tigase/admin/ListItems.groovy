@@ -49,58 +49,66 @@ eventBus = (EventBus) eventBus
 @CompileStatic
 Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus, Set admins) {
 
-    def componentConfig = kernel.getInstance(PubSubConfig.class)
+	def componentConfig = kernel.getInstance(PubSubConfig.class)
 
-    def NODE = "node"
+	def NODE = "node"
 
-    IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
+	IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
 
-    def stanzaFromBare = p.getStanzaFrom().getBareJID()
-    def isServiceAdmin = admins.contains(stanzaFromBare)
+	def stanzaFromBare = p.getStanzaFrom().getBareJID()
+	def isServiceAdmin = admins.contains(stanzaFromBare)
 
-    Packet result = null;
-    def node = Command.getFieldValue(p, NODE);
+	Packet result = null;
+	def node = Command.getFieldValue(p, NODE);
 
-    try {
-        if (!node) {
-            result = p.commandResult(Command.DataType.form);
-            Command.addTitle(result, "List of PubSub node items");
-            Command.addInstructions(result, "Fill out this form to retrieve list of published items for node");
-            Command.addFieldValue(result, NODE, node ?: "", "text-single", "Node");
-        } else {
-            result = p.commandResult(Command.DataType.result);
-            Command.addTitle(result, "List of PubSub node items");
-            if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
-                Command.addFieldValue(result, NODE, node, "text-single", "Node");
-                def nodeConfig = pubsubRepository.getNodeConfig(p.getStanzaTo().getBareJID(), node);
-                if (nodeConfig == null)
-                    throw new PubSubException(Authorization.ITEM_NOT_FOUND, "Node " + node + " was not found");
-                def items = pubsubRepository.getNodeItems(p.getStanzaTo().getBareJID(), node);
-                def itemsIds = items.getItemsIds() ?: [];
-                Command.addFieldMultiValue(result, "items", itemsIds as List);
-                result.getElement().getChild('command').getChild('x').getChildren().find { e -> e.getAttribute("var") == "items" }?.setAttribute("label", "Items");
-            } else {
-                throw new PubSubException(Authorization.FORBIDDEN, "You do not have enough " +
-                        "permissions to list items published to a node.");
-            }
-        }
-    } catch (PubSubException ex) {
-        Command.addTextField(result, "Error", ex.getMessage())
-        if (ex.getErrorCondition()) {
-            def error = ex.getErrorCondition();
-            Element errorEl = new Element("error");
-            errorEl.setAttribute("type", error.getErrorType());
-            Element conditionEl = new Element(error.getCondition(), ex.getMessage());
-            conditionEl.setXMLNS(Packet.ERROR_NS);
-            errorEl.addChild(conditionEl);
-            Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
-            if (pubsubCondition)
-                errorEl.addChild(pubsubCondition);
-            result.getElement().addChild(errorEl);
-        }
-    }
+	try {
+		if (!node) {
+			result = p.commandResult(Command.DataType.form);
+			Command.addTitle(result, "List of PubSub node items");
+			Command.addInstructions(result, "Fill out this form to retrieve list of published items for node");
+			Command.addFieldValue(result, NODE, node ?: "", "text-single", "Node");
+		} else {
+			result = p.commandResult(Command.DataType.result);
+			Command.addTitle(result, "List of PubSub node items");
+			if (isServiceAdmin || componentConfig.isAdmin(stanzaFromBare)) {
+				Command.addFieldValue(result, NODE, node, "text-single", "Node");
+				def nodeConfig = pubsubRepository.getNodeConfig(p.getStanzaTo().getBareJID(), node);
+				if (nodeConfig == null) {
+					throw new PubSubException(Authorization.ITEM_NOT_FOUND,
+											  "Node " + node + " was not found")
+				};
+				def items = pubsubRepository.getNodeItems(p.getStanzaTo().getBareJID(), node);
+				def itemsIds = items.getItemsIds() ?: [ ];
+				Command.addFieldMultiValue(result, "items", itemsIds as List);
+				result.getElement().
+						getChild('command').
+						getChild('x').
+						getChildren().
+						find { e -> e.getAttribute("var") == "items" }?.
+						setAttribute("label", "Items");
+			} else {
+				throw new PubSubException(Authorization.FORBIDDEN,
+										  "You do not have enough " + "permissions to list items published to a node.");
+			}
+		}
+	} catch (PubSubException ex) {
+		Command.addTextField(result, "Error", ex.getMessage())
+		if (ex.getErrorCondition()) {
+			def error = ex.getErrorCondition();
+			Element errorEl = new Element("error");
+			errorEl.setAttribute("type", error.getErrorType());
+			Element conditionEl = new Element(error.getCondition(), ex.getMessage());
+			conditionEl.setXMLNS(Packet.ERROR_NS);
+			errorEl.addChild(conditionEl);
+			Element pubsubCondition = ex.pubSubErrorCondition?.getElement();
+			if (pubsubCondition) {
+				errorEl.addChild(pubsubCondition)
+			};
+			result.getElement().addChild(errorEl);
+		}
+	}
 
-    return result;
+	return result;
 }
 
 return process(kernel, component, packet, eventBus, (Set) adminsSet)

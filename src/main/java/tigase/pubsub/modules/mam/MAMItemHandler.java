@@ -35,7 +35,8 @@ import java.util.Map;
  * Created by andrzej on 25.12.2016.
  */
 @Bean(name = "mamItemHandler", parent = MAMQueryModule.class, active = true)
-public class MAMItemHandler extends tigase.xmpp.mam.MAMItemHandler {
+public class MAMItemHandler
+		extends tigase.xmpp.mam.MAMItemHandler {
 
 	private long idCounter = 0;
 
@@ -45,12 +46,14 @@ public class MAMItemHandler extends tigase.xmpp.mam.MAMItemHandler {
 	@Override
 	public void itemFound(Query query, MAMRepository.Item item) {
 		if (item instanceof IPubSubRepository.Item) {
-			Map<String,String> headers = new HashMap<>();
+			Map<String, String> headers = new HashMap<>();
 			headers.put("Collection", ((IPubSubRepository.Item) item).getNode());
 			Element itemEl = item.getMessage();
-			Element itemsEl = new Element("items", new String[] { "node" }, new String[] { ((IPubSubRepository.Item) item).getNode() });
+			Element itemsEl = new Element("items", new String[]{"node"},
+										  new String[]{((IPubSubRepository.Item) item).getNode()});
 			itemsEl.addChild(itemEl);
-			Element message = logic.prepareNotificationMessage(query.getComponentJID(), query.getQuestionerJID(), String.valueOf(++this.idCounter), itemsEl, headers);
+			Element message = logic.prepareNotificationMessage(query.getComponentJID(), query.getQuestionerJID(),
+															   String.valueOf(++this.idCounter), itemsEl, headers);
 			((PubSubDAO.Item) item).setMessage(message);
 		}
 		super.itemFound(query, item);

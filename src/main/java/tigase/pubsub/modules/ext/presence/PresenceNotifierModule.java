@@ -38,15 +38,17 @@ import tigase.pubsub.repository.ISubscriptions;
 import tigase.server.Packet;
 import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
+import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
-import tigase.xmpp.StanzaType;
 
 import java.util.Collection;
 import java.util.logging.Level;
 
 @Bean(name = "presenceNotifierModule", parent = PubSubComponent.class, active = true)
-public class PresenceNotifierModule extends AbstractPubSubModule implements Initializable, UnregisterAware {
+public class PresenceNotifierModule
+		extends AbstractPubSubModule
+		implements Initializable, UnregisterAware {
 
 	@Inject
 	private EventBus eventBus;
@@ -61,24 +63,9 @@ public class PresenceNotifierModule extends AbstractPubSubModule implements Init
 
 	}
 
-	protected Element createPresenceNotificationItem(BareJID serviceJID, String node, JID occupantJID, Packet presenceStanza) {
-		Element notification = new Element("presence");
-		notification.setAttribute("xmlns", PresencePerNodeExtension.XMLNS_EXTENSION);
-		notification.setAttribute("node", node);
-		notification.setAttribute("jid", occupantJID.toString());
-
-		if (presenceStanza == null || presenceStanza.getType() == StanzaType.unavailable) {
-			notification.setAttribute("type", "unavailable");
-		} else if (presenceStanza.getType() == StanzaType.available) {
-			notification.setAttribute("type", "available");
-		}
-
-		return notification;
-	}
-
 	@Override
 	public String[] getFeatures() {
-		return new String[] { PresencePerNodeExtension.XMLNS_EXTENSION };
+		return new String[]{PresencePerNodeExtension.XMLNS_EXTENSION};
 	}
 
 	@Override
@@ -93,6 +80,46 @@ public class PresenceNotifierModule extends AbstractPubSubModule implements Init
 	@Override
 	public void initialize() {
 		eventBus.registerAll(this);
+	}
+
+	@Override
+	public void process(Packet packet) throws ComponentException, TigaseStringprepException {
+	}
+
+	@HandleEvent
+	public void onLoginToNode(PresencePerNodeExtension.LoginToNodeEvent event) {
+		onLoginToNode(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
+	}
+
+	@HandleEvent
+	public void onLogoffFromNodeH(PresencePerNodeExtension.LogoffFromNodeEvent event) {
+		onLogoffFromNode(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
+	}
+
+	@HandleEvent
+	public void onUpdatePresence(PresencePerNodeExtension.UpdatePresenceEvent event) {
+		onPresenceUpdate(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
+	}
+
+	@Override
+	public void beforeUnregister() {
+		eventBus.unregisterAll(this);
+	}
+
+	protected Element createPresenceNotificationItem(BareJID serviceJID, String node, JID occupantJID,
+													 Packet presenceStanza) {
+		Element notification = new Element("presence");
+		notification.setAttribute("xmlns", PresencePerNodeExtension.XMLNS_EXTENSION);
+		notification.setAttribute("node", node);
+		notification.setAttribute("jid", occupantJID.toString());
+
+		if (presenceStanza == null || presenceStanza.getType() == StanzaType.unavailable) {
+			notification.setAttribute("type", "unavailable");
+		} else if (presenceStanza.getType() == StanzaType.available) {
+			notification.setAttribute("type", "available");
+		}
+
+		return notification;
 	}
 
 	protected void onLoginToNode(BareJID serviceJID, String node, JID occupantJID, Packet presenceStanza) {
@@ -122,10 +149,6 @@ public class PresenceNotifierModule extends AbstractPubSubModule implements Init
 	protected void onPresenceUpdate(BareJID serviceJID, String node, JID occupantJID, Packet presenceStanza) {
 	}
 
-	@Override
-	public void process(Packet packet) throws ComponentException, TigaseStringprepException {
-	}
-
 	protected void publish(BareJID serviceJID, String nodeName, Element itemToSend) throws RepositoryException {
 		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJID, nodeName);
 		final IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJID, nodeName);
@@ -139,7 +162,7 @@ public class PresenceNotifierModule extends AbstractPubSubModule implements Init
 		item.addChild(itemToSend);
 
 		publishItemModule.sendNotifications(items, JID.jidInstance(serviceJID), nodeName, nodeConfig, nodeAffiliations,
-				nodeSubscriptions);
+											nodeSubscriptions);
 	}
 
 	protected void publishToOne(BareJID serviceJID, String nodeName, JID destinationJID) throws RepositoryException {
@@ -148,12 +171,14 @@ public class PresenceNotifierModule extends AbstractPubSubModule implements Init
 		Collection<JID> occupants = presencePerNodeExtension.getNodeOccupants(serviceJID, nodeName);
 		for (JID jid : occupants) {
 
-			if (jid.equals(destinationJID))
+			if (jid.equals(destinationJID)) {
 				continue;
+			}
 
 			Packet p = presencePerNodeExtension.getPresence(serviceJID, nodeName, jid);
-			if (p == null)
+			if (p == null) {
 				continue;
+			}
 
 			Element items = new Element("items");
 			items.addAttribute("node", nodeName);
@@ -161,28 +186,8 @@ public class PresenceNotifierModule extends AbstractPubSubModule implements Init
 			items.addChild(item);
 			item.addChild(createPresenceNotificationItem(serviceJID, nodeName, jid, p));
 
-			publishItemModule.sendNotifications(new JID[] { destinationJID }, items, JID.jidInstance(serviceJID), nodeConfig,
-					nodeName, null);
+			publishItemModule.sendNotifications(new JID[]{destinationJID}, items, JID.jidInstance(serviceJID),
+												nodeConfig, nodeName, null);
 		}
-	}
-
-	@HandleEvent
-	public void onLoginToNode(PresencePerNodeExtension.LoginToNodeEvent event) {
-		onLoginToNode(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
-	}
-
-	@HandleEvent
-	public void onLogoffFromNodeH(PresencePerNodeExtension.LogoffFromNodeEvent event) {
-		onLogoffFromNode(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
-	}
-
-	@HandleEvent
-	public void onUpdatePresence(PresencePerNodeExtension.UpdatePresenceEvent event) {
-		onPresenceUpdate(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
-	}
-
-	@Override
-	public void beforeUnregister() {
-		eventBus.unregisterAll(this);
 	}
 }

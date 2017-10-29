@@ -20,9 +20,6 @@
 
 package tigase.pubsub.cluster;
 
-import java.util.Arrays;
-import java.util.Map.Entry;
-
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -33,7 +30,11 @@ import tigase.pubsub.PubSubConfig;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.JID;
 
-public class ViewNodeLoadCommand implements AdHocCommand {
+import java.util.Arrays;
+import java.util.Map.Entry;
+
+public class ViewNodeLoadCommand
+		implements AdHocCommand {
 
 	private final PubSubConfig config;
 
@@ -55,7 +56,7 @@ public class ViewNodeLoadCommand implements AdHocCommand {
 
 			for (Entry<String, Integer> entry : this.nodeMap.getClusterNodesLoad().entrySet()) {
 				Field field = Field.fieldTextSingle("tigase#node-" + entry.getKey(), entry.getValue().toString(),
-						entry.getKey());
+													entry.getKey());
 				form.addField(field);
 
 			}

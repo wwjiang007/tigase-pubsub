@@ -20,9 +20,9 @@
 
 package tigase.pubsub;
 
-import java.util.Collection;
-
 import tigase.xml.Element;
+
+import java.util.Collection;
 
 public interface ElementWriter {
 

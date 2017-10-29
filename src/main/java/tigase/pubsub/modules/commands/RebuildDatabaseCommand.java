@@ -43,7 +43,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 @Bean(name = "rebuildDatabaseCommand", parent = PubSubComponent.class, active = true)
-public class RebuildDatabaseCommand implements AdHocCommand {
+public class RebuildDatabaseCommand
+		implements AdHocCommand {
 
 	@Inject
 	private PubSubConfig config;
