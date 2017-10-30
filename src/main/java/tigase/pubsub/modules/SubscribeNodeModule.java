@@ -39,9 +39,6 @@ import tigase.xmpp.jid.JID;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Class description
- */
 @Bean(name = "subscribeNodeModule", parent = PubSubComponent.class, active = true)
 public class SubscribeNodeModule
 		extends AbstractPubSubModule {
@@ -63,16 +60,6 @@ public class SubscribeNodeModule
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 * @param subscriberJid
-	 * @param newSubscription
-	 * @param subid
-	 *
-	 * @return
-	 */
 	public static Element makeSubscription(String nodeName, BareJID subscriberJid, Subscription newSubscription,
 										   String subid) {
 		Element resPubSub = new Element("pubsub", new String[]{"xmlns"},
@@ -90,11 +77,6 @@ public class SubscribeNodeModule
 		return resPubSub;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#manage-subscriptions",
@@ -103,25 +85,11 @@ public class SubscribeNodeModule
 							"http://jabber.org/protocol/pubsub#subscription-notifications"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT_SUBSCRIBE;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		final BareJID serviceJid = packet.getStanzaTo().getBareJID();

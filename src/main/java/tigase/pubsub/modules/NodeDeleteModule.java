@@ -39,9 +39,6 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-/**
- * Class description
- */
 @Bean(name = "nodeDeleteModule", parent = PubSubComponent.class, active = true)
 public class NodeDeleteModule
 		extends AbstractPubSubModule {
@@ -54,35 +51,16 @@ public class NodeDeleteModule
 	@Inject
 	private PublishItemModule publishModule;
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#delete-nodes"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT_DELETE;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		final BareJID toJid = packet.getStanzaTo().getBareJID();

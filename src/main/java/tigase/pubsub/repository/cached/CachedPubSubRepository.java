@@ -90,14 +90,6 @@ public class CachedPubSubRepository<T>
 
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param serviceJid
-	 * @param nodeName
-	 *
-	 * @throws RepositoryException
-	 */
 	@Override
 	public void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {

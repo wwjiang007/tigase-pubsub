@@ -47,9 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
-/**
- * Class description
- */
 @Bean(name = "manageAffiliationsModule", parent = PubSubComponent.class, active = true)
 public class ManageAffiliationsModule
 		extends AbstractPubSubModule {
@@ -75,35 +72,16 @@ public class ManageAffiliationsModule
 		return message;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#modify-affiliations"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		try {

@@ -38,23 +38,10 @@ public class NodeSubscriptions
 	public NodeSubscriptions() {
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param nodeSubscriptions
-	 */
 	public NodeSubscriptions(tigase.pubsub.repository.NodeSubscriptions nodeSubscriptions) {
 		subs.putAll(nodeSubscriptions.getSubscriptionsMap());
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param jid
-	 * @param subscription
-	 *
-	 * @return
-	 */
 	@Override
 	public String addSubscriberJid(BareJID bareJid, Subscription subscription) {
 		final String subid = Utils.createUID(bareJid);
@@ -65,12 +52,6 @@ public class NodeSubscriptions
 		return subid;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param jid
-	 * @param subscription
-	 */
 	@Override
 	public void changeSubscription(BareJID bareJid, Subscription subscription) {
 		UsersSubscription s = subs.get(bareJid);
@@ -86,11 +67,6 @@ public class NodeSubscriptions
 		return changedSubs();
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public UsersSubscription[] getSubscriptions() {
 		final Set<UsersSubscription> result = new HashSet<UsersSubscription>();
@@ -102,19 +78,11 @@ public class NodeSubscriptions
 		return result.toArray(new UsersSubscription[]{});
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public boolean isChanged() {
 		return this.changedSubs().size() > 0;
 	}
 
-	/**
-	 * Method description
-	 */
 	public void merge() {
 		Map<BareJID, UsersSubscription> changedSubs = changedSubs();
 		for (Map.Entry<BareJID, UsersSubscription> entry : changedSubs.entrySet()) {
@@ -128,9 +96,6 @@ public class NodeSubscriptions
 		changedSubs.clear();
 	}
 
-	/**
-	 * Method description
-	 */
 	@Override
 	public void resetChangedFlag() {
 		changedSubs().clear();

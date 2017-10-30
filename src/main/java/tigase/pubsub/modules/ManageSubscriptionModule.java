@@ -80,35 +80,16 @@ public class ManageSubscriptionModule
 		return message;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#manage-subscriptions"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		try {

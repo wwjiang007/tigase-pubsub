@@ -97,16 +97,6 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param owner
-	 * @param buddy
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
 	@Override
 	public String[] getBuddyGroups(BareJID owner, BareJID buddy) throws RepositoryException {
 		try {
@@ -116,16 +106,6 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param owner
-	 * @param buddy
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
 	@Override
 	public String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException {
 		try {
@@ -135,15 +115,6 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param owner
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
 	@Override
 	public Map<BareJID, RosterElement> getUserRoster(BareJID owner) throws RepositoryException {
 		try {

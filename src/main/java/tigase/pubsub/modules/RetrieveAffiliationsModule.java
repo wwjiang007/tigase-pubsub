@@ -35,9 +35,6 @@ import tigase.xmpp.jid.BareJID;
 
 import java.util.Map;
 
-/**
- * Class description
- */
 @Bean(name = "retrieveAffiliationsModule", parent = PubSubComponent.class, active = true)
 public class RetrieveAffiliationsModule
 		extends AbstractPubSubModule {
@@ -46,11 +43,6 @@ public class RetrieveAffiliationsModule
 			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
 			.add(ElementCriteria.name("affiliations"));
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#retrieve-affiliations",
@@ -59,25 +51,11 @@ public class RetrieveAffiliationsModule
 							"http://jabber.org/protocol/pubsub#member-affiliation"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		try {

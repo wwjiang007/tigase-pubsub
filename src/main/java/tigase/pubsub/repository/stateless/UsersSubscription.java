@@ -36,13 +36,6 @@ public class UsersSubscription
 	private final String subid;
 	private Subscription subscription;
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param jid
-	 * @param subid
-	 * @param subscriptionType
-	 */
 	public UsersSubscription(BareJID jid, String subid, Subscription subscriptionType) {
 		super();
 		this.jid = jid;
@@ -50,13 +43,6 @@ public class UsersSubscription
 		this.subscription = subscriptionType;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 *
-	 * @throws CloneNotSupportedException
-	 */
 	@Override
 	public UsersSubscription clone() throws CloneNotSupportedException {
 		UsersSubscription a = new UsersSubscription(jid, subid, subscription);
@@ -64,38 +50,18 @@ public class UsersSubscription
 		return a;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public BareJID getJid() {
 		return jid;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String getSubid() {
 		return subid;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public Subscription getSubscription() {
 		return subscription;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param subscriptionType
-	 */
 	public void setSubscription(Subscription subscriptionType) {
 		this.subscription = subscriptionType;
 	}

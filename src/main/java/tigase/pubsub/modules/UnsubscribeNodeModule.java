@@ -35,9 +35,6 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-/**
- * Class description
- */
 @Bean(name = "unsubscribeNodeModule", parent = PubSubComponent.class, active = true)
 public class UnsubscribeNodeModule
 		extends AbstractPubSubModule {
@@ -46,35 +43,16 @@ public class UnsubscribeNodeModule
 			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
 			.add(ElementCriteria.name("unsubscribe"));
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return null;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT_UNSUBSCRIBE;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		final BareJID toJid = packet.getStanzaTo().getBareJID();

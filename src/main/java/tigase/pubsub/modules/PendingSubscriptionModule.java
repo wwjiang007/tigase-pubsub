@@ -42,9 +42,6 @@ import tigase.xmpp.jid.JID;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Class description
- */
 @Bean(name = "pendingSubscriptionModule", parent = PubSubComponent.class, active = true)
 public class PendingSubscriptionModule
 		extends AbstractPubSubModule {
@@ -55,35 +52,16 @@ public class PendingSubscriptionModule
 			.add(ElementCriteria.name("value", "http://jabber.org/protocol/pubsub#subscribe_authorization", null,
 									  null));
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#get-pending"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param message
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet message) throws PubSubException {
 		try {
@@ -162,19 +140,6 @@ public class PendingSubscriptionModule
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 * @param fromJid
-	 * @param subID
-	 * @param subscriberJid
-	 * @param nodeAffiliations
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
 	public List<Packet> sendAuthorizationRequest(final String nodeName, final JID fromJid, final String subID,
 												 final BareJID subscriberJid, IAffiliations nodeAffiliations)
 			throws RepositoryException {

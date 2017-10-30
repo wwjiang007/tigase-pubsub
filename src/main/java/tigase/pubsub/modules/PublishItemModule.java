@@ -103,9 +103,6 @@ public class PublishItemModule
 		System.out.println(".");
 	}
 
-	/**
-	 * Constructs ...
-	 */
 	public PublishItemModule() {
 		for (String xmlns : SUPPORTED_PEP_XMLNS) {
 			pepNodes.add(xmlns);
@@ -196,35 +193,16 @@ public class PublishItemModule
 		return createPepNode(toJid, nodeName, ownerJid);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#publish",};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT_PUBLISH;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
 	public List<String> getParents(final BareJID serviceJid, final String nodeName) throws RepositoryException {
 		ArrayList<String> result = new ArrayList<String>();
 		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
@@ -250,13 +228,6 @@ public class PublishItemModule
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 *
-	 * @return
-	 */
 	public boolean isPEPNodeName(String nodeName) {
 		if (config.isPepPeristent()) {
 			return false;
@@ -265,15 +236,6 @@ public class PublishItemModule
 		return this.pepNodes.contains(nodeName);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		final BareJID toJid = packet.getStanzaTo().getBareJID();
@@ -389,20 +351,6 @@ public class PublishItemModule
 
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param itemToSend
-	 * @param jidFrom
-	 * @param publisherNodeName
-	 * @param nodeConfig
-	 * @param nodeAffiliations
-	 * @param nodesSubscriptions
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
 	public void sendNotifications(Element itemToSend, final JID jidFrom, final String publisherNodeName,
 								  AbstractNodeConfig nodeConfig, IAffiliations nodeAffiliations,
 								  ISubscriptions nodesSubscriptions) throws RepositoryException {
@@ -410,21 +358,6 @@ public class PublishItemModule
 						  nodesSubscriptions);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param itemToSend
-	 * @param jidFrom
-	 * @param publisherNodeName
-	 * @param headers
-	 * @param nodeConfig
-	 * @param nodeAffiliations
-	 * @param nodesSubscriptions
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
 	public void sendNotifications(final Element itemToSend, final JID jidFrom, final String publisherNodeName,
 								  final Map<String, String> headers, AbstractNodeConfig nodeConfig,
 								  IAffiliations nodeAffiliations, ISubscriptions nodesSubscriptions)
@@ -521,18 +454,6 @@ public class PublishItemModule
 		sendNotifications(subscribers, itemToSend, jidFrom, nodeConfig, publisherNodeName, headers);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param subscribers
-	 * @param itemToSend
-	 * @param jidFrom
-	 * @param nodeConfig
-	 * @param publisherNodeName
-	 * @param headers
-	 *
-	 * @return
-	 */
 	public void sendNotifications(final JID[] subscribers, final Element itemToSend, final JID jidFrom,
 								  AbstractNodeConfig nodeConfig, final String publisherNodeName,
 								  final Map<String, String> headers) {
@@ -581,14 +502,6 @@ public class PublishItemModule
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeItems
-	 * @param maxItems
-	 *
-	 * @throws RepositoryException
-	 */
 	public void trimItems(final IItems nodeItems, final Integer maxItems) throws RepositoryException {
 		final String[] ids = nodeItems.getItemsIds();
 
@@ -625,27 +538,12 @@ public class PublishItemModule
 		eventBus.unregisterAll(this);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeConfig
-	 * @param nodesSubscriptions
-	 */
 	protected void beforePrepareNotification(final AbstractNodeConfig nodeConfig,
 											 final ISubscriptions nodesSubscriptions) {
 		if (nodeConfig.isPresenceExpired()) {
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param id
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
 	protected JID[] getValidBuddies(BareJID id) throws RepositoryException {
 		ArrayList<JID> result = new ArrayList<JID>();
 		Map<BareJID, RosterElement> rosterJids = this.getRepository().getUserRoster(id);

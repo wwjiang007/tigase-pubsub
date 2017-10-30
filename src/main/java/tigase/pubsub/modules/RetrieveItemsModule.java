@@ -41,9 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Class description
- */
 @Bean(name = "retrieveItemsModule", parent = PubSubComponent.class, active = true)
 public class RetrieveItemsModule
 		extends AbstractPubSubModule {
@@ -54,35 +51,16 @@ public class RetrieveItemsModule
 
 	private final TimestampHelper timestampHelper = new TimestampHelper();
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#retrieve-items"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(final Packet packet) throws PubSubException {
 		try {

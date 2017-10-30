@@ -63,11 +63,6 @@ public class NodeCreateModule
 		defaultPepNodeConfig.setValue("pubsub#send_last_published_item", "on_sub_and_presence");
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#create-and-configure",
@@ -82,25 +77,11 @@ public class NodeCreateModule
 							"http://jabber.org/protocol/pubsub#access-whitelist",};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT_CREATE;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		final BareJID toJid = packet.getStanzaTo().getBareJID();

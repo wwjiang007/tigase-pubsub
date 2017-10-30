@@ -48,44 +48,21 @@ public abstract class AbstractNodeConfig {
 	protected final Form form = new Form("form", null, null);
 	private final String nodeName;
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param nodeName
-	 */
 	public AbstractNodeConfig(final String nodeName) {
 		this.nodeName = nodeName;
 		init();
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param nodeName
-	 * @param config
-	 */
 	public AbstractNodeConfig(final String nodeName, final AbstractNodeConfig config) {
 		this.nodeName = nodeName;
 		init();
 		copyFrom(config);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param f
-	 */
 	public void add(Field f) {
 		form.addField(f);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 *
-	 * @throws CloneNotSupportedException
-	 */
 	@Override
 	public AbstractNodeConfig clone() throws CloneNotSupportedException {
 		AbstractNodeConfig clone = getInstance(nodeName);
@@ -95,38 +72,18 @@ public abstract class AbstractNodeConfig {
 		return clone;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param c
-	 */
 	public void copyFrom(AbstractNodeConfig c) {
 		form.copyValuesFrom(c.form);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param f
-	 */
 	public void copyFromForm(Form f) {
 		form.copyValuesFrom(f);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String getBodyXslt() {
 		return form.getAsString("pubsub#body_xslt");
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String getBodyXsltEmbedded() {
 		String[] r = form.getAsStrings("pubsub#embedded_body_xslt");
 
@@ -143,40 +100,20 @@ public abstract class AbstractNodeConfig {
 		return sb.toString();
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param xslt
-	 */
 	public void setBodyXsltEmbedded(String xslt) {
 		setValue("pubsub#embedded_body_xslt", xslt);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String[] getChildren() {
 		return form.getAsStrings("pubsub#children");
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String getCollection() {
 		String d = form.getAsString("pubsub#collection");
 
 		return (d == null) ? "" : d;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param collectionNew
-	 */
 	public void setCollection(String collectionNew) {
 		setValue("pubsub#collection", collectionNew);
 	}
@@ -195,49 +132,24 @@ public abstract class AbstractNodeConfig {
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String[] getDomains() {
 		String[] v = form.getAsStrings(PUBSUB + "domains");
 
 		return (v == null) ? new String[]{} : v;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param domains
-	 */
 	public void setDomains(String... domains) {
 		setValues(PUBSUB + "domains", domains);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public Form getForm() {
 		return form;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public Element getFormElement() {
 		return form.getElement();
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public AccessModel getNodeAccessModel() {
 		String tmp = form.getAsString("pubsub#access_model");
 
@@ -248,20 +160,10 @@ public abstract class AbstractNodeConfig {
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String getNodeName() {
 		return nodeName;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public NodeType getNodeType() {
 		String tmp = form.getAsString("pubsub#node_type");
 
@@ -272,11 +174,6 @@ public abstract class AbstractNodeConfig {
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeType
-	 */
 	public void setNodeType(NodeType nodeType) {
 		form.get("pubsub#node_type").setValues(new String[]{nodeType.name()});
 	}
@@ -295,11 +192,6 @@ public abstract class AbstractNodeConfig {
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String[] getRosterGroupsAllowed() {
 		return form.getAsStrings("pubsub#roster_groups_allowed");
 	}
@@ -313,11 +205,6 @@ public abstract class AbstractNodeConfig {
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String getTitle() {
 		return form.getAsString("pubsub#title");
 	}
@@ -326,72 +213,32 @@ public abstract class AbstractNodeConfig {
 		return form.getAsBoolean(TIGASE + "allow_view_subscribers");
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public boolean isCollectionSet() {
 		return form.get(PUBSUB + "collection") != null;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public boolean isDeliver_payloads() {
 		return form.getAsBoolean("pubsub#deliver_payloads");
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public boolean isDeliverPresenceBased() {
 		return form.getAsBoolean("pubsub#presence_based_delivery");
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public boolean isNotify_config() {
 		return form.getAsBoolean("pubsub#notify_config");
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public boolean isPresenceExpired() {
 		Boolean x = form.getAsBoolean(TIGASE + "presence_expired");
 
 		return (x == null) ? false : x.booleanValue();
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public boolean isTigaseNotifyChangeSubscriptionAffiliationState() {
 		return form.getAsBoolean(PUBSUB + "notify_sub_aff_state");
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param repository
-	 * @param config
-	 * @param subnode
-	 *
-	 * @throws TigaseDBException
-	 * @throws UserNotFoundException
-	 */
 	public void read(final UserRepository repository, final PubSubConfig config, final String subnode)
 			throws UserNotFoundException, TigaseDBException {
 		if (repository == null) {
@@ -409,30 +256,15 @@ public abstract class AbstractNodeConfig {
 		}
 	}
 
-	/**
-	 * Method description
-	 */
 	public void reset() {
 		form.clear();
 		init();
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param var
-	 * @param data
-	 */
 	public void setValue(String var, boolean data) {
 		setValue(var, new Boolean(data));
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param var
-	 * @param data
-	 */
 	public void setValue(String var, Object data) {
 		Field f = form.get(var);
 
@@ -491,16 +323,6 @@ public abstract class AbstractNodeConfig {
 		return "AbstractNodeConfig{" + "form=" + form + ", nodeName=" + nodeName + '}';
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param repo
-	 * @param config
-	 * @param subnode
-	 *
-	 * @throws TigaseDBException
-	 * @throws UserNotFoundException
-	 */
 	public void write(final UserRepository repo, final PubSubConfig config, final String subnode)
 			throws UserNotFoundException, TigaseDBException {
 		if (repo == null) {

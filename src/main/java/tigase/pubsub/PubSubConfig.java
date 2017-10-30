@@ -81,20 +81,10 @@ public class PubSubConfig {
 	@ConfigField(desc = "Trust every XMPP entity", alias = "trust-every-entity")
 	private boolean trustEveryEntity;
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public String[] getAdmins() {
 		return admins;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param strings
-	 */
 	public void setAdmins(String[] strings) {
 		this.admins = strings;
 	}
@@ -115,11 +105,6 @@ public class PubSubConfig {
 		return maxCacheSize;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public BareJID getServiceBareJID() {
 		return serviceBareJID;
 	}
@@ -138,13 +123,6 @@ public class PubSubConfig {
 		return autoSubscribeNodeCreator;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param jid
-	 *
-	 * @return
-	 */
 	public boolean isAdmin(final BareJID jid) {
 		if (trustEveryEntity) {
 			return true;

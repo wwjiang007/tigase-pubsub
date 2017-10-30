@@ -36,9 +36,6 @@ import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
-/**
- * Class description
- */
 @Bean(name = "purgeItemsModule", parent = PubSubComponent.class, active = true)
 public class PurgeItemsModule
 		extends AbstractPubSubModule {
@@ -50,35 +47,16 @@ public class PurgeItemsModule
 	@Inject
 	private PublishItemModule publishModule;
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#purge-nodes"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		final BareJID toJid = packet.getStanzaTo().getBareJID();

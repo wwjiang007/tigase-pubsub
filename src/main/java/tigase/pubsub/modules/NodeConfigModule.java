@@ -42,9 +42,6 @@ import tigase.xmpp.jid.JID;
 
 import java.util.HashSet;
 
-/**
- * Class description
- */
 @Bean(name = "nodeConfigModule", parent = PubSubComponent.class, active = true)
 public class NodeConfigModule
 		extends AbstractConfigCreateNode {
@@ -57,14 +54,6 @@ public class NodeConfigModule
 	@Inject
 	private PublishItemModule publishModule;
 
-	/**
-	 * Method description
-	 *
-	 * @param a
-	 * @param b
-	 *
-	 * @return
-	 */
 	protected static String[] diff(String[] a, String[] b) {
 		HashSet<String> r = new HashSet<String>();
 
@@ -81,14 +70,6 @@ public class NodeConfigModule
 		return r.toArray(new String[]{});
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param conf
-	 * @param configure
-	 *
-	 * @throws PubSubException
-	 */
 	public static void parseConf(final AbstractNodeConfig conf, final Element configure, final PubSubConfig config)
 			throws PubSubException {
 		Element x = configure.getChild("x", "jabber:x:data");
@@ -113,35 +94,16 @@ public class NodeConfigModule
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#config-node"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT_CONFIG;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @return
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		try {
@@ -312,14 +274,6 @@ public class NodeConfigModule
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param node
-	 * @param children
-	 *
-	 * @return
-	 */
 	protected boolean isIn(String node, String[] children) {
 		if (node == null | children == null) {
 			return false;

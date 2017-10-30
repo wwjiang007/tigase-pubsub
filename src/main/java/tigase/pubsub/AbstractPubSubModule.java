@@ -61,13 +61,6 @@ public abstract class AbstractPubSubModule
 	@Inject(nullAllowed = false)
 	private IPubSubRepository repository;
 
-	/**
-	 * Method description
-	 *
-	 * @param iq
-	 *
-	 * @return
-	 */
 	public static Element createResultIQ(Element iq) {
 		Element e = new Element("iq");
 		e.setXMLNS(Packet.CLIENT_XMLNS);
@@ -89,25 +82,10 @@ public abstract class AbstractPubSubModule
 		return e;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param iq
-	 *
-	 * @return
-	 */
 	public static List<Element> createResultIQArray(Element iq) {
 		return makeArray(createResultIQ(iq));
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param allSubscribers
-	 * @param jid
-	 *
-	 * @return
-	 */
 	@Deprecated
 	protected static String findBestJid(final String[] allSubscribers, final String jid) {
 		final String bareJid = JIDUtils.getNodeID(jid);
@@ -126,16 +104,6 @@ public abstract class AbstractPubSubModule
 		return best;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeConfig
-	 * @param jids
-	 * @param affiliations
-	 * @param subscriptions
-	 *
-	 * @return
-	 */
 	public static Collection<BareJID> getActiveSubscribers(final AbstractNodeConfig nodeConfig, final BareJID[] jids,
 														   final IAffiliations affiliations,
 														   final ISubscriptions subscriptions) {
@@ -177,17 +145,6 @@ public abstract class AbstractPubSubModule
 		return result;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeConfig
-	 * @param affiliations
-	 * @param subscriptions
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
 	public static Collection<BareJID> getActiveSubscribers(final AbstractNodeConfig nodeConfig,
 														   final IAffiliations affiliations,
 														   final ISubscriptions subscriptions)
@@ -212,13 +169,6 @@ public abstract class AbstractPubSubModule
 		return getActiveSubscribers(nodeConfig, jids, affiliations, subscriptions);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param elements
-	 *
-	 * @return
-	 */
 	public static List<Element> makeArray(Element... elements) {
 		LinkedList<Element> result = new LinkedList<Element>();
 
@@ -229,13 +179,6 @@ public abstract class AbstractPubSubModule
 		return result;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param elements
-	 *
-	 * @return
-	 */
 	public static List<Packet> makeArray(Packet... packets) {
 		LinkedList<Packet> result = new LinkedList<Packet>();
 
@@ -246,13 +189,6 @@ public abstract class AbstractPubSubModule
 		return result;
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param config
-	 * @param pubsubRepository
-	 * @param packetWriter TODO
-	 */
 	public AbstractPubSubModule() {
 		this.setStatisticsPrefix(getClass().getSimpleName());
 	}

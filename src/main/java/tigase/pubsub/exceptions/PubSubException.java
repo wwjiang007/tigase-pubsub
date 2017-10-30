@@ -41,87 +41,37 @@ public class PubSubException
 	private PubSubErrorCondition pubSubErrorCondition;
 	private String xmlns = "urn:ietf:params:xml:ns:xmpp-stanzas";
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param errorCondition
-	 */
 	public PubSubException(final Authorization errorCondition) {
 		this(null, errorCondition, (String) null);
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param errorCondition
-	 * @param pubSubErrorConditions
-	 */
 	public PubSubException(final Authorization errorCondition, PubSubErrorCondition pubSubErrorConditions) {
 		this((Element) null, errorCondition, pubSubErrorConditions);
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param errorCondition
-	 * @param pubSubErrorConditions
-	 * @param message
-	 */
 	public PubSubException(Authorization errorCondition, PubSubErrorCondition pubSubErrorConditions, String message) {
 		this((Element) null, errorCondition, pubSubErrorConditions);
 		this.message = message;
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param errorCondition
-	 * @param message
-	 */
 	public PubSubException(final Authorization errorCondition, String message) {
 		this(null, errorCondition, message);
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param errorCondition
-	 * @param message
-	 */
 	public PubSubException(final Authorization errorCondition, String message, Exception ex) {
 		this(null, errorCondition, message, ex);
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param item
-	 * @param errorCondition
-	 */
 	public PubSubException(final Element item, final Authorization errorCondition) {
 		this(item, errorCondition, (String) null);
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param item
-	 * @param errorCondition
-	 * @param pubSubErrorConditions
-	 */
 	public PubSubException(final Element item, final Authorization errorCondition,
 						   PubSubErrorCondition pubSubErrorConditions) {
 		this(item, errorCondition, (String) null);
 		this.pubSubErrorCondition = pubSubErrorConditions;
 	}
 
-	/**
-	 * Constructs ...
-	 *
-	 * @param item
-	 * @param errorCondition
-	 * @param message
-	 */
 	public PubSubException(final Element item, final Authorization errorCondition, final String message) {
 		this(item, errorCondition, message, null);
 	}
@@ -134,44 +84,25 @@ public class PubSubException
 		this.message = message;
 	}
 
-	/**
-	 * @return Returns the code.
-	 */
 	@Override
 	public String getCode() {
 		return String.valueOf(this.errorCondition.getErrorCode());
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Authorization getErrorCondition() {
 		return errorCondition;
 	}
 
-	/**
-	 * @return Returns the item.
-	 */
 	public Element getItem() {
 		return item;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String getMessage() {
 		return message;
 	}
 
-	/**
-	 * @return Returns the name.
-	 */
 	@Override
 	public String getName() {
 		return errorCondition.getCondition();
@@ -181,30 +112,15 @@ public class PubSubException
 		return pubSubErrorCondition;
 	}
 
-	/**
-	 * @return Returns the type.
-	 */
 	@Override
 	public String getType() {
 		return errorCondition.getErrorType();
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public Element makeElement() {
 		return makeElement(true);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param insertOriginal
-	 *
-	 * @return
-	 */
 	public Element makeElement(boolean insertOriginal) {
 		Element answer = insertOriginal ? item.clone() : new Element(item.getName());
 
@@ -226,22 +142,12 @@ public class PubSubException
 		return answer;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param sourceElement
-	 *
-	 * @return
-	 */
 	public Element makeElement(Element sourceElement) {
 		this.item = sourceElement;
 
 		return makeElement(true);
 	}
 
-	/**
-	 * @return
-	 */
 	public Element makeErrorElement() {
 		Element error = new Element("error");
 

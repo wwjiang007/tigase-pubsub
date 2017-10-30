@@ -60,14 +60,6 @@ public class DeleteAllNodesCommand
 	@Inject
 	private UserRepository userRepo;
 
-	/**
-	 * Method description
-	 *
-	 * @param request
-	 * @param response
-	 *
-	 * @throws AdHocCommandException
-	 */
 	@Override
 	public void execute(AdhHocRequest request, AdHocResponse response) throws AdHocCommandException {
 		try {
@@ -112,21 +104,11 @@ public class DeleteAllNodesCommand
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String getName() {
 		return "Deleting ALL nodes";
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String getNode() {
 		return "delete-all-nodes";

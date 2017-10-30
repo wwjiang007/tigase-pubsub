@@ -54,11 +54,6 @@ public abstract class NodeSubscriptions
 
 	private boolean changed = false;
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public static tigase.pubsub.repository.cached.NodeSubscriptions create() {
 		tigase.pubsub.repository.cached.NodeSubscriptions s = new tigase.pubsub.repository.cached.NodeSubscriptions();
 
@@ -68,14 +63,6 @@ public abstract class NodeSubscriptions
 	protected NodeSubscriptions() {
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param jid
-	 * @param subscription
-	 *
-	 * @return
-	 */
 	@Override
 	public String addSubscriberJid(final BareJID bareJid, final Subscription subscription) {
 		final String subid = Utils.createUID(bareJid);
@@ -88,12 +75,6 @@ public abstract class NodeSubscriptions
 		return subid;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param jid
-	 * @param subscription
-	 */
 	@Override
 	public void changeSubscription(BareJID bareJid, Subscription subscription) {
 		UsersSubscription s = get(bareJid);
@@ -104,13 +85,6 @@ public abstract class NodeSubscriptions
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param jid
-	 *
-	 * @return
-	 */
 	@Override
 	public Subscription getSubscription(BareJID bareJid) {
 		UsersSubscription s = get(bareJid);
@@ -122,13 +96,6 @@ public abstract class NodeSubscriptions
 		return Subscription.none;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param jid
-	 *
-	 * @return
-	 */
 	@Override
 	public String getSubscriptionId(BareJID bareJid) {
 		UsersSubscription s = get(bareJid);
@@ -140,11 +107,6 @@ public abstract class NodeSubscriptions
 		return null;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public UsersSubscription[] getSubscriptions() {
 		synchronized (this.subs) {
@@ -170,11 +132,6 @@ public abstract class NodeSubscriptions
 		return subscriptions;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public Map<BareJID, UsersSubscription> getSubscriptionsMap() {
 		return subs;
 	}
@@ -186,21 +143,11 @@ public abstract class NodeSubscriptions
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public boolean isChanged() {
 		return changed;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param data
-	 */
 	public void parse(String data) {
 		Map<BareJID, UsersSubscription> parsed = new HashMap<BareJID, UsersSubscription>();
 		String[] tokens = data.split(DELIMITER);
@@ -237,11 +184,6 @@ public abstract class NodeSubscriptions
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeSubscriptions
-	 */
 	public void replaceBy(final ISubscriptions nodeSubscriptions) {
 		synchronized (this.subs) {
 			if (nodeSubscriptions instanceof NodeSubscriptions) {
@@ -259,20 +201,10 @@ public abstract class NodeSubscriptions
 		}
 	}
 
-	/**
-	 * Method description
-	 */
 	public void resetChangedFlag() {
 		this.changed = false;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param fragment
-	 *
-	 * @return
-	 */
 	@Override
 	public String serialize(Map<BareJID, UsersSubscription> fragment) {
 		StringBuilder sb = new StringBuilder();

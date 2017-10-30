@@ -41,9 +41,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * Class description
- */
 @Bean(name = "presenceCollectorModule", parent = PubSubComponent.class, active = true)
 public class PresenceCollectorModule
 		extends AbstractPubSubModule {
@@ -56,19 +53,7 @@ public class PresenceCollectorModule
 	private CapsModule capsModule;
 	@Inject
 	private EventBus eventBus;
-
-	// private final Map<BareJID, Set<String>> resources = new HashMap<BareJID,
-	// Set<String>>();
-
-	/**
-	 * Method description
-	 *
-	 * @param serviceJid
-	 * @param jid
-	 * @param caps
-	 *
-	 * @return
-	 */
+	
 	public boolean addJid(final BareJID serviceJid, final JID jid, String[] caps) {
 		if (jid == null) {
 			return false;
@@ -166,11 +151,6 @@ public class PresenceCollectorModule
 		return added;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	public List<JID> getAllAvailableJids(final BareJID serviceJid) {
 		ArrayList<JID> result = new ArrayList<JID>();
 
@@ -189,14 +169,6 @@ public class PresenceCollectorModule
 		return result;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param serviceJid
-	 * @param feature
-	 *
-	 * @return
-	 */
 	public List<JID> getAllAvailableJidsWithFeature(final BareJID serviceJid, final String feature) {
 		final List<JID> result = new ArrayList<>();
 		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
@@ -229,13 +201,6 @@ public class PresenceCollectorModule
 		return result;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param bareJid
-	 *
-	 * @return
-	 */
 	public List<JID> getAllAvailableResources(final BareJID serviceJid, final BareJID bareJid) {
 		final List<JID> result = new ArrayList<JID>();
 		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
@@ -257,33 +222,16 @@ public class PresenceCollectorModule
 		return result;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/pubsub#presence-notifications"};
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 */
 	@Override
 	public Criteria getModuleCriteria() {
 		return CRIT;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param bareJid
-	 *
-	 * @return
-	 */
 	public boolean isJidAvailable(final BareJID serviceJid, final BareJID bareJid) {
 		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
 		if (presenceByUser == null) {
@@ -294,13 +242,6 @@ public class PresenceCollectorModule
 		return (resources != null) && (resources.size() > 0);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 *
-	 * @throws PubSubException
-	 */
 	@Override
 	public void process(Packet packet) throws PubSubException {
 		final StanzaType type = packet.getType();
@@ -364,13 +305,6 @@ public class PresenceCollectorModule
 		return true;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param jid
-	 *
-	 * @return
-	 */
 	protected boolean removeJid(final BareJID serviceJid, final JID jid) {
 		if (jid == null) {
 			return false;

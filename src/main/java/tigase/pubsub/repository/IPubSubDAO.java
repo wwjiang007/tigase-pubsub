@@ -47,52 +47,16 @@ import java.util.Map;
 public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 		extends DataSourceAware<S> {
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 *
-	 * @throws RepositoryException
-	 */
-	public void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException;
+	void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 * @param ownerJid
-	 * @param nodeConfig
-	 * @param nodeType
-	 * @param collection
-	 *
-	 * @throws RepositoryException
-	 */
-	public abstract T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-								 NodeType nodeType, T collectionId) throws RepositoryException;
+	T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
+				 NodeType nodeType, T collectionId) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 * @param id
-	 *
-	 * @throws RepositoryException
-	 */
-	public abstract void deleteItem(BareJID serviceJid, T nodeId, String id) throws RepositoryException;
+	void deleteItem(BareJID serviceJid, T nodeId, String id) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 *
-	 * @throws RepositoryException
-	 */
-	public abstract void deleteNode(BareJID serviceJid, T nodeId) throws RepositoryException;
+	void deleteNode(BareJID serviceJid, T nodeId) throws RepositoryException;
 
-	/**
-	 * Method description
-	 */
-	public void destroy();
+	void destroy();
 
 	String[] getAllNodesList(BareJID serviceJid) throws RepositoryException;
 
@@ -102,28 +66,11 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 	@Deprecated
 	String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	public String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException;
+	String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	Element getItem(BareJID serviceJid, T nodeId, String id) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 * @param id
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	public abstract Date getItemCreationDate(BareJID serviceJid, T nodeId, final String id) throws RepositoryException;
+	Date getItemCreationDate(BareJID serviceJid, T nodeId, final String id) throws RepositoryException;
 
 	String[] getItemsIds(BareJID serviceJid, T nodeId) throws RepositoryException;
 
@@ -131,54 +78,19 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 
 	List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, T nodeId, String nodeName) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 * @param id
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	public abstract Date getItemUpdateDate(BareJID serviceJid, T nodeId, final String id) throws RepositoryException;
+	Date getItemUpdateDate(BareJID serviceJid, T nodeId, final String id) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	public NodeAffiliations getNodeAffiliations(BareJID serviceJid, T nodeId) throws RepositoryException;
-
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	@Deprecated
-	public String getNodeConfig(BareJID serviceJid, T nodeId) throws RepositoryException;
+	NodeAffiliations getNodeAffiliations(BareJID serviceJid, T nodeId) throws RepositoryException;
 
 	@Deprecated
-	public T getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException;
+	String getNodeConfig(BareJID serviceJid, T nodeId) throws RepositoryException;
 
-	public INodeMeta<T> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException;
+	@Deprecated
+	T getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 *
-	 * @throws RepositoryException
-	 */
-	public abstract String[] getNodesList(BareJID serviceJid, String nodeName) throws RepositoryException;
+	INodeMeta<T> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException;
+
+	String[] getNodesList(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	NodeSubscriptions getNodeSubscriptions(BareJID serviceJid, T nodeId) throws RepositoryException;
 
@@ -188,74 +100,29 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 
 	Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID jid) throws RepositoryException;
 
-//	/**
-//	 * Method initilizes implementation of this interface which will internally
-//	 * call {@link initReposiotry()} method to initialize repository.
-//	 *
-//	 * @param resource_uri
-//	 * @param params
-//	 * @param userRepository
-//	 * @throws RepositoryException
-//	 */
-//	public void init(String resource_uri, Map<String, String> params, UserRepository userRepository) throws RepositoryException;
-
-	public AbstractNodeConfig parseConfig(String nodeName, String cfgData) throws RepositoryException;
+	AbstractNodeConfig parseConfig(String nodeName, String cfgData) throws RepositoryException;
 
 	void queryItems(Q query, List<T> nodesIds, MAMRepository.ItemHandler<Q, IPubSubRepository.Item> itemHandler)
 			throws RepositoryException, ComponentException;
 
-	public void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException;
+	void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException;
 
 	void removeService(BareJID serviceJid) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 *
-	 * @throws RepositoryException
-	 */
-	public void removeFromRootCollection(BareJID serviceJid, T nodeId) throws RepositoryException;
+	void removeFromRootCollection(BareJID serviceJid, T nodeId) throws RepositoryException;
 
-	public void removeNodeSubscription(BareJID serviceJid, T nodeId, BareJID jid) throws RepositoryException;
+	void removeNodeSubscription(BareJID serviceJid, T nodeId, BareJID jid) throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 * @param affiliations
-	 *
-	 * @throws RepositoryException
-	 */
-	public void updateNodeAffiliation(BareJID serviceJid, T nodeId, String nodeName, UsersAffiliation userAffiliation)
+	void updateNodeAffiliation(BareJID serviceJid, T nodeId, String nodeName, UsersAffiliation userAffiliation)
 			throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 * @param nodeConfig
-	 *
-	 * @throws RepositoryException
-	 */
-	public abstract void updateNodeConfig(BareJID serviceJid, final T nodeId, final String serializedData,
-										  T collectionId) throws RepositoryException;
+	void updateNodeConfig(BareJID serviceJid, final T nodeId, final String serializedData, T collectionId)
+			throws RepositoryException;
 
-	public void updateNodeSubscription(BareJID serviceJid, T nodeId, String nodeName,
-									   UsersSubscription userSubscription) throws RepositoryException;
+	void updateNodeSubscription(BareJID serviceJid, T nodeId, String nodeName, UsersSubscription userSubscription)
+			throws RepositoryException;
 
-	/**
-	 * Method description
-	 *
-	 * @param nodeName
-	 * @param timeInMilis
-	 * @param id
-	 * @param publisher
-	 * @param item
-	 *
-	 * @throws RepositoryException
-	 */
-	public abstract void writeItem(BareJID serviceJid, T nodeId, long timeInMilis, final String id,
-								   final String publisher, final Element item) throws RepositoryException;
+	void writeItem(BareJID serviceJid, T nodeId, long timeInMilis, final String id, final String publisher,
+				   final Element item) throws RepositoryException;
 
 }
