@@ -25,6 +25,7 @@ import tigase.component.exceptions.RepositoryException;
 import tigase.db.DataRepository;
 import tigase.db.Repository;
 import tigase.db.TigaseDBException;
+import tigase.db.util.RepositoryVersionAware;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.Affiliation;
@@ -49,7 +50,8 @@ import java.util.logging.Level;
 @Repository.Meta(supportedUris = {"jdbc:[^:]+:.*"})
 @Repository.SchemaId(id = Schema.PUBSUB_SCHEMA_ID, name = Schema.PUBSUB_SCHEMA_NAME)
 public class PubSubDAOJDBC
-		extends PubSubDAO<Long, DataRepository, Query> {
+		extends PubSubDAO<Long, DataRepository, Query>
+		implements RepositoryVersionAware {
 
 	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?) }";
 	private static final String REMOVE_NODE_QUERY = "{ call TigPubSubRemoveNode(?) }";
@@ -952,8 +954,6 @@ public class PubSubDAOJDBC
 
 	public void setDataSource(DataRepository dataSource) {
 		try {
-			dataSource.checkSchemaVersion(this);
-
 			initPreparedStatements(dataSource);
 		} catch (SQLException ex) {
 			new RuntimeException("Failed to initialize access to SQL database for PubSubDAOJDBC", ex);
