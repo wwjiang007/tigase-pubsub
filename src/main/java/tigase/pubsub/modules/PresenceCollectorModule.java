@@ -108,7 +108,7 @@ public class PresenceCollectorModule
 
 			// we are firing CapsChangeEvent only for PEP services
 			if (this.config.isPepPeristent() && this.config.isSendLastPublishedItemOnPresence() &&
-					serviceJid.getLocalpart() != null && oldCaps != caps && caps != null) {
+					(serviceJid.getLocalpart() != null || config.isSubscribeByPresenceFilteredNotifications()) && oldCaps != caps && caps != null) {
 				// calculating new features and firing event
 				Set<String> newFeatures = new HashSet<String>();
 				for (String node : caps) {
