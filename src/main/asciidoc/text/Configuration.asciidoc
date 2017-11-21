@@ -131,6 +131,21 @@ sess-man () {
 }
 ----
 
+NOTE: If your PubSub component uses different name than `pubsub` then you need to set `pubsub-jid` property of `pep` processor to JID of PubSub component make it aware of a different name of a PubSub component.
+
+.Example with PubSub component named `events` hosted at server named `servername.com` and enabled PEP
+----
+events () {
+    persistent-pep = true
+    send-last-published-item-on-presence = true
+}
+sess-man () {
+    pep () {
+        'pubsub-jid' = 'events@servername.com'
+    }
+}
+----
+
 == Enabling REST API
 To use REST API for PubSub component it is required that:
 
