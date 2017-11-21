@@ -61,7 +61,6 @@ import java.util.stream.Collectors;
 public class CachedPubSubRepository<T>
 		implements IPubSubRepository, StatisticHolder, Initializable {
 
-	/** Field description */
 	public final static long MAX_WRITE_DELAY = 1000l * 15l;
 	private final ConcurrentHashMap<BareJID, RootCollectionSet> rootCollection = new ConcurrentHashMap<>();
 	@Inject

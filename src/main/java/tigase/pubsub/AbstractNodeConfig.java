@@ -36,10 +36,8 @@ import tigase.xml.Element;
  */
 public abstract class AbstractNodeConfig {
 
-	/** Field description */
 	public static final String PUBSUB = "pubsub#";
 
-	/** Field description */
 	public static final String TIGASE = "tigase#";
 
 	/**

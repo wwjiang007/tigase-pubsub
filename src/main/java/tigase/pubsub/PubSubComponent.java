@@ -63,18 +63,14 @@ public class PubSubComponent
 		extends AbstractKernelBasedComponent
 		implements Configurable, DisableDisco {
 
-	/** Field description */
 	public static final String DEFAULT_LEAF_NODE_CONFIG_KEY = "default-node-config";
 	public static final String EVENT_XMLNS = "tigase:events:pubsub";
-	/** Field description */
 	private static final String COMPONENT = "component";
 
 	// ~--- fields
 	// ---------------------------------------------------------------
-	/** Field description */
 	@Inject(bean = "defaultNodeConfig")
 	protected LeafNodeConfig defaultNodeConfig;
-	/** Field description */
 	protected Integer maxRepositoryCacheSize;
 	@Inject
 	private IPubSubRepository pubsubRepository;

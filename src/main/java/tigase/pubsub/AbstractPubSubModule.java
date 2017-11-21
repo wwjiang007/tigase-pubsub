@@ -50,7 +50,6 @@ public abstract class AbstractPubSubModule
 		extends StatisticHolderImpl
 		implements Module {
 
-	/** Field description */
 	protected final static Logger log = Logger.getLogger(AbstractPubSubModule.class.getName());
 	@Inject
 	protected PubSubConfig config;

@@ -49,7 +49,6 @@ public abstract class NodeSubscriptions
 	// FragmentedMap<BareJID, UsersSubscription>(
 	// MAX_FRAGMENT_SIZE);
 	protected final ConcurrentMap<BareJID, UsersSubscription> subs = new ConcurrentHashMap<BareJID, UsersSubscription>();
-	/** Field description */
 	// public final static int MAX_FRAGMENT_SIZE = 10000;
 
 	private boolean changed = false;
