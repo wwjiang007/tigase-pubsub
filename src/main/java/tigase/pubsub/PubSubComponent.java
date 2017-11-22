@@ -145,9 +145,7 @@ public class PubSubComponent
 
 	@Override
 	public void initBindings(Bindings binds) {
-		super.initBindings(binds); // To change body of generated methods,
-
-		// choose Tools | Templates.
+		super.initBindings(binds);
 		binds.put(COMPONENT, this);
 	}
 
