@@ -45,6 +45,7 @@ import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
 import java.util.Arrays;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Bean(name = "loadTestCommand", parent = PubSubComponent.class, active = true)
@@ -140,8 +141,7 @@ public class LoadTestCommand
 		} catch (AdHocCommandException e) {
 			throw e;
 		} catch (Exception e) {
-			e.printStackTrace();
-
+			log.log(Level.FINE, "Error processing load test command", e);
 			throw new AdHocCommandException(Authorization.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}

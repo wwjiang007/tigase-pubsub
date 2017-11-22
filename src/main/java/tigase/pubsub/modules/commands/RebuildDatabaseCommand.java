@@ -41,10 +41,14 @@ import tigase.xmpp.jid.JID;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Bean(name = "rebuildDatabaseCommand", parent = PubSubComponent.class, active = true)
 public class RebuildDatabaseCommand
 		implements AdHocCommand {
+
+	private static final Logger log = Logger.getLogger(RebuildDatabaseCommand.class.getName());
 
 	@Inject
 	private PubSubConfig config;
@@ -87,7 +91,7 @@ public class RebuildDatabaseCommand
 			}
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error during rebuild database", e);
 			throw new AdHocCommandException(Authorization.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}

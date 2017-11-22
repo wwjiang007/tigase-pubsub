@@ -25,9 +25,13 @@ import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.xmpp.jid.BareJID;
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class NodeAffiliations
 		extends tigase.pubsub.repository.NodeAffiliations {
+
+	private static final Logger log = Logger.getLogger(NodeAffiliations.class.getName());
 
 	protected final ThreadLocal<Map<BareJID, UsersAffiliation>> changedAffs = new ThreadLocal<Map<BareJID, UsersAffiliation>>();
 
@@ -123,7 +127,7 @@ public class NodeAffiliations
 				try {
 					return us.clone();
 				} catch (Exception e) {
-					e.printStackTrace();
+					log.log(Level.WARNING, "Cloning failed", e);
 					return null;
 				}
 			}

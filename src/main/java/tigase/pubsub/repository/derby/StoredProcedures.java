@@ -91,8 +91,6 @@ public class StoredProcedures {
 			ps.executeUpdate();
 			data[0] = ps.getGeneratedKeys();
 		} catch (SQLException e) {
-
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -132,7 +130,6 @@ public class StoredProcedures {
 			ps.setString(1, serviceJidSha1);
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -151,7 +148,6 @@ public class StoredProcedures {
 			ps.setString(2, itemId);
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -171,7 +167,6 @@ public class StoredProcedures {
 			ps.setString(2, sha1OfLower(jid));
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -205,8 +200,6 @@ public class StoredProcedures {
 			}
 			return null;
 		} catch (SQLException e) {
-
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -242,8 +235,6 @@ public class StoredProcedures {
 			}
 			return null;
 		} catch (SQLException e) {
-
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -274,7 +265,6 @@ public class StoredProcedures {
 			ps.setString(4, itemId);
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -298,7 +288,6 @@ public class StoredProcedures {
 			ps.setLong(2, nodeId);
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -318,7 +307,6 @@ public class StoredProcedures {
 			ps.setString(1, sha1OfLower(serviceJid));
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -341,7 +329,6 @@ public class StoredProcedures {
 			ps.setString(2, collection);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -363,7 +350,6 @@ public class StoredProcedures {
 			ps.setString(2, itemId);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -383,7 +369,6 @@ public class StoredProcedures {
 			ps.setLong(1, nodeId);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -402,7 +387,6 @@ public class StoredProcedures {
 			ps.setLong(1, nodeId);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -423,7 +407,6 @@ public class StoredProcedures {
 			ps.setString(2, nodeName);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -442,7 +425,6 @@ public class StoredProcedures {
 			ps.setLong(1, nodeId);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -463,7 +445,6 @@ public class StoredProcedures {
 			ps.setTimestamp(2, since);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -482,7 +463,6 @@ public class StoredProcedures {
 			ps.setLong(1, nodeId);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -505,7 +485,6 @@ public class StoredProcedures {
 			ps.setString(2, nodeName);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -525,7 +504,6 @@ public class StoredProcedures {
 			ps.setLong(1, nodeId);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -545,7 +523,6 @@ public class StoredProcedures {
 			ps.setString(1, sha1OfLower(serviceJid));
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -569,7 +546,6 @@ public class StoredProcedures {
 			ps.setString(2, sha1OfLower(serviceJid));
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -594,7 +570,6 @@ public class StoredProcedures {
 			ps.setString(2, sha1OfLower(serviceJid));
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -737,7 +712,6 @@ public class StoredProcedures {
 			ps.setLong(1, nodeId);
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -790,7 +764,6 @@ public class StoredProcedures {
 			ps.executeUpdate();
 
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -842,7 +815,6 @@ public class StoredProcedures {
 				ps.executeUpdate();
 			}
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -868,7 +840,6 @@ public class StoredProcedures {
 			ps.setLong(3, nodeId);
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -906,7 +877,6 @@ public class StoredProcedures {
 				ps.executeUpdate();
 			}
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
@@ -948,7 +918,6 @@ public class StoredProcedures {
 				ps.executeUpdate();
 			}
 		} catch (SQLException e) {
-			// e.printStackTrace();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {

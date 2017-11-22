@@ -38,6 +38,7 @@ import tigase.xmpp.jid.JID;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 @Bean(name = "subscribeNodeModule", parent = PubSubComponent.class, active = true)
 public class SubscribeNodeModule
@@ -230,8 +231,7 @@ public class SubscribeNodeModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
-
+			log.log(Level.FINE, "Error processing subscribe node packet", e);
 			throw new RuntimeException(e);
 		}
 	}

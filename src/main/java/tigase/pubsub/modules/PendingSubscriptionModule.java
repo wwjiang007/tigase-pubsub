@@ -41,6 +41,7 @@ import tigase.xmpp.jid.JID;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 @Bean(name = "pendingSubscriptionModule", parent = PubSubComponent.class, active = true)
 public class PendingSubscriptionModule
@@ -134,8 +135,7 @@ public class PendingSubscriptionModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
-
+			log.log(Level.FINE, "Error processing pending subscription packet", e);
 			throw new RuntimeException(e);
 		}
 	}

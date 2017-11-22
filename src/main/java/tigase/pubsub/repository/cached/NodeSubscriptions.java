@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 public class NodeSubscriptions
 		extends tigase.pubsub.repository.NodeSubscriptions {
@@ -114,7 +115,7 @@ public class NodeSubscriptions
 				try {
 					return us.clone();
 				} catch (Exception e) {
-					e.printStackTrace();
+					log.log(Level.WARNING, "Cloning failed, us: " + us, e);
 
 					return null;
 				}

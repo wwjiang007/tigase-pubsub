@@ -189,7 +189,7 @@ public class PubSubDAOJDBC
 		} catch (SQLIntegrityConstraintViolationException e) {
 			throw new RepositoryException("Error while adding node to repository, already exists?", e);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error creating node", e);
 			throw new RepositoryException("Problem accessing repository.", e);
 		} finally {
 			if (hash != null) {

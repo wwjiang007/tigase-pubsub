@@ -35,6 +35,8 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
+import java.util.logging.Level;
+
 @Bean(name = "unsubscribeNodeModule", parent = PubSubComponent.class, active = true)
 public class UnsubscribeNodeModule
 		extends AbstractPubSubModule {
@@ -110,8 +112,7 @@ public class UnsubscribeNodeModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
-
+			log.log(Level.FINE, "Error processing unsubscribe node packet", e);
 			throw new RuntimeException(e);
 		}
 	}

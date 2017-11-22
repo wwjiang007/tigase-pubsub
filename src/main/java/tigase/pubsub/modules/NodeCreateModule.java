@@ -36,6 +36,7 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * Case 8.1.2
@@ -211,7 +212,7 @@ public class NodeCreateModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing node create packet", e);
 
 			throw new RuntimeException(e);
 		}

@@ -37,6 +37,7 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.JID;
 
 import java.util.Arrays;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Bean(name = "default-config-adhoc", parent = PubSubComponent.class, active = true)
@@ -88,7 +89,7 @@ public class DefaultConfigCommand
 			}
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error executing command", e);
 			throw new AdHocCommandException(Authorization.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}

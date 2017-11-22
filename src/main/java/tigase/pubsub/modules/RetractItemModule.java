@@ -39,6 +39,7 @@ import tigase.xmpp.jid.BareJID;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Class description
@@ -144,8 +145,7 @@ public class RetractItemModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
-
+			log.log(Level.FINE, "Error processing retract item packet", e);
 			throw new RuntimeException(e);
 		}
 	}

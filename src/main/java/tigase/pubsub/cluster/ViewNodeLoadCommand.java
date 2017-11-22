@@ -32,9 +32,13 @@ import tigase.xmpp.jid.JID;
 
 import java.util.Arrays;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ViewNodeLoadCommand
 		implements AdHocCommand {
+
+	public static final Logger log = Logger.getLogger(ViewNodeLoadCommand.class.getName());
 
 	private final PubSubConfig config;
 
@@ -67,7 +71,7 @@ public class ViewNodeLoadCommand
 		} catch (AdHocCommandException e) {
 			throw e;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing vie node load packet", e);
 			throw new AdHocCommandException(Authorization.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}

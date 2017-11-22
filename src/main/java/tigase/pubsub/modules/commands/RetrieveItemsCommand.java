@@ -42,10 +42,14 @@ import tigase.xmpp.jid.JID;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Bean(name = "retrieveItemsCommand", parent = PubSubComponent.class, active = true)
 public class RetrieveItemsCommand
 		implements AdHocCommand {
+
+	public static final Logger log = Logger.getLogger(RetrieveItemsCommand.class.getName());
 
 	public static final String TIGASE_PUBSUB_INTERNAL_KEY = "tigase-pubsub#internal";
 
@@ -160,7 +164,7 @@ public class RetrieveItemsCommand
 		} catch (AdHocCommandException e) {
 			throw e;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing retrieve items packet", e);
 
 			throw new AdHocCommandException(Authorization.INTERNAL_SERVER_ERROR, e.getMessage());
 		}

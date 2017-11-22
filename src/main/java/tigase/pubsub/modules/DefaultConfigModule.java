@@ -32,6 +32,8 @@ import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 
+import java.util.logging.Level;
+
 @Bean(name = "defaultConfigModule", parent = PubSubComponent.class, active = true)
 public class DefaultConfigModule
 		extends AbstractPubSubModule {
@@ -76,7 +78,7 @@ public class DefaultConfigModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing config command", e);
 			throw new RuntimeException(e);
 		}
 

@@ -127,7 +127,7 @@ public class ManageSubscriptionModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing subscription packet", e);
 
 			throw new RuntimeException(e);
 		}

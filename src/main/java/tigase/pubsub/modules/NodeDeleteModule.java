@@ -39,6 +39,8 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
+import java.util.logging.Level;
+
 @Bean(name = "nodeDeleteModule", parent = PubSubComponent.class, active = true)
 public class NodeDeleteModule
 		extends AbstractPubSubModule {
@@ -133,7 +135,7 @@ public class NodeDeleteModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing node delete packet", e);
 
 			throw new RuntimeException(e);
 		}

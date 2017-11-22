@@ -38,10 +38,14 @@ import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Bean(name = "readAllNodesCommand", parent = PubSubComponent.class, active = true)
 public class ReadAllNodesCommand
 		implements AdHocCommand {
+
+	public static final Logger log = Logger.getLogger(ReadAllNodesCommand.class.getName());
 
 	@Inject
 	private PubSubConfig config;
@@ -77,7 +81,7 @@ public class ReadAllNodesCommand
 			}
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing read all nodes packet", e);
 			throw new AdHocCommandException(Authorization.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}

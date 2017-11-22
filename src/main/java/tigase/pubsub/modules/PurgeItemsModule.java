@@ -36,6 +36,8 @@ import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
+import java.util.logging.Level;
+
 @Bean(name = "purgeItemsModule", parent = PubSubComponent.class, active = true)
 public class PurgeItemsModule
 		extends AbstractPubSubModule {
@@ -113,7 +115,7 @@ public class PurgeItemsModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing purge items packet", e);
 
 			throw new RuntimeException(e);
 		}

@@ -34,6 +34,7 @@ import tigase.xml.Element;
 import tigase.xmpp.jid.BareJID;
 
 import java.util.Map;
+import java.util.logging.Level;
 
 @Bean(name = "retrieveAffiliationsModule", parent = PubSubComponent.class, active = true)
 public class RetrieveAffiliationsModule
@@ -84,8 +85,7 @@ public class RetrieveAffiliationsModule
 
 			packetWriter.write(result);
 		} catch (Exception e) {
-			e.printStackTrace();
-
+			log.log(Level.FINE, "Error processing retrieve affiliation packet", e);
 			throw new RuntimeException(e);
 		}
 	}

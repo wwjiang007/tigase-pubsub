@@ -124,7 +124,7 @@ public class ManageAffiliationsModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing affiliation packet", e);
 
 			throw new RuntimeException(e);
 		}

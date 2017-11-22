@@ -40,6 +40,8 @@ import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class description
@@ -50,6 +52,8 @@ import java.util.Arrays;
 @Bean(name = "deleteAllNodesCommand", active = true)
 public class DeleteAllNodesCommand
 		implements AdHocCommand {
+
+	private static final Logger log = Logger.getLogger(DeleteAllNodesCommand.class.getName());
 
 	@Inject
 	private PubSubConfig config;
@@ -98,8 +102,8 @@ public class DeleteAllNodesCommand
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-
+			//e.printStackTrace();
+			log.log(Level.FINE, "Error processing config command", e);
 			throw new AdHocCommandException(Authorization.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}

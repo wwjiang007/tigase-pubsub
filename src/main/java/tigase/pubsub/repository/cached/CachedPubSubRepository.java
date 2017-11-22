@@ -257,8 +257,7 @@ public class CachedPubSubRepository<T>
 		try {
 			return (node == null) ? null : node.getNodeConfig().clone();
 		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-
+			log.log(Level.WARNING, "Error getting node config", e);
 			return null;
 		}
 	}
@@ -1053,30 +1052,12 @@ public class CachedPubSubRepository<T>
 
 		@Override
 		public void setStatisticsPrefix(String prefix) {
-			throw new UnsupportedOperationException("Not supported yet."); // To
-			// change
-			// body
-			// of
-			// generated
-			// methods,
-			// choose
-			// Tools
-			// |
-			// Templates.
+			throw new UnsupportedOperationException("Not supported yet.");
 		}
 
 		@Override
 		public void statisticExecutedIn(long executionTime) {
-			throw new UnsupportedOperationException("Not supported yet."); // To
-			// change
-			// body
-			// of
-			// generated
-			// methods,
-			// choose
-			// Tools
-			// |
-			// Templates.
+			throw new UnsupportedOperationException("Not supported yet.");
 		}
 
 		@Override

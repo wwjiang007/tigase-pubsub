@@ -39,6 +39,7 @@ import tigase.xmpp.jid.JID;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Bean(name = "retrieveItemsModule", parent = PubSubComponent.class, active = true)
@@ -151,7 +152,7 @@ public class RetrieveItemsModule
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.FINE, "Error processing retrieve items packet", e);
 
 			throw new RuntimeException(e);
 		}
