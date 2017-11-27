@@ -45,6 +45,6 @@ end
 GO
 
 -- QUERY START:
-exec TigSetComponentVersion('pubsub', '3.2.0');
+exec TigSetComponentVersion 'pubsub', '3.2.0';
 -- QUERY END:
 GO
