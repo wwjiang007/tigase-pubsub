@@ -20,16 +20,15 @@
 package tigase.pubsub.repository;
 
 import org.junit.*;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
 import org.junit.runners.MethodSorters;
-import org.junit.runners.model.Statement;
 import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
+import tigase.db.AbstractDataSourceAwareTestCase;
 import tigase.db.DBInitException;
 import tigase.db.DataSource;
-import tigase.db.DataSourceHelper;
-import tigase.db.RepositoryFactory;
+import tigase.db.DataSourceAware;
+import tigase.db.xml.XMLRepository;
+import tigase.kernel.core.Kernel;
 import tigase.pubsub.*;
 import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
@@ -46,28 +45,11 @@ import static org.junit.Assert.*;
  * Created by andrzej on 12.10.2016.
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
+public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends AbstractDataSourceAwareTestCase<DS, IPubSubDAO> {
 
 	protected static String emoji = "\uD83D\uDE97\uD83D\uDCA9\uD83D\uDE21";
-	protected static String uri = System.getProperty("testDbUri");
-	@ClassRule
-	public static TestRule rule = new TestRule() {
-		@Override
-		public Statement apply(Statement stmnt, Description d) {
-			if (uri == null) {
-				return new Statement() {
-					@Override
-					public void evaluate() throws Throwable {
-						Assume.assumeTrue("Ignored due to not passed DB URI!", false);
-					}
-				};
-			}
-			return stmnt;
-		}
-	};
 	protected boolean checkEmoji = true;
 	protected IPubSubDAO dao;
-	protected DS dataSource;
 	private String nodeNameWithoutEmoji = "test-node";
 	private String nodeName = nodeNameWithoutEmoji;
 	private JID senderJid = JID.jidInstanceNS("owner@tigase/tigase-1");
@@ -79,19 +61,14 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 		if (checkEmoji) {
 			nodeName += emoji;
 		}
-
-		dataSource = prepareDataSource();
-		dao = DataSourceHelper.getDefaultClass(IPubSubDAO.class, uri).newInstance();
-		try {
-			dao.setDataSource(dataSource);
-		} catch (RuntimeException ex) {
-			throw new RepositoryException(ex);
-		}
+		dao = getDataSourceAware();
 	}
 
 	@After
 	public void tearDown() {
-		dao.destroy();
+		if (dao != null) {
+			dao.destroy();
+		}
 		dao = null;
 	}
 
@@ -243,10 +220,9 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 		assertNull("Node not removed", nodeId);
 	}
 
-	protected DS prepareDataSource() throws DBInitException, IllegalAccessException, InstantiationException {
-		DataSource dataSource = RepositoryFactory.getRepoClass(DataSource.class, uri).newInstance();
-		dataSource.initRepository(uri, new HashMap<>());
-		return (DS) dataSource;
+	@Override
+	protected Class<? extends DataSourceAware> getDataSourceAwareIfc() {
+		return IPubSubDAO.class;
 	}
 
 	protected void test08_queryNodeItems(CollectionItemsOrdering order)
@@ -355,4 +331,18 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> {
 	}
 
 	protected abstract String getMAMID(Object nodeId, String itemId);
+
+	@Override
+	protected void registerBeans(Kernel kernel) {
+		super.registerBeans(kernel);
+		try {
+			String xmlRepositoryURI = "memory://xmlRepo?autoCreateUser=true";
+			XMLRepository repository = new XMLRepository();
+			repository.initRepository(xmlRepositoryURI, null);
+			kernel.registerBean("userAuthRepository").asInstance(repository).exportable().exec();
+		} catch (Exception ex) {
+			throw new RuntimeException("Failed to initialize user/auth repository", ex);
+		}
+	}
+
 }
