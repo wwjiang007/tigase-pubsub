@@ -1,6 +1,6 @@
 == PubSub Node Presence Protocol
 :author: Andrzej Wójcik
-:version: v2.0 August 2017. Reformatted for v7.2.0.
+:version: v2.0 August 2017. Reformatted for v8.0.0.
 
 :toc:
 :numbered:
@@ -72,7 +72,7 @@ Component will send events to all occupants as described:
 If component receives presence stanza with type unavailable without specified node, then component will log out user from all nodes he logged before and publish events.
 
 === Retrieving list of all Node Subscribers
-To retrieve list of node subscribers, node configuration option +tigase#allow_view_subscribers+ must be set to true:
+To retrieve list of node subscribers, node configuration option `tigase#allow_view_subscribers` must be set to true:
 [source,xml]
 -----
 <iq type='set'

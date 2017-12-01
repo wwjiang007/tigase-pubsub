@@ -1,6 +1,6 @@
 = Configuration
 :author: Andrzej Wójcik
-:version: v2.0 August 2017. Reformatted for v7.2.0.
+:version: v2.0 August 2017. Reformatted for v8.0.0.
 
 :toc:
 :numbered:
@@ -19,8 +19,8 @@ Pubsub nodes within Tigase can be found as a combination of JID and node where n
 -----
 
 [[rosterLimit]]
-== Configure Roster Maxmimum size
-Administrators can configure the maximum allowable roster size per user via the init.properties file.
+== Configure Roster Maximum size
+Administrators can configure the maximum allowable roster size per user via the config.tdsl file.
 [source,dsl]
 -----
 'sess-man' {
@@ -30,14 +30,14 @@ Administrators can configure the maximum allowable roster size per user via the 
 }
 -----
 
-This sets the roster limit to 100 entries per user.  It can be set to any integer, however by default no limit is set and no configuration is set in `init.properties` file.
+This sets the roster limit to 100 entries per user.  It can be set to any integer, however by default no limit is set and no configuration is set in `config.tdsl` file.
 
 [[storeFullXMLLastPresence]]
 == Store Full XML of Last Presence
 Tigase can store a more detailed `<unavailable/>` presence stanza to include timestamps and other information.
 
 === Requirements
-Ensure that `presence-offline` plugin is enabled in init.properties.  To do this, add be sure `presence-offline` is listed under `sess-man`
+Ensure that `presence-offline` plugin is enabled in config.tdsl.  To do this, add be sure `presence-offline` is listed under `sess-man`
 [source,dsl]
 -----
 'sess-man' {
@@ -55,14 +55,14 @@ The following two lines in `sess-man` configure options to broadcast probes to o
 -----
 Without these lines, Tigase will not send presence probes to users that the server knows to be offline.
 
-The full XML presence is stored under the tig_pairs table with a pkey of +last-unavailable-presence+ will look like this:
+The full XML presence is stored under the tig_pairs table with a pkey of `last-unavailable-presence` will look like this:
 [source,xml]
 -----
 <presence from="user@example.com" xmlns="jabber:client" type="unavailable">
 <status>Logged out</status>
 <delay stamp="2015-12-29T16:51:50.748Z" xmlns="urn:xmpp:delay"/></presence>
 -----
-As you can see, the plugin has added a delay stamp which indicates the last time they were seen online. This may be suppressed by using the following line in your init.properties file.
+As you can see, the plugin has added a delay stamp which indicates the last time they were seen online. This may be suppressed by using the following line in your config.tdsl file.
 [source,dsl]
 -----
 'sess-man' {
@@ -83,7 +83,7 @@ When a user logs on, they will receive the same full unavailable presence statem
 *NOTE: This will increase traffic with users with many people on their rosters.*
 
 == Using separate store
-As mentioned above, by default Tigase PubSub component uses default data source configured for Tigase XMPP Server. It is possible to use separate store by PubSub component. To do so you need to configure new `DataSource` in `dataSource` section. Here we will use `pubsub-store` as name of newly configured data source. Additionally you need to pass name of newly configured data source to `dataSourceName` property of default DAO of PubSub component.
+As mentioned above, by default Tigase pubsub component uses default data source configured for Tigase XMPP Server. It is possible to use separate store by pubsub component. To do so you need to configure new `DataSource` in `dataSource` section. Here we will use `pubsub-store` as name of newly configured data source. Additionally you need to pass name of newly configured data source to `dataSourceName` property of default DAO of pubsub component.
 ----
 dataSource {
     pubsub-store () {
@@ -99,7 +99,7 @@ pubsub () {
     }
 }
 ----
-It is also possible to configure separate store for particular domain, ie. `pubsub.example.com`. Here we will configure data source with name `pubsub.example.com` and use it to store data for PubSub nodes and items at `pubsub.example.com`:
+It is also possible to configure separate store for particular domain, ie. `pubsub.example.com`. Here we will configure data source with name `pubsub.example.com` and use it to store data for pubsub nodes and items at `pubsub.example.com`:
 ----
 dataSource {
     'pubsub.example.com' () {
@@ -118,7 +118,7 @@ pubsub () {
 NOTE: With this configuration, data for other domains than `pubsub.example.com` will be stored in default data source.
 
 == Enabling PEP support
-To enable http://xmpp.org/extensions/xep-0163.html[XEP-0163: Personal Eventing Protocol] support it is required to set `persistent-pep` property of PubSub component to `true`, set `send-last-published-item-on-presence` property of component to `true` and enable `pep` SessionManager processor.
+To enable http://xmpp.org/extensions/xep-0163.html[XEP-0163: Personal Eventing Protocol] support it is required to set `persistent-pep` property of pubsub component to `true`, set `send-last-published-item-on-presence` property of component to `true` and enable `pep` SessionManager processor.
 ----
 pubsub () {
     persistent-pep = true
@@ -131,9 +131,9 @@ sess-man () {
 }
 ----
 
-NOTE: If your PubSub component uses different name than `pubsub` then you need to set `pubsub-jid` property of `pep` processor to JID of PubSub component make it aware of a different name of a PubSub component.
+NOTE: If your pubsub component uses different name than `pubsub` then you need to set `pubsub-jid` property of `pep` processor to JID of pubsub component make it aware of a different name of a pubsub component.
 
-.Example with PubSub component named `events` hosted at server named `servername.com` and enabled PEP
+.Example with pubsub component named `events` hosted at server named `servername.com` and enabled PEP
 ----
 events () {
     persistent-pep = true
@@ -147,12 +147,12 @@ sess-man () {
 ----
 
 == Enabling REST API
-To use REST API for PubSub component it is required that:
+To use REST API for pubsub component it is required that:
 
 * Tigase HTTP API component is installed and configured properly. For information about HTTP API component installation please look into xref:compHTTPAPI[HTTP component documentation].
-* Tigase PubSub REST scripts are copied to HTTP API REST scripts directory
+* Tigase pubsub REST scripts are copied to HTTP API REST scripts directory
 In installation package this is already done and scripts are in proper locations.
-dd* JID of HTTP API component needs to be added to list of trusted jids of Tigase PubSub component `trusted` property (if `http` is name of HTTP API component)
+dd* JID of HTTP API component needs to be added to list of trusted jids of Tigase pubsub component `trusted` property (if `http` is name of HTTP API component)
 ----
 pubsub () {
     trusted = [ 'http@{clusterNode}' ];
@@ -160,10 +160,10 @@ pubsub () {
 ----
 
 == Changing nodes cache size
-By default Tigase PubSub component caches node configuration of 2000 last loaded nodes.
+By default Tigase pubsub component caches node configuration of 2000 last loaded nodes.
 If there are many requests to database to load node configuration and your installation contains many nodes it may be a good idea to increase number of cached nodes.
 
-To do this you need to set `pubsub-repository-cache-size` property of PubSub component to new size.
+To do this you need to set `pubsub-repository-cache-size` property of pubsub component to new size.
 ----
 pubsub () {
     pubsub-repository-cache-size = 4000
@@ -171,7 +171,7 @@ pubsub () {
 ----
 
 == Enable sending last published item on presence
-By default it is not possible to use delivery of last published item when users broadcasts initial presence. To do so you need to set `send-last-published-item-on-presence` of PubSub component to `true`. This will allow you to configure nodes to send last published item on presence.
+By default it is not possible to use delivery of last published item when users broadcasts initial presence. To do so you need to set `send-last-published-item-on-presence` of pubsub component to `true`. This will allow you to configure nodes to send last published item on presence.
 ----
 pubsub () {
     send-last-published-item-on-presence = true
@@ -179,12 +179,12 @@ pubsub () {
 ----
 
 == Tune handling of low memory
-If there is less than 10% of free heap memory available during publication of item then Tigase PubSub component will trigger Garbage Collection and it there is still very little amount of free memory will slow down delivery of notifications for published items (waiting about 1 second before continuing).
+If there is less than 10% of free heap memory available during publication of item then Tigase pubsub component will trigger Garbage Collection and it there is still very little amount of free memory will slow down delivery of notifications for published items (waiting about 1 second before continuing).
 
-If you have assigned a lot of memory to Tigase XMPP Server or in your case this delay is not acceptable you can adjust it by PubSub component properties:
+If you have assigned a lot of memory to Tigase XMPP Server or in your case this delay is not acceptable you can adjust it by pubsub component properties:
 
 * setting `pubsub-high-memory-usage-level` to percentage of heap memory accepted as near OOM state
-* setting `pubsub-low-memory-delay` to number of miliseconds to wait to throttle delivery of notifications
+* setting `pubsub-low-memory-delay` to number of milliseconds to wait to throttle delivery of notifications
 
 ----
 pubsub () {
@@ -194,7 +194,7 @@ pubsub () {
 ----
 
 == Disable automatic subscription of node creator
-During creation of node PubSub component subscribes creator to PubSub node and delivers notifications to creator. If in your case you do not want this behaviour, you may set `auto-subscribe-node-creator` property of PubSub component to `false`.
+During creation of node pubsub component subscribes creator to pubsub node and delivers notifications to creator. If in your case you do not want this behavior, you may set `auto-subscribe-node-creator` property of pubsub component to `false`.
 ----
 pubsub () {
     auto-subscribe-node-creator = false

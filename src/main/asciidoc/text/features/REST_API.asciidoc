@@ -1,13 +1,13 @@
 = REST API
 :author: Andrzej Wójcik
-:version: v2.0 November 2016. Reformatted for v7.2.0.
+:version: v2.0 November 2016. Reformatted for v8.0.0.
 
 :toc:
 :numbered:
 :website: http://www.tigase.net
 
 
-All example calls to PubSub REST API are prepared for PubSub component running at `pubsub.example.com`. It is required to replace this value with JID of PubSub component from your installation.
+All example calls to pubsub REST API are prepared for pubsub component running at `pubsub.example.com`. It is required to replace this value with JID of pubsub component from your installation.
 
 It is possible to provide parameters to requests as:
 
@@ -271,7 +271,7 @@ Command requires fields `node` and `entry` to be filled
 * `node` - field should contain id of node  to publish to
 * `item-id` - field may contain id of entry to publish
 * `expire-at` - field may contain timestamp (in http://xmpp.org/extensions/xep-0082.html[XEP-0082] format) after which item should not be delivered to user
-* `entry` - field should contain multiline entry content which should be valid XML value for an item
+* `entry` - field should contain multi-line entry content which should be valid XML value for an item
 
 Example content to publish item with id `item-1` to node with id `example` and with content in example field. P
 
@@ -484,7 +484,7 @@ Available HTTP methods:
 
 === GET
 
-Method returns list of available PubSub nodes for domain passed as part of URI (`pubsub.example.com`).
+Method returns list of available pubsub nodes for domain passed as part of URI (`pubsub.example.com`).
 
 .Example response in XML
 [source,xml]
@@ -618,7 +618,7 @@ Example content to list of items published on node with id `example`.
 [source,xml]
 ----
 <result>
-  <title>Retrive PubSub node item</title>
+  <title>Retrieve PubSub node item</title>
   <node label="Node" type="text-single">
     <value>example</value>
   </node>

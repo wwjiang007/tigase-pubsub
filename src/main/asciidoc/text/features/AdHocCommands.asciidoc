@@ -1,19 +1,19 @@
 = AdHoc Commands
 :author: Andrzej Wójcik
-:version: v2.0, September 2015. Reformatted for v7.2.0.
+:version: v2.0, September 2015. Reformatted for v8.0.0.
 
 :toc:
 :numbered:
 :website: http://www.tigase.net
 
-Similar to the HTTP API, AdHoc commands based on groovy scripts can be sent to this component to do a number of tasks. All scripts for these Ad-hoc commands are found at `sec/main/groovy/tigase/admin` in source distrubitions, or at link:https://projects.tigase.org/projects/tigase-pubsub/repository/revisions/master/show/src/main/groovy/tigase/admin[this link]. To use them, the scripts need to be copied into the `scripts/admin/pubsub` folder in the Tigase installation directory.
+Similar to the HTTP API, AdHoc commands based on groovy scripts can be sent to this component to do a number of tasks. All scripts for these Ad-hoc commands are found at `sec/main/groovy/tigase/admin` in source distributions, or at link:https://projects.tigase.org/projects/tigase-pubsub/repository/revisions/master/show/src/main/groovy/tigase/admin[this link]. To use them, the scripts need to be copied into the `scripts/admin/pubsub` folder in the Tigase installation directory.
 For all examples, the component address will be `pubsub.example.com`.
 
 == Create a Node
 Ad-hoc command node: `create-node`
 Required role: Service Administrator
 
-Command requires fields +node+ and +pubsub#node_type+ to be filled with proper values for execution.
+Command requires fields `node` and `pubsub#node_type` to be filled with proper values for execution.
 - `node` Field containing id of node to create.
 - `pubsub#node_type` Contains one of two possible values.
   * `leaf-node` Node that will be published.
