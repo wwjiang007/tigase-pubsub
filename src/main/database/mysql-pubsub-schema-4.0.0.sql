@@ -20,12 +20,6 @@ source database/mysql-pubsub-schema-3.2.0.sql;
 -- LOAD FILE: database/mysql-pubsub-schema-3.2.0.sql
 
 -- QUERY START:
-alter table tig_pubsub_items
-    modify `id` varchar(1000) character set utf8mb4 collate utf8mb4_bin,
-    modify `data` mediumtext character set utf8mb4 collate utf8mb4_bin;
--- QUERY END:
-
--- QUERY START:
 drop procedure if exists TigExecuteIf;
 -- QUERY END:
 
@@ -46,6 +40,24 @@ end //
 -- QUERY END:
 
 delimiter ;
+
+
+-- QUERY START:
+call TigExecuteIf(
+    (select count(1) from information_schema.statistics where table_schema = database() and table_name = 'tig_pubsub_items' and column_name = 'node_id'),
+    "drop index `node_id` on tig_pubsub_items"
+);
+-- QUERY END:
+
+-- QUERY START:
+alter table tig_pubsub_items
+    modify `id` varchar(1000) character set utf8mb4 collate utf8mb4_bin,
+    modify `data` mediumtext character set utf8mb4 collate utf8mb4_bin;
+-- QUERY END:
+
+-- QUERY START:
+create index node_id on tig_pubsub_items ( node_id, id(190) ) using hash;
+-- QUERY END:
 
 -- QUERY START:
 call TigExecuteIf(
