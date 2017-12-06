@@ -478,12 +478,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>tigase</groupId>
-            <artifactId>tigase-testsuite</artifactId>
-            <version>2.3.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.osgi.core</artifactId>
             <version>1.4.0</version>
