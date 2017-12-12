@@ -9,12 +9,14 @@
 
 Welcome to Tigase PubSub component guide
 
-:leveloffset: 1
-
-include::text/Overview.asciidoc[]
-include::text/Announcement.asciidoc[]
-include::text/Configuration.asciidoc[]
-include::text/Database.asciidoc[]
-include::text/Features.asciidoc[]
-include::text/Schema_Changes.asciidoc[]
-include::text/Limitations.asciidoc[]
+include::text/Overview.asciidoc[leveloffset=+1]
+include::text/Announcement.asciidoc[leveloffset=+2]
+include::text/Configuration.asciidoc[leveloffset=+2]
+include::text/Database.asciidoc[leveloffset=+2]
+include::text/Schema_Changes.asciidoc[leveloffset=+3]
+include::text/Features.asciidoc[leveloffset=+2]
+include::text/features/AdHocCommands.asciidoc[leveloffset=+3]
+include::text/features/PubSub_Node_Presence_Protocol.asciidoc[leveloffset=+3]
+include::text/features/OfflineMessagesSink.asciidoc[leveloffset=+3]
+include::text/features/REST_API.asciidoc[leveloffset=+3]
+include::text/Limitations.asciidoc[leveloffset=+1]
