@@ -44,7 +44,20 @@ delimiter ;
 
 -- QUERY START:
 call TigExecuteIf(
-    (select count(1) from information_schema.statistics where table_schema = database() and table_name = 'tig_pubsub_items' and column_name = 'node_id'),
+    (
+      SELECT count(*)
+      FROM information_schema.statistics s1
+        INNER JOIN information_schema.statistics s2
+          ON s1.table_schema = s2.table_schema AND s1.table_name = s2.table_name AND s1.index_name = s2.index_name
+        JOIN (SELECT @@GLOBAL.innodb_large_prefix AS val) x
+      WHERE
+        s1.table_schema = database()
+        AND s1.table_name = 'tig_pubsub_items'
+        AND s1.column_name = 'node_id'
+        AND s2.column_name = 'id'
+        AND ((s2.sub_part = 255
+              AND x.val = 0) OR (s2.sub_part <> 255 AND x.val = 1))
+    ),
     "drop index `node_id` on tig_pubsub_items"
 );
 -- QUERY END:
@@ -56,7 +69,49 @@ alter table tig_pubsub_items
 -- QUERY END:
 
 -- QUERY START:
-create index node_id on tig_pubsub_items ( node_id, id(190) ) using hash;
+call TigExecuteIf(
+    (
+      SELECT 1
+      FROM dual
+      WHERE (SELECT @@GLOBAL.innodb_large_prefix val
+             FROM dual
+             WHERE (SELECT count(*)
+                    FROM information_schema.statistics s1
+                      INNER JOIN information_schema.statistics s2
+                        ON s1.table_schema = s2.table_schema AND s1.table_name = s2.table_name AND
+                           s1.index_name = s2.index_name
+                      JOIN (SELECT @@GLOBAL.innodb_large_prefix AS val) x
+                    WHERE
+                      s1.table_schema = database()
+                      AND s1.table_name = 'tig_pubsub_items'
+                      AND s1.column_name = 'node_id'
+                      AND s2.column_name = 'id') = 0) = 0
+    ),
+    "create index node_id_id on tig_pubsub_items ( node_id, id(190) ) using hash;"
+);
+-- QUERY END:
+
+-- QUERY START:
+call TigExecuteIf(
+    (
+      SELECT 1
+      FROM dual
+      WHERE (SELECT @@GLOBAL.innodb_large_prefix val
+             FROM dual
+             WHERE (SELECT count(*)
+                    FROM information_schema.statistics s1
+                      INNER JOIN information_schema.statistics s2
+                        ON s1.table_schema = s2.table_schema AND s1.table_name = s2.table_name AND
+                           s1.index_name = s2.index_name
+                      JOIN (SELECT @@GLOBAL.innodb_large_prefix AS val) x
+                    WHERE
+                      s1.table_schema = database()
+                      AND s1.table_name = 'tig_pubsub_items'
+                      AND s1.column_name = 'node_id'
+                      AND s2.column_name = 'id') = 0) = 1
+    ),
+    "create index node_id_id on tig_pubsub_items ( node_id, id(255) ) using hash;"
+);
 -- QUERY END:
 
 -- QUERY START:
