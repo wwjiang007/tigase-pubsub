@@ -689,12 +689,16 @@ public class CachedPubSubRepository<T>
 		Iterator<Node> nodesIter = this.nodes.values().iterator();
 		while (nodesIter.hasNext()) {
 			Node node = nodesIter.next();
-			NodeSubscriptions nodeSubscriptions = node.getNodeSubscriptions();
-			nodeSubscriptions.changeSubscription(userJid, Subscription.none);
-			nodeSubscriptions.merge();
-			NodeAffiliations nodeAffiliations = node.getNodeAffiliations();
-			nodeAffiliations.changeAffiliation(userJid, Affiliation.none);
-			nodeAffiliations.merge();
+			if (userJid.equals(node.getServiceJid())) {
+				nodesIter.remove();
+			} else {
+				NodeSubscriptions nodeSubscriptions = node.getNodeSubscriptions();
+				nodeSubscriptions.changeSubscription(userJid, Subscription.none);
+				nodeSubscriptions.merge();
+				NodeAffiliations nodeAffiliations = node.getNodeAffiliations();
+				nodeAffiliations.changeAffiliation(userJid, Affiliation.none);
+				nodeAffiliations.merge();
+			}
 		}
 	}
 
