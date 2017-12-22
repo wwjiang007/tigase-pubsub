@@ -15,8 +15,6 @@
 --  along with this program. Look for COPYING file in the top folder.
 --  If not, see http://www.gnu.org/licenses/.
 
--- LOAD FILE: database/sqlserver-pubsub-schema-3.1.0.sql
-
 -- QUERY START:
 SET QUOTED_IDENTIFIER ON
 -- QUERY END:

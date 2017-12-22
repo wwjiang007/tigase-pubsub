@@ -15,10 +15,6 @@
 --  along with this program. Look for COPYING file in the top folder.
 --  If not, see http://www.gnu.org/licenses/.
 
-\i database/postgresql-pubsub-schema-3.2.0.sql
-
--- LOAD FILE: database/postgresql-pubsub-schema-3.2.0.sql
-
 -- QUERY START:
 do $$
 begin
