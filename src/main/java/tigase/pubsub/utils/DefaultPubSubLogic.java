@@ -209,4 +209,11 @@ public class DefaultPubSubLogic
 		return false;
 	}
 
+	protected PubSubConfig getPubSubConfig() {
+		return pubSubConfig;
+	}
+
+	protected CachedPubSubRepository getRepository() {
+		return repository;
+	}
 }

@@ -146,6 +146,9 @@ public class NodeCreateModule
 					}
 				}
 			}
+
+			logic.checkNodeCreationAllowed(toJid, packet.getStanzaFrom().getBareJID(), nodeName, collection);
+
 			if (nodeType == NodeType.collection) {
 				Form f = nodeConfig.getForm();
 

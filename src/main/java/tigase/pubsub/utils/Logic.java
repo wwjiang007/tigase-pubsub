@@ -53,4 +53,7 @@ public interface Logic {
 
 	Element prepareNotificationMessage(JID from, JID to, String id, Element itemToSend, Map<String, String> headers);
 
+	default void checkNodeCreationAllowed(BareJID serviceJid, BareJID userJid, String node, String collection) throws PubSubException {
+	}
+
 }
