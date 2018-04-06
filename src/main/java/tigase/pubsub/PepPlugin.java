@@ -156,6 +156,10 @@ public class PepPlugin
 		}
 	}
 
+	protected JID getPubsubJid(XMPPResourceConnection session, JID serviceJid) {
+		return pubsubJid;
+	}
+
 	protected void processIq(Packet packet, XMPPResourceConnection session, Queue<Packet> results)
 			throws XMPPException {
 		if (session != null && session.isServerSession()) {
@@ -244,7 +248,7 @@ public class PepPlugin
 			result.initVars(packet.getStanzaFrom() != null ? packet.getStanzaFrom() : session.getJID(), userJid);
 		}
 		result.setPacketFrom(packet.getFrom());
-		result.setPacketTo(pubsubJid);
+		result.setPacketTo(getPubsubJid(session, packet.getStanzaTo()));
 
 		results.offer(result);
 	}
@@ -276,7 +280,7 @@ public class PepPlugin
 				JID userJid = JID.jidInstance(session.getBareJID());
 				result.initVars(session.getJID(), userJid);
 			}
-			result.setPacketTo(pubsubJid);
+			result.setPacketTo(getPubsubJid(session, packet.getStanzaTo()));
 			results.offer(result);
 		}
 	}
