@@ -544,5 +544,21 @@ $$ LANGUAGE SQL;
 -- QUERY END:
 
 -- QUERY START:
+create or replace function TigPubSubCountNodes(_service_jid varchar(2049)) returns table (
+    "count" bigint
+) as $$
+	select count(1) as "count"
+	from tig_pubsub_nodes n
+	where
+	    _service_jid is null
+	    or n.service_id = (
+	        select sj.service_id
+	        from tig_pubsub_service_jids sj
+		    where lower(sj.service_jid) = lower(_service_jid)
+		);
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
 select TigSetComponentVersion('pubsub', '4.0.0');
 -- QUERY END:

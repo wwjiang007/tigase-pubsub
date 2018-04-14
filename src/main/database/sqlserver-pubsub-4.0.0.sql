@@ -614,6 +614,31 @@ end
 GO
 
 -- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubCountNodes')
+	DROP PROCEDURE TigPubSubCountNodes
+-- QUERY END:
+GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubCountNodes
+	@_service_jid nvarchar(2049)
+AS
+begin
+    SET NOCOUNT ON;
+    select count(1)
+    from tig_pubsub_nodes n
+    where
+        @_service_jid is null
+        or n.service_id = (
+            select sj.service_id
+            from tig_pubsub_service_jids sj
+            where sj.service_jid_sha1 = HASHBYTES('SHA1', LOWER(@_service_jid))
+        );
+end
+-- QUERY END:
+GO
+
+-- QUERY START:
 exec TigSetComponentVersion 'pubsub', '4.0.0';
 -- QUERY END:
 GO

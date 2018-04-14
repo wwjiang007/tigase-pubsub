@@ -109,6 +109,11 @@ public class PubSubRepositoryWrapper
 	}
 
 	@Override
+	public long getNodesCount(BareJID serviceJid) {
+		return getNodesCount(serviceJid);
+	}
+
+	@Override
 	public IPubSubDAO getPubSubDAO() {
 		return repo.getPubSubDAO();
 	}

@@ -69,6 +69,8 @@ public interface IPubSubRepository
 
 	ISubscriptions getNodeSubscriptions(BareJID serviceJid, String nodeName) throws RepositoryException;
 
+	long getNodesCount(BareJID serviceJid) throws RepositoryException;
+
 	IPubSubDAO getPubSubDAO();
 
 	String[] getRootCollection(BareJID serviceJid) throws RepositoryException;

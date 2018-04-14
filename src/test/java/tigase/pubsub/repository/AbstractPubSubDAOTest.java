@@ -73,6 +73,12 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 	}
 
 	@Test
+	public void test00_testNodesCount() throws RepositoryException {
+		long value = dao.getNodesCount(null);
+		assertTrue(value >= 0);
+	}
+
+	@Test
 	public void test01_createNode() throws RepositoryException {
 		Object nodeId = dao.getNodeId(serviceJid, nodeName);
 		if (nodeId != null) {

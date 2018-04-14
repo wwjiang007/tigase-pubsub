@@ -924,4 +924,28 @@ public class StoredProcedures {
 			conn.close();
 		}
 	}
+
+	public static void tigPubSubCountNodes(String serviceJid, ResultSet[] data)
+			throws SQLException {
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			PreparedStatement ps = null;
+			if (serviceJid == null) {
+				ps = conn.prepareStatement("select count(1) from tig_pubsub_nodes");
+			} else {
+				String serviceJidSha1 = sha1OfLower(serviceJid);
+				ps = conn.prepareStatement("select count(1) from tig_pubsub_nodes n inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id where sj.service_jid_sha1 = ?)");
+				ps.setString(1, serviceJidSha1);
+			}
+			data[0] = ps.executeQuery();
+		} catch (SQLException e) {
+			// log.log(Level.SEVERE, "SP error", e);
+			throw e;
+		} finally {
+			conn.close();
+		}
+	}
 }

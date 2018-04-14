@@ -51,5 +51,14 @@ create procedure TigPubSubMamQueryItemsCount(nodes_ids varchar(32672), since tim
 -- QUERY END:
 
 -- QUERY START:
+create procedure TigPubSubCountNodes(serviceJid varchar(2049))
+	PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	READS SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubCountNodes';
+-- QUERY END:
+
+-- QUERY START:
 call TigSetComponentVersion('pubsub', '4.0.0');
 -- QUERY END:

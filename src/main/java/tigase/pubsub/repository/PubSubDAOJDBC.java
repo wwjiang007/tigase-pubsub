@@ -64,6 +64,7 @@ public class PubSubDAOJDBC
 	private static final String GET_NODE_ITEM_IDS_QUERY = "{ call TigPubSubGetNodeItemsIds(?) }";
 	private static final String GET_NODE_ITEM_IDS_SINCE_QUERY = "{ call TigPubSubGetNodeItemsIdsSince(?,?) }";
 	private static final String GET_NODE_ITEMS_META_QUERY = "{ call TigPubSubGetNodeItemsMeta(?) }";
+	private static final String COUNT_NODES_QUERY = "{ call TigPubSubCountNodes(?) }";
 	private static final String GET_ALL_NODES_QUERY = "{ call TigPubSubGetAllNodes(?) }";
 	private static final String GET_ROOT_NODES_QUERY = "{ call TigPubSubGetRootNodes(?) }";
 	private static final String GET_CHILD_NODES_QUERY = "{ call TigPubSubGetChildNodes(?,?) }";
@@ -577,6 +578,35 @@ public class PubSubDAOJDBC
 			}
 		} catch (SQLException e) {
 			throw new RepositoryException("Nodes list getting error", e);
+		} finally {
+			offerDao(hash);
+		}
+	}
+
+	@Override
+	public long getNodesCount(BareJID serviceJid) throws RepositoryException {
+		HashCode hash = null;
+		try {
+			ResultSet rs = null;
+			hash = takeDao();
+
+			PreparedStatement stmt = data_repo.getPreparedStatement(hash.hashCode(), COUNT_NODES_QUERY);
+
+			synchronized (stmt) {
+				try {
+					stmt.setString(1, serviceJid == null ? null : serviceJid.toString());
+					rs = stmt.executeQuery();
+					if (rs.next()) {
+						return rs.getLong(1);
+					} else {
+						return 0;
+					}
+				} finally {
+					release(null, rs);
+				}
+			}
+		} catch (SQLException ex) {
+			throw new RepositoryException("Counting nodes error", ex);
 		} finally {
 			offerDao(hash);
 		}
@@ -1192,6 +1222,7 @@ public class PubSubDAOJDBC
 		data_repo.initPreparedStatement(GET_NODE_ITEM_IDS_QUERY, GET_NODE_ITEM_IDS_QUERY);
 		data_repo.initPreparedStatement(GET_NODE_ITEM_IDS_SINCE_QUERY, GET_NODE_ITEM_IDS_SINCE_QUERY);
 		data_repo.initPreparedStatement(GET_NODE_ITEMS_META_QUERY, GET_NODE_ITEMS_META_QUERY);
+		data_repo.initPreparedStatement(COUNT_NODES_QUERY, COUNT_NODES_QUERY);
 		data_repo.initPreparedStatement(GET_ALL_NODES_QUERY, GET_ALL_NODES_QUERY);
 		data_repo.initPreparedStatement(GET_ROOT_NODES_QUERY, GET_ROOT_NODES_QUERY);
 		data_repo.initPreparedStatement(GET_CHILD_NODES_QUERY, GET_CHILD_NODES_QUERY);

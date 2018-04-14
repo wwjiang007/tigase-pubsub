@@ -46,6 +46,7 @@ import tigase.xmpp.jid.JID;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -84,6 +85,8 @@ public class CachedPubSubRepository<T>
 	private Map<String, StatisticHolder> stats;
 	private long updateSubscriptionsCalled = 0;
 	private long writingTime = 0;
+
+	protected final AtomicLong nodesCount = new AtomicLong(0);
 
 	public CachedPubSubRepository() {
 
@@ -148,6 +151,7 @@ public class CachedPubSubRepository<T>
 		}
 
 		++nodes_added;
+		nodesCount.incrementAndGet();
 		writingTime += (end - start);
 	}
 
@@ -169,6 +173,7 @@ public class CachedPubSubRepository<T>
 		}
 
 		this.nodes.remove(key);
+		nodesCount.decrementAndGet();
 	}
 
 	@Override
@@ -302,8 +307,26 @@ public class CachedPubSubRepository<T>
 	}
 
 	@Override
+	public long getNodesCount(BareJID serviceJID) throws RepositoryException {
+		if (serviceJID != null) {
+			return dao.getNodesCount(serviceJID);
+		} else {
+			return nodesCount.get();
+		}
+	}
+
+	@Override
 	public IPubSubDAO getPubSubDAO() {
 		return this.dao;
+	}
+
+	public void setDao(IPubSubDAO<T, DataSource, Query> dao) {
+		this.dao = dao;
+		try {
+			nodesCount.set(dao.getNodesCount(null));
+		} catch (RepositoryException ex) {
+			nodesCount.set(0);
+		}
 	}
 
 	@Override
@@ -374,6 +397,8 @@ public class CachedPubSubRepository<T>
 		} else {
 			stats.add(name, "Added new nodes", nodes_added, Level.FINEST);
 		}
+
+		stats.add(name, "Total number of nodes", nodesCount.get(), Level.INFO);
 
 		if (nodes_added > 0) {
 			stats.add(name, "Total writing time", Utils.longToTime(writingTime), Level.INFO);
@@ -685,6 +710,11 @@ public class CachedPubSubRepository<T>
 
 	protected void userRemoved(BareJID userJid) {
 		// clearing in memory caches
+		try {
+			nodesCount.set(dao.getNodesCount(null));
+		} catch (RepositoryException ex) {
+			// ignoring...
+		}
 		rootCollection.remove(userJid);
 		Iterator<Node> nodesIter = this.nodes.values().iterator();
 		while (nodesIter.hasNext()) {

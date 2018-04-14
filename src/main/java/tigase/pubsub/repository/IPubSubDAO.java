@@ -90,6 +90,8 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 
 	INodeMeta<T> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException;
 
+	long getNodesCount(BareJID serviceJid) throws RepositoryException;
+
 	String[] getNodesList(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	NodeSubscriptions getNodeSubscriptions(BareJID serviceJid, T nodeId) throws RepositoryException;

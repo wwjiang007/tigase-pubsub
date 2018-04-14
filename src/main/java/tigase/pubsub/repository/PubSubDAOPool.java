@@ -336,6 +336,27 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
+	public long getNodesCount(BareJID serviceJid) throws RepositoryException {
+		if (serviceJid != null) {
+			IPubSubDAO<T, DataSource, Q> dao = takeDao(serviceJid);
+			if (dao != null) {
+				try {
+					return dao.getNodesCount(serviceJid);
+				} finally {
+					offerDao(serviceJid, dao);
+				}
+			}
+			return 0;
+		 } else {
+			long count = 0;
+			for (IPubSubDAO dao : this.getRepositories().values()) {
+				count += dao.getNodesCount(serviceJid);
+			}
+			return count;
+		}
+	}
+
+	@Override
 	public String[] getNodesList(BareJID serviceJid, String nodeName) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {

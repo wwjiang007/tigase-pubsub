@@ -326,6 +326,11 @@ public class CachedPubSubRepositoryTest {
 		}
 
 		@Override
+		public long getNodesCount(BareJID serviceJid) throws RepositoryException {
+			return 0;
+		}
+
+		@Override
 		public String[] getNodesList(BareJID serviceJid, String nodeName) throws RepositoryException {
 			return new String[0];
 		}

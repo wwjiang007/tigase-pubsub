@@ -635,8 +635,31 @@ begin
 end //
 -- QUERY END:
 
+delimiter ;
+
 -- QUERY START:
-call TigSetComponentVersion('pubsub', '4.0.0');
+drop procedure if exists TigPubSubCountNodes;
+-- QUERY END:
+
+delimiter //
+
+-- QUERY START:
+create procedure TigPubSubCountNodes(_service_jid varchar(2049))
+begin
+	select count(1)
+	from tig_pubsub_nodes n
+	where
+	    _service_jid is null
+	    or n.service_id = (
+	        select sj.service_id
+	        from tig_pubsub_service_jids sj
+		    where sj.service_jid_sha1 = SHA1(lower(_service_jid))
+		);
+end //
 -- QUERY END:
 
 delimiter ;
+
+-- QUERY START:
+call TigSetComponentVersion('pubsub', '4.0.0');
+-- QUERY END:
