@@ -54,7 +54,7 @@ public class LoadTestCommand
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
-	@Inject
+	@Inject(bean = "service")
 	private AbstractMessageReceiver component;
 
 	@Inject
