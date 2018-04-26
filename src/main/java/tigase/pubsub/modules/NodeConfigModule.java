@@ -187,7 +187,7 @@ public class NodeConfigModule
 																					nodeName);
 
 						publishModule.sendNotifications(associateNotification, packet.getStanzaTo(), nodeName,
-														nodeConfig, colNodeAffiliations, colNodeSubscriptions);
+														colNodeConfig, colNodeAffiliations, colNodeSubscriptions);
 					}
 					if (nodeConfig.getCollection().equals("")) {
 						AbstractNodeConfig colNodeConfig = getRepository().getNodeConfig(toJid, collectionOld);
@@ -204,7 +204,7 @@ public class NodeConfigModule
 						Element disassociateNotification = createDisassociateNotification(collectionOld, nodeName);
 
 						publishModule.sendNotifications(disassociateNotification, packet.getStanzaTo(), nodeName,
-														nodeConfig, colNodeAffiliations, colNodeSubscriptions);
+														colNodeConfig, colNodeAffiliations, colNodeSubscriptions);
 					}
 				}
 				if (nodeConfig instanceof CollectionNodeConfig) {

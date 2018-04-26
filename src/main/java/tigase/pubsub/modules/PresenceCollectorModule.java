@@ -100,6 +100,7 @@ public class PresenceCollectorModule
 			}
 
 			String[] oldCaps;
+			String[] availableCaps = caps;
 			synchronized (resources) {
 				oldCaps = resources.put(resource, caps);
 				added = oldCaps == null;

@@ -30,18 +30,21 @@ import tigase.component.exceptions.ComponentException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.criteria.Or;
+import tigase.eventbus.EventBus;
 import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.PubSubComponent;
 import tigase.server.Packet;
 import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
+import tigase.xmpp.StanzaType;
 import tigase.xmpp.impl.PresenceCapabilitiesManager;
+import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Queue;
+import java.util.HashSet;
 
 /**
  * @author andrzej
@@ -59,6 +62,9 @@ public class CapsModule
 
 	private static String[] FEATURES = {};
 
+	@Inject
+	private EventBus eventBus;
+
 	public CapsModule() {
 	}
 
@@ -75,6 +81,23 @@ public class CapsModule
 	@Override
 	public void process(Packet packet) throws ComponentException, TigaseStringprepException {
 		PresenceCapabilitiesManager.processCapsQueryResponse(packet);
+		if (packet.getType() == StanzaType.result) {
+			String id = packet.getAttributeStaticStr("id");
+			if (id == null)
+				return;
+			BareJID serviceJid = id.contains("@") ? BareJID.bareJIDInstance(id) : packet.getStanzaTo().getBareJID();
+			Element query = packet.getElement().getChild("query", DiscoveryModule.DISCO_INFO_XMLNS);
+			if (query != null) {
+				String node = query.getAttributeStaticStr("node");
+				if (node != null) {
+					String[] features = PresenceCapabilitiesManager.getNodeFeatures(node);
+					if (features != null) {
+						eventBus.fire(new PresenceCollectorModule.CapsChangeEvent(serviceJid, packet.getStanzaFrom(), new String[] { node }, EMPTY_FEATURES,
+																				  new HashSet<>(Arrays.asList(features))));
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -92,17 +115,21 @@ public class CapsModule
 			caps = PresenceCapabilitiesManager.processPresence(c);
 			if (caps != null) {
 				Arrays.sort(caps);
-			}
 
-			Queue<Packet> results = new ArrayDeque<>();
-			JID pubSubJid = packet.getStanzaTo();
-			if (pubSubJid.getLocalpart() != null) {
-				String compName = config.getComponentJID().getLocalpart();
-				pubSubJid = JID.jidInstanceNS(compName + "." + pubSubJid.getDomain());
-			}
+				JID pubSubJid = packet.getStanzaTo();
+				if (pubSubJid.getLocalpart() != null) {
+					String compName = config.getComponentJID().getLocalpart();
+					pubSubJid = JID.jidInstanceNS(compName + "." + pubSubJid.getDomain());
+				}
 
-			PresenceCapabilitiesManager.prepareCapsQueries(pubSubJid, jid, caps, results);
-			packetWriter.write(results);
+				for (String node : caps) {
+					if (PresenceCapabilitiesManager.getNodeFeatures(node) == null) {
+						Packet p = PresenceCapabilitiesManager.prepareCapsQuery(jid, pubSubJid, node);
+						p.getElement().setAttribute("id", packet.getStanzaTo().getBareJID().toString());
+						packetWriter.write(p);
+					}
+				}
+			}
 		}
 		return caps;
 	}

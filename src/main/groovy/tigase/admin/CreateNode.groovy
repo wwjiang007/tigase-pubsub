@@ -165,7 +165,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 
 				def publishNodeModule = kernel.getInstance(PublishItemModule.class);
 				publishNodeModule.sendNotifications(colE,
-													p.getStanzaTo(), collection, nodeConfig,
+													p.getStanzaTo(), collection, colNodeConfig,
 													colNodeAffiliations, colNodeSubscriptions);
 			}
 

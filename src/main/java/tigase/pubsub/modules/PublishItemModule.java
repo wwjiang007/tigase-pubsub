@@ -161,7 +161,8 @@ public class PublishItemModule
 				new Object[]{items, nodeName, leafNodeConfig, nodeAffiliations, nodeSubscriptions});
 
 		if ((parents != null) && (parents.size() > 0)) {
-			for (String collection : parents) {
+			for (int i=1; i<=parents.size(); i++) {
+				String collection = parents.get(i-1);
 				Map<String, String> headers = new HashMap<String, String>();
 
 				headers.put("Collection", collection);
@@ -171,7 +172,7 @@ public class PublishItemModule
 				IAffiliations colNodeAffiliations = this.getRepository().getNodeAffiliations(serviceJID, collection);
 
 				sendNotifications(items, JID.jidInstance(serviceJID), nodeName, headers, colNodeConfig,
-								  colNodeAffiliations, colNodeSubscriptions);
+								  colNodeAffiliations, colNodeSubscriptions, i);
 			}
 		}
 	}
@@ -355,13 +356,17 @@ public class PublishItemModule
 								  AbstractNodeConfig nodeConfig, IAffiliations nodeAffiliations,
 								  ISubscriptions nodesSubscriptions) throws RepositoryException {
 		sendNotifications(itemToSend, jidFrom, publisherNodeName, null, nodeConfig, nodeAffiliations,
-						  nodesSubscriptions);
+						  nodesSubscriptions, 0);
 	}
 
 	public void sendNotifications(final Element itemToSend, final JID jidFrom, final String publisherNodeName,
 								  final Map<String, String> headers, AbstractNodeConfig nodeConfig,
-								  IAffiliations nodeAffiliations, ISubscriptions nodesSubscriptions)
+								  IAffiliations nodeAffiliations, ISubscriptions nodesSubscriptions, int depth)
 			throws RepositoryException {
+		if (depth > 1) {
+			return;
+		}
+
 		beforePrepareNotification(nodeConfig, nodesSubscriptions);
 
 		HashSet<JID> tmp = new HashSet<JID>();
@@ -580,17 +585,36 @@ public class PublishItemModule
 			String nodeName = feature.substring(0, feature.length() - "+notify".length());
 
 			try {
-				AbstractNodeConfig nodeConfig = repository.getNodeConfig(event.serviceJid, nodeName);
-				if (nodeConfig != null &&
-						nodeConfig.getSendLastPublishedItem() == SendLastPublishedItem.on_sub_and_presence) {
-					publishLastItem(event.serviceJid, nodeConfig, event.buddyJid);
-				}
+				publishLastItem(event.serviceJid, nodeName, event.buddyJid);
 			} catch (RepositoryException ex) {
 				log.log(Level.WARNING,
-						"Exception while sending last published item on on_sub_and_presence with CAPS filtering");
+						"Exception while sending last published item on on_sub_and_presence for service jid " +
+								event.serviceJid + " and node " + nodeName);
 			}
 		}
 
+	}
+
+	protected void publishLastItem(BareJID serviceJid, String nodeName, JID buddyJid) throws RepositoryException {
+		AbstractNodeConfig nodeConfig = repository.getNodeConfig(serviceJid, nodeName);
+		if (nodeConfig != null && nodeConfig.getSendLastPublishedItem() == SendLastPublishedItem.on_sub_and_presence) {
+			if (nodeConfig instanceof LeafNodeConfig) {
+				publishLastItem(serviceJid, nodeConfig, buddyJid);
+			} else if (nodeConfig instanceof CollectionNodeConfig) {
+				String[] childNodes = repository.getChildNodes(serviceJid, nodeConfig.getNodeName());
+				if (childNodes != null) {
+					for (String childNode : childNodes) {
+						try {
+							publishLastItem(serviceJid, childNode, buddyJid);
+						} catch (RepositoryException ex) {
+							log.log(Level.WARNING,
+									"Exception while sending last published item on on_sub_and_presence for service jid " +
+											serviceJid + " and node " + childNode);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	@HandleEvent

@@ -148,7 +148,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				def parents = publishNodeModule.getParents(toJid, node);
 
 				if (!parents) {
-					parents.each { collection ->
+					parents.eachWithIndex { collection, index ->
 						def headers = [ Collection: collection ];
 
 						AbstractNodeConfig colNodeConfig = pubsubRepository.getNodeConfig(toJid, collection);
@@ -159,7 +159,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 
 						publishNodeModule.sendNotifications(items, p.getStanzaTo(),
 															node, headers, colNodeConfig,
-															colNodeAffiliations, colNodeSubscriptions)
+															colNodeAffiliations, colNodeSubscriptions, index + 1);
 					}
 				}
 

@@ -198,7 +198,7 @@ public class NodeCreateModule
 				Element colE = new Element("collection", new String[]{"node"}, new String[]{collection});
 
 				colE.addChild(new Element("associate", new String[]{"node"}, new String[]{nodeName}));
-				publishModule.sendNotifications(colE, packet.getStanzaTo(), collection, nodeConfig, colNodeAffiliations,
+				publishModule.sendNotifications(colE, packet.getStanzaTo(), collection, colNodeConfig, colNodeAffiliations,
 												colNodeSubscriptions);
 			}
 			if (instantNode) {
