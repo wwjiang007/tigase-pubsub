@@ -39,6 +39,7 @@ import tigase.pubsub.modules.commands.DefaultConfigCommand;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.server.DisableDisco;
 import tigase.server.Packet;
+import tigase.server.Presence;
 import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticsList;
 import tigase.xmpp.Authorization;
@@ -138,6 +139,11 @@ public class PubSubComponent
 
 	@Override
 	public int hashCodeForPacket(Packet packet) {
+		if (packet.getElemName() == Presence.ELEM_NAME) {
+			if (packet.getStanzaFrom() != null) {
+				return packet.getStanzaFrom().hashCode();
+			}
+		}
 		int hash = packet.hashCode();
 
 		return hash;
