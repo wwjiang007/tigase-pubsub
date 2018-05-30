@@ -331,7 +331,7 @@ public class CachedPubSubRepository<T>
 
 	@Override
 	public String[] getRootCollection(BareJID serviceJid) throws RepositoryException {
-		RootCollectionSet rootCollection = getRootCollectionSet(serviceJid);
+		RootCollectionSetIfc rootCollection = getRootCollectionSet(serviceJid);
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Getting root collection, serviceJid: {0}", new Object[]{serviceJid});
 		}
@@ -470,6 +470,7 @@ public class CachedPubSubRepository<T>
 												 node -> (node.getNodeConfig() instanceof LeafNodeConfig));
 
 		if (nodes.isEmpty()) {
+			query.getRsm().setIndex(0);
 			query.getRsm().setCount(0);
 			return;
 		}
@@ -497,7 +498,7 @@ public class CachedPubSubRepository<T>
 					"Getting node items, serviceJid: {0}, nodeName: {1}, key: {2}, node: {3}, nodeId: {4}",
 					new Object[]{serviceJid, nodeName, key, node, nodeId});
 		}
-		RootCollectionSet rootCollectionSet = getRootCollectionSet(serviceJid);
+		RootCollectionSetIfc rootCollectionSet = getRootCollectionSet(serviceJid);
 		if (rootCollectionSet != null) {
 			rootCollectionSet.remove(nodeName);
 		}
@@ -639,7 +640,7 @@ public class CachedPubSubRepository<T>
 		return this.nodes.get(key);
 	}
 
-	protected RootCollectionSet getRootCollectionSet(BareJID serviceJid) throws RepositoryException {
+	protected RootCollectionSetIfc getRootCollectionSet(BareJID serviceJid) throws RepositoryException {
 		RootCollectionSet rootCollection = this.rootCollection.get(serviceJid);
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Getting root collection, serviceJid: {0}", new Object[]{serviceJid});
@@ -781,7 +782,7 @@ public class CachedPubSubRepository<T>
 		}
 	}
 
-	public static class RootCollectionSet {
+	public static class RootCollectionSet implements RootCollectionSetIfc {
 
 		private static final Logger log = Logger.getLogger(RootCollectionSet.class.getCanonicalName());
 
@@ -802,6 +803,7 @@ public class CachedPubSubRepository<T>
 			this.cachedPubSubRepository = cachedPubSubRepository;
 		}
 
+		@Override
 		public void add(String node) {
 			synchronized (this) {
 				switch (state) {
@@ -827,6 +829,7 @@ public class CachedPubSubRepository<T>
 			return serviceJid;
 		}
 
+		@Override
 		public void remove(String node) {
 			synchronized (this) {
 				switch (state) {
@@ -843,6 +846,7 @@ public class CachedPubSubRepository<T>
 			}
 		}
 
+		@Override
 		public Set<String> values() throws IllegalStateException {
 			synchronized (this) {
 				switch (state) {

@@ -25,11 +25,13 @@ import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersSubscription;
+import tigase.xml.Element;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.mam.MAMRepository;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface description
@@ -98,5 +100,17 @@ public interface IPubSubRepository
 
 		String getNode();
 
+		void setMessage(Element message);
+
+	}
+
+	interface RootCollectionSetIfc {
+
+		void add(String node);
+
+		void remove(String node);
+
+		Set<String> values();
+		
 	}
 }

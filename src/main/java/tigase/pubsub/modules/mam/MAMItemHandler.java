@@ -22,7 +22,6 @@ package tigase.pubsub.modules.mam;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.repository.IPubSubRepository;
-import tigase.pubsub.repository.PubSubDAO;
 import tigase.pubsub.utils.Logic;
 import tigase.xml.Element;
 import tigase.xmpp.mam.MAMRepository;
@@ -54,7 +53,7 @@ public class MAMItemHandler
 			itemsEl.addChild(itemEl);
 			Element message = logic.prepareNotificationMessage(query.getComponentJID(), query.getQuestionerJID(),
 															   String.valueOf(++this.idCounter), itemsEl, headers);
-			((PubSubDAO.Item) item).setMessage(message);
+			((IPubSubRepository.Item) item).setMessage(message);
 		}
 		super.itemFound(query, item);
 	}

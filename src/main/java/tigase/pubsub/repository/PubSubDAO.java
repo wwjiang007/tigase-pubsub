@@ -243,6 +243,7 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 			return item;
 		}
 
+		@Override
 		public void setMessage(Element item) {
 			this.item = item;
 		}

@@ -26,8 +26,8 @@ import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
+import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.ISubscriptions;
-import tigase.pubsub.repository.cached.CachedPubSubRepository;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Packet;
@@ -55,7 +55,7 @@ public class DefaultPubSubLogic
 	private PubSubConfig pubSubConfig;
 
 	@Inject
-	private CachedPubSubRepository repository;
+	private IPubSubRepository repository;
 
 	@Override
 	public void checkAccessPermission(BareJID serviceJid, String nodeName, JID senderJid)
@@ -213,7 +213,7 @@ public class DefaultPubSubLogic
 		return pubSubConfig;
 	}
 
-	protected CachedPubSubRepository getRepository() {
+	protected IPubSubRepository getRepository() {
 		return repository;
 	}
 }
