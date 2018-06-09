@@ -248,6 +248,9 @@ public class PresenceCollectorModule
 		final StanzaType type = packet.getType();
 		final JID jid = packet.getStanzaFrom();
 		final JID toJid = packet.getStanzaTo();
+		if (jid == null || toJid == null) {
+			return;
+		}
 		// why it is here if it is also below?
 		// PresenceChangeEvent event = new PresenceChangeEvent( packet );
 		// config.getEventBus().fire( event, this );

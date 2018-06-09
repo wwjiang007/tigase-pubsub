@@ -275,7 +275,11 @@ public class PepPlugin
 								session.isUserId(packet.getStanzaTo().getBareJID())))) {
 
 			Packet result = packet.copyElementOnly();
-			if (packet.getStanzaTo() == null) {
+			if (packet.getStanzaTo() == null || packet.getStanzaFrom() == null) {
+				if (session == null ||
+						(packet.getStanzaTo() != null && session.isUserId(packet.getStanzaTo().getBareJID()))) {
+					return;
+				}
 				// in case if packet is from local user without from/to
 				JID userJid = JID.jidInstance(session.getBareJID());
 				result.initVars(session.getJID(), userJid);
