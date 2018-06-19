@@ -178,33 +178,36 @@ public class StoredProcedures {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-
 		try {
-			String jidSha1 = sha1OfLower(jid);
-			PreparedStatement ps = conn.prepareStatement("select jid_id from tig_pubsub_jids where jid_sha1 = ?");
-
-			ps.setString(1, jidSha1);
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				return rs.getLong(1);
-			} else {
-				ps = conn.prepareStatement("insert into tig_pubsub_jids (jid, jid_sha1) values (?, ?)",
-										   Statement.RETURN_GENERATED_KEYS);
-				ps.setString(1, jid);
-				ps.setString(2, jidSha1);
-				ps.executeUpdate();
-				rs = ps.getGeneratedKeys();
-				if (rs.next()) {
-					return rs.getLong(1);
-				}
-			}
-			return null;
+			return tigPubSubEnsureJid(conn, jid);
 		} catch (SQLException e) {
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
 			conn.close();
 		}
+	}
+
+	public static Long tigPubSubEnsureJid(Connection conn, String jid) throws SQLException {
+		String jidSha1 = sha1OfLower(jid);
+		PreparedStatement ps = conn.prepareStatement("select jid_id from tig_pubsub_jids where jid_sha1 = ?");
+
+		ps.setString(1, jidSha1);
+		ResultSet rs = ps.executeQuery();
+		if (rs.next()) {
+			return rs.getLong(1);
+		} else {
+			ps = conn.prepareStatement("insert into tig_pubsub_jids (jid, jid_sha1) values (?, ?)",
+					Statement.RETURN_GENERATED_KEYS);
+			ps.setString(1, jid);
+			ps.setString(2, jidSha1);
+			ps.executeUpdate();
+			rs = ps.getGeneratedKeys();
+			if (rs.next()) {
+				return rs.getLong(1);
+			}
+		}
+		return null;
 	}
 
 	public static Long tigPubSubEnsureServiceJid(String serviceJid) throws SQLException {
@@ -888,27 +891,21 @@ public class StoredProcedures {
 										  ResultSet[] data) throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
-		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+		conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
 
+		conn.setAutoCommit(false);
 		try {
 			PreparedStatement ps = conn.prepareStatement(
-					"select 1 from tig_pubsub_items " + "where node_id = ? and id = ?");
-			ps.setLong(1, nodeId);
-			ps.setString(2, itemId);
-
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				ps = conn.prepareStatement(
-						"update tig_pubsub_items set update_date = ?, data = ? " + "where node_id = ? and id = ?");
-				ps.setTimestamp(1, ts);
-				ps.setString(2, itemData);
-				ps.setLong(3, nodeId);
-				ps.setString(4, itemId);
-				ps.executeUpdate();
-			} else {
-				long publisherId = tigPubSubEnsureJid(publisher);
+					"update tig_pubsub_items set update_date = ?, data = ? " + "where node_id = ? and id = ?");
+			ps.setTimestamp(1, ts);
+			ps.setString(2, itemData);
+			ps.setLong(3, nodeId);
+			ps.setString(4, itemId);
+			int updated = ps.executeUpdate();
+			if (updated == 0) {
+				long publisherId = tigPubSubEnsureJid(conn, publisher);
 				ps = conn.prepareStatement("insert into tig_pubsub_items (node_id, id, creation_date, " +
-												   "update_date, publisher_id, data) values (?, ?, ?, ?, ?, ?)");
+						"update_date, publisher_id, data) values (?, ?, ?, ?, ?, ?)");
 				ps.setLong(1, nodeId);
 				ps.setString(2, itemId);
 				ps.setTimestamp(3, ts);
@@ -917,10 +914,13 @@ public class StoredProcedures {
 				ps.setString(6, itemData);
 				ps.executeUpdate();
 			}
+			conn.commit();
 		} catch (SQLException e) {
+			conn.rollback();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
+			//conn.setAutoCommit(true);
 			conn.close();
 		}
 	}
