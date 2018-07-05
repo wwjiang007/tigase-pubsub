@@ -891,36 +891,34 @@ public class StoredProcedures {
 										  ResultSet[] data) throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
-		conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
-		conn.setAutoCommit(false);
 		try {
-			PreparedStatement ps = conn.prepareStatement(
-					"update tig_pubsub_items set update_date = ?, data = ? " + "where node_id = ? and id = ?");
-			ps.setTimestamp(1, ts);
-			ps.setString(2, itemData);
-			ps.setLong(3, nodeId);
-			ps.setString(4, itemId);
-			int updated = ps.executeUpdate();
-			if (updated == 0) {
-				long publisherId = tigPubSubEnsureJid(conn, publisher);
-				ps = conn.prepareStatement("insert into tig_pubsub_items (node_id, id, creation_date, " +
-						"update_date, publisher_id, data) values (?, ?, ?, ?, ?, ?)");
-				ps.setLong(1, nodeId);
-				ps.setString(2, itemId);
-				ps.setTimestamp(3, ts);
-				ps.setTimestamp(4, ts);
-				ps.setLong(5, publisherId);
-				ps.setString(6, itemData);
-				ps.executeUpdate();
+			synchronized (StoredProcedures.class) {
+				PreparedStatement ps = conn.prepareStatement(
+						"update tig_pubsub_items set update_date = ?, data = ? " + "where node_id = ? and id = ?");
+				ps.setTimestamp(1, ts);
+				ps.setString(2, itemData);
+				ps.setLong(3, nodeId);
+				ps.setString(4, itemId);
+				int updated = ps.executeUpdate();
+				if (updated == 0) {
+					long publisherId = tigPubSubEnsureJid(conn, publisher);
+					ps = conn.prepareStatement("insert into tig_pubsub_items (node_id, id, creation_date, " +
+													   "update_date, publisher_id, data) values (?, ?, ?, ?, ?, ?)");
+					ps.setLong(1, nodeId);
+					ps.setString(2, itemId);
+					ps.setTimestamp(3, ts);
+					ps.setTimestamp(4, ts);
+					ps.setLong(5, publisherId);
+					ps.setString(6, itemData);
+					ps.executeUpdate();
+				}
 			}
-			conn.commit();
 		} catch (SQLException e) {
-			conn.rollback();
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
 		} finally {
-			//conn.setAutoCommit(true);
 			conn.close();
 		}
 	}
