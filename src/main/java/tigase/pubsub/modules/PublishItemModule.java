@@ -323,16 +323,7 @@ public class PublishItemModule
 			throw new RuntimeException(e);
 		}
 	}
-
-	public void publish(BareJID serviceJid, String publisher, String nodeName, Element item)
-			throws RepositoryException {
-		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
-		IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJid, nodeName);
-		ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(serviceJid, nodeName);
-
-		doPublishItems(serviceJid, nodeName, (LeafNodeConfig) nodeConfig, publisher, Collections.singletonList(item));
-	}
-
+	
 	public void publishLastItem(BareJID serviceJid, AbstractNodeConfig nodeConfig, JID destinationJID)
 			throws RepositoryException {
 		IItems nodeItems = this.getRepository().getNodeItems(serviceJid, nodeConfig.getNodeName());
