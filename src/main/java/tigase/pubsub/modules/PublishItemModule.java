@@ -138,7 +138,7 @@ public class PublishItemModule
 			}
 		}
 
-		eventBus.fire(new ItemPublishedEvent(serviceJID, nodeName, itemsToSend));
+		eventBus.fire(new ItemPublishedEvent(serviceJID, nodeName, publisher, itemsToSend));
 		sendNotifications(serviceJID, nodeName, itemsToSend);
 	}
 
@@ -734,11 +734,13 @@ public class PublishItemModule
 
 		public final List<Element> itemsToSend;
 		public final String node;
+		public final String publisher;
 		public final BareJID serviceJid;
 
-		public ItemPublishedEvent(BareJID serviceJid, String node, List<Element> itemsToSend) {
+		public ItemPublishedEvent(BareJID serviceJid, String node, String publisher, List<Element> itemsToSend) {
 			this.serviceJid = serviceJid;
 			this.node = node;
+			this.publisher = publisher;
 			this.itemsToSend = itemsToSend;
 		}
 
