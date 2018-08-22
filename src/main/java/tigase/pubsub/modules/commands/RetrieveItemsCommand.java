@@ -33,7 +33,7 @@ import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubRepository;
-import tigase.util.datetime.DateTimeFormatter;
+import tigase.util.datetime.TimestampHelper;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
@@ -60,7 +60,7 @@ public class RetrieveItemsCommand
 	public static final String TIGASE_PUBSUB_SERVICE_KEY = "tigase-pubsub#service-name";
 
 	public static final String TIGASE_PUBSUB_TIMESTAMP_KEY = "tigase-pubsub#timestamp";
-	private final DateTimeFormatter dtf = new DateTimeFormatter();
+	private final TimestampHelper dtf = new TimestampHelper();
 	@Inject
 	private PubSubConfig config;
 	@Inject
@@ -83,7 +83,7 @@ public class RetrieveItemsCommand
 					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_SERVICE_KEY, "", "Service name"));
 					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_NODENAME_KEY, "", "Node name"));
 					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_ITEMID_KEY, "", "Item ID"));
-					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_TIMESTAMP_KEY, dtf.formatDateTime(new Date()),
+					form.addField(Field.fieldTextSingle(TIGASE_PUBSUB_TIMESTAMP_KEY, dtf.format(new Date()),
 														"Items since"));
 					form.addField(Field.fieldHidden(TIGASE_PUBSUB_INTERNAL_KEY, ""));
 
@@ -98,8 +98,8 @@ public class RetrieveItemsCommand
 						String nodeName = form.getAsString(TIGASE_PUBSUB_NODENAME_KEY);
 						String nodeId = form.getAsString(TIGASE_PUBSUB_ITEMID_KEY);
 						String timeStr = form.getAsString(TIGASE_PUBSUB_TIMESTAMP_KEY);
-						final Calendar timestamp =
-								timeStr == null || timeStr.trim().length() == 0 ? null : dtf.parseDateTime(timeStr);
+						final Date timestamp =
+								timeStr == null || timeStr.trim().length() == 0 ? null : dtf.parseTimestamp(timeStr);
 						String internalId = form.getAsString(TIGASE_PUBSUB_INTERNAL_KEY);
 
 						final JID sender = request.getSender();
@@ -140,7 +140,7 @@ public class RetrieveItemsCommand
 								f.addChild(field);
 							}
 						} else {
-							String[] allItems = nodeItems.getItemsIdsSince(timestamp.getTime());
+							String[] allItems = nodeItems.getItemsIdsSince(timestamp);
 							for (String id : allItems) {
 								Element i = new Element("item");
 								Element fi = new Element("field", new String[]{"var"}, new String[]{"id"});

@@ -39,7 +39,7 @@ import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Packet;
-import tigase.util.datetime.DateTimeFormatter;
+import tigase.util.datetime.TimestampHelper;
 import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -49,6 +49,7 @@ import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
+import java.text.ParseException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -74,7 +75,7 @@ public class PublishItemModule
 			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
 			.add(ElementCriteria.name("publish"));
 	private final LeafNodeConfig defaultPepNodeConfig;
-	private final DateTimeFormatter dtf = new DateTimeFormatter();
+	private final TimestampHelper dtf = new TimestampHelper();
 	private final Set<String> pepNodes = new HashSet<String>();
 	@Inject
 	private EventBus eventBus;
@@ -680,7 +681,7 @@ public class PublishItemModule
 		return nodeConfig;
 	}
 
-	private List<Element> makeItemsToSend(Element publish) {
+	private List<Element> makeItemsToSend(Element publish) throws PubSubException {
 		List<Element> items = new ArrayList<Element>();
 
 		for (Element si : publish.getChildren()) {
@@ -689,11 +690,15 @@ public class PublishItemModule
 			}
 			String expireAttr = si.getAttributeStaticStr("expire-at");
 			if (expireAttr != null) {
-				Calendar parseDateTime = dtf.parseDateTime(expireAttr);
-				if (null != parseDateTime) {
-					si.setAttribute("expire-at", dtf.formatDateTime(parseDateTime.getTime()));
-				} else {
-					si.removeAttribute("expire-at");
+				try {
+					Date parseDateTime = dtf.parseTimestamp(expireAttr);
+					if (null != parseDateTime) {
+						si.setAttribute("expire-at", dtf.format(parseDateTime));
+					} else {
+						si.removeAttribute("expire-at");
+					}
+				} catch (ParseException e) {
+					throw new PubSubException(Authorization.BAD_REQUEST, "Invalid value for attribute expire-at");
 				}
 			}
 			items.add(si);

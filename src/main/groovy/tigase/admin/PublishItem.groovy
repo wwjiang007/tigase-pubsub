@@ -40,7 +40,7 @@ import tigase.pubsub.repository.IPubSubRepository
 import tigase.server.Command
 import tigase.server.Iq
 import tigase.server.Packet
-import tigase.util.datetime.DateTimeFormatter
+import tigase.util.datetime.TimestampHelper
 import tigase.xml.DomBuilderHandler
 import tigase.xml.Element
 import tigase.xml.SingletonFactory
@@ -72,7 +72,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 		def expire = Command.getFieldValue(p, EXPIRE);
 		def entry = Command.getFieldValues(p, ENTRY);
 
-		def dtf = new DateTimeFormatter();
+		def dtf = new TimestampHelper();
 
 		if (!node || !entry) {
 			def result = p.commandResult(Command.DataType.form);
@@ -118,11 +118,11 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 
 				if (expire) {
 					try {
-						def parseDateTime = dtf.parseDateTime(expire);
+						def parseDateTime = dtf.parseTimestamp(expire);
 						if (parseDateTime) {
 							item.setAttribute(EXPIRE, dtf.formatDateTime(parseDateTime.getTime()));
 						}
-					} catch (IllegalArgumentException e) {
+					} catch (java.text.ParseException e) {
 						throw new PubSubException(Authorization.BAD_REQUEST,
 												  "Expiration date " + expire + " is malformed.");
 					}
