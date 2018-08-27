@@ -120,7 +120,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 					try {
 						def parseDateTime = dtf.parseTimestamp(expire);
 						if (parseDateTime) {
-							item.setAttribute(EXPIRE, dtf.formatDateTime(parseDateTime.getTime()));
+							item.setAttribute(EXPIRE, dtf.format(parseDateTime));
 						}
 					} catch (java.text.ParseException e) {
 						throw new PubSubException(Authorization.BAD_REQUEST,
