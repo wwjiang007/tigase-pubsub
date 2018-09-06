@@ -32,9 +32,9 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * Class description
+ * Class contains basic configuration of PubSub component used by component modules.
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:10:54 GMT
  */
 @Bean(name = "pubsubConfig", parent = PubSubComponent.class, active = true)

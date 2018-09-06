@@ -39,9 +39,9 @@ import java.util.Map;
 import java.util.logging.Level;
 
 /**
- * Class description
+ * Implementation of subscription retrieval module.
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:27:10 GMT
  */
 @Bean(name = "retrieveSubscriptionsModule", parent = PubSubComponent.class, active = true)

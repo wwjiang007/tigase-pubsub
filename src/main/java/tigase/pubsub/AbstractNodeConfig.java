@@ -29,9 +29,9 @@ import tigase.form.Form;
 import tigase.xml.Element;
 
 /**
- * Class description
+ * Common implementation of PubSub node configuration handler.
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:11:05 GMT
  */
 public abstract class AbstractNodeConfig {

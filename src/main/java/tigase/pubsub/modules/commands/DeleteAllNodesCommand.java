@@ -44,9 +44,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class description
+ * Implementation of ad-hoc commands which removes all PubSub nodes.
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:11:57 GMT
  */
 @Bean(name = "deleteAllNodesCommand", active = true)

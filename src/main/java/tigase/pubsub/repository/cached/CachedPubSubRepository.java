@@ -53,9 +53,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * Class description
+ * Implementation of IPubSubRepository interface providing access to the database for data storage with caching.
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:20:46 GMT
  */
 @Bean(name = "pubsubRepository", parent = PubSubComponent.class, active = true)

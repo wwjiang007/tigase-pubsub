@@ -53,7 +53,7 @@ import java.util.logging.Level;
 /**
  * Class description
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.1.0, 2010.11.02 at 01:05:02 MDT
  */
 @Bean(name = "pubsub", parent = Kernel.class, active = true)
@@ -234,7 +234,7 @@ public class PubSubComponent
 	 * pubsub@xxx address as pubsub service jid since we added support to use PEP and we have multiple domains support
 	 * with separated nodes.
 	 *
-	 * @param packet
+	 * @param packet packet to check
 	 *
 	 * @return true - if packet service jid is ok and should be processed
 	 */

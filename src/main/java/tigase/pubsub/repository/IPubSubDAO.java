@@ -39,9 +39,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Interface description
+ * Interface of database access layer for PubSub component.
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:16:25 GMT
  */
 public interface IPubSubDAO<T, S extends DataSource, Q extends Query>

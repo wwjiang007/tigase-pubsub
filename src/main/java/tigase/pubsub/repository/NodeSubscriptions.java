@@ -35,9 +35,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class description
+ * Implementation of PubSub node subscription handling.
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:27:46 GMT
  */
 public abstract class NodeSubscriptions

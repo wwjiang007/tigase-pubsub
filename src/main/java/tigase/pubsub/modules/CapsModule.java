@@ -47,6 +47,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 /**
+ * Class implements discovery of capabilities using disco#info query and CAPS.
+ *
  * @author andrzej
  */
 @Bean(name = "capsModule", parent = PubSubComponent.class, active = true)
@@ -103,9 +105,9 @@ public class CapsModule
 	/**
 	 * Processes presence packet and send disco#info queries when needed
 	 *
-	 * @param packet
+	 * @param packet presence packet to process
 	 *
-	 * @return
+	 * @return CAPS nodes found in presence packets or null
 	 */
 	public String[] processPresence(Packet packet) {
 		String[] caps = null;

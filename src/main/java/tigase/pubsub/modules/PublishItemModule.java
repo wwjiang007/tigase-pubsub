@@ -56,9 +56,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class description
+ * Implementation of the PubSub component module responsible for publication of new entries on the pubsub nodes.
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:21:54 GMT
  */
 @Bean(name = "publishItemModule", parent = PubSubComponent.class, active = true)

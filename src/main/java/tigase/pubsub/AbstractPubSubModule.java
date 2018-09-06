@@ -41,9 +41,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class description
+ * Base class for modules of PubSub component. Provides commonly used properties and methods.
  *
- * @author Artur Hefczyc <artur.hefczyc@tigase.org>
+ * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:24:03 GMT
  */
 public abstract class AbstractPubSubModule

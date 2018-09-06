@@ -90,6 +90,8 @@ public class ClusterNodeMap {
 	/**
 	 * Stupid name, but important method. This meathod realize Load-Balancing
 	 *
+	 * @param nodeName name of the cluster node
+	 *
 	 * @return Name of (usual) less loaded cluster node
 	 */
 	public String getNewOwnerOfNode(final String nodeName) {
