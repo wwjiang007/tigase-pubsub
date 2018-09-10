@@ -247,13 +247,10 @@ delimiter //
 create function TigPubSubEnsureServiceJid(_service_jid varchar(2049)) returns bigint DETERMINISTIC
 begin
 	declare _service_id bigint;
-	declare _service_jid_sha1 char(40);
-
-	select SHA1(_service_jid) into _service_jid_sha1;
-	select service_id into _service_id from tig_pubsub_service_jids where service_jid_sha1 = _service_jid_sha1;
+	select service_id into _service_id from tig_pubsub_service_jids where service_jid_sha1 = SHA1(_service_jid);
 	if _service_id is null then
 		insert into tig_pubsub_service_jids (service_jid, service_jid_sha1)
-			values (_service_jid, _service_jid_sha1);
+			values (_service_jid, SHA1(_service_jid));
 		select LAST_INSERT_ID() into _service_id;
 	end if;
 
@@ -265,13 +262,11 @@ end //
 create function TigPubSubEnsureJid(_jid varchar(2049)) returns bigint DETERMINISTIC
 begin
 	declare _jid_id bigint;
-	declare _jid_sha1 char(40);
 
-	select SHA1(_jid) into _jid_sha1;
-	select jid_id into _jid_id from tig_pubsub_jids where jid_sha1 = _jid_sha1;
+	select jid_id into _jid_id from tig_pubsub_jids where jid_sha1 = SHA1(_jid);
 	if _jid_id is null then
 		insert into tig_pubsub_jids (jid, jid_sha1)
-			values (_jid, _jid_sha1)
+			values (_jid, SHA1(_jid))
 			on duplicate key update jid_id = LAST_INSERT_ID(jid_id);
 		select LAST_INSERT_ID() into _jid_id;
 	end if;
