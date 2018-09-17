@@ -209,7 +209,7 @@ begin
 	select service_id into _service_id from tig_pubsub_service_jids where service_jid_sha1 = SHA1(LOWER(_service_jid));
 	if _service_id is null then
 		insert into tig_pubsub_service_jids (service_jid, service_jid_sha1)
-			values (_service_jid, SHA1(LOWER(_service_jid));
+			values (_service_jid, SHA1(LOWER(_service_jid)));
 		select LAST_INSERT_ID() into _service_id;
 	end if;
 
