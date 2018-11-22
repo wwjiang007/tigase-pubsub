@@ -247,6 +247,16 @@ public class PepPlugin
 			JID userJid = JID.jidInstance(session.getBareJID());
 			result.initVars(packet.getStanzaFrom() != null ? packet.getStanzaFrom() : session.getJID(), userJid);
 		}
+		if (packet.getStanzaFrom() == null) {
+			// at this point we should already have "from" attribute set
+			// if we do not have it, then we should drop this packet
+			if (log.isLoggable(Level.FINEST)) {
+				log.log(Level.FINEST,
+						"received <iq/> packet to forward to PubSub component without 'from' attribute, dropping packet = {0}",
+						packet);
+			}
+			return;
+		}
 		result.setPacketFrom(packet.getFrom());
 		result.setPacketTo(getPubsubJid(session, packet.getStanzaTo()));
 
