@@ -31,9 +31,12 @@ public enum Affiliation {
 	/**
 	 * The manager of a node, of which there may be more than one; often but not necessarily the node creator.
 	 */
-	owner(4, true, true, true, true, true, true, true),
+	owner(5, true, true, true, true, true, true, true),
 	/** An entity that is allowed to publish items to a node. */
-	publisher(3, true, true, true, true, false, false, false);
+	publisher(3, true, true, true, true, false, false, false),
+
+	/** An entity that is allowed to publish items to a node. */
+	publish_only(4, false, false, true, true, false, false, false);
 
 	private final boolean configureNode;
 

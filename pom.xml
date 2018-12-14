@@ -478,6 +478,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>tigase</groupId>
+            <artifactId>tigase-database-migrator</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.osgi.core</artifactId>
             <version>1.4.0</version>

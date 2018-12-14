@@ -42,8 +42,8 @@ import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.mam.MAMRepository;
 
 import java.sql.*;
-import java.util.*;
 import java.util.Date;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 
@@ -515,8 +515,8 @@ public class PubSubDAOJDBC
 
 						if (log.isLoggable(Level.FINEST)) {
 							log.log(Level.FINEST,
-									"Getting Node ID: serviceJid: {0}, nodeName: {1}, nodeId: {2}, get_node_id_sp: {3}",
-									new Object[]{serviceJid, nodeName, nodeId, GET_NODE_META_QUERY});
+									"Getting Node ID: serviceJid: {0}, nodeName: {1}, nodeId: {2}, get_node_id_sp: {3}, nodeMeta: {4}",
+									new Object[]{serviceJid, nodeName, nodeId, GET_NODE_META_QUERY, nodeMeta});
 						}
 						return nodeMeta;
 					}
