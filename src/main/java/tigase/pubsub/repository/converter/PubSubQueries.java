@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 class PubSubQueries {
 
 	final static String NODES = "SELECT host, node, parent, nodeid, ( SELECT COUNT(*) FROM `pubsub_node` WHERE pubsub_node.host = outer_pubsub_node.host AND `node` like CONCAT(outer_pubsub_node.node, '/%')) AS counter FROM pubsub_node as outer_pubsub_node order by host, counter DESC, node";
+	final static String NODES_MSSQL = "SELECT host, node, parent, nodeid, ( SELECT COUNT(*) FROM [pubsub_node] WHERE pubsub_node.host = outer_pubsub_node.host AND [node] like CONCAT(outer_pubsub_node.node, '/%')) AS counter FROM pubsub_node as outer_pubsub_node order by host, counter DESC, node";
 	final static String NODE_OPTIONS = "SELECT name, val FROM pubsub_node_option WHERE nodeid = ?";
 	final static String NODE_OWNER = "SELECT owner FROM pubsub_node_owner where nodeid = ?";
 	final static String SUBSCRIPTIONS = "SELECT jid, affiliation, subscriptions, stateid FROM pubsub_state WHERE nodeid = ?";
@@ -57,8 +58,10 @@ class PubSubQueries {
 		ejabberdSqlGeneric.put(SUBSCRIPTIONS, SUBSCRIPTIONS);
 		ejabberdSqlGeneric.put(SUBSCRIPTION_OPT, SUBSCRIPTION_OPT);
 
-		ejabberdQueries.put(DataRepository.dbTypes.sqlserver.name(), ejabberdSqlGeneric);
-		ejabberdQueries.put(DataRepository.dbTypes.jtds.name(), ejabberdSqlGeneric);
+		Map<String, String> ejabberdMssql = new ConcurrentHashMap<>(ejabberdSqlGeneric);
+		ejabberdMssql.put(NODES, NODES_MSSQL);
+		ejabberdQueries.put(DataRepository.dbTypes.sqlserver.name(), ejabberdMssql);
+		ejabberdQueries.put(DataRepository.dbTypes.jtds.name(), ejabberdMssql);
 		ejabberdQueries.put(DataRepository.dbTypes.mysql.name(), ejabberdSqlGeneric);
 		ejabberdQueries.put(DataRepository.dbTypes.postgresql.name(), ejabberdSqlGeneric);
 
