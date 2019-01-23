@@ -135,4 +135,11 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <repositories>
+        <repository>
+            <id>tigase</id>
+            <url>http://maven-repo.tigase.org/repository/tigase</url>
+        </repository>
+    </repositories>
 </project>
