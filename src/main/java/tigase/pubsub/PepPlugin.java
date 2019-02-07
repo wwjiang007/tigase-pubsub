@@ -29,6 +29,7 @@ import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.*;
 import tigase.xmpp.impl.PresenceAbstract;
+import tigase.xmpp.impl.ServiceDiscovery;
 import tigase.xmpp.jid.JID;
 
 import java.util.*;
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
 @Bean(name = "pep", parent = SessionManager.class, active = true)
 public class PepPlugin
 		extends XMPPProcessor
-		implements XMPPProcessorIfc, XMPPStopListenerIfc {
+		implements XMPPProcessorIfc, XMPPStopListenerIfc, ServiceDiscovery.AccountServiceProvider {
 
 	protected static final String PUBSUB_XMLNS = "http://jabber.org/protocol/pubsub";
 	protected static final String PUBSUB_XMLNS_OWNER = PUBSUB_XMLNS + "#owner";
@@ -55,9 +56,8 @@ public class PepPlugin
 	protected static final String DISCO_INFO_XMLNS = "http://jabber.org/protocol/disco#info";
 	protected static final String DISCO_ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
 	protected static final String[][] ELEMENTS = {Iq.IQ_PUBSUB_PATH, Iq.IQ_PUBSUB_PATH,
-												  new String[]{Presence.ELEM_NAME}, Iq.IQ_QUERY_PATH, Iq.IQ_QUERY_PATH};
-	protected static final String[] XMLNSS = {PUBSUB_XMLNS_OWNER, PUBSUB_XMLNS, Presence.CLIENT_XMLNS,
-											  DISCO_ITEMS_XMLNS, DISCO_INFO_XMLNS};
+												  new String[]{Presence.ELEM_NAME} };
+	protected static final String[] XMLNSS = {PUBSUB_XMLNS_OWNER, PUBSUB_XMLNS, Presence.CLIENT_XMLNS};
 	private static final String CAPS_XMLNS = "http://jabber.org/protocol/caps";
 	private static final String ID = "pep";
 	private static final Logger log = Logger.getLogger(PepPlugin.class.getCanonicalName());
@@ -75,22 +75,6 @@ public class PepPlugin
 	protected JID pubsubJid = JID.jidInstanceNS("pubsub", DNSResolverFactory.getInstance().getDefaultHost(), null);
 	@ConfigField(desc = "Enable simple PEP", alias = "simple-pep-enabled")
 	protected boolean simplePepEnabled = false;
-
-	@Override
-	public Authorization canHandle(Packet packet, XMPPResourceConnection conn) {
-		if (packet.isServiceDisco()) {
-			try {
-				if (packet.getStanzaTo() != null && packet.getStanzaTo().getLocalpart() != null &&
-						packet.getStanzaTo().getResource() == null &&
-						(conn == null || conn.isUserId(packet.getStanzaTo().getBareJID()))) {
-					return super.canHandle(packet, conn);
-				}
-			} catch (NotAuthorizedException ex) {
-			}
-			return null;
-		}
-		return super.canHandle(packet, conn);
-	}
 
 	@Override
 	public String id() {
@@ -151,6 +135,11 @@ public class PepPlugin
 				}
 			}
 		}
+	}
+
+	@Override
+	public JID getServiceProviderComponentJid() {
+		return pubsubJid;
 	}
 
 	protected JID getPubsubJid(XMPPResourceConnection session, JID serviceJid) {
