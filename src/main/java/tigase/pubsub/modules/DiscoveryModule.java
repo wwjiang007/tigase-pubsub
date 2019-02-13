@@ -23,10 +23,7 @@ import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.Utils;
+import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
@@ -44,6 +41,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.stream.Stream;
 
 @Bean(name = DiscoveryModule.ID, parent = PubSubComponent.class, active = true)
 public class DiscoveryModule
@@ -51,6 +49,8 @@ public class DiscoveryModule
 
 	private final SimpleDateFormat formatter;
 
+	@Inject
+	private PubSubConfig config;
 	@Inject
 	private IPubSubRepository repository;
 
@@ -232,4 +232,18 @@ public class DiscoveryModule
 		write(resultIq);
 	}
 
+	@Override
+	protected Packet prepareDiscoInfoReponse(Packet packet, JID jid, String node, JID senderJID) {
+		Packet result =  super.prepareDiscoInfoReponse(packet, jid, node, senderJID);
+		if (node == null && jid.getLocalpart() != null && config.isPepPeristent()) {
+			Element query = result.getElement().getChild("query", "http://jabber.org/protocol/disco#info");
+			if (query != null) {
+				Stream.of("http://jabber.org/protocol/pubsub#auto-create",
+						  "http://jabber.org/protocol/pubsub#auto-subscribe")
+						.map(feature -> new Element("feature", new String[]{"var"}, new String[]{feature}))
+						.forEach(query::addChild);
+			}
+		}
+		return result;
+	}
 }
