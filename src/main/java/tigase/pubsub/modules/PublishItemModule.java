@@ -324,6 +324,13 @@ public class PublishItemModule
 	
 	public void publishLastItem(BareJID serviceJid, AbstractNodeConfig nodeConfig, JID destinationJID)
 			throws RepositoryException {
+		try {
+			IAffiliations affiliations = getRepository().getNodeAffiliations(serviceJid, nodeConfig.getNodeName());
+			ISubscriptions subscriptions = getRepository().getNodeSubscriptions(serviceJid, nodeConfig.getNodeName());
+			logic.checkAccessPermission(serviceJid, nodeConfig, affiliations, subscriptions, destinationJID);
+		} catch (Exception ex) {
+			return;
+		}
 		IItems nodeItems = this.getRepository().getNodeItems(serviceJid, nodeConfig.getNodeName());
 		String[] ids = nodeItems.getItemsIds();
 
