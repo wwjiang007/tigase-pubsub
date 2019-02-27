@@ -19,6 +19,15 @@
 -- QUERY START:
 drop procedure if exists TigExecuteIf;
 -- QUERY END:
+-- QUERY START:
+drop procedure if exists TigExecuteIfLT8;
+-- QUERY END:
+-- QUERY START:
+drop procedure if exists TigExecuteIfGT8;
+-- QUERY END:
+-- QUERY START:
+drop procedure if exists TigExecuteIfNotGT8;
+-- QUERY END:
 
 delimiter //
 
@@ -36,13 +45,72 @@ deallocate prepare stmt;
 end //
 -- QUERY END:
 
+-- QUERY START:
+create procedure TigExecuteIfLT8(cond text, query text)
+begin
+  if exists (select 1 from information_schema.PLUGINS where PLUGIN_NAME = "InnoDB" and PLUGIN_TYPE_VERSION < 80000) then
+    set @s = concat("set @cond = (", cond, ")");
+    prepare stmt from @s;
+    execute stmt;
+    deallocate prepare stmt;
+    set @s = (select if (
+                           @cond > 0,
+                           query,
+                           'select 1'
+                       ));
+    prepare stmt from @s;
+    execute stmt;
+    deallocate prepare stmt;
+  end if;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigExecuteIfGT8(cond text, query text)
+begin
+  if exists (select 1 from information_schema.PLUGINS where PLUGIN_NAME = "InnoDB" and PLUGIN_TYPE_VERSION >= 80000) then
+    set @s = concat("set @cond = (", cond, ")");
+    prepare stmt from @s;
+    execute stmt;
+    deallocate prepare stmt;
+    set @s = (select if (
+                           @cond > 0,
+                           query,
+                           'select 1'
+                       ));
+    prepare stmt from @s;
+    execute stmt;
+    deallocate prepare stmt;
+  end if;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigExecuteIfNotGT8(cond text, query text)
+begin
+  if exists (select 1 from information_schema.PLUGINS where PLUGIN_NAME = "InnoDB" and PLUGIN_TYPE_VERSION >= 80000) then
+    set @s = concat("set @cond = (", cond, ")");
+    prepare stmt from @s;
+    execute stmt;
+    deallocate prepare stmt;
+    set @s = (select if (
+                           @cond <= 0,
+                           query,
+                           'select 1'
+                       ));
+    prepare stmt from @s;
+    execute stmt;
+    deallocate prepare stmt;
+  end if;
+end //
+-- QUERY END:
+
 delimiter ;
 
 
 -- QUERY START:
-call TigExecuteIf(
-    (
-      SELECT count(*)
+call TigExecuteIfLT8(
+    "SELECT count(*)
       FROM information_schema.statistics s1
         INNER JOIN information_schema.statistics s2
           ON s1.table_schema = s2.table_schema AND s1.table_name = s2.table_name AND s1.index_name = s2.index_name
@@ -54,7 +122,24 @@ call TigExecuteIf(
         AND s2.column_name = 'id'
         AND ((s2.sub_part = 255
               AND x.val = 0) OR (s2.sub_part <> 255 AND x.val = 1))
-    ),
+    ",
+    "drop index `node_id` on tig_pubsub_items"
+);
+-- QUERY END:
+
+-- QUERY START:
+call TigExecuteIfGT8(
+      "SELECT count(*)
+      FROM information_schema.statistics s1
+        INNER JOIN information_schema.statistics s2
+          ON s1.table_schema = s2.table_schema AND s1.table_name = s2.table_name AND s1.index_name = s2.index_name
+      WHERE
+        s1.table_schema = database()
+        AND s1.table_name = 'tig_pubsub_items'
+        AND s1.column_name = 'node_id'
+        AND s2.column_name = 'id'
+        AND s2.sub_part <> 255
+    ",
     "drop index `node_id` on tig_pubsub_items"
 );
 -- QUERY END:
@@ -66,9 +151,8 @@ alter table tig_pubsub_items
 -- QUERY END:
 
 -- QUERY START:
-call TigExecuteIf(
-    (
-      SELECT 1
+call TigExecuteIfLT8(
+    "SELECT 1
       FROM dual
       WHERE (SELECT @@GLOBAL.innodb_large_prefix val
              FROM dual
@@ -83,30 +167,23 @@ call TigExecuteIf(
                       AND s1.table_name = 'tig_pubsub_items'
                       AND s1.column_name = 'node_id'
                       AND s2.column_name = 'id') = 0) = 0
-    ),
+    ",
     "create index node_id_id on tig_pubsub_items ( node_id, id(190) ) using hash;"
 );
 -- QUERY END:
 
 -- QUERY START:
-call TigExecuteIf(
-    (
-      SELECT 1
-      FROM dual
-      WHERE (SELECT @@GLOBAL.innodb_large_prefix val
-             FROM dual
-             WHERE (SELECT count(*)
-                    FROM information_schema.statistics s1
-                      INNER JOIN information_schema.statistics s2
-                        ON s1.table_schema = s2.table_schema AND s1.table_name = s2.table_name AND
-                           s1.index_name = s2.index_name
-                      JOIN (SELECT @@GLOBAL.innodb_large_prefix AS val) x
-                    WHERE
-                      s1.table_schema = database()
-                      AND s1.table_name = 'tig_pubsub_items'
-                      AND s1.column_name = 'node_id'
-                      AND s2.column_name = 'id') = 0) = 1
-    ),
+call TigExecuteIfNotGT8(
+    "SELECT count(*)
+      FROM information_schema.statistics s1
+        INNER JOIN information_schema.statistics s2
+          ON s1.table_schema = s2.table_schema AND s1.table_name = s2.table_name AND s1.index_name = s2.index_name
+      WHERE
+        s1.table_schema = database()
+        AND s1.table_name = 'tig_pubsub_items'
+        AND s1.column_name = 'node_id'
+        AND s2.column_name = 'id'
+    ",
     "create index node_id_id on tig_pubsub_items ( node_id, id(255) ) using hash;"
 );
 -- QUERY END:
