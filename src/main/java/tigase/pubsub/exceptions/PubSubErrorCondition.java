@@ -42,6 +42,8 @@ public class PubSubErrorCondition {
 	public static final PubSubErrorCondition PRESENCE_SUBSCRIPTION_REQUIRED = new PubSubErrorCondition(
 			"presence-subscription-required");
 
+	public static final PubSubErrorCondition PRECONDITION_NOT_MET = new PubSubErrorCondition("precondition-not-met");
+
 	protected static final String XMLNS = "http://jabber.org/protocol/pubsub#errors";
 
 	private final String condition;

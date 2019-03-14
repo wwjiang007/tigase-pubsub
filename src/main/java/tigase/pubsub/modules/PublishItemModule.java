@@ -22,6 +22,7 @@ import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.eventbus.EventBus;
 import tigase.eventbus.HandleEvent;
+import tigase.form.Field;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
@@ -68,6 +69,7 @@ public class PublishItemModule
 														"http://jabber.org/protocol/geoloc",
 														"http://jabber.org/protocol/activity",
 														"http://jabber.org/protocol/tune"};
+	private static final String[] FIELD_VALUE_PATH = { "field", "value" };
 	private static final Criteria CRIT_PUBLISH = ElementCriteria.nameType("iq", "set")
 			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
 			.add(ElementCriteria.name("publish"));
@@ -175,7 +177,7 @@ public class PublishItemModule
 		}
 	}
 
-	public AbstractNodeConfig ensurePepNode(BareJID toJid, String nodeName, BareJID ownerJid) throws PubSubException {
+	public AbstractNodeConfig ensurePepNode(BareJID toJid, String nodeName, BareJID ownerJid, Element publishOptions) throws PubSubException {
 		AbstractNodeConfig nodeConfig;
 		try {
 			IPubSubRepository repo = getRepository();
@@ -189,12 +191,12 @@ public class PublishItemModule
 			return nodeConfig;
 		}
 
-		return createPepNode(toJid, nodeName, ownerJid);
+		return createPepNode(toJid, nodeName, ownerJid, publishOptions);
 	}
 
 	@Override
 	public String[] getFeatures() {
-		return new String[]{"http://jabber.org/protocol/pubsub#publish",};
+		return new String[]{"http://jabber.org/protocol/pubsub#publish", "http://jabber.org/protocol/pubsub#publish-options"};
 	}
 
 	@Override
@@ -241,6 +243,9 @@ public class PublishItemModule
 		final Element element = packet.getElement();
 		final Element pubSub = element.getChild("pubsub", "http://jabber.org/protocol/pubsub");
 		final Element publish = pubSub.getChild("publish");
+		final Element publishOptions = Optional.ofNullable(pubSub.getChild("publish-options"))
+				.map(el -> el.getChild("x", "jabber:x:data"))
+				.orElse(null);
 		final String nodeName = publish.getAttributeStaticStr("node");
 
 		try {
@@ -250,19 +255,74 @@ public class PublishItemModule
 			}
 
 			AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(toJid, nodeName);
-
+			
 			if (nodeConfig == null) {
 				if (packet.getStanzaTo().getLocalpart() == null || !config.isPepPeristent()) {
 					throw new PubSubException(element, Authorization.ITEM_NOT_FOUND);
 				} else {
 					// this is PubSub service for particular user - we should
 					// autocreate node
-					nodeConfig = createPepNode(toJid, nodeName, packet.getStanzaFrom().getBareJID());
+					nodeConfig = createPepNode(toJid, nodeName, packet.getStanzaFrom().getBareJID(), publishOptions);
 				}
 			} else {
 				if (nodeConfig.getNodeType() == NodeType.collection) {
 					throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
 											  new PubSubErrorCondition("unsupported", "publish"));
+				}
+				if (publishOptions != null) {
+					if (publishOptions.findChild(
+							el -> el.getName() == "field" && "FORM_TYPE" == el.getAttributeStaticStr("var") &&
+									"http://jabber.org/protocol/pubsub#publish-option".equals(
+											el.getCData(FIELD_VALUE_PATH))) == null) {
+						for (Element field : publishOptions.getChildren()) {
+							String key = field.getAttributeStaticStr("var");
+							if ("FORM_TYPE".equals(key)) {
+								continue;
+							}
+
+							Field f = nodeConfig.getForm().get(key);
+							if (f == null) {
+								throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
+							}
+							switch (f.getType()) {
+								case bool:
+									String v1 = field.getCData(FIELD_VALUE_PATH);
+									if (!(("true".equals(v1) || "1".equals(v1)) == ("true".equals(f.getValue()) || "1".equals(f.getValue())))) {
+										throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
+									}
+									break;
+								case jid_multi:
+								case text_multi:
+									List<String> reqValues = Optional.ofNullable(
+											field.mapChildren(el -> el.getName() == "value", el -> el.getCData()))
+											.orElse(Collections.EMPTY_LIST);
+									String[] values = f.getValues();
+									if (values == null) {
+										if (!reqValues.isEmpty()) {
+											throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
+										} else {
+											continue;
+										}
+									}
+									if (reqValues.size() != values.length) {
+										throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
+									}
+									for (String v2 : values) {
+										if (!reqValues.contains(v2)) {
+											throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
+										}
+									}
+									break;
+								default:
+									String reqValue = field.getCData(FIELD_VALUE_PATH);
+									String value = f.getValue();
+									if (!((reqValue == null && value == null) || (reqValue != null && reqValue.equals(value)))) {
+										throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
+									}
+									break;
+							}
+						}
+					}
 				}
 			}
 
@@ -657,7 +717,7 @@ public class PublishItemModule
 
 	}
 
-	private AbstractNodeConfig createPepNode(BareJID toJid, String nodeName, BareJID ownerJid) throws PubSubException {
+	private AbstractNodeConfig createPepNode(BareJID toJid, String nodeName, BareJID ownerJid, Element publishOptions) throws PubSubException {
 		if (!toJid.equals(ownerJid)) {
 			throw new PubSubException(Authorization.FORBIDDEN);
 		}
@@ -666,6 +726,18 @@ public class PublishItemModule
 		try {
 			IPubSubRepository repo = getRepository();
 			nodeConfig = new LeafNodeConfig(nodeName, defaultPepNodeConfig);
+			if (publishOptions != null) {
+				for (Element field : publishOptions.getChildren()) {
+					String key = field.getAttributeStaticStr("var");
+					if ("http://jabber.org/protocol/pubsub#publish-option".equals(key)) {
+						continue;
+					}
+
+					List<String> values = field.mapChildren(el -> el.getName() == "value", el -> el.getCData());
+					Field f = nodeConfig.getForm().get(key);
+					f.setValues(values == null ? null : values.toArray(new String[values.size()]));
+				}
+			}
 			repo.createNode(toJid, nodeName, ownerJid, nodeConfig, NodeType.leaf, "");
 			nodeConfig = repo.getNodeConfig(toJid, nodeName);
 			IAffiliations nodeaAffiliations = repo.getNodeAffiliations(toJid, nodeName);
