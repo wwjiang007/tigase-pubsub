@@ -29,7 +29,6 @@ import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.pubsub.utils.Logic;
 import tigase.server.Packet;
 import tigase.stats.StatisticHolderImpl;
-import tigase.util.JIDUtils;
 import tigase.xml.Element;
 import tigase.xmpp.jid.BareJID;
 
@@ -81,25 +80,7 @@ public abstract class AbstractPubSubModule
 	public static List<Element> createResultIQArray(Element iq) {
 		return makeArray(createResultIQ(iq));
 	}
-
-	@Deprecated
-	protected static String findBestJid(final String[] allSubscribers, final String jid) {
-		final String bareJid = JIDUtils.getNodeID(jid);
-		String best = null;
-
-		for (String j : allSubscribers) {
-			if (j.equals(jid)) {
-				return j;
-			} else {
-				if (bareJid.equals(j)) {
-					best = j;
-				}
-			}
-		}
-
-		return best;
-	}
-
+	
 	public static Collection<BareJID> getActiveSubscribers(final AbstractNodeConfig nodeConfig, final BareJID[] jids,
 														   final IAffiliations affiliations,
 														   final ISubscriptions subscriptions) {
