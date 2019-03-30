@@ -19,6 +19,7 @@ package tigase.pubsub;
 
 import tigase.db.NonAuthUserRepository;
 import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Inject;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.server.Iq;
 import tigase.server.Packet;
@@ -30,11 +31,13 @@ import tigase.xml.Element;
 import tigase.xmpp.*;
 import tigase.xmpp.impl.PresenceAbstract;
 import tigase.xmpp.impl.ServiceDiscovery;
+import tigase.xmpp.impl.VCardTemp;
 import tigase.xmpp.jid.JID;
 
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * Implements PubSub support for every local user account on it's bare jid using local version of PubSub component.
@@ -53,6 +56,13 @@ public class PepPlugin
 			new Element("feature", new String[]{"var"}, new String[]{PUBSUB_XMLNS + "#owner"}),
 			new Element("feature", new String[]{"var"}, new String[]{PUBSUB_XMLNS + "#publish"}),
 			new Element("identity", new String[]{"category", "type"}, new String[]{"pubsub", "pep"}),};
+	protected static final Element[] DISCO_FEATURES_WITH_XEP0398 = Stream.concat(Arrays.stream(DISCO_FEATURES),
+																				 Stream.of(new Element("feature",
+																									   new String[]{
+																											   "var"},
+																									   new String[]{
+																											   "urn:xmpp:pep-vcard-conversion:0"})))
+																						 .toArray(Element[]::new);
 	protected static final String DISCO_INFO_XMLNS = "http://jabber.org/protocol/disco#info";
 	protected static final String DISCO_ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
 	protected static final String[][] ELEMENTS = {Iq.IQ_PUBSUB_PATH, Iq.IQ_PUBSUB_PATH,
@@ -75,7 +85,9 @@ public class PepPlugin
 	protected JID pubsubJid = JID.jidInstanceNS("pubsub", DNSResolverFactory.getInstance().getDefaultHost(), null);
 	@ConfigField(desc = "Enable simple PEP", alias = "simple-pep-enabled")
 	protected boolean simplePepEnabled = false;
-
+	@Inject(nullAllowed = true)
+	private VCardTemp vcardTempProcessor;
+	
 	@Override
 	public String id() {
 		return ID;
@@ -100,7 +112,11 @@ public class PepPlugin
 
 	@Override
 	public Element[] supDiscoFeatures(final XMPPResourceConnection session) {
-		return DISCO_FEATURES;
+		if (vcardTempProcessor ==  null) {
+			return DISCO_FEATURES;
+		} else {
+			return DISCO_FEATURES_WITH_XEP0398;
+		}
 	}
 
 	@Override
@@ -148,6 +164,13 @@ public class PepPlugin
 
 	protected void processIq(Packet packet, XMPPResourceConnection session, Queue<Packet> results)
 			throws XMPPException {
+		if (vcardTempProcessor != null && packet.getStanzaFrom() != null && packet.getStanzaTo() != null && packet.getType() == StanzaType.result &&
+				packet.getStanzaTo().getBareJID().equals(packet.getStanzaFrom().getBareJID()) &&
+				packet.getAttributeStaticStr("id") != null && packet.getAttributeStaticStr("id").startsWith("sm-query-vcard-pep-")) {
+			vcardTempProcessor.pepToVCardTemp_onDataRetrieved(packet, session);
+			return;
+		}
+
 		if (session != null && session.isServerSession()) {
 			return;
 		}
@@ -247,6 +270,26 @@ public class PepPlugin
 		result.setPacketTo(getPubsubJid(session, packet.getStanzaTo()));
 
 		results.offer(result);
+
+		if (vcardTempProcessor != null && pubsubEl != null && packet.getType() == StanzaType.set && session != null &&
+				packet.getStanzaFrom() != null && session.isUserId(packet.getStanzaFrom().getBareJID())) {
+			Element publishEl = pubsubEl.getChild("publish");
+//			if (publishEl != null) {
+//				pepListeners.forEach(listener -> {
+//					listener.itemSentForPublication(packet.getStanzaFrom().getBareJID(), publishEl, () -> getPubsubJid(session, packet.getStanzaFrom()), results::offer);
+//				});
+//			}
+			if (publishEl != null && "urn:xmpp:avatar:metadata".equals(publishEl.getAttributeStaticStr("node"))) {
+				String itemId = publishEl.getChildAttributeStaticStr("item", "id");
+				if (itemId != null) {
+					Element infoEl = publishEl.findChildStaticStr(new String[] { "publish", "item", "metadata", "info" });
+					if (infoEl != null && infoEl.getAttributeStaticStr("url") == null) {
+						String mimeType = Optional.ofNullable(infoEl.getAttributeStaticStr("type")).orElse("image/png");
+						vcardTempProcessor.pepToVCardTemp_onPublication(packet.getStanzaFrom().getBareJID(), session, itemId, mimeType, () -> getPubsubJid(session, packet.getStanzaFrom()), results::offer);
+					}
+				}
+			}
+		}
 	}
 
 	protected void processPresence(Packet packet, XMPPResourceConnection session, Queue<Packet> results)
