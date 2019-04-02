@@ -18,23 +18,24 @@
 package tigase.pubsub;
 
 import tigase.db.NonAuthUserRepository;
+import tigase.db.TigaseDBException;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.kernel.beans.config.ConfigField;
-import tigase.server.Iq;
-import tigase.server.Packet;
-import tigase.server.Presence;
+import tigase.server.*;
 import tigase.server.xmppsession.SessionManager;
 import tigase.util.dns.DNSResolverFactory;
 import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.*;
+import tigase.xmpp.impl.JabberIqPrivate;
 import tigase.xmpp.impl.PresenceAbstract;
 import tigase.xmpp.impl.ServiceDiscovery;
 import tigase.xmpp.impl.VCardTemp;
 import tigase.xmpp.jid.JID;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -56,18 +57,11 @@ public class PepPlugin
 			new Element("feature", new String[]{"var"}, new String[]{PUBSUB_XMLNS + "#owner"}),
 			new Element("feature", new String[]{"var"}, new String[]{PUBSUB_XMLNS + "#publish"}),
 			new Element("identity", new String[]{"category", "type"}, new String[]{"pubsub", "pep"}),};
-	protected static final Element[] DISCO_FEATURES_WITH_XEP0398 = Stream.concat(Arrays.stream(DISCO_FEATURES),
-																				 Stream.of(new Element("feature",
-																									   new String[]{
-																											   "var"},
-																									   new String[]{
-																											   "urn:xmpp:pep-vcard-conversion:0"})))
-																						 .toArray(Element[]::new);
 	protected static final String DISCO_INFO_XMLNS = "http://jabber.org/protocol/disco#info";
 	protected static final String DISCO_ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
 	protected static final String[][] ELEMENTS = {Iq.IQ_PUBSUB_PATH, Iq.IQ_PUBSUB_PATH,
-												  new String[]{Presence.ELEM_NAME} };
-	protected static final String[] XMLNSS = {PUBSUB_XMLNS_OWNER, PUBSUB_XMLNS, Presence.CLIENT_XMLNS};
+												  new String[]{Presence.ELEM_NAME}, Iq.IQ_QUERY_PATH };
+	protected static final String[] XMLNSS = {PUBSUB_XMLNS_OWNER, PUBSUB_XMLNS, Presence.CLIENT_XMLNS, "jabber:iq:private"};
 	private static final String CAPS_XMLNS = "http://jabber.org/protocol/caps";
 	private static final String ID = "pep";
 	private static final Logger log = Logger.getLogger(PepPlugin.class.getCanonicalName());
@@ -77,6 +71,18 @@ public class PepPlugin
 			null, StanzaType.available, StanzaType.unavailable,
 			// stanza types for iq
 			StanzaType.get, StanzaType.set, StanzaType.result, StanzaType.error));
+	private static final Element BOOKMARKS_CONVERSION_PUBLISH_OPTIONS = Optional.ofNullable((Element) null).orElseGet(()-> {
+		Element optionsEl = new Element("publish-options");
+		DataForm.Builder builder = new DataForm.Builder(optionsEl, Command.DataType.submit);
+		builder.addField(
+				DataForm.FieldType.Hidden, "FORM_TYPE")
+				.setValue("http://jabber.org/protocol/pubsub#publish-options")
+				.build();
+		builder.addField(DataForm.FieldType.Boolean, "pubsub#persist_items").setValue(true).build();
+		builder.addField(DataForm.FieldType.Fixed, "pubsub#access_model").setValue("whitelist").build();
+		builder.build();
+		return optionsEl;
+	});
 	protected final Set<String> simpleNodes = new HashSet<String>(
 			Arrays.asList("http://jabber.org/protocol/tune", "http://jabber.org/protocol/mood",
 						  "http://jabber.org/protocol/activity", "http://jabber.org/protocol/geoloc",
@@ -86,7 +92,10 @@ public class PepPlugin
 	@ConfigField(desc = "Enable simple PEP", alias = "simple-pep-enabled")
 	protected boolean simplePepEnabled = false;
 	@Inject(nullAllowed = true)
+	private JabberIqPrivate jabberIqPrivateProcessor;
+	@Inject(nullAllowed = true)
 	private VCardTemp vcardTempProcessor;
+	private Element[] discoFeatures = DISCO_FEATURES;
 	
 	@Override
 	public String id() {
@@ -110,13 +119,19 @@ public class PepPlugin
 		}
 	}
 
+	public void setJabberIqPrivateProcessor(JabberIqPrivate jabberIqPrivateProcessor) {
+		this.jabberIqPrivateProcessor = jabberIqPrivateProcessor;
+		updateDiscoFeatures();
+	}
+
+	public void setVcardTempProcessor(VCardTemp vcardTempProcessor) {
+		this.vcardTempProcessor = vcardTempProcessor;
+		updateDiscoFeatures();
+	}
+
 	@Override
 	public Element[] supDiscoFeatures(final XMPPResourceConnection session) {
-		if (vcardTempProcessor ==  null) {
-			return DISCO_FEATURES;
-		} else {
-			return DISCO_FEATURES_WITH_XEP0398;
-		}
+		return discoFeatures;
 	}
 
 	@Override
@@ -164,6 +179,12 @@ public class PepPlugin
 
 	protected void processIq(Packet packet, XMPPResourceConnection session, Queue<Packet> results)
 			throws XMPPException {
+		Element queryEl = packet.getElemChild("query", "jabber:iq:private");
+		if (queryEl != null) {
+			processJabberIqPrivateToPubSubConversion(packet, queryEl, session, results::offer);
+			return;
+		}
+
 		if (vcardTempProcessor != null && packet.getStanzaFrom() != null && packet.getStanzaTo() != null && packet.getType() == StanzaType.result &&
 				packet.getStanzaTo().getBareJID().equals(packet.getStanzaFrom().getBareJID()) &&
 				packet.getAttributeStaticStr("id") != null && packet.getAttributeStaticStr("id").startsWith("sm-query-vcard-pep-")) {
@@ -274,11 +295,6 @@ public class PepPlugin
 		if (vcardTempProcessor != null && pubsubEl != null && packet.getType() == StanzaType.set && session != null &&
 				packet.getStanzaFrom() != null && session.isUserId(packet.getStanzaFrom().getBareJID())) {
 			Element publishEl = pubsubEl.getChild("publish");
-//			if (publishEl != null) {
-//				pepListeners.forEach(listener -> {
-//					listener.itemSentForPublication(packet.getStanzaFrom().getBareJID(), publishEl, () -> getPubsubJid(session, packet.getStanzaFrom()), results::offer);
-//				});
-//			}
 			if (publishEl != null && "urn:xmpp:avatar:metadata".equals(publishEl.getAttributeStaticStr("node"))) {
 				String itemId = publishEl.getChildAttributeStaticStr("item", "id");
 				if (itemId != null) {
@@ -286,6 +302,20 @@ public class PepPlugin
 					if (infoEl != null && infoEl.getAttributeStaticStr("url") == null) {
 						String mimeType = Optional.ofNullable(infoEl.getAttributeStaticStr("type")).orElse("image/png");
 						vcardTempProcessor.pepToVCardTemp_onPublication(packet.getStanzaFrom().getBareJID(), session, itemId, mimeType, () -> getPubsubJid(session, packet.getStanzaFrom()), results::offer);
+					}
+				}
+			}
+		}
+		if (jabberIqPrivateProcessor != null && packet.getType() == StanzaType.set && session != null &&
+				packet.getStanzaFrom() != null && session.isUserId(packet.getStanzaFrom().getBareJID())) {
+			Element publishEl = pubsubEl.getChild("publish");
+			if (publishEl != null && "storage:bookmarks".equals(publishEl.getAttributeStaticStr("node"))) {
+				Element storageEl = publishEl.findChildStaticStr(new String[] { "publish", "item", "storage" });
+				if (storageEl != null && "storage:bookmarks".equals(storageEl.getXMLNS())) {
+					try {
+						session.setData("jabber:iq:private", storageEl.getName() + storageEl.getXMLNS(), storageEl.toString());
+					} catch (TigaseDBException ex) {
+						log.log(Level.FINEST, "could not update bookmarks store in the private storage", ex);
 					}
 				}
 			}
@@ -326,5 +356,69 @@ public class PepPlugin
 			result.setPacketTo(getPubsubJid(session, packet.getStanzaTo()));
 			results.offer(result);
 		}
+	}
+
+	protected void processJabberIqPrivateToPubSubConversion(Packet packet, Element queryEl, XMPPResourceConnection session, Consumer<Packet> writer)
+			throws PacketErrorTypeException, NotAuthorizedException {
+		if ((packet.getStanzaTo() != null) && !session.isUserId(packet.getStanzaTo().getBareJID())) {
+			writer.accept(Authorization.SERVICE_UNAVAILABLE.getResponseMessage(packet,
+																			   "You are not authorized to access this private storage.",
+																			   true));
+			return;
+		}
+		
+		if (jabberIqPrivateProcessor == null) {
+			writer.accept(Authorization.FEATURE_NOT_IMPLEMENTED.getResponseMessage(packet, null, true));
+			return;
+		}
+
+		switch (packet.getType()) {
+			case get:
+				// original processor will take care of this request
+				return;
+			case set:
+				// original processor will put data in the private storage, but we need to do the same in the PEP
+				Element storage = queryEl.getChild("storage", "storage:bookmarks");
+				if (storage == null) {
+					return;
+				}
+				Iq iq = new Iq(new Element("iq", new String[]{"xmlns", "type"}, new String[]{"jabber:client", "set"}),
+							   session.getJID(), JID.jidInstanceNS(session.getBareJID()));
+				iq.getElement().withElement("pubsub", PUBSUB_XMLNS, pubsubEl -> {
+					pubsubEl.withElement("publish", publishEl -> {
+						publishEl.setAttribute("node", "storage:bookmarks");
+						publishEl.withElement("item", itemEl -> {
+							itemEl.setAttribute("id", "current");
+							itemEl.addChild(storage);
+						});
+					});
+					pubsubEl.addChild(BOOKMARKS_CONVERSION_PUBLISH_OPTIONS);
+				});
+				iq.setPacketTo(getPubsubJid(session, session.getJID()));
+				writer.accept(iq);
+				break;
+			default:
+				writer.accept(Authorization.BAD_REQUEST.getResponseMessage(packet, null, true));
+				break;
+		}
+	}
+
+	private void updateDiscoFeatures() {
+		Stream<Element> stream = Arrays.stream(DISCO_FEATURES);
+		if (vcardTempProcessor != null) {
+			stream = Stream.concat(stream, Stream.of(new Element("feature",
+																new String[]{
+																		"var"},
+																new String[]{
+																		"urn:xmpp:pep-vcard-conversion:0"})));
+		}
+		if (jabberIqPrivateProcessor != null) {
+			stream = Stream.concat(stream, Stream.of(new Element("feature",
+																 new String[]{
+																		 "var"},
+																 new String[]{
+																		 "urn:xmpp:bookmarks-conversion:0"})));
+		}
+		discoFeatures = stream.toArray(Element[]::new);
 	}
 }
