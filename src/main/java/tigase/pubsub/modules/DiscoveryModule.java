@@ -233,8 +233,8 @@ public class DiscoveryModule
 	}
 
 	@Override
-	protected Packet prepareDiscoInfoReponse(Packet packet, JID jid, String node, JID senderJID) {
-		Packet result =  super.prepareDiscoInfoReponse(packet, jid, node, senderJID);
+	protected Packet prepareDiscoInfoResponse(Packet packet, JID jid, String node, JID senderJID) {
+		Packet result =  super.prepareDiscoInfoResponse(packet, jid, node, senderJID);
 		if (node == null && jid.getLocalpart() != null && config.isPepPeristent()) {
 			Element query = result.getElement().getChild("query", "http://jabber.org/protocol/disco#info");
 			if (query != null) {
