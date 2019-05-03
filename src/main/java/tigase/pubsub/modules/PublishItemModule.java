@@ -397,13 +397,19 @@ public class PublishItemModule
 		if (ids != null && ids.length > 0) {
 			String lastID = ids[ids.length - 1];
 			Element payload = nodeItems.getItem(lastID);
+			if (payload != null) {
+				Element items = new Element("items");
+				items.addAttribute("node", nodeConfig.getNodeName());
+				items.addChild(payload);
 
-			Element items = new Element("items");
-			items.addAttribute("node", nodeConfig.getNodeName());
-			items.addChild(payload);
-
-			sendNotifications(new JID[]{destinationJID}, items, JID.jidInstance(serviceJid), nodeConfig,
-							  nodeConfig.getNodeName(), null);
+				sendNotifications(new JID[]{destinationJID}, items, JID.jidInstance(serviceJid), nodeConfig, nodeConfig.getNodeName(), null);
+			} else {
+				if (log.isLoggable(Level.FINEST)) {
+					log.log(Level.FINEST,
+							"There is no payload for item with id '" + lastID + "' at '" + nodeConfig.getNodeName() +
+									"' for '" + serviceJid + "'");
+				}
+			}
 		}
 
 	}
