@@ -741,6 +741,9 @@ public class PublishItemModule
 
 					List<String> values = field.mapChildren(el -> el.getName() == "value", el -> el.getCData());
 					Field f = nodeConfig.getForm().get(key);
+					if (f == null) {
+						throw new PubSubException(Authorization.BAD_REQUEST, "Invalid option " + key);
+					}
 					f.setValues(values == null ? null : values.toArray(new String[values.size()]));
 				}
 			}
