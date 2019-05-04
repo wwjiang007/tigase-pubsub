@@ -43,7 +43,7 @@ public class Node<T>
 	// private Long nodeAffiliationsChangeTimestamp;
 
 	private AbstractNodeConfig nodeConfig;
-	private T nodeId;
+	private final T nodeId;
 	private NodeSubscriptions nodeSubscriptions;
 
 	// private Long nodeConfigChangeTimestamp;

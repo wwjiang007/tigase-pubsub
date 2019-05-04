@@ -58,10 +58,6 @@ public class DefaultPubSubLogic
 	@Override
 	public void checkAccessPermission(BareJID serviceJid, String nodeName, JID senderJid)
 			throws PubSubException, RepositoryException {
-		if (pubSubConfig.isAdmin(senderJid)) {
-			return;
-		}
-
 		checkAccessPermission(serviceJid, repository.getNodeConfig(serviceJid, nodeName),
 							  repository.getNodeAffiliations(serviceJid, nodeName),
 							  repository.getNodeSubscriptions(serviceJid, nodeName), senderJid);
@@ -75,6 +71,11 @@ public class DefaultPubSubLogic
 		if (nodeConfig == null) {
 			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
 		}
+
+		if (pubSubConfig.isAdmin(senderJid)) {
+			return;
+		}
+
 		if ((nodeConfig.getNodeAccessModel() == AccessModel.open) &&
 				!Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains())) {
 			throw new PubSubException(Authorization.FORBIDDEN);

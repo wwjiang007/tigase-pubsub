@@ -283,7 +283,7 @@ public class CachedPubSubRepository<T>
 		}
 		long end = System.currentTimeMillis();
 		this.stats.get("getNodeItems").statisticExecutedIn(end - start);
-		return new Items(nodeId, serviceJid, nodeName, this.dao);
+		return nodeId != null ? new Items(nodeId, serviceJid, nodeName, this.dao) : null;
 	}
 
 	@Override
