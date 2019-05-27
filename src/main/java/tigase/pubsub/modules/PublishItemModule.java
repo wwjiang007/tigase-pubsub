@@ -647,6 +647,13 @@ public class PublishItemModule
 			String nodeName = feature.substring(0, feature.length() - "+notify".length());
 
 			try {
+				ISubscriptions subscriptions = getRepository().getNodeSubscriptions(event.serviceJid, nodeName);
+				if (subscriptions != null) {
+					if (subscriptions.getSubscription(event.buddyJid.getBareJID()) == Subscription.subscribed) {
+						// user is already subcribed to this node and will receive notifications event without CAPS change based delivery
+						continue;
+					}
+				}
 				publishLastItem(event.serviceJid, nodeName, event.buddyJid);
 			} catch (RepositoryException ex) {
 				log.log(Level.WARNING,

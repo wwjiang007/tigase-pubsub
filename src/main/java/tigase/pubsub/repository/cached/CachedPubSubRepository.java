@@ -297,7 +297,7 @@ public class CachedPubSubRepository<T>
 					new Object[]{serviceJid, nodeName, node});
 		}
 
-		if (presenceNotifierModule == null) {
+		if (presenceNotifierModule == null || xx == null) {
 			return xx;
 		} else {
 			return new PresenceNodeSubscriptions(serviceJid, nodeName, xx, presenceNotifierModule);

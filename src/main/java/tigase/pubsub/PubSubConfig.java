@@ -51,7 +51,7 @@ public class PubSubConfig {
 	protected String[] admins;
 	protected BareJID serviceBareJID = BareJID.bareJIDInstanceNS("tigase-pubsub");
 	@ConfigField(desc = "Automatically subscribe creator to node", alias = AUTO_SUBSCRIBE_NODE_CREATOR)
-	private boolean autoSubscribeNodeCreator = true;
+	private boolean autoSubscribeNodeCreator = false;
 	@Inject(bean = "service")
 	private PubSubComponent component;
 	@ConfigField(desc = "High memory usage level", alias = PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY)
