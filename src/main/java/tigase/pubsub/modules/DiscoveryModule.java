@@ -31,16 +31,16 @@ import tigase.pubsub.repository.INodeMeta;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.cached.CachedPubSubRepository;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.server.Iq;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
+import tigase.xmpp.rsm.RSM;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Bean(name = DiscoveryModule.ID, parent = PubSubComponent.class, active = true)
@@ -142,6 +142,8 @@ public class DiscoveryModule
 		}
 	}
 
+	private static final String[] EMPTY_NODES = new String[0];
+
 	@Override
 	protected void processDiscoItems(Packet packet, JID jid, String nodeName, JID senderJID)
 			throws ComponentException, RepositoryException {
@@ -165,6 +167,12 @@ public class DiscoveryModule
 			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
 		}
 
+		Element rsmEl = element.getChildStaticStr(Iq.QUERY_NAME, "http://jabber.org/protocol/disco#items").getChildStaticStr("set", RSM.XMLNS);
+		RSM rsm = null;
+		if (rsmEl != null) {
+			rsm = RSM.parseRootElement(element.getChild("query"));
+		}
+
 		if ((nodeName == null) || ((nodeConfig != null) && (nodeConfig.getNodeType() == NodeType.collection))) {
 			String parentName;
 
@@ -182,6 +190,29 @@ public class DiscoveryModule
 
 			// = this.repository.getNodesList();
 			if (nodes != null) {
+				int count = nodes.length;
+				int index = 0;
+				boolean inverted = false;
+				if (nodes.length > 0 && rsm != null) {
+					String[] originalNodes = nodes;
+					nodes = prefilterNodesWithRSM(nodes, rsm);
+					if (nodes.length > 0 && originalNodes.length > nodes.length) {
+						for (int i=0; i<originalNodes.length; i++) {
+							if (originalNodes[i].equals(nodes[0])) {
+								index = i;
+								break;
+							}
+						}
+					}
+					inverted = rsm.hasBefore();
+					if (inverted) {
+						List<String> tmp = Arrays.asList(nodes);
+						Collections.reverse(tmp);
+						nodes = tmp.toArray(new String[tmp.size()]);
+					}
+				}
+				
+				List<Element> results = new ArrayList<>();
 				for (String node : nodes) {
 					AbstractNodeConfig childNodeConfig = this.repository.getNodeConfig(toJid.getBareJID(), node);
 
@@ -189,8 +220,7 @@ public class DiscoveryModule
 						boolean allowed = ((senderJid == null) || (childNodeConfig == null))
 										  ? true
 										  : Utils.isAllowedDomain(senderJid.getBareJID(), childNodeConfig.getDomains());
-						String collection = childNodeConfig.getCollection();
-
+						
 						if (allowed) {
 							String name = childNodeConfig.getTitle();
 
@@ -199,13 +229,28 @@ public class DiscoveryModule
 							Element item = new Element("item", new String[]{"jid", "node", "name"},
 													   new String[]{element.getAttributeStaticStr("to"), node, name});
 
-							if (parentName.equals(collection)) {
-								resultQuery.addChild(item);
+							results.add(item);
+							if (rsm != null && results.size() >= rsm.getMax()) {
+								break;
 							}
 						} else {
 							log.fine("User " + senderJid + " not allowed to see node '" + node + "'");
 						}
 					}
+				}
+				
+				if (inverted) {
+					index = nodes.length - results.size();
+					Collections.reverse(results);
+				}
+				if (rsm != null && !results.isEmpty()) {
+					rsm.setResults(count, results.get(0).getAttributeStaticStr("node"),
+								   results.get(results.size() - 1).getAttributeStaticStr("node"));
+					rsm.setIndex(index);
+					resultQuery.addChildren(results);
+					resultQuery.addChild(rsm.toElement());
+				} else {
+					resultQuery.addChildren(results);
 				}
 			}
 		} else {
@@ -230,6 +275,48 @@ public class DiscoveryModule
 		}
 
 		write(resultIq);
+	}
+
+	protected String[] prefilterNodesWithRSM(String[] nodes, RSM rsm) throws PubSubException {
+		Integer start = null;
+		if (rsm.getAfter() != null) {
+			for (int i = 0; i < nodes.length; i++) {
+				if (nodes[i].equals(rsm.getAfter())) {
+					start = i + 1;
+					break;
+				}
+			}
+			if (start == null) {
+				throw new PubSubException(Authorization.ITEM_NOT_FOUND);
+			}
+		} else if (rsm.getIndex() != null) {
+			start = rsm.getIndex();
+		}
+
+		Integer stop = null;
+		if (rsm.getBefore() != null) {
+			for (int i = nodes.length-1; i >= 0; i--) {
+				if (nodes[i].equals(rsm.getBefore())) {
+					stop = i;
+					break;
+				}
+			}
+			if (stop == null) {
+				throw new PubSubException(Authorization.ITEM_NOT_FOUND);
+			}
+		}
+
+		if (start == null) {
+			start = 0;
+		}
+		if (stop == null) {
+			stop = nodes.length;
+		}
+		if (start <= stop) {
+			return Arrays.copyOfRange(nodes, start, stop);
+		} else {
+			return EMPTY_NODES;
+		}
 	}
 
 	@Override
