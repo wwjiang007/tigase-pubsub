@@ -715,18 +715,20 @@ public class CachedPubSubRepository<T>
 			// ignoring...
 		}
 		rootCollection.remove(userJid);
-		Iterator<Node> nodesIter = this.nodes.values().iterator();
-		while (nodesIter.hasNext()) {
-			Node node = nodesIter.next();
-			if (userJid.equals(node.getServiceJid())) {
-				nodesIter.remove();
+		NodeKey[] keys = this.nodes.keySet().toArray(new NodeKey[0]);
+		for (NodeKey key : keys) {
+			if (userJid.equals(key.serviceJid)) {
+				this.nodes.remove(key);
 			} else {
-				NodeSubscriptions nodeSubscriptions = node.getNodeSubscriptions();
-				nodeSubscriptions.changeSubscription(userJid, Subscription.none);
-				nodeSubscriptions.merge();
-				NodeAffiliations nodeAffiliations = node.getNodeAffiliations();
-				nodeAffiliations.changeAffiliation(userJid, Affiliation.none);
-				nodeAffiliations.merge();
+				Node node = this.nodes.get(key);
+				if (node != null) {
+					NodeSubscriptions nodeSubscriptions = node.getNodeSubscriptions();
+					nodeSubscriptions.changeSubscription(userJid, Subscription.none);
+					nodeSubscriptions.merge();
+					NodeAffiliations nodeAffiliations = node.getNodeAffiliations();
+					nodeAffiliations.changeAffiliation(userJid, Affiliation.none);
+					nodeAffiliations.merge();
+				}
 			}
 		}
 	}
