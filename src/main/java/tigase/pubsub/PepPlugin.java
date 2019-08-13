@@ -259,7 +259,7 @@ public class PepPlugin
 			if (pubsubEl == null ||
 					(pubsubEl.getXMLNS() != PUBSUB_XMLNS && pubsubEl.getXMLNS() != PUBSUB_XMLNS_OWNER)) {
 				// ignoring - disco#info or disco#items to server
-				log.log(Level.FINEST, "got <iq/> packet with no 'to' attribute = {0}", packet);
+				log.log(Level.FINEST, "got <iq/> packet with no ''to'' attribute = {0}", packet);
 				return;
 			}
 		} else if (packet.getStanzaTo().getResource() == null && packet.getType() == StanzaType.error &&
@@ -282,7 +282,7 @@ public class PepPlugin
 			// if we do not have it, then we should drop this packet
 			if (log.isLoggable(Level.FINEST)) {
 				log.log(Level.FINEST,
-						"received <iq/> packet to forward to PubSub component without 'from' attribute, dropping packet = {0}",
+						"received <iq/> packet to forward to PubSub component without ''from'' attribute, dropping packet = {0}",
 						packet);
 			}
 			return;
