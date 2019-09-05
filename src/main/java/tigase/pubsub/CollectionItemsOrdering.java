@@ -23,7 +23,7 @@ import java.util.Comparator;
 
 public enum CollectionItemsOrdering {
 
-	byCreationDate("Sort items by creation time", new Comparator<IItems.ItemMeta>() {
+	byCreationDate(1,"Sort items by creation time", new Comparator<IItems.ItemMeta>() {
 
 		@Override
 		public int compare(IItems.ItemMeta o1, IItems.ItemMeta o2) {
@@ -31,7 +31,7 @@ public enum CollectionItemsOrdering {
 		}
 	}),
 
-	byUpdateDate("Sort items by last update time", new Comparator<IItems.ItemMeta>() {
+	byUpdateDate(2,"Sort items by last update time", new Comparator<IItems.ItemMeta>() {
 
 		@Override
 		public int compare(IItems.ItemMeta o1, IItems.ItemMeta o2) {
@@ -41,6 +41,7 @@ public enum CollectionItemsOrdering {
 
 	private final Comparator<IItems.ItemMeta> comparator;
 	private final String description;
+	private final int value;
 
 	public static String[] descriptions() {
 		String[] result = new String[values().length];
@@ -51,13 +52,18 @@ public enum CollectionItemsOrdering {
 		return result;
 	}
 
-	private CollectionItemsOrdering(String description, Comparator<IItems.ItemMeta> cmp) {
+	private CollectionItemsOrdering(int value, String description, Comparator<IItems.ItemMeta> cmp) {
 		this.description = description;
 		this.comparator = cmp;
+		this.value = value;
 	}
 
 	public Comparator<IItems.ItemMeta> getComparator() {
 		return comparator;
+	}
+
+	public int value() {
+		return value;
 	}
 
 }

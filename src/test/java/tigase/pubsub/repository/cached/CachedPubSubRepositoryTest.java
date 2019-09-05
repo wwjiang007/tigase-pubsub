@@ -25,6 +25,7 @@ import tigase.component.exceptions.RepositoryException;
 import tigase.db.DataSource;
 import tigase.kernel.core.Kernel;
 import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.exceptions.PubSubException;
@@ -282,12 +283,12 @@ public class CachedPubSubRepositoryTest {
 		}
 
 		@Override
-		public String[] getItemsIds(BareJID serviceJid, Object nodeId) throws RepositoryException {
+		public String[] getItemsIds(BareJID serviceJid, Object nodeId, CollectionItemsOrdering order) throws RepositoryException {
 			return new String[0];
 		}
 
 		@Override
-		public String[] getItemsIdsSince(BareJID serviceJid, Object nodeId, Date since) throws RepositoryException {
+		public String[] getItemsIdsSince(BareJID serviceJid, Object nodeId, CollectionItemsOrdering order, Date since) throws RepositoryException {
 			return new String[0];
 		}
 

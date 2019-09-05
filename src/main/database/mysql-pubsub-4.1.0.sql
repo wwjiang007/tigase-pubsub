@@ -17,3 +17,38 @@
 --
 
 --
+
+-- QUERY START:
+drop procedure if exists TigPubSubGetNodeItemsIds;
+-- QUERY END:
+-- QUERY START:
+drop procedure if exists TigPubSubGetNodeItemsIdsSince;
+-- QUERY END:
+
+delimiter //
+
+-- QUERY START:
+create procedure TigPubSubGetNodeItemsIds(_node_id bigint, _order int)
+begin
+    if _order = 1 then
+        select id from tig_pubsub_items where node_id = _node_id order by creation_date;
+    else
+        select id from tig_pubsub_items where node_id = _node_id order by update_date;
+    end if;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubGetNodeItemsIdsSince(_node_id bigint, _order int, _since datetime)
+begin
+    if _order = 1 then
+        select id from tig_pubsub_items where node_id = _node_id
+                                          and creation_date >= _since order by creation_date;
+    else
+        select id from tig_pubsub_items where node_id = _node_id
+                                          and update_date >= _since order by update_date;
+    end if;
+end //
+-- QUERY END:
+
+delimiter ;

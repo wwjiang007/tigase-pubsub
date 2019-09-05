@@ -17,3 +17,21 @@
 --
 
 --
+
+-- QUERY START:
+create procedure TigPubSubGetNodeItemsIds(node_id bigint, itemsOrder int)
+    PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	READS SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubGetNodeItemIds';
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubGetNodeItemsIdsSince(node_id bigint, itemsOrder int, since timestamp)
+    PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	READS SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubGetNodeItemIdsSince';
+-- QUERY END:

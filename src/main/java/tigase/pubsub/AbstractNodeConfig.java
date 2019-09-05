@@ -117,12 +117,12 @@ public abstract class AbstractNodeConfig {
 		String tmp = form.getAsString(TIGASE + "collection_items_odering");
 
 		if (tmp == null) {
-			return null;
+			return CollectionItemsOrdering.byUpdateDate;
 		} else {
 			try {
 				return CollectionItemsOrdering.valueOf(tmp);
 			} catch (Throwable ex) {
-				return null;
+				return CollectionItemsOrdering.byUpdateDate;
 			}
 		}
 	}

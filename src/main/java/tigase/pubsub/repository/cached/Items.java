@@ -18,6 +18,7 @@
 package tigase.pubsub.repository.cached;
 
 import tigase.component.exceptions.RepositoryException;
+import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.xml.Element;
@@ -80,21 +81,21 @@ class Items<T>
 	}
 
 	@Override
-	public String[] getItemsIds() throws RepositoryException {
+	public String[] getItemsIds(CollectionItemsOrdering order) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "getItemsIds, serviceJid: {0}, nodeId: {1}, dao: {2}",
-					new Object[]{serviceJid, nodeId, dao});
+			log.log(Level.FINEST, "getItemsIds, serviceJid: {0}, nodeId: {1}, dao: {2}, order: {3}",
+					new Object[]{serviceJid, nodeId, dao, order});
 		}
-		return this.dao.getItemsIds(serviceJid, nodeId);
+		return this.dao.getItemsIds(serviceJid, nodeId, order);
 	}
 
 	@Override
-	public String[] getItemsIdsSince(Date since) throws RepositoryException {
+	public String[] getItemsIdsSince(CollectionItemsOrdering order, Date since) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "getItemsIdsSince, serviceJid: {0}, nodeId: {1}, dao: {2}, since: {3}",
-					new Object[]{serviceJid, nodeId, dao, since});
+			log.log(Level.FINEST, "getItemsIdsSince, serviceJid: {0}, nodeId: {1}, dao: {2}, order: {3}, since: {4}",
+					new Object[]{serviceJid, nodeId, dao, order, since});
 		}
-		return this.dao.getItemsIdsSince(serviceJid, nodeId, since);
+		return this.dao.getItemsIdsSince(serviceJid, nodeId, order, since);
 	}
 
 	@Override

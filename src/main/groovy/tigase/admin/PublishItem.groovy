@@ -168,7 +168,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 										p.getAttributeStaticStr("from"), item);
 
 					if (leafNodeConfig.getMaxItems() != null) {
-						publishNodeModule.trimItems(nodeItems, leafNodeConfig.getMaxItems());
+						publishNodeModule.trimItems(nodeItems, leafNodeConfig.getMaxItems(), leafNodeConfig.getCollectionItemsOrdering());
 					}
 				}
 

@@ -134,7 +134,7 @@ public class PublishItemModule
 				}
 			}
 			if (leafNodeConfig.getMaxItems() != null) {
-				trimItems(nodeItems, leafNodeConfig.getMaxItems());
+				trimItems(nodeItems, leafNodeConfig.getMaxItems(), leafNodeConfig.getCollectionItemsOrdering());
 			}
 		}
 
@@ -392,7 +392,7 @@ public class PublishItemModule
 			return;
 		}
 		IItems nodeItems = this.getRepository().getNodeItems(serviceJid, nodeConfig.getNodeName());
-		String[] ids = nodeItems.getItemsIds();
+		String[] ids = nodeItems.getItemsIds(nodeConfig.getCollectionItemsOrdering());
 
 		if (ids != null && ids.length > 0) {
 			String lastID = ids[ids.length - 1];
@@ -569,34 +569,17 @@ public class PublishItemModule
 		}
 	}
 
-	public void trimItems(final IItems nodeItems, final Integer maxItems) throws RepositoryException {
-		final String[] ids = nodeItems.getItemsIds();
+	public void trimItems(final IItems nodeItems, final Integer maxItems, CollectionItemsOrdering collectionItemsOrdering) throws RepositoryException {
+		final String[] ids = nodeItems.getItemsIds(collectionItemsOrdering);
 
 		if ((ids == null) || (ids.length <= maxItems)) {
 			return;
 		}
+		
+		for (int i = 0; i < (ids.length - maxItems); i++) {
+			String id = ids[i];
 
-		final ArrayList<Item> items = new ArrayList<Item>();
-
-		for (String id : ids) {
-			Date updateDate = nodeItems.getItemUpdateDate(id);
-
-			if (updateDate != null) {
-				Item i = new Item(id, updateDate);
-
-				items.add(i);
-			}
-		}
-		Collections.sort(items, new Comparator<Item>() {
-			@Override
-			public int compare(Item o1, Item o2) {
-				return o2.updateDate.compareTo(o1.updateDate);
-			}
-		});
-		for (int i = maxItems; i < items.size(); i++) {
-			Item it = items.get(i);
-
-			nodeItems.deleteItem(it.id);
+			nodeItems.deleteItem(id);
 		}
 	}
 

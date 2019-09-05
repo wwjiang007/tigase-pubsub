@@ -24,10 +24,7 @@ import tigase.db.Repository;
 import tigase.db.TigaseDBException;
 import tigase.db.util.RepositoryVersionAware;
 import tigase.kernel.beans.config.ConfigField;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.Subscription;
+import tigase.pubsub.*;
 import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.NodeMeta;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
@@ -58,8 +55,8 @@ public class PubSubDAOJDBC
 	private static final String GET_ITEM_QUERY = "{ call TigPubSubGetItem(?, ?) }";
 	private static final String WRITE_ITEM_QUERY = "{ call TigPubSubWriteItem(?, ?, ?, ?, ?) }";
 	private static final String DELETE_ITEM_QUERY = "{ call TigPubSubDeleteItem(?, ?) }";
-	private static final String GET_NODE_ITEM_IDS_QUERY = "{ call TigPubSubGetNodeItemsIds(?) }";
-	private static final String GET_NODE_ITEM_IDS_SINCE_QUERY = "{ call TigPubSubGetNodeItemsIdsSince(?,?) }";
+	private static final String GET_NODE_ITEM_IDS_QUERY = "{ call TigPubSubGetNodeItemsIds(?,?) }";
+	private static final String GET_NODE_ITEM_IDS_SINCE_QUERY = "{ call TigPubSubGetNodeItemsIdsSince(?,?,?) }";
 	private static final String GET_NODE_ITEMS_META_QUERY = "{ call TigPubSubGetNodeItemsMeta(?) }";
 	private static final String COUNT_NODES_QUERY = "{ call TigPubSubCountNodes(?) }";
 	private static final String GET_ALL_NODES_QUERY = "{ call TigPubSubGetAllNodes(?) }";
@@ -299,7 +296,7 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public String[] getItemsIds(BareJID serviceJid, Long nodeId) throws RepositoryException {
+	public String[] getItemsIds(BareJID serviceJid, Long nodeId, CollectionItemsOrdering order) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "getting items IDs: serviceJid: {0}, nodeId: {1}", new Object[]{serviceJid, nodeId});
 		}
@@ -313,6 +310,7 @@ public class PubSubDAOJDBC
 				synchronized (get_node_items_ids_sp) {
 					try {
 						get_node_items_ids_sp.setLong(1, nodeId);
+						get_node_items_ids_sp.setInt(2, order.value());
 						rs = get_node_items_ids_sp.executeQuery();
 						List<String> ids = new ArrayList<String>();
 						while (rs.next()) {
@@ -334,7 +332,7 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public String[] getItemsIdsSince(BareJID serviceJid, Long nodeId, Date since) throws RepositoryException {
+	public String[] getItemsIdsSince(BareJID serviceJid, Long nodeId, CollectionItemsOrdering order, Date since) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Getting items since: serviceJid: {0}, nodeId: {1}, since: {2}",
 					new Object[]{serviceJid, nodeId, since});
@@ -349,7 +347,8 @@ public class PubSubDAOJDBC
 			synchronized (get_node_items_ids_since_sp) {
 				try {
 					get_node_items_ids_since_sp.setLong(1, nodeId);
-					data_repo.setTimestamp(get_node_items_ids_since_sp, 2, sinceTs);
+					get_node_items_ids_since_sp.setInt(2, order.value());
+					data_repo.setTimestamp(get_node_items_ids_since_sp, 3, sinceTs);
 					rs = get_node_items_ids_since_sp.executeQuery();
 					List<String> ids = new ArrayList<String>();
 					while (rs.next()) {

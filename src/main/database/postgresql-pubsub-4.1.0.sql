@@ -17,3 +17,34 @@
 --
 
 --
+
+-- QUERY START:
+create or replace function TigPubSubGetNodeItemsIds(bigint, int) returns table (id varchar(1024)) as $$
+declare
+    _node_id alias for $1;
+    _order alias for $2;
+begin
+    if _order = 1 then
+        return query select i.id from tig_pubsub_items i where i.node_id = _node_id order by i.creation_date;
+    else
+        return query select i.id from tig_pubsub_items i where i.node_id = _node_id order by i.update_date;
+    end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubGetNodeItemsIdsSince(bigint, int, timestamp with time zone) returns table (id varchar(1024)) as $$
+declare
+    _node_id alias for $1;
+    _order alias for $2;
+    _since alias for $3;
+begin
+    if _order = 1 then
+        return query select i.id from tig_pubsub_items where i.node_id = _node_id and i.creation_date >= _since order by i.creation_date;
+    else
+        return query select i.id from tig_pubsub_items where i.node_id = _node_id and i.update_date >= _since order by i.update_date;
+    end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:

@@ -18,6 +18,7 @@
 package tigase.pubsub.repository.stateless;
 
 import tigase.component.exceptions.RepositoryException;
+import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.xml.Element;
@@ -60,13 +61,13 @@ class Items
 	}
 
 	@Override
-	public String[] getItemsIds() throws RepositoryException {
-		return this.dao.getItemsIds(serviceJid, nodeId);
+	public String[] getItemsIds(CollectionItemsOrdering order) throws RepositoryException {
+		return this.dao.getItemsIds(serviceJid, nodeId, order);
 	}
 
 	@Override
-	public String[] getItemsIdsSince(Date since) throws RepositoryException {
-		return this.dao.getItemsIdsSince(serviceJid, nodeId, since);
+	public String[] getItemsIdsSince(CollectionItemsOrdering order, Date since) throws RepositoryException {
+		return this.dao.getItemsIdsSince(serviceJid, nodeId, order, since);
 	}
 
 	@Override

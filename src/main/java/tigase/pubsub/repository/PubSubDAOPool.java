@@ -26,6 +26,7 @@ import tigase.db.beans.MDRepositoryBeanWithStatistics;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.modules.mam.Query;
@@ -213,11 +214,11 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public String[] getItemsIds(BareJID serviceJid, T nodeId) throws RepositoryException {
+	public String[] getItemsIds(BareJID serviceJid, T nodeId, CollectionItemsOrdering order) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
-				return dao.getItemsIds(serviceJid, nodeId);
+				return dao.getItemsIds(serviceJid, nodeId, order);
 			} finally {
 				offerDao(serviceJid, dao);
 			}
@@ -228,11 +229,11 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public String[] getItemsIdsSince(BareJID serviceJid, T nodeId, Date since) throws RepositoryException {
+	public String[] getItemsIdsSince(BareJID serviceJid, T nodeId, CollectionItemsOrdering order, Date since) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
-				return dao.getItemsIdsSince(serviceJid, nodeId, since);
+				return dao.getItemsIdsSince(serviceJid, nodeId, order, since);
 			} finally {
 				offerDao(serviceJid, dao);
 			}

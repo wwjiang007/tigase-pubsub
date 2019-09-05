@@ -18,6 +18,7 @@
 package tigase.pubsub.repository;
 
 import tigase.component.exceptions.RepositoryException;
+import tigase.pubsub.CollectionItemsOrdering;
 import tigase.xml.Element;
 
 import java.util.Date;
@@ -31,9 +32,19 @@ public interface IItems {
 
 	public abstract Date getItemCreationDate(String id) throws RepositoryException;
 
-	public abstract String[] getItemsIds() throws RepositoryException;
+	@Deprecated
+	default String[] getItemsIds() throws RepositoryException {
+		return getItemsIds(CollectionItemsOrdering.byUpdateDate);
+	}
 
-	public abstract String[] getItemsIdsSince(Date since) throws RepositoryException;
+	public abstract String[] getItemsIds(CollectionItemsOrdering order) throws RepositoryException;
+
+	@Deprecated
+	default String[] getItemsIdsSince(Date since) throws RepositoryException {
+		return getItemsIdsSince(CollectionItemsOrdering.byUpdateDate, since);
+	}
+
+	public abstract String[] getItemsIdsSince(CollectionItemsOrdering order, Date since) throws RepositoryException;
 
 	public abstract List<ItemMeta> getItemsMeta() throws RepositoryException;
 

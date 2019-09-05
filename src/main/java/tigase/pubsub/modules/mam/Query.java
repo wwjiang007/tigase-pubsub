@@ -25,7 +25,7 @@ import tigase.pubsub.CollectionItemsOrdering;
 public class Query
 		extends tigase.xmpp.mam.QueryImpl {
 
-	private CollectionItemsOrdering order = CollectionItemsOrdering.byCreationDate;
+	private CollectionItemsOrdering order = CollectionItemsOrdering.byUpdateDate;
 	private String pubsubNode;
 
 	public String getPubsubNode() {

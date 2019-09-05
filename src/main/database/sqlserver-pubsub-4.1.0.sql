@@ -17,3 +17,46 @@
 --
 
 --
+
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubGetNodeItemsIds')
+    DROP PROCEDURE TigPubSubGetNodeItemsIds
+-- QUERY END:
+GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubGetNodeItemsIds
+    @_node_id bigint,
+    @_order int
+AS
+begin
+    if @_order = 1
+        select id from tig_pubsub_items where node_id = @_node_id order by creation_date;
+    else
+        select id from tig_pubsub_items where node_id = @_node_id order by update_date;
+end
+-- QUERY END:
+GO
+
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubGetNodeItemsIdsSince')
+    DROP PROCEDURE TigPubSubGetNodeItemsIdsSince
+-- QUERY END:
+GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubGetNodeItemsIdsSince
+    @_node_id bigint,
+    @_order int,
+	@_since datetime
+AS
+begin
+    if @_order = 1
+        select id from tig_pubsub_items where node_id = @_node_id
+                                  and creation_date >= @_since order by creation_date;
+    else
+        select id from tig_pubsub_items where node_id = @_node_id
+                                  and update_date >= @_since order by update_date;
+end
+-- QUERY END:
+GO

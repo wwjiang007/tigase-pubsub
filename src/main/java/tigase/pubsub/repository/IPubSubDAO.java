@@ -22,6 +22,7 @@ import tigase.component.exceptions.RepositoryException;
 import tigase.db.DataSource;
 import tigase.db.DataSourceAware;
 import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
@@ -69,9 +70,19 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 
 	Date getItemCreationDate(BareJID serviceJid, T nodeId, final String id) throws RepositoryException;
 
-	String[] getItemsIds(BareJID serviceJid, T nodeId) throws RepositoryException;
+	@Deprecated
+	default String[] getItemsIds(BareJID serviceJid, T nodeId) throws RepositoryException {
+		return getItemsIds(serviceJid, nodeId, CollectionItemsOrdering.byUpdateDate);
+	}
 
-	String[] getItemsIdsSince(BareJID serviceJid, T nodeId, Date since) throws RepositoryException;
+	String[] getItemsIds(BareJID serviceJid, T nodeId, CollectionItemsOrdering order) throws RepositoryException;
+
+	@Deprecated
+	default String[] getItemsIdsSince(BareJID serviceJid, T nodeId, Date since) throws RepositoryException {
+		return getItemsIdsSince(serviceJid, nodeId, CollectionItemsOrdering.byUpdateDate, since);
+	}
+
+	String[] getItemsIdsSince(BareJID serviceJid, T nodeId, CollectionItemsOrdering order, Date since) throws RepositoryException;
 
 	List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, T nodeId, String nodeName) throws RepositoryException;
 

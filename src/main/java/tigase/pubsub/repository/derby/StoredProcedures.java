@@ -415,14 +415,15 @@ public class StoredProcedures {
 		}
 	}
 
-	public static void tigPubSubGetNodeItemIds(Long nodeId, ResultSet[] data) throws SQLException {
+	public static void tigPubSubGetNodeItemIds(Long nodeId, Integer order, ResultSet[] data) throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
-			PreparedStatement ps = conn.prepareStatement(
-					"select id from tig_pubsub_items where node_id = ?" + " order by creation_date");
+			PreparedStatement ps = conn.prepareStatement(order == 1
+					? "select id from tig_pubsub_items where node_id = ?" + " order by creation_date"
+					: "select id from tig_pubsub_items where node_id = ?" + " order by update_date");
 			ps.setLong(1, nodeId);
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
@@ -433,15 +434,18 @@ public class StoredProcedures {
 		}
 	}
 
-	public static void tigPubSubGetNodeItemIdsSince(Long nodeId, java.sql.Timestamp since, ResultSet[] data)
+	public static void tigPubSubGetNodeItemIdsSince(Long nodeId, Integer order, java.sql.Timestamp since, ResultSet[] data)
 			throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
-			PreparedStatement ps = conn.prepareStatement("select id from tig_pubsub_items where node_id = ?" +
-																 " and creation_date >= ? order by creation_date");
+			PreparedStatement ps = conn.prepareStatement(order == 1
+					? "select id from tig_pubsub_items where node_id = ?" +
+																 " and creation_date >= ? order by creation_date"
+					: "select id from tig_pubsub_items where node_id = ?" +
+																 " and update_date >= ? order by update_date");
 			ps.setLong(1, nodeId);
 			ps.setTimestamp(2, since);
 			data[0] = ps.executeQuery();
