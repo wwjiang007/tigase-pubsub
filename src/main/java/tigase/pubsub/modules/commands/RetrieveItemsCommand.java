@@ -1,4 +1,4 @@
-/**
+/*
  * Tigase PubSub - Publish Subscribe component for Tigase
  * Copyright (C) 2008 Tigase, Inc. (office@tigase.com)
  *
