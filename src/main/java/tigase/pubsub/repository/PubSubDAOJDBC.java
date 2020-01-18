@@ -48,9 +48,9 @@ public class PubSubDAOJDBC
 		extends PubSubDAO<Long, DataRepository, Query>
 		implements RepositoryVersionAware {
 
-	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?) }";
+	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?, ?) }";
 	private static final String REMOVE_NODE_QUERY = "{ call TigPubSubRemoveNode(?) }";
-	private static final String REMOVE_SERVICE_QUERY = "{ call TigPubSubRemoveService(?) }";
+	private static final String REMOVE_SERVICE_QUERY = "{ call TigPubSubRemoveService(?, ?) }";
 	private static final String GET_NODE_ID_QUERY = "{ call TigPubSubGetNodeId(?, ?) }";
 	private static final String GET_NODE_META_QUERY = "{ call TigPubSubGetNodeMeta(?, ?) }";
 	private static final String GET_ITEM_QUERY = "{ call TigPubSubGetItem(?, ?) }";
@@ -63,7 +63,6 @@ public class PubSubDAOJDBC
 	private static final String GET_ALL_NODES_QUERY = "{ call TigPubSubGetAllNodes(?) }";
 	private static final String GET_ROOT_NODES_QUERY = "{ call TigPubSubGetRootNodes(?) }";
 	private static final String GET_CHILD_NODES_QUERY = "{ call TigPubSubGetChildNodes(?,?) }";
-	private static final String DELETE_ALL_NODES_QUERY = "{ call TigPubSubDeleteAllNodes(?) }";
 	private static final String SET_NODE_CONFIGURATION_QUERY = "{ call TigPubSubSetNodeConfiguration(?, ?, ?) }";
 	private static final String SET_NODE_AFFILIATION_QUERY = "{ call TigPubSubSetNodeAffiliation(?, ?, ?) }";
 	private static final String GET_NODE_CONFIGURATION_QUERY = "{ call TigPubSubGetNodeConfiguration(?) }";
@@ -86,58 +85,8 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
-		// TODO
-		// We do not support collections yet, so all nodes are in root
-		// collection.
-		return;
-	}
-
-//	private void checkSchema() {
-//		if (schemaOk)
-//			return;
-//
-//		try {
-//			CallableStatement testCall = conn.prepareCall("{ call TigPubSubGetNodeMeta(?,?) }");
-//			testCall.setString(1, "tigase-pubsub");
-//			testCall.setString(2, "tigase-pubsub");
-//			testCall.execute();
-//			testCall.close();
-//			schemaOk = true;
-//		} catch (Exception ex) {
-//			String[] msg = {
-//					"",
-//					"  ---------------------------------------------",
-//					"  ERROR! Terminating the server process.",
-//					"  PubSub Component is not compatible with",
-//					"  database schema which exists in",
-//					"  " + db_conn,
-//					"  This component uses newer schema. To continue",
-//					"  use of currently deployed schema, please use",
-//					"  older version of PubSub Component.",
-//					"  To convert database to new schema please see:",
-//					"  https://projects.tigase.org/projects/tigase-pubsub/wiki/PubSub_database_schema_conversion"
-//			};
-//			if (XMPPServer.isOSGi()) {
-//				// for some reason System.out.println is not working in OSGi
-//				for (String line : msg) {
-//					log.log(Level.SEVERE, line);
-//				}
-//			}
-//			else {
-//				for (String line : msg) {
-//					System.out.println(line);
-//				}
-//			}
-//			log.log(Level.FINEST, "Exception during checkSchema: ", ex);
-//
-//			System.exit(1);
-//		}
-//	}
-
-	@Override
 	public Long createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-						   NodeType nodeType, Long collectionId) throws RepositoryException {
+						   NodeType nodeType, Long collectionId, String componentName) throws RepositoryException {
 		Long nodeId = null;
 		HashCode hash = null;
 		try {
@@ -163,6 +112,7 @@ public class PubSubDAOJDBC
 						create_node_sp.setLong(6, collectionId);
 					}
 					data_repo.setTimestamp(create_node_sp, 7, new Timestamp(System.currentTimeMillis()));
+					create_node_sp.setString(8, componentName);
 
 					switch (this.data_repo.getDatabaseType()) {
 						case sqlserver:
@@ -770,32 +720,7 @@ public class PubSubDAOJDBC
 			throw new TigaseDBException("Cound not retrieve items", ex);
 		}
 	}
-
-	@Override
-	public void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException {
-		// TODO check it
-		HashCode hash = null;
-		try {
-			hash = takeDao();
-			PreparedStatement delete_all_nodes_sp = data_repo.getPreparedStatement(hash.hashCode(),
-																				   DELETE_ALL_NODES_QUERY);
-			synchronized (delete_all_nodes_sp) {
-				delete_all_nodes_sp.setString(1, serviceJid.toString());
-				delete_all_nodes_sp.execute();
-			}
-		} catch (SQLException e) {
-			throw new RepositoryException("Removing root collection error", e);
-		} finally {
-			offerDao(hash);
-		}
-	}
-
-	@Override
-	public void removeFromRootCollection(BareJID serviceJid, Long nodeId) throws RepositoryException {
-		// TODO check it
-		deleteNode(serviceJid, nodeId);
-	}
-
+	
 	@Override
 	public void removeNodeSubscription(BareJID serviceJid, Long nodeId, BareJID jid) throws RepositoryException {
 		HashCode hash = null;
@@ -816,13 +741,14 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public void removeService(BareJID serviceJid) throws RepositoryException {
+	public void removeService(BareJID serviceJid, String componentName) throws RepositoryException {
 		HashCode hash = null;
 		try {
 			hash = takeDao();
 			PreparedStatement remove_service_sp = data_repo.getPreparedStatement(hash.hashCode(), REMOVE_SERVICE_QUERY);
 			synchronized (remove_service_sp) {
 				remove_service_sp.setString(1, serviceJid.toString());
+				remove_service_sp.setString(2, componentName);
 				remove_service_sp.execute();
 			}
 		} catch (SQLException e) {
@@ -1231,7 +1157,6 @@ public class PubSubDAOJDBC
 		data_repo.initPreparedStatement(GET_ALL_NODES_QUERY, GET_ALL_NODES_QUERY);
 		data_repo.initPreparedStatement(GET_ROOT_NODES_QUERY, GET_ROOT_NODES_QUERY);
 		data_repo.initPreparedStatement(GET_CHILD_NODES_QUERY, GET_CHILD_NODES_QUERY);
-		data_repo.initPreparedStatement(DELETE_ALL_NODES_QUERY, DELETE_ALL_NODES_QUERY);
 		data_repo.initPreparedStatement(SET_NODE_CONFIGURATION_QUERY, SET_NODE_CONFIGURATION_QUERY);
 		data_repo.initPreparedStatement(SET_NODE_AFFILIATION_QUERY, SET_NODE_AFFILIATION_QUERY);
 		data_repo.initPreparedStatement(GET_NODE_CONFIGURATION_QUERY, GET_NODE_CONFIGURATION_QUERY);

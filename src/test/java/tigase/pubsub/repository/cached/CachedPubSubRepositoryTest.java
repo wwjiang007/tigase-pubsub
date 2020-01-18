@@ -76,7 +76,7 @@ public class CachedPubSubRepositoryTest {
 		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
-			dao.addToRootCollection(serviceJid, node);
+			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, "pubsub");
 		}
 
 		try {
@@ -114,7 +114,7 @@ public class CachedPubSubRepositoryTest {
 		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
-			dao.addToRootCollection(serviceJid, node);
+			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, "pubsub");
 		}
 
 		Arrays.sort(nodes);
@@ -146,7 +146,7 @@ public class CachedPubSubRepositoryTest {
 		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
-			dao.addToRootCollection(serviceJid, node);
+			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, "pubsub");
 		}
 
 		try {
@@ -178,7 +178,7 @@ public class CachedPubSubRepositoryTest {
 		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
-			dao.addToRootCollection(serviceJid, node);
+			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, "pubsub");
 		}
 
 		assertEquals(10, cachedPubSubRepository.getRootCollection(serviceJid).length);
@@ -242,18 +242,14 @@ public class CachedPubSubRepositoryTest {
 
 		protected Map<BareJID, Set<String>> rootCollections = new ConcurrentHashMap<>();
 		protected boolean withDelay;
-
+		
 		@Override
-		public void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
+		public Object createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
+								 NodeType nodeType, Object collectionId, String componentName) throws RepositoryException {
 			synchronized (rootCollections) {
 				Set<String> nodes = rootCollections.computeIfAbsent(serviceJid, bareJID -> new HashSet<String>());
 				nodes.add(nodeName);
 			}
-		}
-
-		@Override
-		public Object createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-								 NodeType nodeType, Object collectionId) throws RepositoryException {
 			return null;
 		}
 
@@ -364,19 +360,10 @@ public class CachedPubSubRepositoryTest {
 		}
 
 		@Override
-		public void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException {
-
-		}
-
-		@Override
-		public void removeService(BareJID serviceJid) throws RepositoryException {
+		public void removeService(BareJID serviceJid, String componentName) throws RepositoryException {
 			rootCollections.remove(serviceJid);
 		}
-
-		@Override
-		public void removeFromRootCollection(BareJID serviceJid, Object nodeId) throws RepositoryException {
-		}
-
+		
 		@Override
 		public void removeNodeSubscription(BareJID serviceJid, Object nodeId, BareJID jid) throws RepositoryException {
 

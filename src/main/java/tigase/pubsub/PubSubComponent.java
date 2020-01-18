@@ -195,7 +195,20 @@ public class PubSubComponent
 		}
 		return super.processScriptCommand(pc, results);
 	}
-	
+
+	@Override
+	public void setName(String name) {
+		super.setName(name);
+		if (pubsubRepository != null) {
+			this.pubsubRepository.setComponentName(name);
+		}
+	}
+
+	public void setPubsubRepository(IPubSubRepository pubsubRepository) {
+		pubsubRepository.setComponentName(getName());
+		this.pubsubRepository = pubsubRepository;
+	}
+
 	@Override
 	public void start() {
 		super.start();

@@ -84,7 +84,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 		}
 
 		LeafNodeConfig nodeCfg = new LeafNodeConfig(nodeName);
-		dao.createNode(serviceJid, nodeName, senderJid.getBareJID(), nodeCfg, NodeType.leaf, null);
+		dao.createNode(serviceJid, nodeName, senderJid.getBareJID(), nodeCfg, NodeType.leaf, null, "pubsub");
 
 		nodeId = dao.getNodeId(serviceJid, nodeName);
 		Assert.assertNotNull("Could not retrieve nodeId for newly created node", nodeId);

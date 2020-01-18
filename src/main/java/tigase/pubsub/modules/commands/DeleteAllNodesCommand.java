@@ -31,6 +31,7 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IPubSubDAO;
+import tigase.server.AbstractMessageReceiver;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
@@ -52,6 +53,9 @@ public class DeleteAllNodesCommand
 
 	private static final Logger log = Logger.getLogger(DeleteAllNodesCommand.class.getName());
 
+	@Inject(bean = "service")
+	private AbstractMessageReceiver component;
+	
 	@Inject
 	private PubSubConfig config;
 
@@ -122,7 +126,7 @@ public class DeleteAllNodesCommand
 
 	private void startRemoving(BareJID serviceJid)
 			throws RepositoryException, UserNotFoundException, TigaseDBException {
-		dao.removeAllFromRootCollection(serviceJid);
+		dao.removeService(serviceJid, component.getName());
 		userRepo.removeSubnode(config.getServiceBareJID(), "nodes");
 	}
 }

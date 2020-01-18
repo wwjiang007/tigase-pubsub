@@ -31,6 +31,7 @@ import tigase.pubsub.CollectionNodeConfig;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IPubSubDAO;
+import tigase.server.AbstractMessageReceiver;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
@@ -47,6 +48,9 @@ public class RebuildDatabaseCommand
 
 	private static final Logger log = Logger.getLogger(RebuildDatabaseCommand.class.getName());
 
+	@Inject(bean = "service")
+	private AbstractMessageReceiver component;
+	
 	@Inject
 	private PubSubConfig config;
 
@@ -152,10 +156,7 @@ public class RebuildDatabaseCommand
 			dao.updateNodeConfig(serviceJid, nodeId, nodeConfig.getFormElement().toString(), collectionId);
 		}
 
-		dao.removeAllFromRootCollection(serviceJid);
-		for (String nodeName : rootCollection) {
-			dao.addToRootCollection(serviceJid, nodeName);
-		}
+		dao.removeService(serviceJid, component.getName());
 
 	}
 
