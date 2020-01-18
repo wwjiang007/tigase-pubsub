@@ -50,6 +50,8 @@ public interface IPubSubRepository
 
 	void forgetConfiguration(BareJID serviceJid, String nodeName) throws RepositoryException;
 
+	void setComponentName(String componentName);
+
 	@Deprecated
 	String[] getBuddyGroups(BareJID owner, BareJID buddy) throws RepositoryException;
 

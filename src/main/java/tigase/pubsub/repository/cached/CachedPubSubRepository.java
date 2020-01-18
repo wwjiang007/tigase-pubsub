@@ -59,8 +59,7 @@ import java.util.stream.Collectors;
 @Bean(name = "pubsubRepository", parent = PubSubComponent.class, active = true)
 public class CachedPubSubRepository<T>
 		implements IPubSubRepository, StatisticHolder, Initializable {
-
-	public final static long MAX_WRITE_DELAY = 1000l * 15l;
+	
 	private final ConcurrentHashMap<BareJID, RootCollectionSet> rootCollection = new ConcurrentHashMap<>();
 	@Inject
 	protected PubSubConfig config;
@@ -84,6 +83,8 @@ public class CachedPubSubRepository<T>
 	private long updateSubscriptionsCalled = 0;
 	private long writingTime = 0;
 
+	private String componentName = null;
+
 	protected final AtomicLong nodesCount = new AtomicLong(0);
 
 	public CachedPubSubRepository() {
@@ -96,9 +97,9 @@ public class CachedPubSubRepository<T>
 			log.log(Level.FINEST, "Addint to root collection, serviceJid: {0}, nodeName: {1}",
 					new Object[]{serviceJid, nodeName});
 		}
-		this.dao.addToRootCollection(serviceJid, nodeName);
-
-		this.getRootCollectionSet(serviceJid).add(nodeName);
+		if (serviceJid.getLocalpart() == null) {
+			this.getRootCollectionSet(serviceJid).add(nodeName);
+		}
 	}
 
 	@Override
@@ -119,7 +120,7 @@ public class CachedPubSubRepository<T>
 			}
 		}
 
-		T nodeId = this.dao.createNode(serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collectionId);
+		T nodeId = this.dao.createNode(serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collectionId, componentName);
 		if (null == nodeId) {
 			nodeId = this.dao.getNodeId(serviceJid, nodeName);
 			if (null == nodeId) {
@@ -216,6 +217,10 @@ public class CachedPubSubRepository<T>
 
 	public Collection<Node> getAllNodes() {
 		return Collections.unmodifiableCollection(nodes.values());
+	}
+
+	public void setComponentName(String componentName) {
+		this.componentName = componentName;
 	}
 
 	@Override
@@ -329,16 +334,20 @@ public class CachedPubSubRepository<T>
 
 	@Override
 	public String[] getRootCollection(BareJID serviceJid) throws RepositoryException {
-		RootCollectionSetIfc rootCollection = getRootCollectionSet(serviceJid);
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "Getting root collection, serviceJid: {0}", new Object[]{serviceJid});
-		}
-		if (rootCollection == null) {
-			return null;
-		}
+		if (serviceJid.getLocalpart() != null) {
+			return dao.getChildNodes(serviceJid, null);
+		} else {
+			RootCollectionSetIfc rootCollection = getRootCollectionSet(serviceJid);
+			if (log.isLoggable(Level.FINEST)) {
+				log.log(Level.FINEST, "Getting root collection, serviceJid: {0}", new Object[]{serviceJid});
+			}
+			if (rootCollection == null) {
+				return null;
+			}
 
-		Set<String> nodes = rootCollection.values();
-		return nodes.toArray(new String[nodes.size()]);
+			Set<String> nodes = rootCollection.values();
+			return nodes.toArray(new String[nodes.size()]);
+		}
 	}
 
 	@Override
@@ -488,19 +497,12 @@ public class CachedPubSubRepository<T>
 
 	@Override
 	public void removeFromRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
-		NodeKey key = createKey(serviceJid, nodeName);
-		Node<T> node = this.nodes.get(key);
-		T nodeId = node != null ? node.getNodeId() : dao.getNodeId(serviceJid, nodeName);
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST,
-					"Getting node items, serviceJid: {0}, nodeName: {1}, key: {2}, node: {3}, nodeId: {4}",
-					new Object[]{serviceJid, nodeName, key, node, nodeId});
+		if (serviceJid.getLocalpart() == null) {
+			RootCollectionSetIfc rootCollectionSet = getRootCollectionSet(serviceJid);
+			if (rootCollectionSet != null) {
+				rootCollectionSet.remove(nodeName);
+			}
 		}
-		RootCollectionSetIfc rootCollectionSet = getRootCollectionSet(serviceJid);
-		if (rootCollectionSet != null) {
-			rootCollectionSet.remove(nodeName);
-		}
-		this.nodes.remove(key);
 	}
 
 	@Override
@@ -576,7 +578,7 @@ public class CachedPubSubRepository<T>
 
 	@Override
 	public void onUserRemoved(BareJID userJid) throws RepositoryException {
-		dao.removeService(userJid);
+		dao.removeService(userJid, componentName);
 		userRemoved(userJid);
 	}
 
@@ -714,7 +716,9 @@ public class CachedPubSubRepository<T>
 		} catch (RepositoryException ex) {
 			// ignoring...
 		}
-		rootCollection.remove(userJid);
+		if (userJid.getLocalpart() == null) {
+			rootCollection.remove(userJid);
+		}
 		NodeKey[] keys = this.nodes.keySet().toArray(new NodeKey[0]);
 		for (NodeKey key : keys) {
 			if (userJid.equals(key.serviceJid)) {

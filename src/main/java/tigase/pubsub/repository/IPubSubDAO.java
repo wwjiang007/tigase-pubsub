@@ -44,11 +44,9 @@ import java.util.Map;
  */
 public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 		extends DataSourceAware<S> {
-
-	void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException;
-
+	
 	T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-				 NodeType nodeType, T collectionId) throws RepositoryException;
+				 NodeType nodeType, T collectionId, String componentName) throws RepositoryException;
 
 	void deleteItem(BareJID serviceJid, T nodeId, String id) throws RepositoryException;
 
@@ -114,12 +112,8 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 
 	void queryItems(Q query, List<T> nodesIds, MAMRepository.ItemHandler<Q, IPubSubRepository.Item> itemHandler)
 			throws RepositoryException, ComponentException;
-
-	void removeAllFromRootCollection(BareJID serviceJid) throws RepositoryException;
-
-	void removeService(BareJID serviceJid) throws RepositoryException;
-
-	void removeFromRootCollection(BareJID serviceJid, T nodeId) throws RepositoryException;
+	
+	void removeService(BareJID serviceJid, String componentName) throws RepositoryException;
 
 	void removeNodeSubscription(BareJID serviceJid, T nodeId, BareJID jid) throws RepositoryException;
 
