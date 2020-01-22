@@ -31,6 +31,7 @@ import tigase.xml.Element;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.mam.MAMRepository;
+import tigase.xmpp.rsm.RSM;
 
 import java.util.Date;
 import java.util.List;
@@ -55,41 +56,20 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 	void destroy();
 
 	String[] getAllNodesList(BareJID serviceJid) throws RepositoryException;
-
-	@Deprecated
-	String[] getBuddyGroups(BareJID owner, BareJID bareJid) throws RepositoryException;
-
-	@Deprecated
-	String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException;
-
+	
 	String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException;
 
-	Element getItem(BareJID serviceJid, T nodeId, String id) throws RepositoryException;
+	IItems.IItem getItem(BareJID serviceJid, T nodeId, String id) throws RepositoryException;
 
-	Date getItemCreationDate(BareJID serviceJid, T nodeId, final String id) throws RepositoryException;
-
-	@Deprecated
-	default String[] getItemsIds(BareJID serviceJid, T nodeId) throws RepositoryException {
-		return getItemsIds(serviceJid, nodeId, CollectionItemsOrdering.byUpdateDate);
-	}
+	List<IItems.IItem> getItems(BareJID serviceJid, List<T> nodeIds, Date after, Date before, RSM rsm, CollectionItemsOrdering ordering) throws RepositoryException;
 
 	String[] getItemsIds(BareJID serviceJid, T nodeId, CollectionItemsOrdering order) throws RepositoryException;
-
-	@Deprecated
-	default String[] getItemsIdsSince(BareJID serviceJid, T nodeId, Date since) throws RepositoryException {
-		return getItemsIdsSince(serviceJid, nodeId, CollectionItemsOrdering.byUpdateDate, since);
-	}
-
+	
 	String[] getItemsIdsSince(BareJID serviceJid, T nodeId, CollectionItemsOrdering order, Date since) throws RepositoryException;
 
 	List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, T nodeId, String nodeName) throws RepositoryException;
 
-	Date getItemUpdateDate(BareJID serviceJid, T nodeId, final String id) throws RepositoryException;
-
 	NodeAffiliations getNodeAffiliations(BareJID serviceJid, T nodeId) throws RepositoryException;
-
-	@Deprecated
-	String getNodeConfig(BareJID serviceJid, T nodeId) throws RepositoryException;
 
 	@Deprecated
 	T getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException;
@@ -110,7 +90,9 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 
 	AbstractNodeConfig parseConfig(String nodeName, String cfgData) throws RepositoryException;
 
-	void queryItems(Q query, List<T> nodesIds, MAMRepository.ItemHandler<Q, IPubSubRepository.Item> itemHandler)
+	void addMAMItem(BareJID serviceJid, T nodeId, String uuid, Element message, String itemId) throws RepositoryException;
+
+	void queryItems(Q query, T nodeId, MAMRepository.ItemHandler<Q, MAMRepository.Item> itemHandler)
 			throws RepositoryException, ComponentException;
 	
 	void removeService(BareJID serviceJid, String componentName) throws RepositoryException;
@@ -127,6 +109,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 			throws RepositoryException;
 
 	void writeItem(BareJID serviceJid, T nodeId, long timeInMilis, final String id, final String publisher,
-				   final Element item) throws RepositoryException;
+				   final Element item, final String uuid) throws RepositoryException;
 
 }

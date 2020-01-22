@@ -140,7 +140,7 @@ class PubSubNodeEntity
 	}
 
 	UsersSubscription[] getNodeSubscriptions() {
-		return nodeSubscriptions.getSubscriptions();
+		return nodeSubscriptions.getSubscriptions().toArray(UsersSubscription[]::new);
 	}
 
 	BareJID getService() {

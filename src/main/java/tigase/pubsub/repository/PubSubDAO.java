@@ -38,7 +38,6 @@ import tigase.xml.SingletonFactory;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.impl.roster.RosterFlat;
 import tigase.xmpp.jid.BareJID;
-import tigase.xmpp.mam.Query;
 import tigase.xmpp.rsm.RSM;
 
 import java.lang.reflect.Constructor;
@@ -58,9 +57,8 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 	@Inject
 	private UserRepository repository;
 
-	protected static <Q extends Query> void calculateOffsetAndPosition(Q query, int count, Integer before,
+	protected static void calculateOffsetAndPosition(RSM rsm, int count, Integer before,
 																	   Integer after) {
-		RSM rsm = query.getRsm();
 		int index = rsm.getIndex() == null ? 0 : rsm.getIndex();
 		int limit = rsm.getMax();
 
@@ -92,24 +90,6 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 	@Override
 	public void destroy() {
 
-	}
-
-	@Override
-	public String[] getBuddyGroups(BareJID owner, BareJID buddy) throws RepositoryException {
-		try {
-			return this.repository.getDataList(owner, "roster/" + buddy, "groups");
-		} catch (Exception e) {
-			throw new RepositoryException("Getting buddy groups error", e);
-		}
-	}
-
-	@Override
-	public String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException {
-		try {
-			return this.repository.getData(owner, "roster/" + buddy, "subscription");
-		} catch (Exception e) {
-			throw new RepositoryException("Getting buddy subscription status error", e);
-		}
 	}
 
 	@Override
@@ -179,6 +159,9 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 	}
 
 	protected Element itemDataToElement(String data) {
+		if (data == null) {
+			return null;
+		}
 		return itemDataToElement(data.toCharArray());
 	}
 
@@ -208,41 +191,26 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 		return null;
 	}
 
-	public static class Item<T>
-			implements IPubSubRepository.Item {
+	public static class MAMItem implements IPubSubRepository.Item {
 
-		private final String itemId;
-		private final T nodeId;
-		private final String nodeName;
+		private final String itemUuid;
 		private final Date ts;
-		private Element item;
+		private final Element message;
 
-		public Item(String nodeName, T nodeId, String itemId, Date ts, Element item) {
-			this.nodeName = nodeName;
-			this.nodeId = nodeId;
-			this.itemId = itemId;
+		public MAMItem(String itemUuid, Date ts, Element message) {
+			this.itemUuid = itemUuid.toLowerCase();
 			this.ts = ts;
-			this.item = item;
+			this.message = message;
 		}
 
 		@Override
 		public String getId() {
-			return nodeId.toString() + "," + itemId;
-		}
-
-		@Override
-		public String getItemId() {
-			return itemId;
+			return itemUuid;
 		}
 
 		@Override
 		public Element getMessage() {
-			return item;
-		}
-
-		@Override
-		public void setMessage(Element item) {
-			this.item = item;
+			return message;
 		}
 
 		@Override
@@ -250,10 +218,6 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 			return ts;
 		}
 
-		@Override
-		public String getNode() {
-			return nodeName;
-		}
 	}
-
+	
 }

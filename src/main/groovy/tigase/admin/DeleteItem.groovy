@@ -96,7 +96,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				def removed = false;
 				if (((LeafNodeConfig) nodeConfig).isPersistItem()) {
 					def nodeItems = pubsubRepository.getNodeItems(toJid, node);
-					if (nodeItems.getItemCreationDate(id)) {
+					if (nodeItems.getItem(id)) {
 						Element notification = new Element("retract", [ "id" ] as String[], [ id ] as String[]);
 
 						removed = true;
@@ -104,7 +104,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 						eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, node, notification));
 
 						def publishNodeModule = kernel.getInstance(PublishItemModule.class);
-						publishNodeModule.sendNotifications(p.getStanzaTo().getBareJID(), node, [ notification ]);
+						publishNodeModule.generateNotifications(p.getStanzaTo().getBareJID(), node, [notification], null, false);
 					}
 				}
 

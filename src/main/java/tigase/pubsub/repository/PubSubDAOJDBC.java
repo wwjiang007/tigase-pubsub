@@ -34,6 +34,7 @@ import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.mam.MAMRepository;
+import tigase.xmpp.rsm.RSM;
 
 import java.sql.*;
 import java.util.Date;
@@ -53,7 +54,7 @@ public class PubSubDAOJDBC
 	private static final String GET_NODE_ID_QUERY = "{ call TigPubSubGetNodeId(?, ?) }";
 	private static final String GET_NODE_META_QUERY = "{ call TigPubSubGetNodeMeta(?, ?) }";
 	private static final String GET_ITEM_QUERY = "{ call TigPubSubGetItem(?, ?) }";
-	private static final String WRITE_ITEM_QUERY = "{ call TigPubSubWriteItem(?, ?, ?, ?, ?) }";
+	private static final String WRITE_ITEM_QUERY = "{ call TigPubSubWriteItem(?, ?, ?, ?, ?, ?) }";
 	private static final String DELETE_ITEM_QUERY = "{ call TigPubSubDeleteItem(?, ?) }";
 	private static final String GET_NODE_ITEM_IDS_QUERY = "{ call TigPubSubGetNodeItemsIds(?,?) }";
 	private static final String GET_NODE_ITEM_IDS_SINCE_QUERY = "{ call TigPubSubGetNodeItemsIdsSince(?,?,?) }";
@@ -64,20 +65,26 @@ public class PubSubDAOJDBC
 	private static final String GET_CHILD_NODES_QUERY = "{ call TigPubSubGetChildNodes(?,?) }";
 	private static final String SET_NODE_CONFIGURATION_QUERY = "{ call TigPubSubSetNodeConfiguration(?, ?, ?) }";
 	private static final String SET_NODE_AFFILIATION_QUERY = "{ call TigPubSubSetNodeAffiliation(?, ?, ?) }";
-	private static final String GET_NODE_CONFIGURATION_QUERY = "{ call TigPubSubGetNodeConfiguration(?) }";
 	private static final String GET_NODE_AFFILIATIONS_QUERY = "{ call TigPubSubGetNodeAffiliations(?) }";
 	private static final String GET_NODE_SUBSCRIPTIONS_QUERY = "{ call TigPubSubGetNodeSubscriptions(?) }";
 	private static final String SET_NODE_SUBSCRIPTION_QUERY = "{ call TigPubSubSetNodeSubscription(?, ?, ?, ?) }";
 	private static final String DELETE_NODE_SUBSCRIPTIONS_QUERY = "{ call TigPubSubDeleteNodeSubscription(?, ?) }";
 	private static final String GET_USER_AFFILIATIONS_QUERY = "{ call TigPubSubGetUserAffiliations(?, ?) }";
 	private static final String GET_USER_SUBSCRIPTIONS_QUERY = "{ call TigPubSubGetUserSubscriptions(?, ?) }";
+
+	private static final String COUNT_NODES_ITEMS_QUERY = "{ call TigPubSubQueryItemsCount(?,?,?) }";
+	private static final String GET_NODES_ITEMS_QUERY = "{ call TigPubSubQueryItems(?,?,?,?) }";
+	private static final String GET_NODES_ITEMS_POSITION_QUERY = "{ call TigPubSubQueryItemPosition(?,?,?,?,?) }";
+
 	private DataRepository data_repo;
+	@ConfigField(desc = "Add entry to MAM repository", alias = "mam-add-item-query")
+	private String mamAddItem = "{ call TigPubSubMamAddItem(?,?,?,?,?) }";
 	@ConfigField(desc = "Find item position in result set from repository", alias = "mam-query-item-position-query")
-	private String mamQueryItemPosition = "{ call TigPubSubMamQueryItemPosition(?,?,?,?,?,?,?) }";
+	private String mamQueryItemPosition = "{ call TigPubSubMamQueryItemPosition(?,?,?,?) }";
 	@ConfigField(desc = "Retrieve items from repository", alias = "mam-query-items-query")
-	private String mamQueryItems = "{ call TigPubSubMamQueryItems(?,?,?,?,?,?,?) }";
+	private String mamQueryItems = "{ call TigPubSubMamQueryItems(?,?,?,?,?) }";
 	@ConfigField(desc = "Count number of items from repository", alias = "mam-query-items-count-query")
-	private String mamQueryItemsCount = "{ call TigPubSubMamQueryItemsCount(?,?,?,?,?) }";
+	private String mamQueryItemsCount = "{ call TigPubSubMamQueryItemsCount(?,?,?) }";
 	private LinkedBlockingDeque<HashCode> pool_hashCodes = new LinkedBlockingDeque<>();
 
 	public PubSubDAOJDBC() {
@@ -225,26 +232,39 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public Element getItem(BareJID serviceJid, Long nodeId, String id) throws RepositoryException {
-		String data = getStringFromItem(serviceJid, nodeId, id, 1);
-		if (data == null) {
-			return null;
+	public IItems.IItem getItem(BareJID serviceJid, Long nodeId, String id) throws RepositoryException {
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "Getting string from item: serviceJid: {0}, nodeId: {1}",
+					new Object[]{serviceJid, nodeId});
 		}
-		return itemDataToElement(data.toCharArray());
+		HashCode hash = null;
+		try {
+			ResultSet rs = null;
+			hash = takeDao();
+			PreparedStatement get_item_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_ITEM_QUERY);
+			synchronized (get_item_sp) {
+				try {
+					get_item_sp.setLong(1, nodeId);
+					get_item_sp.setString(2, id);
+					rs = get_item_sp.executeQuery();
+					if (rs.next()) {
+						Element item = itemDataToElement(rs.getString(1));
+						String node = rs.getString(2);
+						String uuid = rs.getString(3);
+						return new IItems.Item(node, id, uuid, item);
+					}
+					return null;
+				} finally {
+					release(null, rs);
+				}
+			}
+		} catch (SQLException e) {
+			throw new RepositoryException("Could not load item reading error", e);
+		} finally {
+			offerDao(hash);
+		}
 	}
-
-	// @Override
-	// public String getItemPublisher( BareJID serviceJid, long nodeId, String
-	// id ) throws RepositoryException {
-	// return getStringFromItem( serviceJid, nodeId, id, 2 );
-	// }
-
-	@Override
-	public Date getItemCreationDate(final BareJID serviceJid, final Long nodeId, final String id)
-			throws RepositoryException {
-		return getDateFromItem(serviceJid, nodeId, id, 3);
-	}
-
+	
 	@Override
 	public String[] getItemsIds(BareJID serviceJid, Long nodeId, CollectionItemsOrdering order) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
@@ -317,6 +337,128 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
+	public List<IItems.IItem> getItems(BareJID serviceJid, List<Long> nodesIds, Date afterDate, Date beforeDate, RSM rsm, CollectionItemsOrdering ordering)
+			throws RepositoryException {
+		int count = 0;
+
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < nodesIds.size(); i++) {
+			if (i != 0) {
+				sb.append(',');
+			}
+			sb.append(nodesIds.get(i).longValue());
+		}
+		String ids = sb.toString();
+		
+		Integer after = null;
+		Integer before = null;
+
+
+		try {
+			PreparedStatement st = data_repo.getPreparedStatement(ids.hashCode(), COUNT_NODES_ITEMS_QUERY);
+			synchronized (st) {
+				ResultSet rs = null;
+				try {
+					int i =1;
+					st.setString(i++, ids);
+					data_repo.setTimestamp(st, i++, afterDate == null ? null : new Timestamp(afterDate.getTime()));
+					data_repo.setTimestamp(st, i++, beforeDate == null ? null : new Timestamp(beforeDate.getTime()));
+					st.setInt(i++, ordering.value());
+					rs = st.executeQuery();
+					if (rs.next()) {
+						count = rs.getInt(1);
+					}
+				} finally {
+					data_repo.release(null, rs);
+				}
+			}
+
+			if (rsm.getAfter() != null) {
+				st = data_repo.getPreparedStatement(ids.hashCode(), GET_NODES_ITEMS_POSITION_QUERY);
+				synchronized (st) {
+					ResultSet rs = null;
+					try {
+						int i = 1;
+						st.setString(i++, ids);
+						data_repo.setTimestamp(st, i++, afterDate == null ? null : new Timestamp(afterDate.getTime()));
+						data_repo.setTimestamp(st, i++,
+											   beforeDate == null ? null : new Timestamp(beforeDate.getTime()));
+						st.setInt(i++, ordering.value());
+						st.setString(i++, rsm.getAfter());
+						rs = st.executeQuery();
+						if (rs.next()) {
+							after = rs.getInt(1);
+						}
+					} finally {
+						data_repo.release(null, rs);
+					}
+				}
+			}
+
+			if (rsm.getBefore() != null) {
+				st = data_repo.getPreparedStatement(ids.hashCode(), GET_NODES_ITEMS_POSITION_QUERY);
+				synchronized (st) {
+					ResultSet rs = null;
+					try {
+						int i = 1;
+						st.setString(i++, ids);
+						data_repo.setTimestamp(st, i++, afterDate == null ? null : new Timestamp(afterDate.getTime()));
+						data_repo.setTimestamp(st, i++,
+											   beforeDate == null ? null : new Timestamp(beforeDate.getTime()));
+						st.setInt(i++, ordering.value());
+						st.setString(i++, rsm.getBefore());
+						rs = st.executeQuery();
+						if (rs.next()) {
+							before = rs.getInt(1);
+						}
+					} finally {
+						data_repo.release(null, rs);
+					}
+				}
+			}
+			
+			calculateOffsetAndPosition(rsm, count, before, after);
+
+			st = data_repo.getPreparedStatement(ids.hashCode(), GET_NODES_ITEMS_QUERY);
+
+			List<IItems.IItem> results = new ArrayList<>();
+			synchronized (st) {
+				ResultSet rs = null;
+				try {
+					int i = 1;
+					st.setString(i++, ids);
+					data_repo.setTimestamp(st, i++, afterDate == null ? null : new Timestamp(afterDate.getTime()));
+					data_repo.setTimestamp(st, i++,
+										   beforeDate == null ? null : new Timestamp(beforeDate.getTime()));
+					st.setInt(i++, ordering.value());
+					st.setInt(i++, rsm.getMax());
+					st.setInt(i++, rsm.getIndex());
+
+					rs = st.executeQuery();
+
+					while (rs.next()) {
+						String node = rs.getString(1);
+						String itemId = rs.getString(2);
+						String itemUuid = rs.getString(3);
+						Element itemEl = itemDataToElement(rs.getString(5));
+
+						results.add(new IItems.Item(node, itemId, itemUuid, itemEl));
+					}
+				} finally {
+					data_repo.release(null, rs);
+				}
+			}
+			if (results.size() > 0) {
+				rsm.setLast(results.get(results.size() - 1).getId());
+				rsm.setFirst(results.get(0).getId());
+			}
+			return results;
+		} catch (SQLException ex) {
+			throw new TigaseDBException("Cound not retrieve items", ex);
+		}
+	}
+
+	@Override
 	public List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, Long nodeId, String nodeName)
 			throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
@@ -338,7 +480,8 @@ public class PubSubDAOJDBC
 						String id = rs.getString(1);
 						Date creationDate = data_repo.getTimestamp(rs, 2);
 						Date updateDate = data_repo.getTimestamp(rs, 3);
-						results.add(new IItems.ItemMeta(nodeName, id, creationDate, updateDate));
+						String uuid = rs.getString(4);
+						results.add(new IItems.ItemMeta(nodeName, id, creationDate, updateDate, uuid));
 					}
 					return results;
 				} finally {
@@ -351,12 +494,7 @@ public class PubSubDAOJDBC
 			offerDao(hash);
 		}
 	}
-
-	@Override
-	public Date getItemUpdateDate(BareJID serviceJid, Long nodeId, String id) throws RepositoryException {
-		return getDateFromItem(serviceJid, nodeId, id, 4);
-	}
-
+	
 	@Override
 	public NodeAffiliations getNodeAffiliations(BareJID serviceJid, Long nodeId) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
@@ -389,11 +527,6 @@ public class PubSubDAOJDBC
 		} finally {
 			offerDao(hash);
 		}
-	}
-
-	@Override
-	public String getNodeConfig(BareJID serviceJid, Long nodeId) throws RepositoryException {
-		return readNodeConfigFormData(serviceJid, nodeId);
 	}
 
 	@Override
@@ -667,28 +800,45 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public void queryItems(Query query, List<Long> nodesIds,
-						   MAMRepository.ItemHandler<Query, IPubSubRepository.Item> itemHandler)
-			throws RepositoryException, ComponentException {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < nodesIds.size(); i++) {
-			if (i != 0) {
-				sb.append(',');
+	public void addMAMItem(BareJID serviceJid, Long nodeId, String uuid, Element message, String itemId) throws RepositoryException {
+		HashCode hash = null;
+		try {
+			hash = takeDao();
+			PreparedStatement write_item_sp = data_repo.getPreparedStatement(hash.hashCode(), mamAddItem);
+			ResultSet rs = null;
+			synchronized (write_item_sp) {
+				try {
+					write_item_sp.setLong(1, nodeId);
+					write_item_sp.setString(2, uuid);
+					data_repo.setTimestamp(write_item_sp, 3, new Timestamp(System.currentTimeMillis()));
+					write_item_sp.setString(4, message.toString());
+					write_item_sp.setString(5, itemId);
+					write_item_sp.execute();
+				} finally {
+					release(null, rs);
+				}
 			}
-			sb.append(nodesIds.get(i).longValue());
+		} catch (SQLException e) {
+			throw new RepositoryException("Item writing error", e);
+		} finally {
+			offerDao(hash);
 		}
 
-		String ids = sb.toString();
+	}
 
-		Integer count = countItems(query, ids);
+	@Override
+	public void queryItems(Query query, Long nodeId,
+						   MAMRepository.ItemHandler<Query, IPubSubRepository.Item> itemHandler)
+			throws RepositoryException, ComponentException {
+		Integer count = countMAMItems(query, nodeId);
 		if (count == null) {
 			count = 0;
 		}
 
-		Integer after = getItemPosition(query, ids, query.getRsm().getAfter());
-		Integer before = getItemPosition(query, ids, query.getRsm().getBefore());
+		Integer after = getMAMItemPosition(query, nodeId, query.getRsm().getAfter());
+		Integer before = getMAMItemPosition(query, nodeId, query.getRsm().getBefore());
 
-		calculateOffsetAndPosition(query, count, before, after);
+		calculateOffsetAndPosition(query.getRsm(), count, before, after);
 
 		try {
 			PreparedStatement st = data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(), mamQueryItems);
@@ -696,20 +846,18 @@ public class PubSubDAOJDBC
 			synchronized (st) {
 				ResultSet rs = null;
 				try {
-					int i = setStatementParamsForMAM(st, query, ids);
+					int i = setStatementParamsForMAM(st, query, nodeId);
 					st.setInt(i++, query.getRsm().getMax());
 					st.setInt(i++, query.getRsm().getIndex());
 
 					rs = st.executeQuery();
 
 					while (rs.next()) {
-						String node = rs.getString(1);
-						long nodeId = rs.getLong(2);
-						String itemId = rs.getString(3);
-						Timestamp creationDate = data_repo.getTimestamp(rs, 4);
-						Element itemEl = itemDataToElement(rs.getString(5));
+						String itemUuid = rs.getString(1);
+						Timestamp ts = data_repo.getTimestamp(rs, 2);
+						Element itemEl = itemDataToElement(rs.getString(3));
 
-						itemHandler.itemFound(query, new Item(node, nodeId, itemId, creationDate, itemEl));
+						itemHandler.itemFound(query, new MAMItem(itemUuid, ts, itemEl));
 					}
 				} finally {
 					data_repo.release(null, rs);
@@ -879,7 +1027,7 @@ public class PubSubDAOJDBC
 
 	@Override
 	public void writeItem(final BareJID serviceJid, final Long nodeId, long timeInMilis, final String id,
-						  final String publisher, final Element item) throws RepositoryException {
+						  final String publisher, final Element item, final String uuid) throws RepositoryException {
 		HashCode hash = null;
 		try {
 			hash = takeDao();
@@ -892,6 +1040,7 @@ public class PubSubDAOJDBC
 					write_item_sp.setString(3, publisher);
 					write_item_sp.setString(4, item.toString());
 					data_repo.setTimestamp(write_item_sp, 5, new Timestamp(System.currentTimeMillis()));
+					write_item_sp.setString(6, uuid);
 					write_item_sp.execute();
 				} finally {
 					release(null, rs);
@@ -916,85 +1065,15 @@ public class PubSubDAOJDBC
 			pool_hashCodes.offer(new HashCode(dataSource, i));
 		}
 	}
-
-	protected Date getDateFromItem(BareJID serviceJid, long nodeId, String id, int field) throws RepositoryException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "getting date from item: serviceJid: {0}, nodeId: {1}, id: {2}, field: {3}",
-					new Object[]{serviceJid, nodeId, id, field});
-		}
-		HashCode hash = null;
-		try {
-			ResultSet rs = null;
-			hash = takeDao();
-			PreparedStatement get_item_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_ITEM_QUERY);
-			synchronized (get_item_sp) {
-				try {
-					get_item_sp.setLong(1, nodeId);
-					get_item_sp.setString(2, id);
-					rs = get_item_sp.executeQuery();
-					if (rs.next()) {
-						// String date = rs.getString( field );
-						// if ( date == null ) {
-						// return null;
-						// }
-						// -- why do we need this?
-						// return DateFormat.getDateInstance().parse( date );
-						return data_repo.getTimestamp(rs, field);
-					}
-				} finally {
-					release(null, rs);
-				}
-				return null;
-			}
-		} catch (SQLException e) {
-			throw new RepositoryException("Item field " + field + " reading error", e);
-			// } catch ( ParseException e ) {
-			// throw new RepositoryException( "Item field " + field + " parsing
-			// error", e );
-		} finally {
-			offerDao(hash);
-		}
-	}
-
-	protected String getStringFromItem(BareJID serviceJid, long nodeId, String id, int field)
-			throws RepositoryException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "Getting string from item: serviceJid: {0}, nodeId: {1}",
-					new Object[]{serviceJid, nodeId});
-		}
-		HashCode hash = null;
-		try {
-			ResultSet rs = null;
-			hash = takeDao();
-			PreparedStatement get_item_sp = data_repo.getPreparedStatement(hash.hashCode(), GET_ITEM_QUERY);
-			synchronized (get_item_sp) {
-				try {
-					get_item_sp.setLong(1, nodeId);
-					get_item_sp.setString(2, id);
-					rs = get_item_sp.executeQuery();
-					if (rs.next()) {
-						return rs.getString(field);
-					}
-					return null;
-				} finally {
-					release(null, rs);
-				}
-			}
-		} catch (SQLException e) {
-			throw new RepositoryException("Item field " + field + " reading error", e);
-		} finally {
-			offerDao(hash);
-		}
-	}
-
-	protected Integer countItems(Query query, String nodeIds) throws TigaseDBException {
+	
+	protected Integer countMAMItems(Query query, Long nodeId) throws TigaseDBException {
 		try {
 			PreparedStatement st = this.data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
 																	   mamQueryItemsCount);
 			synchronized (st) {
 				ResultSet rs = null;
 				try {
-					setStatementParamsForMAM(st, query, nodeIds);
+					setStatementParamsForMAM(st, query, nodeId);
 
 					rs = st.executeQuery();
 					if (rs.next()) {
@@ -1012,101 +1091,45 @@ public class PubSubDAOJDBC
 		}
 	}
 
-	protected Integer getItemPosition(Query query, String nodeIds, String itemId)
+	protected Integer getMAMItemPosition(Query query, Long nodeId, String itemUuid)
 			throws RepositoryException, ComponentException {
-		if (itemId == null) {
+		if (itemUuid == null) {
 			return null;
 		}
 
 		try {
-			String[] parts = itemId.split(",");
-			if (parts.length != 2) {
-				throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
-			}
-			long itemNodeId = Long.parseLong(parts[0]);
-			String id = parts[1];
-
 			PreparedStatement st = this.data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
 																	   mamQueryItemPosition);
 			synchronized (st) {
 				ResultSet rs = null;
 				try {
-					int i = setStatementParamsForMAM(st, query, nodeIds);
-					st.setLong(i++, itemNodeId);
-					st.setString(i++, id);
+					int i = setStatementParamsForMAM(st, query, nodeId);
+					st.setString(i++, itemUuid);
 
 					rs = st.executeQuery();
 					if (rs.next()) {
 						return rs.getInt(1) - 1;
 					} else {
 						throw new ComponentException(Authorization.ITEM_NOT_FOUND,
-													 "Not found item with id = " + itemId);
+													 "Not found item with uuid = " + itemUuid);
 					}
 				} finally {
 					data_repo.release(null, rs);
 				}
 			}
-		} catch (NumberFormatException ex) {
-			throw new ComponentException(Authorization.ITEM_NOT_FOUND, "Not found item with id = " + itemId);
 		} catch (SQLException ex) {
-			throw new TigaseDBException("Can't find position for item with id " + itemId + " in archive for room " +
+			throw new TigaseDBException("Can't find position for item with id " + itemUuid + " in archive for room " +
 												query.getComponentJID(), ex);
 		}
 	}
 
-	protected int setStatementParamsForMAM(PreparedStatement st, Query query, String nodeIds) throws SQLException {
+	protected int setStatementParamsForMAM(PreparedStatement st, Query query, Long nodeId) throws SQLException {
 		int i = 1;
-		st.setString(i++, nodeIds);
+		st.setLong(i++, nodeId);
 		data_repo.setTimestamp(st, i++, query.getStart() == null ? null : new Timestamp(query.getStart().getTime()));
 		data_repo.setTimestamp(st, i++, query.getEnd() == null ? null : new Timestamp(query.getEnd().getTime()));
-		st.setString(i++, query.getWith() == null ? null : query.getWith().toString());
-//		if (query.getStart() != null) {
-//			st.setTimestamp(i++, new Timestamp(query.getStart().getTime()));
-//		} else {
-//			st.setObject(i++, null);
-//		}
-//		if (query.getEnd() != null) {
-//			st.setTimestamp(i++, new Timestamp(query.getEnd().getTime()));
-//		} else {
-//			st.setObject(i++, null);
-//		}
-//		if (query.getWith() != null) {
-//			st.setString(i++, query.getWith().toString());
-//		} else {
-//			st.setObject(i++, null);
-//		}
-		st.setInt(i++, query.getOrder().ordinal());
 
 		return i;
-	}
-
-	protected String readNodeConfigFormData(final BareJID serviceJid, final long nodeId) throws RepositoryException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "reding node config: serviceJid: {0}, nodeId: {1}", new Object[]{serviceJid, nodeId});
-		}
-		HashCode hash = null;
-		try {
-			ResultSet rs = null;
-			hash = takeDao();
-			PreparedStatement get_node_configuration_sp = data_repo.getPreparedStatement(hash.hashCode(),
-																						 GET_NODE_CONFIGURATION_QUERY);
-			synchronized (get_node_configuration_sp) {
-				try {
-					get_node_configuration_sp.setLong(1, nodeId);
-					rs = get_node_configuration_sp.executeQuery();
-					if (rs.next()) {
-						return rs.getString(1);
-					}
-					return null;
-				} finally {
-					release(null, rs);
-				}
-			}
-		} catch (SQLException e) {
-			throw new RepositoryException("Node subscribers reading error", e);
-		} finally {
-			offerDao(hash);
-		}
 	}
 
 	protected HashCode takeDao() {
@@ -1150,7 +1173,6 @@ public class PubSubDAOJDBC
 		data_repo.initPreparedStatement(GET_CHILD_NODES_QUERY, GET_CHILD_NODES_QUERY);
 		data_repo.initPreparedStatement(SET_NODE_CONFIGURATION_QUERY, SET_NODE_CONFIGURATION_QUERY);
 		data_repo.initPreparedStatement(SET_NODE_AFFILIATION_QUERY, SET_NODE_AFFILIATION_QUERY);
-		data_repo.initPreparedStatement(GET_NODE_CONFIGURATION_QUERY, GET_NODE_CONFIGURATION_QUERY);
 		data_repo.initPreparedStatement(GET_NODE_AFFILIATIONS_QUERY, GET_NODE_AFFILIATIONS_QUERY);
 		data_repo.initPreparedStatement(GET_NODE_SUBSCRIPTIONS_QUERY, GET_NODE_SUBSCRIPTIONS_QUERY);
 		data_repo.initPreparedStatement(SET_NODE_SUBSCRIPTION_QUERY, SET_NODE_SUBSCRIPTION_QUERY);
@@ -1158,6 +1180,11 @@ public class PubSubDAOJDBC
 		data_repo.initPreparedStatement(GET_USER_AFFILIATIONS_QUERY, GET_USER_AFFILIATIONS_QUERY);
 		data_repo.initPreparedStatement(GET_USER_SUBSCRIPTIONS_QUERY, GET_USER_SUBSCRIPTIONS_QUERY);
 
+		data_repo.initPreparedStatement(COUNT_NODES_ITEMS_QUERY, COUNT_NODES_ITEMS_QUERY);
+		data_repo.initPreparedStatement(GET_NODES_ITEMS_QUERY, GET_NODES_ITEMS_QUERY);
+		data_repo.initPreparedStatement(GET_NODES_ITEMS_POSITION_QUERY, GET_NODES_ITEMS_POSITION_QUERY);
+
+		data_repo.initPreparedStatement(mamAddItem, mamAddItem);
 		data_repo.initPreparedStatement(mamQueryItems, mamQueryItems);
 		data_repo.initPreparedStatement(mamQueryItemPosition, mamQueryItemPosition);
 		data_repo.initPreparedStatement(mamQueryItemsCount, mamQueryItemsCount);

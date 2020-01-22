@@ -29,7 +29,6 @@ import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.BasicComponent;
@@ -37,6 +36,7 @@ import tigase.xml.Element;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.mam.MAMRepository;
+import tigase.xmpp.rsm.RSM;
 
 import java.util.Date;
 import java.util.List;
@@ -137,24 +137,6 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public String[] getBuddyGroups(BareJID owner, BareJID bareJid) throws RepositoryException {
-		IPubSubDAO dao = takeDao(null);
-		if (dao != null) {
-			return dao.getBuddyGroups(owner, bareJid);
-		}
-		return null;
-	}
-
-	@Override
-	public String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException {
-		IPubSubDAO dao = takeDao(null);
-		if (dao != null) {
-			return dao.getBuddySubscription(owner, buddy);
-		}
-		return null;
-	}
-
-	@Override
 	public String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
@@ -170,7 +152,7 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public Element getItem(BareJID serviceJid, T nodeId, String id) throws RepositoryException {
+	public IItems.IItem getItem(BareJID serviceJid, T nodeId, String id) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -185,11 +167,12 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public Date getItemCreationDate(BareJID serviceJid, final T nodeId, final String id) throws RepositoryException {
+	public List<IItems.IItem> getItems(BareJID serviceJid, List<T> nodesIds, Date after, Date before, RSM rsm, CollectionItemsOrdering ordering)
+			throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
-				return dao.getItemCreationDate(serviceJid, nodeId, id);
+				return dao.getItems(serviceJid, nodesIds, after, before, rsm, ordering);
 			} finally {
 				offerDao(serviceJid, dao);
 			}
@@ -246,21 +229,6 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public Date getItemUpdateDate(BareJID serviceJid, T nodeId, String id) throws RepositoryException {
-		IPubSubDAO dao = takeDao(serviceJid);
-		if (dao != null) {
-			try {
-				return dao.getItemUpdateDate(serviceJid, nodeId, id);
-			} finally {
-				offerDao(serviceJid, dao);
-			}
-		} else {
-			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
-		}
-		return null;
-	}
-
-	@Override
 	public NodeAffiliations getNodeAffiliations(BareJID serviceJid, T nodeId) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
@@ -274,22 +242,7 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 		}
 		return null;
 	}
-
-	@Override
-	public String getNodeConfig(BareJID serviceJid, T nodeId) throws RepositoryException {
-		IPubSubDAO dao = takeDao(serviceJid);
-		if (dao != null) {
-			try {
-				return dao.getNodeConfig(serviceJid, nodeId);
-			} finally {
-				offerDao(serviceJid, dao);
-			}
-		} else {
-			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
-			return null;
-		}
-	}
-
+	
 	@Override
 	public T getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
 		IPubSubDAO<T, DataSource, Q> dao = takeDao(serviceJid);
@@ -418,17 +371,28 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public void queryItems(Query query, List nodesIds, MAMRepository.ItemHandler itemHandler)
-			throws ComponentException, RepositoryException {
-		BareJID serviceJid = query.getComponentJID().getBareJID();
+	public void addMAMItem(BareJID serviceJid, T nodeId, String uuid, Element message, String itemId) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
-			dao.queryItems(query, nodesIds, itemHandler);
+			dao.addMAMItem(serviceJid, nodeId, uuid, message, itemId);
 		} else {
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
 		}
 	}
 
+	@Override
+	public void queryItems(Q query, T nodeId, MAMRepository.ItemHandler<Q, IPubSubRepository.Item> itemHandler)
+			throws RepositoryException, ComponentException {
+		BareJID serviceJid = query.getComponentJID().getBareJID();
+		IPubSubDAO dao = takeDao(serviceJid);
+		if (dao != null) {
+			dao.queryItems(query, nodeId, itemHandler);
+		} else {
+			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
+		}
+
+	}
+	
 	/*
 	 * //@Override protected String readNodeConfigFormData(BareJID serviceJid,
 	 * final long nodeId) throws TigaseDBException { IPubSubDAO dao =
@@ -516,11 +480,11 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 
 	@Override
 	public void writeItem(final BareJID serviceJid, T nodeId, long timeInMilis, final String id, final String publisher,
-						  final Element item) throws RepositoryException {
+						  final Element item, final String uuid) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
-				dao.writeItem(serviceJid, nodeId, timeInMilis, id, publisher, item);
+				dao.writeItem(serviceJid, nodeId, timeInMilis, id, publisher, item, uuid);
 			} finally {
 				offerDao(serviceJid, dao);
 			}

@@ -145,6 +145,10 @@ public class StoredProcedures {
 			ps.setLong(1, nodeId);
 			ps.setString(2, itemId);
 			ps.executeUpdate();
+			ps = conn.prepareStatement("update tig_pubsub_mam set data = null where node_id = ? and item_id = ?");
+			ps.setLong(1, nodeId);
+			ps.setString(2, itemId);
+			ps.executeUpdate();
 		} catch (SQLException e) {
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;
@@ -345,9 +349,9 @@ public class StoredProcedures {
 
 		try {
 			PreparedStatement ps = conn.prepareStatement(
-					"select data, p.jid, creation_date, update_date " + "from tig_pubsub_items pi " +
-							"inner join tig_pubsub_jids p on p.jid_id = pi.publisher_id " +
-							"where node_id = ? and id = ?");
+					"select pi.data, pn.name, pi.uuid " + "from tig_pubsub_items pi " +
+							"inner join tig_pubsub_nodes pn on pn.node_id = pi.node_id " +
+							"where pi.node_id = ? and pi.id = ?");
 			ps.setLong(1, nodeId);
 			ps.setString(2, itemId);
 			data[0] = ps.executeQuery();
@@ -464,7 +468,7 @@ public class StoredProcedures {
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
-			PreparedStatement ps = conn.prepareStatement("select id, creation_date, update_date from tig_pubsub_items" +
+			PreparedStatement ps = conn.prepareStatement("select id, creation_date, update_date, uuid from tig_pubsub_items" +
 																 " where node_id = ? order by creation_date");
 			ps.setLong(1, nodeId);
 			data[0] = ps.executeQuery();
@@ -583,13 +587,123 @@ public class StoredProcedures {
 		}
 	}
 
-	public static void tigPubSubMamQueryItemPosition(String nodesIds, Timestamp since, Timestamp to, String publisher,
+	public static void tigPubSubMamAddItem(Long nodeId, String uuid, Timestamp ts, String itemData, String itemId,
+										  ResultSet[] data) throws SQLException {
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			synchronized (StoredProcedures.class) {
+				PreparedStatement ps = conn.prepareStatement(
+						"insert into tig_pubsub_mam (node_id, uuid, ts, data, item_id) VALUES (?,?,?,?,?)");
+				ps.setLong(1, nodeId);
+				ps.setString(2, uuid);
+				ps.setTimestamp(3, ts);
+				ps.setString(4, itemData);
+				ps.setString(5, itemId);
+				ps.executeUpdate();
+			}
+		} catch (SQLException e) {
+			// log.log(Level.SEVERE, "SP error", e);
+			throw e;
+		} finally {
+			conn.close();
+		}
+	}
+
+	public static void tigPubSubMamQueryItemPosition(Long nodeId, Timestamp since, Timestamp to, String uuid, ResultSet[] data)
+			throws SQLException {
+		String query = "select pm.uuid, row_number() over () as position" + " from tig_pubsub_mam pm" +
+				" where pm.node_id = ?  and (? is null or pm.ts >= ?)" +
+				" and (? is null or pm.ts <= ?)" + " order by pm.ts";
+
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			PreparedStatement st = conn.prepareStatement(query);
+			st.setLong(1, nodeId);
+			st.setTimestamp(2, since);
+			st.setTimestamp(3, since);
+			st.setTimestamp(5, to);
+			st.setTimestamp(6, to);
+
+			int i = 0;
+			try (ResultSet rs = st.executeQuery()) {
+				while (rs.next()) {
+					if (uuid.equalsIgnoreCase(rs.getString(1))) {
+						i = rs.getInt(3);
+					}
+				}
+			}
+
+			String q = "select " + i + " as position from SYSIBM.SYSDUMMY1 where " + i + " <> 0";
+			data[0] = conn.prepareStatement(q).executeQuery();
+		} finally {
+			conn.close();
+		}
+	}
+
+	public static void tigPubSubMamQueryItems(Long nodeId, Timestamp since, Timestamp to, Integer limit, Integer offset,
+											  ResultSet[] data)
+			throws SQLException {
+		String query = "select pm.uuid, pm.ts, pm.data from tig_pubsub_mam pm" +
+				" where pm.node_id = ?" +
+				" and (? is null or pm.ts >= ?)" + " and (? is null or pm.ts <= ?)" +
+				" order by pm.ts" +
+				" offset ? rows fetch next ? rows only";
+
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			PreparedStatement st = conn.prepareStatement(query);
+			st.setLong(1, nodeId);
+			st.setTimestamp(2, since);
+			st.setTimestamp(3, since);
+			st.setTimestamp(4, to);
+			st.setTimestamp(5, to);
+			st.setInt(7, offset);
+			st.setInt(8, limit);
+
+			data[0] = st.executeQuery();
+		} finally {
+			conn.close();
+		}
+	}
+
+	public static void tigPubSubMamQueryItemsCount(Long nodeId, Timestamp since, Timestamp to, ResultSet[] data) throws SQLException {
+		String query = "select count(1)" + " from tig_pubsub_mam pm" + " where pm.node_id = ?" +
+				" and (? is null or pm.ts >= ?)" + " and (? is null or pm.ts <= ?)";
+
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			PreparedStatement st = conn.prepareStatement(query);
+			st.setLong(1, nodeId);
+			st.setTimestamp(1, since);
+			st.setTimestamp(2, since);
+			st.setTimestamp(3, to);
+			st.setTimestamp(4, to);
+
+			data[0] = st.executeQuery();
+		} finally {
+			conn.close();
+		}
+	}
+
+	public static void tigPubSubQueryItemPosition(String nodesIds, Timestamp since, Timestamp to,
 													 Integer order, Long nodeId, String itemId, ResultSet[] data)
 			throws SQLException {
 		String ts = order == 1 ? "update_date" : "creation_date";
 		String query = "select pi.node_id, pi.id, row_number() over () as position" + " from tig_pubsub_items pi" +
 				" where pi.node_id in (" + nodesIds + ")" + " and (? is null or pi." + ts + " >= ?)" +
-				" and (? is null or pi." + ts + " <= ?)" + " and (? is null or pi.publisher_id = ?)" + " order by pi." +
+				" and (? is null or pi." + ts + " <= ?)" + " order by pi." +
 				ts;
 
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
@@ -597,20 +711,11 @@ public class StoredProcedures {
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
-			Long publisherId = getIdOfJid(conn, publisher);
-
 			PreparedStatement st = conn.prepareStatement(query);
 			st.setTimestamp(1, since);
 			st.setTimestamp(2, since);
 			st.setTimestamp(3, to);
 			st.setTimestamp(4, to);
-			if (publisherId != null) {
-				st.setLong(5, publisherId);
-				st.setLong(6, publisherId);
-			} else {
-				st.setNull(5, Types.BIGINT);
-				st.setNull(6, Types.BIGINT);
-			}
 
 			int i = 0;
 			try (ResultSet rs = st.executeQuery()) {
@@ -628,14 +733,14 @@ public class StoredProcedures {
 		}
 	}
 
-	public static void tigPubSubMamQueryItems(String nodesIds, Timestamp since, Timestamp to, String publisher,
+	public static void tigPubSubQueryItems(String nodesIds, Timestamp since, Timestamp to,
 											  Integer order, Integer limit, Integer offset, ResultSet[] data)
 			throws SQLException {
 		String ts = order == 1 ? "update_date" : "creation_date";
 		String query = "select pn.name, pi.node_id, pi.id, pi." + ts + ", pi.data" + " from tig_pubsub_items pi" +
 				" inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id" + " where pi.node_id in (" + nodesIds +
 				")" + " and (? is null or pi." + ts + " >= ?)" + " and (? is null or pi." + ts + " <= ?)" +
-				" and (? is null or pi.publisher_id = ?)" + " order by pi." + ts +
+				" order by pi." + ts +
 				" offset ? rows fetch next ? rows only";
 
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
@@ -643,20 +748,11 @@ public class StoredProcedures {
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
-			Long publisherId = getIdOfJid(conn, publisher);
-
 			PreparedStatement st = conn.prepareStatement(query);
 			st.setTimestamp(1, since);
 			st.setTimestamp(2, since);
 			st.setTimestamp(3, to);
 			st.setTimestamp(4, to);
-			if (publisherId != null) {
-				st.setLong(5, publisherId);
-				st.setLong(6, publisherId);
-			} else {
-				st.setNull(5, Types.BIGINT);
-				st.setNull(6, Types.BIGINT);
-			}
 			st.setInt(7, offset);
 			st.setInt(8, limit);
 
@@ -666,32 +762,22 @@ public class StoredProcedures {
 		}
 	}
 
-	public static void tigPubSubMamQueryItemsCount(String nodesIds, Timestamp since, Timestamp to, String publisher,
+	public static void tigPubSubQueryItemsCount(String nodesIds, Timestamp since, Timestamp to,
 												   Integer order, ResultSet[] data) throws SQLException {
 		String ts = order == 1 ? "update_date" : "creation_date";
 		String query = "select count(1)" + " from tig_pubsub_items pi" + " where pi.node_id in (" + nodesIds + ")" +
-				" and (? is null or pi." + ts + " >= ?)" + " and (? is null or pi." + ts + " <= ?)" +
-				" and (? is null or pi.publisher_id = ?)";
+				" and (? is null or pi." + ts + " >= ?)" + " and (? is null or pi." + ts + " <= ?)";
 
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
-			Long publisherId = getIdOfJid(conn, publisher);
-
 			PreparedStatement st = conn.prepareStatement(query);
 			st.setTimestamp(1, since);
 			st.setTimestamp(2, since);
 			st.setTimestamp(3, to);
 			st.setTimestamp(4, to);
-			if (publisherId != null) {
-				st.setLong(5, publisherId);
-				st.setLong(6, publisherId);
-			} else {
-				st.setNull(5, Types.BIGINT);
-				st.setNull(6, Types.BIGINT);
-			}
 
 			data[0] = st.executeQuery();
 		} finally {
@@ -895,7 +981,7 @@ public class StoredProcedures {
 		}
 	}
 
-	public static void tigPubSubWriteItem(Long nodeId, String itemId, String publisher, String itemData, Timestamp ts,
+	public static void tigPubSubWriteItem(Long nodeId, String itemId, String publisher, String itemData, Timestamp ts, String uuid,
 										  ResultSet[] data) throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
@@ -904,22 +990,24 @@ public class StoredProcedures {
 		try {
 			synchronized (StoredProcedures.class) {
 				PreparedStatement ps = conn.prepareStatement(
-						"update tig_pubsub_items set update_date = ?, data = ? " + "where node_id = ? and id = ?");
+						"update tig_pubsub_items set update_date = ?, data = ?, uuid = ? " + "where node_id = ? and id = ?");
 				ps.setTimestamp(1, ts);
 				ps.setString(2, itemData);
-				ps.setLong(3, nodeId);
-				ps.setString(4, itemId);
+				ps.setString(3, uuid);
+				ps.setLong(4, nodeId);
+				ps.setString(5, itemId);
 				int updated = ps.executeUpdate();
 				if (updated == 0) {
 					long publisherId = tigPubSubEnsureJid(conn, publisher);
 					ps = conn.prepareStatement("insert into tig_pubsub_items (node_id, id, creation_date, " +
-													   "update_date, publisher_id, data) values (?, ?, ?, ?, ?, ?)");
+													   "update_date, publisher_id, data, uuid) values (?, ?, ?, ?, ?, ?, ?)");
 					ps.setLong(1, nodeId);
 					ps.setString(2, itemId);
 					ps.setTimestamp(3, ts);
 					ps.setTimestamp(4, ts);
 					ps.setLong(5, publisherId);
 					ps.setString(6, itemData);
+					ps.setString(7, uuid);
 					ps.executeUpdate();
 				}
 			}

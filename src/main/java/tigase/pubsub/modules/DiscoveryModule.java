@@ -264,7 +264,7 @@ public class DiscoveryModule
 			resultQuery.addAttribute("node", nodeName);
 
 			IItems items = repository.getNodeItems(toJid.getBareJID(), nodeName);
-			String[] itemsId = items.getItemsIds();
+			String[] itemsId = items.getItemsIds(nodeConfig.getCollectionItemsOrdering());
 
 			if (itemsId != null) {
 				for (String itemId : itemsId) {

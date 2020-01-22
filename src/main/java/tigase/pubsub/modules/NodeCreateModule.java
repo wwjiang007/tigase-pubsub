@@ -32,6 +32,7 @@ import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
+import java.util.Collections;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -195,8 +196,8 @@ public class NodeCreateModule
 				Element colE = new Element("collection", new String[]{"node"}, new String[]{collection});
 
 				colE.addChild(new Element("associate", new String[]{"node"}, new String[]{nodeName}));
-				publishModule.sendNotifications(colE, packet.getStanzaTo(), collection, colNodeConfig, colNodeAffiliations,
-												colNodeSubscriptions);
+				publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), collection,
+													Collections.singletonList(colE), null, false);
 			}
 			if (instantNode) {
 				Element ps = new Element("pubsub", new String[]{"xmlns"},

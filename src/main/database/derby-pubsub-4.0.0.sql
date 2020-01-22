@@ -25,7 +25,7 @@ alter table tig_pubsub_jids add column jid_sha1 varchar(50);
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubMamQueryItems(nodes_ids varchar(32672), since timestamp, "to" timestamp, "publisher" varchar(1024), "order" int, "limit" int, "offset" int)
+create procedure TigPubSubMamQueryItems(node_id bigint, since timestamp, "to" timestamp, "limit" int, "offset" int)
 	PARAMETER STYLE JAVA
 	LANGUAGE JAVA
 	MODIFIES SQL DATA
@@ -34,7 +34,7 @@ create procedure TigPubSubMamQueryItems(nodes_ids varchar(32672), since timestam
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubMamQueryItemPosition(nodes_ids varchar(32672), since timestamp, "to" timestamp, "publisher" varchar(1024), "order" int, "node_id" bigint, "item_id" varchar(1024))
+create procedure TigPubSubMamQueryItemPosition(node_id bigint, since timestamp, "to" timestamp, "uuid" varchar(36))
 	PARAMETER STYLE JAVA
 	LANGUAGE JAVA
 	MODIFIES SQL DATA
@@ -43,7 +43,7 @@ create procedure TigPubSubMamQueryItemPosition(nodes_ids varchar(32672), since t
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigPubSubMamQueryItemsCount(nodes_ids varchar(32672), since timestamp, "to" timestamp, "publisher" varchar(1024), "order" int)
+create procedure TigPubSubMamQueryItemsCount(node_id bigint, since timestamp, "to" timestamp)
 	PARAMETER STYLE JAVA
 	LANGUAGE JAVA
 	MODIFIES SQL DATA

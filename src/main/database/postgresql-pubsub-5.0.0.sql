@@ -54,6 +54,15 @@ end$$;
 -- QUERY END:
 
 -- QUERY START:
+do $$
+begin
+if not exists (select 1 from information_schema.columns where table_catalog = current_database() and table_schema = 'public' and table_name = 'tig_pubsub_items' and column_name = 'uuid') then
+    alter table tig_pubsub_items add column uuid uuid;
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
 drop function if exists TigPubSubEnsureServiceJid(varchar(2049));
 -- QUERY END:
 
@@ -120,5 +129,287 @@ delete from tig_pubsub_nodes where node_id in (
 delete from tig_pubsub_service_jids where lower(service_jid) = lower($1) and component_name = $2;
 delete from tig_pubsub_affiliations where jid_id in (select j.jid_id from tig_pubsub_jids j where lower(j.jid) = lower($1));
 delete from tig_pubsub_subscriptions where jid_id in (select j.jid_id from tig_pubsub_jids j where lower(j.jid) = lower($1));
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+
+-- MAM TABLE
+
+-- QUERY START:
+create table if not exists tig_pubsub_mam (
+    node_id bigint not null references tig_pubsub_nodes ( node_id ) on delete cascade,
+    uuid uuid not null,
+    item_id varchar(1024),
+    ts timestamp with time zone not null,
+    data text
+);
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists (select 1 where (select to_regclass('tig_pubsub_mam_node_id_item_id')) is null) then
+    create index tig_pubsub_mam_node_id_item_id on tig_pubsub_mam ( node_id, item_id );
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubDeleteItem(bigint,varchar(1024)) returns void as $$
+	delete from tig_pubsub_items where node_id = $1 and id = $2;
+	update tig_pubsub_mam set data = null where node_id = $1 and item_id = $2;
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+drop function if exists TigPubSubWriteItem(bigint,varchar(1024),varchar(2049),text, timestamp with time zone);
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubWriteItem(bigint,varchar(1024),varchar(2049),text, timestamp with time zone, varchar(36)) returns void as $$
+declare
+	_node_id alias for $1;
+	_item_id alias for $2;
+	_publisher alias for $3;
+	_item_data alias for $4;
+	_ts alias for $5;
+	_uuid alias for $6;
+	_publisher_id bigint;
+begin
+	if exists (select 1 from tig_pubsub_items where node_id = _node_id and id = _item_id) then
+		update tig_pubsub_items set update_date = _ts, data = _item_data, uuid = uuid(_uuid)
+			where node_id = _node_id and id = _item_id;
+	else
+		select TigPubSubEnsureJid(_publisher) into _publisher_id;
+		insert into tig_pubsub_items (node_id, id, creation_date, update_date, publisher_id, data, uuid)
+			values (_node_id, _item_id, _ts, _ts, _publisher_id, _item_data, uuid(_uuid));
+	end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubMamAddItem(bigint, varchar(36), timestamp with time zone, text, varchar(1024)) returns void as $$
+declare
+	_node_id alias for $1;
+	_uuid alias for $2;
+	_ts alias for $3;
+	_item_data alias for $4;
+	_item_id alias for $5;
+begin
+    insert into tig_pubsub_mam (node_id, uuid, ts, data, item_id)
+	    values (_node_id, uuid(_uuid), _ts, _item_data, _item_id);
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubMamQueryItems') and pg_get_function_arguments(oid) = '_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _publisher character varying, _order integer, _limit integer, _offset integer') then
+    drop function TigPubSubMamQueryItems(_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _publisher character varying, _order integer, _limit integer, _offset integer);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubMamQueryItems(_node_id bigint, _since timestamp with time zone , _to timestamp with time zone, _limit int, _offset int) returns table (
+    uuid varchar(32),
+    ts timestamp with time zone,
+    payload text
+) as $$
+    select concat(pm.uuid, ''), pm.ts, pm.data
+        from tig_pubsub_mam pm
+        where
+            pm.node_id = _node_id
+            and (_since is null or pm.ts >= _since)
+            and (_to is null or pm.ts <= _to)
+        order by pm.ts
+        limit _limit offset _offset
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubMamQueryItemPosition') and pg_get_function_arguments(oid) = '_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _publisher character varying, _order integer, _node_id bigint, _item_id character varying') then
+    drop function TigPubSubMamQueryItemPosition(_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _publisher character varying, _order integer, _node_id bigint, _item_id character varying);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubMamQueryItemPosition(_node_id bigint, _since timestamp with time zone, _to timestamp with time zone, _uuid varchar(32)) returns table (
+    "position" bigint
+) as $$
+    select x.position from (
+	    select row_number() over (w) as position, pm.uuid
+        from tig_pubsub_mam pm
+        where
+            pm.node_id = _node_id
+            and (_since is null or pm.ts >= _since)
+            and (_to is null or pm.ts <= _to)
+            window w as (order by pm.ts)
+        ) x where x.uuid = uuid(_uuid)
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubMamQueryItemsCount') and pg_get_function_arguments(oid) = '_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _publisher character varying, _order integer') then
+    drop function TigPubSubMamQueryItemsCount(_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _publisher character varying, _order integer);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubMamQueryItemsCount(_node_id bigint, _since timestamp with time zone, _to timestamp with time zone) returns table (
+    "count" bigint
+) as $$
+    select count(1)
+        from tig_pubsub_mam pm
+        where
+            pm.node_id = _node_id
+            and (_since is null or pm.ts >= _since)
+            and (_to is null or pm.ts <= _to)
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubGetItem') and pg_get_function_result(oid) = 'TABLE(data text, jid character varying, creation_date timestamp with time zone, update_date timestamp with time zone)') then
+    drop function TigPubSubGetItem(bigint, character varying);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubGetItem(bigint,varchar(1024)) returns table (
+	"data" text, jid varchar(2049), uuid varchar(32)
+) as $$
+	select "data", pn.name, concat(pi.uuid, '')
+		from tig_pubsub_items pi
+		inner join tig_pubsub_nodes pn on pn.node_id = pi.node_id
+		where pi.node_id = $1 and pi.id = $2
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubQueryItems(_nodes_ids text, _since timestamp with time zone , _to timestamp with time zone, _order int, _limit int, _offset int) returns table (
+    node_name varchar(1024),
+    node_id bigint,
+    item_id varchar(1024),
+    creation_date timestamp with time zone,
+    payload text
+) as $$
+declare
+	nodesIds text;
+begin
+    nodesIds := '{' || _nodes_ids || '}';
+
+    if _order = 0 then
+        return query select pn.name, pi.node_id, pi.id, pi.creation_date, pi.data
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (select unnest(nodesIds::bigint[]))
+            and (_since is null or pi.creation_date >= _since)
+            and (_to is null or pi.creation_date <= _to)
+        order by pi.creation_date
+        limit _limit offset _offset;
+    else
+        return query select pn.name, pi.node_id, pi.id, pi.update_date, pi.data
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (select unnest(nodesIds::bigint[]))
+            and (_since is null or pi.update_date >= _since)
+            and (_to is null or pi.update_date <= _to)
+        order by pi.update_date
+        limit _limit offset _offset;
+    end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubQueryItemPosition(_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _order int, _node_id bigint, _item_id varchar(1024)) returns table (
+    "position" bigint
+) as $$
+declare
+	nodesIds text;
+begin
+    nodesIds := '{' || _nodes_ids || '}';
+
+    if _order = 0 then
+        return query select x.position from (
+		    select row_number() over (w) as position, pi.node_id, id
+            from tig_pubsub_items pi
+            where
+                pi.node_id in (select unnest(nodesIds::bigint[]))
+                and (_since is null or pi.creation_date >= _since)
+                and (_to is null or pi.creation_date <= _to)
+            window w as (order by pi.creation_date)
+            ) x where x.node_id = _node_id and x.id = _item_id;
+    else
+        return query select x.position from (
+		    select row_number() over (w) as position, pi.node_id, id
+            from tig_pubsub_items pi
+            where
+                pi.node_id in (select unnest(nodesIds::bigint[]))
+                and (_since is null or pi.update_date >= _since)
+                and (_to is null or pi.update_date <= _to)
+            window w as (order by pi.update_date)
+            ) x where x.node_id = _node_id and x.id = _item_id;
+    end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubQueryItemsCount(_nodes_ids text, _since timestamp with time zone, _to timestamp with time zone, _order int) returns table (
+    "count" bigint
+) as $$
+declare
+	nodesIds text;
+begin
+    nodesIds := '{' || _nodes_ids || '}';
+
+    if _order = 0 then
+        return query select count(1)
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (select unnest(nodesIds::bigint[]))
+            and (_since is null or pi.creation_date >= _since)
+            and (_to is null or pi.creation_date <= _to);
+    else
+        return query select count(1)
+        from tig_pubsub_items pi
+            inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
+        where
+            pi.node_id in (select unnest(nodesIds::bigint[]))
+            and (_since is null or pi.update_date >= _since)
+            and (_to is null or pi.update_date <= _to);
+    end if;
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubGetNodeItemsMeta') and pg_get_function_result(oid) = 'TABLE(id character varying, creation_date timestamp with time zone, update_date timestamp with time zone)') then
+    drop function TigPubSubGetNodeItemsMeta(bigint);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubGetNodeItemsMeta(bigint)
+		returns table (id varchar(1024), creation_date timestamp with time zone, update_date timestamp with time zone, uuid varchar(32)) as $$
+	select id, creation_date, update_date, concat(uuid, '') from tig_pubsub_items where node_id = $1 order by creation_date
 $$ LANGUAGE SQL;
 -- QUERY END:

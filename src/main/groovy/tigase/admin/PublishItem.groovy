@@ -133,39 +133,15 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				parser.parse(handler, chars, 0, chars.length);
 				item.addChildren((LinkedList<Element>) handler.getParsedElements());
 
-				def items = new Element("items");
-				items.setAttribute("node", node);
-				items.addChild(item);
-
 				def publishNodeModule = kernel.getInstance(PublishItemModule.class);
-				publishNodeModule.sendNotifications(items, p.getStanzaTo(),
-													node, pubsubRepository.getNodeConfig(toJid, node),
-													nodeAffiliations, nodeSubscriptions)
-
-				def parents = publishNodeModule.getParents(toJid, node);
-
-				if (!parents) {
-					parents.eachWithIndex { collection, index ->
-						def headers = [ Collection: collection ];
-
-						AbstractNodeConfig colNodeConfig = pubsubRepository.getNodeConfig(toJid, collection);
-						def colNodeSubscriptions =
-								pubsubRepository.getNodeSubscriptions(toJid, collection);
-						def colNodeAffiliations =
-								pubsubRepository.getNodeAffiliations(toJid, collection);
-
-						publishNodeModule.sendNotifications(items, p.getStanzaTo(),
-															node, headers, colNodeConfig,
-															colNodeAffiliations, colNodeSubscriptions, index + 1);
-					}
-				}
-
+				publishNodeModule.generateNotifications(p.getStanzaTo().getBareJID(), node, [item], null, false);
+				
 				def leafNodeConfig = (LeafNodeConfig) nodeConfig;
 				if (leafNodeConfig.isPersistItem()) {
 					def nodeItems = pubsubRepository.getNodeItems(toJid, node);
 
 					nodeItems.writeItem(System.currentTimeMillis(), id,
-										p.getAttributeStaticStr("from"), item);
+										p.getAttributeStaticStr("from"), item, null);
 
 					if (leafNodeConfig.getMaxItems() != null) {
 						publishNodeModule.trimItems(nodeItems, leafNodeConfig.getMaxItems(), leafNodeConfig.getCollectionItemsOrdering());

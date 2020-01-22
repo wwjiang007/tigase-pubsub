@@ -26,13 +26,13 @@ import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
-import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
+import java.util.Collections;
 import java.util.logging.Level;
 
 @Bean(name = "purgeItemsModule", parent = PubSubComponent.class, active = true)
@@ -95,12 +95,11 @@ public class PurgeItemsModule
 			Packet result = packet.okResult((Element) null, 0);
 
 			final IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
-			String[] itemsToDelete = nodeItems.getItemsIds();
-			ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(toJid, nodeName);
+			String[] itemsToDelete = nodeItems.getItemsIds(CollectionItemsOrdering.byUpdateDate);
 
-			publishModule.sendNotifications(new Element("purge", new String[]{"node"}, new String[]{nodeName}),
-											packet.getStanzaTo(), nodeName, nodeConfig, nodeAffiliations,
-											nodeSubscriptions);
+			publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections
+					.singletonList(new Element("purge", new String[]{"node"}, new String[]{nodeName})), null, false);
+
 			log.info("Purging node " + nodeName);
 			if (itemsToDelete != null) {
 				for (String id : itemsToDelete) {

@@ -51,15 +51,10 @@ class Items
 	}
 
 	@Override
-	public Element getItem(String id) throws RepositoryException {
+	public IItem getItem(String id) throws RepositoryException {
 		return this.dao.getItem(serviceJid, nodeId, id);
 	}
-
-	@Override
-	public Date getItemCreationDate(String id) throws RepositoryException {
-		return this.dao.getItemCreationDate(serviceJid, nodeId, id);
-	}
-
+	
 	@Override
 	public String[] getItemsIds(CollectionItemsOrdering order) throws RepositoryException {
 		return this.dao.getItemsIds(serviceJid, nodeId, order);
@@ -74,15 +69,10 @@ class Items
 	public List<ItemMeta> getItemsMeta() throws RepositoryException {
 		return this.dao.getItemsMeta(serviceJid, nodeId, nodeName);
 	}
-
+	
 	@Override
-	public Date getItemUpdateDate(String id) throws RepositoryException {
-		return this.dao.getItemUpdateDate(serviceJid, nodeId, id);
-	}
-
-	@Override
-	public void writeItem(long timeInMilis, String id, String publisher, Element item) throws RepositoryException {
-		this.dao.writeItem(serviceJid, nodeId, timeInMilis, id, publisher, item);
+	public void writeItem(long timeInMilis, String id, String publisher, Element item, String uuid) throws RepositoryException {
+		this.dao.writeItem(serviceJid, nodeId, timeInMilis, id, publisher, item, uuid);
 	}
 
 }

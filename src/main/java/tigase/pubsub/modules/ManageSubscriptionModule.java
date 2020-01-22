@@ -38,12 +38,12 @@ import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * Implementation of subscription management module for PubSub component.
@@ -173,29 +173,17 @@ public class ManageSubscriptionModule
 
 		ps.addChild(afr);
 
-		UsersSubscription[] subscribers = nodeSubscriptions.getSubscriptions();
+		Stream<UsersSubscription> subscribers = nodeSubscriptions.getSubscriptions()
+				.filter(usersSubscription -> usersSubscription.getSubscription() != Subscription.none);
 
-		if (log.isLoggable(Level.FINEST)) {
-			log.finest("Node subscriptions: " + nodeName + " / " + Arrays.toString(subscribers));
+		if (subscriptionFilter != null) {
+			subscribers = subscribers.filter(subscriptionFilter::match);
 		}
 
-		if (subscribers != null) {
-			for (UsersSubscription usersSubscription : subscribers) {
-				if (usersSubscription.getSubscription() == Subscription.none) {
-					continue;
-				}
-
-				if (subscriptionFilter != null && !subscriptionFilter.match(usersSubscription)) {
-					continue;
-				}
-
-				Element subscription = new Element("subscription", new String[]{"jid", "subscription"},
-												   new String[]{usersSubscription.getJid().toString(),
-																usersSubscription.getSubscription().name()});
-
-				afr.addChild(subscription);
-			}
-		}
+		subscribers.map(usersSubscription -> new Element("subscription", new String[]{"jid", "subscription"},
+														 new String[]{usersSubscription.getJid().toString(),
+																	  usersSubscription.getSubscription().name()}))
+				.forEach(afr::addChild);
 
 		if (nodeSubscriptions.isChanged()) {
 			getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeSubscriptions);

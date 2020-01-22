@@ -26,7 +26,9 @@ import tigase.xml.Element;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Interface of a bean which implements PubSub logic.
@@ -34,23 +36,40 @@ import java.util.Map;
  * Created by andrzej on 25.12.2016.
  */
 public interface Logic {
-
-	void checkAccessPermission(BareJID serviceJid, String nodeName, JID senderJid)
-			throws PubSubException, RepositoryException;
-
-	void checkAccessPermission(BareJID serviceJid, AbstractNodeConfig nodeConfig, IAffiliations nodeAffiliations,
-							   ISubscriptions nodeSubscriptions, JID senderJid)
-			throws PubSubException, RepositoryException;
-
-	boolean hasSenderSubscription(final BareJID bareJid, final IAffiliations affiliations,
-								  final ISubscriptions subscriptions) throws RepositoryException;
+	
+	boolean hasSenderSubscription(final BareJID bareJid, final IAffiliations affiliations) throws RepositoryException;
 
 	boolean isSenderInRosterGroup(BareJID bareJid, AbstractNodeConfig nodeConfig, IAffiliations affiliations,
 								  final ISubscriptions subscriptions) throws RepositoryException;
 
-	Element prepareNotificationMessage(JID from, JID to, String id, Element itemToSend, Map<String, String> headers);
+	Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName, List<Element> itemsToSend,
+									   Map<String, String> headers);
 
 	default void checkNodeCreationAllowed(BareJID serviceJid, BareJID userJid, String node, String collection) throws PubSubException {
 	}
 
+	void checkRole(BareJID serviceJid, String nodeName, JID senderJid, Action action) throws PubSubException, RepositoryException;
+
+	Stream<JID> subscribersOfNotifications(BareJID serviceJid, String nodeName) throws RepositoryException;
+
+	boolean isServiceJidPEP(BareJID serivceJid);
+
+	boolean isMAMEnabled(BareJID serviceJid, String node) throws RepositoryException;
+
+	enum Action {
+		subscribe,
+		retrieveItems,
+		publishItems,
+		retractItems,
+		purgeNode,
+		manageNode
+	}
+//	enum Role {
+//		none,
+//		subscriber,
+//		member,
+//		publisher,
+//		retracter,
+//		owner
+//	}
 }

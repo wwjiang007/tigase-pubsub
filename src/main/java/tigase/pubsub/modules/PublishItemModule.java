@@ -34,8 +34,8 @@ import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.ISubscriptions;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
+import tigase.pubsub.utils.Logic;
 import tigase.server.Packet;
 import tigase.util.datetime.TimestampHelper;
 import tigase.util.stringprep.TigaseStringprepException;
@@ -83,8 +83,6 @@ public class PublishItemModule
 	private PresenceCollectorModule presenceCollector;
 	@Inject(nullAllowed = false)
 	private IPubSubRepository repository;
-	@Inject
-	private XsltTool xslTransformer;
 
 	private static Collection<String> extractCDataItems(Element event, String[] path) {
 		ArrayList<String> result = new ArrayList<>();
@@ -116,20 +114,24 @@ public class PublishItemModule
 
 	public void doPublishItems(BareJID serviceJID, String nodeName, LeafNodeConfig leafNodeConfig, String publisher,
 							   List<Element> itemsToSend) throws RepositoryException {
+		String uuid = null;
 		if (leafNodeConfig.isPersistItem()) {
+			if (logic.isMAMEnabled(serviceJID, nodeName)) {
+				uuid = UUID.randomUUID().toString().toLowerCase();
+			}
 			IItems nodeItems = getRepository().getNodeItems(serviceJID, nodeName);
 
 			for (Element item : itemsToSend) {
 				final String id = item.getAttributeStaticStr("id");
 
 				if (!config.isPepRemoveEmptyGeoloc()) {
-					nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item);
+					nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item, uuid);
 				} else {
 					Element geoloc = item.findChildStaticStr(new String[]{"item", "geoloc"});
 					if (geoloc != null && (geoloc.getChildren() == null || geoloc.getChildren().size() == 0)) {
 						nodeItems.deleteItem(id);
 					} else {
-						nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item);
+						nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item, uuid);
 					}
 				}
 			}
@@ -139,42 +141,50 @@ public class PublishItemModule
 		}
 
 		eventBus.fire(new ItemPublishedEvent(serviceJID, nodeName, publisher, itemsToSend));
-		sendNotifications(serviceJID, nodeName, itemsToSend);
+		generateNotifications(serviceJID, nodeName, itemsToSend, uuid, true);
 	}
 
-	public void sendNotifications(BareJID serviceJID, String nodeName, List<Element> itemsToSend)
+	public void generateNotifications(BareJID serviceJID, String nodeName, List<Element> itemsToSend, String uuid, boolean persistInMAM)
 			throws RepositoryException {
-		final Element items = new Element("items", new String[]{"node"}, new String[]{nodeName});
-
-		AbstractNodeConfig leafNodeConfig = getRepository().getNodeConfig(serviceJID, nodeName);
-		IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJID, nodeName);
-		ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(serviceJID, nodeName);
-
-		items.addChildren(itemsToSend);
-		sendNotifications(items, JID.jidInstance(serviceJID), nodeName,
-						  this.getRepository().getNodeConfig(serviceJID, nodeName), nodeAffiliations,
-						  nodeSubscriptions);
-
-		List<String> parents = getParents(serviceJID, nodeName);
-
-		log.log(Level.FINEST, "Publishing item: {0}, node: {1}, conf: {2}, aff: {3}, subs: {4} ",
-				new Object[]{items, nodeName, leafNodeConfig, nodeAffiliations, nodeSubscriptions});
-
-		if ((parents != null) && (parents.size() > 0)) {
-			for (int i=1; i<=parents.size(); i++) {
-				String collection = parents.get(i-1);
-				Map<String, String> headers = new HashMap<String, String>();
-
+		for (String collection : getCollectionsForNotification(serviceJID, nodeName)) {
+			Map<String, String> headers = null;
+			if (collection != null) {
+				headers = new HashMap<>();
 				headers.put("Collection", collection);
-
-				AbstractNodeConfig colNodeConfig = this.getRepository().getNodeConfig(serviceJID, collection);
-				ISubscriptions colNodeSubscriptions = this.getRepository().getNodeSubscriptions(serviceJID, collection);
-				IAffiliations colNodeAffiliations = this.getRepository().getNodeAffiliations(serviceJID, collection);
-
-				sendNotifications(items, JID.jidInstance(serviceJID), nodeName, headers, colNodeConfig,
-								  colNodeAffiliations, colNodeSubscriptions, i);
 			}
+			Element message = logic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, itemsToSend,  headers);
+
+			// JUST AN IDEA: MAM2 should work only for leaf nodes... (full query of subtrees is complicated and makes it impossible to satisfy constraints!
+			// MAM cannot work with batch publication of items and this should be forbidden (bad-request)
+			// specification of "from", "to", and "id" are optional
+			// most likely message should have a "stable-id" assigned, but ID can be different
+			// what should control if MAM is enabled? = !isPEP && (pubsubConfig && pubsubNodeConfig)
+
+			// should we store "retraction" notifications? or even "collection reassignments"?
+			// we should not according to the XEP-0313, while it would be useful.. (at least retractions)
+			if (uuid != null && persistInMAM) {
+				String itemId = null;
+				if (itemsToSend.size() > 0) {
+					itemId = itemsToSend.get(0).getAttributeStaticStr("id");
+				}
+				getRepository().addMAMItem(serviceJID, collection == null ? nodeName : collection, uuid, message, itemId);
+			}
+			broadcastNotification(serviceJID, nodeName, message);
 		}
+	}
+
+	public void sendNotification(BareJID serviceJID, String nodeName, Element item, String uuid, Map<String,String> headers, JID recipient) {
+		Element message = logic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, Collections.singletonList(item), headers);
+		packetWriter.write(Packet.packetInstance(message, JID.jidInstance(serviceJID), recipient));
+	}
+
+	public void broadcastNotification(BareJID serviceJID, String nodeName, Element message)
+			throws RepositoryException {
+		JID senderJid = JID.jidInstance(serviceJID);
+		logic.subscribersOfNotifications(serviceJID, nodeName).forEach(subscriberJid -> {
+			Element clone = message.clone();
+			packetWriter.write(Packet.packetInstance(clone, senderJid, subscriberJid));
+		});
 	}
 
 	public AbstractNodeConfig ensurePepNode(BareJID toJid, String nodeName, BareJID ownerJid, Element publishOptions) throws PubSubException {
@@ -204,10 +214,12 @@ public class PublishItemModule
 		return CRIT_PUBLISH;
 	}
 
-	public List<String> getParents(final BareJID serviceJid, final String nodeName) throws RepositoryException {
+	public List<String> getCollectionsForNotification(final BareJID serviceJid, final String nodeName) throws RepositoryException {
 		ArrayList<String> result = new ArrayList<String>();
 		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
 		String cn = nodeConfig.getCollection();
+
+		result.add(null);
 
 		while ((cn != null) && !"".equals(cn)) {
 			result.add(cn);
@@ -269,81 +281,79 @@ public class PublishItemModule
 					throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
 											  new PubSubErrorCondition("unsupported", "publish"));
 				}
-				if (publishOptions != null) {
-					if (publishOptions.findChild(
-							el -> el.getName() == "field" && "FORM_TYPE" == el.getAttributeStaticStr("var") &&
-									"http://jabber.org/protocol/pubsub#publish-option".equals(
-											el.getCData(FIELD_VALUE_PATH))) == null) {
-						for (Element field : publishOptions.getChildren()) {
-							String key = field.getAttributeStaticStr("var");
-							if ("FORM_TYPE".equals(key)) {
-								continue;
-							}
+			}
 
-							Field f = nodeConfig.getForm().get(key);
-							if (f == null) {
-								throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
-							}
-							switch (f.getType()) {
-								case bool:
-									String v1 = field.getCData(FIELD_VALUE_PATH);
-									if (!(("true".equals(v1) || "1".equals(v1)) == ("true".equals(f.getValue()) || "1".equals(f.getValue())))) {
-										throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
+			logic.checkRole(toJid, nodeName, packet.getStanzaFrom(), Logic.Action.publishItems);
+
+			if (publishOptions != null) {
+				if (publishOptions.findChild(
+						el -> el.getName() == "field" && "FORM_TYPE" == el.getAttributeStaticStr("var") &&
+								"http://jabber.org/protocol/pubsub#publish-option".equals(
+										el.getCData(FIELD_VALUE_PATH))) == null) {
+					for (Element field : publishOptions.getChildren()) {
+						String key = field.getAttributeStaticStr("var");
+						if ("FORM_TYPE".equals(key)) {
+							continue;
+						}
+
+						Field f = nodeConfig.getForm().get(key);
+						if (f == null) {
+							throw new PubSubException(Authorization.CONFLICT,
+													  PubSubErrorCondition.PRECONDITION_NOT_MET);
+						}
+						switch (f.getType()) {
+							case bool:
+								String v1 = field.getCData(FIELD_VALUE_PATH);
+								if (!(("true".equals(v1) || "1".equals(v1)) ==
+										("true".equals(f.getValue()) || "1".equals(f.getValue())))) {
+									throw new PubSubException(Authorization.CONFLICT,
+															  PubSubErrorCondition.PRECONDITION_NOT_MET);
+								}
+								break;
+							case jid_multi:
+							case text_multi:
+								List<String> reqValues = Optional.ofNullable(
+										field.mapChildren(el -> el.getName() == "value", el -> el.getCData()))
+										.orElse(Collections.EMPTY_LIST);
+								String[] values = f.getValues();
+								if (values == null) {
+									if (!reqValues.isEmpty()) {
+										throw new PubSubException(Authorization.CONFLICT,
+																  PubSubErrorCondition.PRECONDITION_NOT_MET);
+									} else {
+										continue;
 									}
-									break;
-								case jid_multi:
-								case text_multi:
-									List<String> reqValues = Optional.ofNullable(
-											field.mapChildren(el -> el.getName() == "value", el -> el.getCData()))
-											.orElse(Collections.EMPTY_LIST);
-									String[] values = f.getValues();
-									if (values == null) {
-										if (!reqValues.isEmpty()) {
-											throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
-										} else {
-											continue;
-										}
+								}
+								if (reqValues.size() != values.length) {
+									throw new PubSubException(Authorization.CONFLICT,
+															  PubSubErrorCondition.PRECONDITION_NOT_MET);
+								}
+								for (String v2 : values) {
+									if (!reqValues.contains(v2)) {
+										throw new PubSubException(Authorization.CONFLICT,
+																  PubSubErrorCondition.PRECONDITION_NOT_MET);
 									}
-									if (reqValues.size() != values.length) {
-										throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
-									}
-									for (String v2 : values) {
-										if (!reqValues.contains(v2)) {
-											throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
-										}
-									}
-									break;
-								default:
-									String reqValue = field.getCData(FIELD_VALUE_PATH);
-									String value = f.getValue();
-									if (!((reqValue == null && value == null) || (reqValue != null && reqValue.equals(value)))) {
-										throw new PubSubException(Authorization.CONFLICT, PubSubErrorCondition.PRECONDITION_NOT_MET);
-									}
-									break;
-							}
+								}
+								break;
+							default:
+								String reqValue = field.getCData(FIELD_VALUE_PATH);
+								String value = f.getValue();
+								if (!((reqValue == null && value == null) ||
+										(reqValue != null && reqValue.equals(value)))) {
+									throw new PubSubException(Authorization.CONFLICT,
+															  PubSubErrorCondition.PRECONDITION_NOT_MET);
+								}
+								break;
 						}
 					}
 				}
 			}
 
-			IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(toJid, nodeName);
-			final UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(
-					packet.getStanzaFrom().getBareJID());
-			final ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(toJid, nodeName);
-
-			// XXX #125
-			final PublisherModel publisherModel = nodeConfig.getPublisherModel();
-
-			if (!senderAffiliation.getAffiliation().isPublishItem() && !config.isAdmin(packet.getStanzaFrom())) {
-				if ((publisherModel == PublisherModel.publishers) || ((publisherModel == PublisherModel.subscribers) &&
-						(nodeSubscriptions.getSubscription(packet.getStanzaFrom().getBareJID()) !=
-								Subscription.subscribed))) {
-					throw new PubSubException(Authorization.FORBIDDEN);
-				}
-			}
-
 			LeafNodeConfig leafNodeConfig = (LeafNodeConfig) nodeConfig;
 			List<Element> itemsToSend = makeItemsToSend(publish);
+			if (logic.isMAMEnabled(toJid, nodeName) && itemsToSend.size() > 1) {
+				throw new PubSubException(Authorization.NOT_ALLOWED, "Bulk publication not allowed");
+			}
 			final Packet resultIq = packet.okResult((Element) null, 0);
 
 			if (leafNodeConfig.isPersistItem()) {
@@ -385,24 +395,19 @@ public class PublishItemModule
 	public void publishLastItem(BareJID serviceJid, AbstractNodeConfig nodeConfig, JID destinationJID)
 			throws RepositoryException {
 		try {
-			IAffiliations affiliations = getRepository().getNodeAffiliations(serviceJid, nodeConfig.getNodeName());
-			ISubscriptions subscriptions = getRepository().getNodeSubscriptions(serviceJid, nodeConfig.getNodeName());
-			logic.checkAccessPermission(serviceJid, nodeConfig, affiliations, subscriptions, destinationJID);
+			logic.checkRole(serviceJid, nodeConfig.getNodeName(), destinationJID, Logic.Action.retrieveItems);
 		} catch (Exception ex) {
 			return;
 		}
+
 		IItems nodeItems = this.getRepository().getNodeItems(serviceJid, nodeConfig.getNodeName());
 		String[] ids = nodeItems.getItemsIds(nodeConfig.getCollectionItemsOrdering());
 
 		if (ids != null && ids.length > 0) {
 			String lastID = ids[ids.length - 1];
-			Element payload = nodeItems.getItem(lastID);
-			if (payload != null) {
-				Element items = new Element("items");
-				items.addAttribute("node", nodeConfig.getNodeName());
-				items.addChild(payload);
-
-				sendNotifications(new JID[]{destinationJID}, items, JID.jidInstance(serviceJid), nodeConfig, nodeConfig.getNodeName(), null);
+			IItems.IItem item = nodeItems.getItem(lastID);
+			if (item != null && item.getItem() != null) {
+				sendNotification(serviceJid, nodeConfig.getNodeName(), item.getItem(), item.getUUID(), null, destinationJID);
 			} else {
 				if (log.isLoggable(Level.FINEST)) {
 					log.log(Level.FINEST,
@@ -413,162 +418,7 @@ public class PublishItemModule
 		}
 
 	}
-
-	public void sendNotifications(Element itemToSend, final JID jidFrom, final String publisherNodeName,
-								  AbstractNodeConfig nodeConfig, IAffiliations nodeAffiliations,
-								  ISubscriptions nodesSubscriptions) throws RepositoryException {
-		sendNotifications(itemToSend, jidFrom, publisherNodeName, null, nodeConfig, nodeAffiliations,
-						  nodesSubscriptions, 0);
-	}
-
-	public void sendNotifications(final Element itemToSend, final JID jidFrom, final String publisherNodeName,
-								  final Map<String, String> headers, AbstractNodeConfig nodeConfig,
-								  IAffiliations nodeAffiliations, ISubscriptions nodesSubscriptions, int depth)
-			throws RepositoryException {
-		if (depth > 1) {
-			return;
-		}
-
-		beforePrepareNotification(nodeConfig, nodesSubscriptions);
-
-		HashSet<JID> tmp = new HashSet<JID>();
-		for (BareJID j : getActiveSubscribers(nodeConfig, nodeAffiliations, nodesSubscriptions)) {
-			tmp.add(JID.jidInstance(j));
-		}
-		boolean updateSubscriptions = false;
-
-		log.log(Level.FINEST,
-				"Sending notifications[1] item: {0}, node: {1}, conf: {2}, aff: {3}, subs: {4}, getActiveSubscribers: {5} ",
-				new Object[]{itemToSend, publisherNodeName, nodeConfig, nodeAffiliations, nodesSubscriptions, tmp});
-
-		if (nodeConfig.isPresenceExpired()) {
-			Iterator<JID> it = tmp.iterator();
-
-			while (it.hasNext()) {
-				final JID jid = it.next();
-				boolean available = this.presenceCollector.isJidAvailable(jidFrom.getBareJID(), jid.getBareJID());
-				final UsersAffiliation afi = nodeAffiliations.getSubscriberAffiliation(jid.getBareJID());
-
-				if ((afi == null) || (!available && (afi.getAffiliation() == Affiliation.member))) {
-					it.remove();
-					nodesSubscriptions.changeSubscription(jid.getBareJID(), Subscription.none);
-					updateSubscriptions = true;
-					if (log.isLoggable(Level.FINE)) {
-						log.fine("Subscriptione expired. Node: " + nodeConfig.getNodeName() + ", jid: " + jid);
-					}
-				}
-			}
-		}
-		if (updateSubscriptions) {
-			this.getRepository().update(jidFrom.getBareJID(), nodeConfig.getNodeName(), nodesSubscriptions);
-		}
-
-		JID[] subscribers = tmp.toArray(new JID[]{});
-
-		if (nodeConfig.isDeliverPresenceBased()) {
-			HashSet<JID> s = new HashSet<JID>();
-
-			for (JID jid : subscribers) {
-				s.addAll(this.presenceCollector.getAllAvailableResources(jidFrom.getBareJID(), jid.getBareJID()));
-			}
-
-			// for pubsub service for user accounts we need dynamic
-			// subscriptions based on presence
-			if (jidFrom.getLocalpart() != null || config.isSubscribeByPresenceFilteredNotifications()) {
-				switch (nodeConfig.getNodeAccessModel()) {
-					case open:
-					case presence:
-						s.addAll(this.presenceCollector.getAllAvailableJidsWithFeature(jidFrom.getBareJID(),
-																					   nodeConfig.getNodeName() +
-																							   "+notify"));
-						break;
-					case roster:
-						String[] allowedGroups = nodeConfig.getRosterGroupsAllowed();
-						Arrays.sort(allowedGroups);
-						List<JID> jids = this.presenceCollector.getAllAvailableJidsWithFeature(jidFrom.getBareJID(),
-																							   nodeConfig.getNodeName() +
-																									   "+notify");
-						if (!jids.isEmpty() && (allowedGroups != null && allowedGroups.length > 0)) {
-							Map<BareJID, RosterElement> roster = this.getRepository()
-									.getUserRoster(jidFrom.getBareJID());
-							Iterator<JID> it = jids.iterator();
-							for (JID jid : jids) {
-								RosterElement re = roster.get(jid.getBareJID());
-								if (re == null) {
-									it.remove();
-									continue;
-								}
-								boolean notInGroups = true;
-								String[] groups = re.getGroups();
-								if (groups != null) {
-									for (String group : groups) {
-										notInGroups &= Arrays.binarySearch(allowedGroups, group) < 0;
-									}
-								}
-								if (notInGroups) {
-									it.remove();
-								}
-							}
-						}
-						break;
-					default:
-						break;
-				}
-			}
-			subscribers = s.toArray(new JID[]{});
-		}
-
-		sendNotifications(subscribers, itemToSend, jidFrom, nodeConfig, publisherNodeName, headers);
-	}
-
-	public void sendNotifications(final JID[] subscribers, final Element itemToSend, final JID jidFrom,
-								  AbstractNodeConfig nodeConfig, final String publisherNodeName,
-								  final Map<String, String> headers) {
-		List<Element> body = null;
-
-		log.log(Level.FINEST, "Sending notifications[2] item: {0}, node: {1}, conf: {2}, subs: {3} ",
-				new Object[]{itemToSend, publisherNodeName, nodeConfig, Arrays.asList(subscribers)});
-
-		if ((this.xslTransformer != null) && (nodeConfig != null)) {
-			try {
-				body = this.xslTransformer.transform(itemToSend, nodeConfig);
-			} catch (Exception e) {
-				body = null;
-				log.log(Level.WARNING, "Problem with generating BODY", e);
-			}
-		}
-		for (JID jid : subscribers) {
-
-			// in case of low memory we should slow down creation of response to
-			// prevent OOM on high traffic node
-			// maybe we should drop some notifications if we can not get enough
-			// memory for n-th time?
-			long lowMemoryDelay;
-			while ((lowMemoryDelay = config.getDelayOnLowMemory()) != 0) {
-				try {
-					System.gc();
-					Thread.sleep(lowMemoryDelay);
-				} catch (Exception e) {
-				}
-			}
-
-			Element message = logic.prepareNotificationMessage(jidFrom, jid, String.valueOf(++this.idCounter),
-															   itemToSend, headers);
-			if (body != null) {
-				message.addChildren(body);
-			}
-
-			Packet packet = Packet.packetInstance(message, jidFrom, jid);
-
-			// we are adding notifications to outgoing queue instead temporary
-			// list
-			// of notifications to send, so before creating next packets other
-			// threads
-			// will be able to process first notifications and deliver them
-			packetWriter.write(packet);
-		}
-	}
-
+	
 	public void trimItems(final IItems nodeItems, final Integer maxItems, CollectionItemsOrdering collectionItemsOrdering) throws RepositoryException {
 		final String[] ids = nodeItems.getItemsIds(collectionItemsOrdering);
 
@@ -587,13 +437,7 @@ public class PublishItemModule
 	public void beforeUnregister() {
 		eventBus.unregisterAll(this);
 	}
-
-	protected void beforePrepareNotification(final AbstractNodeConfig nodeConfig,
-											 final ISubscriptions nodesSubscriptions) {
-		if (nodeConfig.isPresenceExpired()) {
-		}
-	}
-
+	
 	protected JID[] getValidBuddies(BareJID id) throws RepositoryException {
 		ArrayList<JID> result = new ArrayList<JID>();
 		Map<BareJID, RosterElement> rosterJids = this.getRepository().getUserRoster(id);
@@ -788,15 +632,17 @@ public class PublishItemModule
 		JID[] subscribers = getValidBuddies(senderJid.getBareJID());
 
 		final Element item = publish.getChild("item");
-		final Element items = new Element("items", new String[]{"node"},
-										  new String[]{publish.getAttributeStaticStr("node")});
+		String nodeName = publish.getAttributeStaticStr("node");
 
-		items.addChild(item);
+		Element message = logic.prepareNotificationMessage(senderJid.copyWithoutResource(), String.valueOf(++counter), null, nodeName, Collections.singletonList(item),  null);
 
-		sendNotifications(subscribers, items, senderJid, null, publish.getAttributeStaticStr("node"), null);
+		for (JID jid : subscribers) {
+			Element clone = message.clone();
+			packetWriter.write(Packet.packetInstance(clone, senderJid, jid));
+		}
 
 		packetWriter.write(packet.okResult((Element) null, 0));
-		sendNotifications(new JID[]{senderJid}, items, senderJid, null, publish.getAttributeStaticStr("node"), null);
+		packetWriter.write(Packet.packetInstance(message, senderJid, senderJid));
 	}
 
 	private static class Item {

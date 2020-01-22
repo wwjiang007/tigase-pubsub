@@ -27,6 +27,7 @@ import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.utils.Logic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -100,13 +101,7 @@ public class SubscribeNodeModule
 		try {
 			AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
 
-			if (nodeConfig == null) {
-				throw new PubSubException(packet.getElement(), Authorization.ITEM_NOT_FOUND);
-			}
-			if ((nodeConfig.getNodeAccessModel() == AccessModel.open) &&
-					!Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains())) {
-				throw new PubSubException(Authorization.FORBIDDEN, "User blocked by domain");
-			}
+			logic.checkRole(serviceJid, nodeName, senderJid, Logic.Action.subscribe);
 
 			IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJid, nodeName);
 			UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(senderJid.getBareJID());
@@ -126,65 +121,30 @@ public class SubscribeNodeModule
 			// TODO 6.1.3.6 Anonymous NodeSubscriptions Not Allowed
 			// TODO 6.1.3.9 NodeSubscriptions Not Supported
 			// TODO 6.1.3.10 Node Has Moved
-			Subscription subscription = nodeSubscriptions.getSubscription(jid);
-
-			if (senderAffiliation != null) {
-				if (!senderAffiliation.getAffiliation().isSubscribe()) {
-					throw new PubSubException(Authorization.FORBIDDEN, "Not enough privileges to subscribe");
-				}
-			}
-
+			
 			AccessModel accessModel = nodeConfig.getNodeAccessModel();
-
-			if (subscription != null) {
-				if ((subscription == Subscription.pending) && !(this.config.isAdmin(senderJid) ||
-						(senderAffiliation.getAffiliation() == Affiliation.owner))) {
-					throw new PubSubException(Authorization.FORBIDDEN, PubSubErrorCondition.PENDING_SUBSCRIPTION,
-											  "Subscription is pending");
-				}
-			}
-			if ((accessModel == AccessModel.whitelist) &&
-					((senderAffiliation == null) || (senderAffiliation.getAffiliation() == Affiliation.none) ||
-							(senderAffiliation.getAffiliation() == Affiliation.outcast))) {
-				throw new PubSubException(Authorization.NOT_ALLOWED, PubSubErrorCondition.CLOSED_NODE);
-			}
-
+			
 			List<Packet> results = new ArrayList<Packet>();
-			Subscription newSubscription;
+			Subscription newSubscription = Subscription.none;
 			Affiliation affiliation = nodeAffiliations.getSubscriberAffiliation(jid).getAffiliation();
 
 			if (this.config.isAdmin(senderJid) || (senderAffiliation.getAffiliation() == Affiliation.owner)) {
 				newSubscription = Subscription.subscribed;
 				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
-			} else if (accessModel == AccessModel.open) {
-				newSubscription = Subscription.subscribed;
-				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
-			} else if (accessModel == AccessModel.authorize) {
-				newSubscription = Subscription.pending;
-				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.none);
-			} else if (accessModel == AccessModel.presence) {
-				boolean allowed = logic.hasSenderSubscription(jid, nodeAffiliations, nodeSubscriptions);
-
-				if (!allowed) {
-					throw new PubSubException(Authorization.NOT_AUTHORIZED,
-											  PubSubErrorCondition.PRESENCE_SUBSCRIPTION_REQUIRED);
-				}
-				newSubscription = Subscription.subscribed;
-				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
-			} else if (accessModel == AccessModel.roster) {
-				boolean allowed = logic.isSenderInRosterGroup(jid, nodeConfig, nodeAffiliations, nodeSubscriptions);
-
-				if (!allowed) {
-					throw new PubSubException(Authorization.NOT_AUTHORIZED, PubSubErrorCondition.NOT_IN_ROSTER_GROUP);
-				}
-				newSubscription = Subscription.subscribed;
-				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
-			} else if (accessModel == AccessModel.whitelist) {
-				newSubscription = Subscription.subscribed;
-				affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
 			} else {
-				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
-										  "AccessModel '" + accessModel.name() + "' is not implemented yet");
+				switch (accessModel) {
+					case open:
+					case presence:
+					case roster:
+					case whitelist:
+						newSubscription = Subscription.subscribed;
+						affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.member);
+						break;
+					case authorize:
+						newSubscription = Subscription.pending;
+						affiliation = calculateNewOwnerAffiliation(affiliation, Affiliation.none);
+						break;
+				}
 			}
 
 			String subid = nodeSubscriptions.getSubscriptionId(jid);

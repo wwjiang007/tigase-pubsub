@@ -94,8 +94,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				del.setAttribute("node", node);
 
 				def publishNodeModule = kernel.getInstance(PublishItemModule.class);
-				publishNodeModule.sendNotifications(del, p.getStanzaTo(), node,
-													nodeConfig, nodeAffiliations, nodeSubscriptions);
+				publishNodeModule.generateNotifications(p.getStanzaTo().getBareJID(), node, [del], null, false);
 			}
 
 

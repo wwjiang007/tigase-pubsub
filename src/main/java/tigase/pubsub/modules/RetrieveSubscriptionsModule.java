@@ -102,16 +102,13 @@ public class RetrieveSubscriptionsModule
 				}
 				subscriptionsResult.addAttribute("node", nodeName);
 
-				UsersSubscription[] subscribers = nodeSubscriptions.getSubscriptions();
-
-				for (final UsersSubscription usersSubscription : subscribers) {
-					Element s = new Element("subscription", new String[]{"jid", "subscription", "subid"},
-											new String[]{usersSubscription.getJid().toString(),
-														 usersSubscription.getSubscription().name(),
-														 usersSubscription.getSubid()});
-
-					subscriptionsResult.addChild(s);
-				}
+				nodeSubscriptions.getSubscriptions()
+						.map(usersSubscription -> new Element("subscription",
+															  new String[]{"jid", "subscription", "subid"},
+															  new String[]{usersSubscription.getJid().toString(),
+																		   usersSubscription.getSubscription().name(),
+																		   usersSubscription.getSubid()}))
+						.forEach(subscriptionsResult::addChild);
 			}
 
 			Packet result = packet.okResult(pubsubResult, 0);
