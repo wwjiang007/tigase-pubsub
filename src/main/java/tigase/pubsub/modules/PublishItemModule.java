@@ -140,7 +140,7 @@ public class PublishItemModule
 			}
 		}
 
-		eventBus.fire(new ItemPublishedEvent(serviceJID, nodeName, publisher, itemsToSend));
+		eventBus.fire(new ItemPublishedEvent(serviceJID, nodeName, publisher, uuid, itemsToSend));
 		generateNotifications(serviceJID, nodeName, itemsToSend, uuid, true);
 	}
 
@@ -659,15 +659,17 @@ public class PublishItemModule
 	public static class ItemPublishedEvent {
 
 		public final List<Element> itemsToSend;
+		public final String uuid;
 		public final String node;
 		public final String publisher;
 		public final BareJID serviceJid;
 
-		public ItemPublishedEvent(BareJID serviceJid, String node, String publisher, List<Element> itemsToSend) {
+		public ItemPublishedEvent(BareJID serviceJid, String node, String publisher, String uuid, List<Element> itemsToSend) {
 			this.serviceJid = serviceJid;
 			this.node = node;
 			this.publisher = publisher;
 			this.itemsToSend = itemsToSend;
+			this.uuid = uuid;
 		}
 
 	}
