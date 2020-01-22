@@ -17,3 +17,56 @@
 --
 
 --
+-- QUERY START:
+create table tig_pubsub_mam (
+	node_id bigint not null references tig_pubsub_nodes ( node_id ) on delete cascade,
+	uuid varchar(36) not null,
+
+	item_id varchar(1024),
+	ts timestamp not null,
+	data varchar(32672),
+
+	primary key ( node_id, uuid )
+);
+-- QUERY END:
+
+-- QUERY START:
+create index tig_pubsub_mam_node_id_item_id on tig_pubsub_mam ( node_id, item_id );
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubMamAddItem(node_id bigint, uuid varchar(36),
+	ts timestamp, item_data varchar(32672), item_id varchar(1024))
+	PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	MODIFIES SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubMamAddItem';
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubQueryItems(nodes_ids varchar(32672), since timestamp, "to" timestamp, "order" int, "limit" int, "offset" int)
+	PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	MODIFIES SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubQueryItems';
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubQueryItemPosition(nodes_ids varchar(32672), since timestamp, "to" timestamp, "order" int, "node_id" bigint, "item_id" varchar(1024))
+	PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	MODIFIES SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubQueryItemPosition';
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubQueryItemsCount(nodes_ids varchar(32672), since timestamp, "to" timestamp, "order" int)
+	PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	MODIFIES SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubQueryItemsCount';
+-- QUERY END:

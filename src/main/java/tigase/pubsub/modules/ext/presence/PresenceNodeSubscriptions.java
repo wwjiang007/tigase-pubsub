@@ -28,6 +28,7 @@ import tigase.xmpp.jid.JID;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class PresenceNodeSubscriptions
 		implements ISubscriptions {
@@ -87,15 +88,10 @@ public class PresenceNodeSubscriptions
 	}
 
 	@Override
-	public UsersSubscription[] getSubscriptions() {
+	public Stream<UsersSubscription> getSubscriptions() {
 		final Map<BareJID, UsersSubscription> result = new HashMap<BareJID, UsersSubscription>();
 
-		UsersSubscription[] o = subscriptions.getSubscriptions();
-		if (o != null) {
-			for (UsersSubscription usersSubscription : o) {
-				result.put(usersSubscription.getJid(), usersSubscription);
-			}
-		}
+		subscriptions.getSubscriptions().forEach(usersSubscription -> result.put(usersSubscription.getJid(), usersSubscription));
 
 		Collection<JID> occupants = extension.getNodeOccupants(serviceJID, nodeName);
 		for (JID jid : occupants) {
@@ -109,11 +105,11 @@ public class PresenceNodeSubscriptions
 			}
 		}
 
-		return result.values().toArray(new UsersSubscription[]{});
+		return result.values().stream();
 	}
 
 	@Override
-	public UsersSubscription[] getSubscriptionsForPublish() {
+	public Stream<UsersSubscription> getSubscriptionsForPublish() {
 		return getSubscriptions();
 	}
 

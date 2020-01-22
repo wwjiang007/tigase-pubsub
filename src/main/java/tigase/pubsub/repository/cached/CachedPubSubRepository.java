@@ -37,10 +37,13 @@ import tigase.stats.Counter;
 import tigase.stats.StatisticHolder;
 import tigase.stats.StatisticHolderImpl;
 import tigase.stats.StatisticsList;
+import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
+import tigase.xmpp.mam.MAMRepository;
+import tigase.xmpp.rsm.RSM;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -223,16 +226,6 @@ public class CachedPubSubRepository<T>
 		this.componentName = componentName;
 	}
 
-	@Override
-	public String[] getBuddyGroups(BareJID owner, BareJID bareJid) throws RepositoryException {
-		return this.dao.getBuddyGroups(owner, bareJid);
-	}
-
-	@Override
-	public String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException {
-		return this.dao.getBuddySubscription(owner, buddy);
-	}
-
 	public String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException {
 		Node node = this.getNode(serviceJid, nodeName);
 		if (node == null) {
@@ -279,7 +272,7 @@ public class CachedPubSubRepository<T>
 	public IItems getNodeItems(BareJID serviceJid, String nodeName) throws RepositoryException {
 		NodeKey key = createKey(serviceJid, nodeName);
 		long start = System.currentTimeMillis();
-		Node<T> node = this.nodes.get(key);
+		Node<T> node = getNode(serviceJid, nodeName);
 		T nodeId = node != null ? node.getNodeId() : dao.getNodeId(serviceJid, nodeName);
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST,
@@ -289,6 +282,23 @@ public class CachedPubSubRepository<T>
 		long end = System.currentTimeMillis();
 		this.stats.get("getNodeItems").statisticExecutedIn(end - start);
 		return nodeId != null ? new Items(nodeId, serviceJid, nodeName, this.dao) : null;
+	}
+
+	@Override
+	public List<IItems.IItem> getNodeItems(BareJID serviceJid, String nodeName, JID requester, Date after, Date before, RSM rsm)
+			throws ComponentException, RepositoryException {
+		List<Node<T>> nodes = getNodeAndSubnodes(serviceJid, nodeName,
+												 node -> hasAccessPermission(node, requester, Logic.Action.retrieveItems),
+												 node -> (node.getNodeConfig() instanceof LeafNodeConfig));
+
+		if (nodes.isEmpty()) {
+			rsm.setIndex(0);
+			rsm.setCount(0);
+			return Collections.emptyList();
+		}
+
+		List<T> nodeIds = nodes.stream().map(node -> node.getNodeId()).collect(Collectors.toList());
+		return dao.getItems(serviceJid, nodeIds, after, before, rsm, getNode(serviceJid, nodeName).getNodeConfig().getCollectionItemsOrdering());
 	}
 
 	@Override
@@ -465,29 +475,21 @@ public class CachedPubSubRepository<T>
 		// Thread.dumpStack();
 
 	}
-
+	
 	@Override
-	public void queryItems(Query query, ItemHandler<Query, Item> itemHandler)
+	public void queryItems(Query query, MAMRepository.ItemHandler<Query, MAMRepository.Item> itemHandler)
 			throws RepositoryException, ComponentException {
 
 		BareJID serviceJid = query.getComponentJID().getBareJID();
 		JID requester = query.getQuestionerJID();
-		List<Node<T>> nodes = getNodeAndSubnodes(serviceJid, query.getPubsubNode(),
-												 node -> hasAccessPermission(node, requester),
-												 node -> (node.getNodeConfig() instanceof LeafNodeConfig));
 
-		if (nodes.isEmpty()) {
-			query.getRsm().setIndex(0);
-			query.getRsm().setCount(0);
-			return;
+		Node<T> node = getNode(serviceJid, query.getPubsubNode());
+		if (node != null && !(node.getNodeConfig() instanceof LeafNodeConfig)) {
+			throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED);
 		}
+		logic.checkRole(serviceJid, query.getPubsubNode(), requester, Logic.Action.retrieveItems);
 
-		if (query.getOrder() == null) {
-			query.setOrder(nodes.get(0).getNodeConfig().getCollectionItemsOrdering());
-		}
-
-		List<T> nodeIds = nodes.stream().map(node -> node.getNodeId()).collect(Collectors.toList());
-		dao.queryItems(query, nodeIds, itemHandler);
+		dao.queryItems(query, node.getNodeId(), itemHandler);
 	}
 
 	@Override
@@ -580,6 +582,16 @@ public class CachedPubSubRepository<T>
 	public void onUserRemoved(BareJID userJid) throws RepositoryException {
 		dao.removeService(userJid, componentName);
 		userRemoved(userJid);
+	}
+
+	@Override
+	public void addMAMItem(BareJID serviceJid, String nodeName, String uuid, Element message, String itemId)
+			throws RepositoryException {
+		Node<T> node = getNode(serviceJid, nodeName);
+		T nodeId = node != null ? node.getNodeId() : dao.getNodeId(serviceJid, nodeName);
+		if (nodeId != null) {
+			dao.addMAMItem(serviceJid, nodeId, uuid, message, itemId);
+		}
 	}
 
 	protected NodeKey createKey(BareJID serviceJid, String nodeName) {
@@ -699,10 +711,9 @@ public class CachedPubSubRepository<T>
 		return result;
 	}
 
-	protected boolean hasAccessPermission(Node node, JID requester) {
+	protected boolean hasAccessPermission(Node node, JID requester, Logic.Action action) {
 		try {
-			logic.checkAccessPermission(node.getServiceJid(), node.getNodeConfig(), node.getNodeAffiliations(),
-										node.getNodeSubscriptions(), requester);
+			logic.checkRole(node.getServiceJid(), node.getName(), requester, action);
 			return true;
 		} catch (PubSubException | RepositoryException ex) {
 			return false;

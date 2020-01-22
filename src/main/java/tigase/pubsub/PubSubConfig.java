@@ -63,6 +63,9 @@ public class PubSubConfig {
 	@ConfigField(desc = "Max Cache size", alias = MAX_CACHE_SIZE)
 	private Integer maxCacheSize = 2000;
 
+	@ConfigField(desc = "MAM enabled")
+	private boolean mamEnabled = false;
+
 	@ConfigField(desc = "PEP Remove Empty Geoloc", alias = PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_KEY)
 	private boolean pepRemoveEmptyGeoloc = false;
 
@@ -140,6 +143,10 @@ public class PubSubConfig {
 
 	public boolean isAdmin(final JID jid) {
 		return isAdmin(jid.getBareJID());
+	}
+
+	public boolean isMAMEnabled() {
+		return mamEnabled;
 	}
 
 	public boolean isPepPeristent() {

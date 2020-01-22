@@ -40,10 +40,12 @@ import tigase.xml.Element;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 import tigase.xmpp.mam.MAMRepository;
+import tigase.xmpp.rsm.RSM;
 
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -194,21 +196,19 @@ public class CachedPubSubRepositoryTest {
 		kernel.registerBean("logic").asInstance(new Logic() {
 
 			@Override
-			public void checkAccessPermission(BareJID serviceJid, String nodeName, JID senderJid)
+			public void checkRole(BareJID serviceJid, String nodeName, JID senderJid, Action action)
 					throws PubSubException, RepositoryException {
-
+				
 			}
 
 			@Override
-			public void checkAccessPermission(BareJID serviceJid, AbstractNodeConfig nodeConfig,
-											  IAffiliations nodeAffiliations, ISubscriptions nodeSubscriptions,
-											  JID senderJid) throws PubSubException, RepositoryException {
-
+			public Stream<JID> subscribersOfNotifications(BareJID serviceJid, String nodeName)
+					throws RepositoryException {
+				return null;
 			}
 
 			@Override
-			public boolean hasSenderSubscription(BareJID bareJid, IAffiliations affiliations,
-												 ISubscriptions subscriptions) throws RepositoryException {
+			public boolean hasSenderSubscription(BareJID bareJid, IAffiliations affiliations) throws RepositoryException {
 				return false;
 			}
 
@@ -220,9 +220,19 @@ public class CachedPubSubRepositoryTest {
 			}
 
 			@Override
-			public Element prepareNotificationMessage(JID from, JID to, String id, Element itemToSend,
-													  Map<String, String> headers) {
+			public Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName,
+													  List<Element> itemsToSend, Map<String, String> headers) {
 				return null;
+			}
+			
+			@Override
+			public boolean isServiceJidPEP(BareJID serivceJid) {
+				return serivceJid.getLocalpart() != null;
+			}
+
+			@Override
+			public boolean isMAMEnabled(BareJID serviceJid, String node) throws RepositoryException {
+				return false;
 			}
 		}).exec();
 		kernel.registerBean("config").asInstance(new PubSubConfig()).exec();
@@ -269,15 +279,16 @@ public class CachedPubSubRepositoryTest {
 		}
 
 		@Override
-		public Element getItem(BareJID serviceJid, Object nodeId, String id) throws RepositoryException {
+		public IItems.IItem getItem(BareJID serviceJid, Object nodeId, String id) throws RepositoryException {
 			return null;
 		}
 
 		@Override
-		public Date getItemCreationDate(BareJID serviceJid, Object nodeId, String id) throws RepositoryException {
+		public List<IPubSubRepository.Item> getItems(BareJID serviceJid, List nodeIds, Date after, Date before, RSM rsm,
+													 CollectionItemsOrdering ordering) throws RepositoryException {
 			return null;
 		}
-
+		
 		@Override
 		public String[] getItemsIds(BareJID serviceJid, Object nodeId, CollectionItemsOrdering order) throws RepositoryException {
 			return new String[0];
@@ -293,22 +304,12 @@ public class CachedPubSubRepositoryTest {
 				throws RepositoryException {
 			return null;
 		}
-
-		@Override
-		public Date getItemUpdateDate(BareJID serviceJid, Object nodeId, String id) throws RepositoryException {
-			return null;
-		}
-
+		
 		@Override
 		public NodeAffiliations getNodeAffiliations(BareJID serviceJid, Object nodeId) throws RepositoryException {
 			return null;
 		}
-
-		@Override
-		public String getNodeConfig(BareJID serviceJid, Object nodeId) throws RepositoryException {
-			return null;
-		}
-
+		
 		@Override
 		public Object getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
 			return null;
@@ -354,11 +355,17 @@ public class CachedPubSubRepositoryTest {
 		}
 
 		@Override
-		public void queryItems(Query query, List nodesIds, MAMRepository.ItemHandler itemHandler)
-				throws RepositoryException, ComponentException {
+		public void addMAMItem(BareJID serviceJid, Object nodeId, String uuid, Element itemData, String itemId)
+				throws RepositoryException {
 
 		}
 
+		@Override
+		public void queryItems(Query query, Object nodeId, MAMRepository.ItemHandler itemHandler)
+				throws RepositoryException, ComponentException {
+
+		}
+		
 		@Override
 		public void removeService(BareJID serviceJid, String componentName) throws RepositoryException {
 			rootCollections.remove(serviceJid);
@@ -389,10 +396,10 @@ public class CachedPubSubRepositoryTest {
 
 		@Override
 		public void writeItem(BareJID serviceJid, Object nodeId, long timeInMilis, String id, String publisher,
-							  Element item) throws RepositoryException {
+							  Element item, String uuid) throws RepositoryException {
 
 		}
-
+		
 		@Override
 		public void setDataSource(DataSource dataSource) {
 

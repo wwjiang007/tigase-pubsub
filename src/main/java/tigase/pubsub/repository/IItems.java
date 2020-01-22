@@ -28,48 +28,84 @@ public interface IItems {
 
 	public abstract void deleteItem(String id) throws RepositoryException;
 
-	public abstract Element getItem(String id) throws RepositoryException;
-
-	public abstract Date getItemCreationDate(String id) throws RepositoryException;
-
-	@Deprecated
-	default String[] getItemsIds() throws RepositoryException {
-		return getItemsIds(CollectionItemsOrdering.byUpdateDate);
-	}
-
+	public abstract IItem getItem(String id) throws RepositoryException;
+	
 	public abstract String[] getItemsIds(CollectionItemsOrdering order) throws RepositoryException;
-
-	@Deprecated
-	default String[] getItemsIdsSince(Date since) throws RepositoryException {
-		return getItemsIdsSince(CollectionItemsOrdering.byUpdateDate, since);
-	}
-
+	
 	public abstract String[] getItemsIdsSince(CollectionItemsOrdering order, Date since) throws RepositoryException;
 
 	public abstract List<ItemMeta> getItemsMeta() throws RepositoryException;
 
-	public abstract Date getItemUpdateDate(String id) throws RepositoryException;
-
-	public abstract void writeItem(long timeInMilis, String id, String publisher, Element item)
+	public abstract void writeItem(long timeInMilis, String id, String publisher, Element item, String uuid)
 			throws RepositoryException;
 
-	public static class ItemMeta {
+	interface IItemBase {
 
-		private final Date creationDate;
+		String getId();
+
+		String getNode();
+
+		String getUUID();
+
+	}
+
+	interface IItem extends IItemBase {
+
+		Element getItem();
+
+	}
+
+	public static class ItemBase {
+
 		private final String id;
 		private final String node;
-		private final Date updateDate;
+		private final String uuid;
 
-		public ItemMeta(String node, String id, Date creationDate) {
+		protected ItemBase(String node, String id, String uuid) {
 			this.node = node;
 			this.id = id;
-			this.creationDate = creationDate;
-			this.updateDate = creationDate;
+			if (uuid != null) {
+				this.uuid = uuid.toLowerCase();
+			} else {
+				this.uuid = null;
+			}
 		}
 
-		public ItemMeta(String node, String id, Date creationDate, Date updateDate) {
-			this.node = node;
-			this.id = id;
+		public String getId() {
+			return id;
+		}
+
+		public String getUUID() { return uuid; }
+
+		public String getNode() {
+			return node;
+		}
+
+	}
+
+	public static class Item extends ItemBase implements IItem {
+
+		private final Element item;
+
+		public Item(String node, String id, String uuid, Element item) {
+			super(node, id, uuid);
+			this.item = item;
+		}
+
+		@Override
+		public Element getItem() {
+			return item;
+		}
+
+	}
+
+	public static class ItemMeta extends ItemBase {
+
+		private final Date creationDate;
+		private final Date updateDate;
+
+		public ItemMeta(String node, String id, Date creationDate, Date updateDate, String uuid) {
+			super(node, id, uuid);
 			this.creationDate = creationDate;
 			this.updateDate = updateDate;
 		}
@@ -78,17 +114,10 @@ public interface IItems {
 			return creationDate;
 		}
 
-		public String getId() {
-			return id;
-		}
-
 		public Date getItemUpdateDate() {
 			return updateDate;
 		}
 
-		public String getNode() {
-			return node;
-		}
 	}
 
 }

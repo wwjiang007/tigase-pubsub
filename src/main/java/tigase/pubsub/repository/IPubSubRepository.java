@@ -17,6 +17,7 @@
  */
 package tigase.pubsub.repository;
 
+import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
@@ -25,8 +26,12 @@ import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xml.Element;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.jid.JID;
 import tigase.xmpp.mam.MAMRepository;
+import tigase.xmpp.rsm.RSM;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +42,7 @@ import java.util.Set;
  * @version 5.0.0, 2010.03.27 at 05:20:15 GMT
  */
 public interface IPubSubRepository
-		extends MAMRepository<Query, IPubSubRepository.Item> {
+		extends MAMRepository<Query, MAMRepository.Item> {
 
 	void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException;
 
@@ -51,13 +56,7 @@ public interface IPubSubRepository
 	void forgetConfiguration(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	void setComponentName(String componentName);
-
-	@Deprecated
-	String[] getBuddyGroups(BareJID owner, BareJID buddy) throws RepositoryException;
-
-	@Deprecated
-	String getBuddySubscription(BareJID owner, BareJID buddy) throws RepositoryException;
-
+	
 	String[] getChildNodes(BareJID serviceJid, String node) throws RepositoryException;
 
 	IAffiliations getNodeAffiliations(BareJID serviceJid, String nodeName) throws RepositoryException;
@@ -65,7 +64,10 @@ public interface IPubSubRepository
 	AbstractNodeConfig getNodeConfig(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	IItems getNodeItems(BareJID serviceJid, String nodeName) throws RepositoryException;
-
+	
+	List<IItems.IItem> getNodeItems(BareJID serviceJid, String nodeName, JID requester, Date after, Date before, RSM rsm)
+			throws ComponentException, RepositoryException;
+		
 	INodeMeta getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	ISubscriptions getNodeSubscriptions(BareJID serviceJid, String nodeName) throws RepositoryException;
@@ -92,16 +94,7 @@ public interface IPubSubRepository
 
 	void onUserRemoved(BareJID userJid) throws RepositoryException;
 
-	interface Item
-			extends MAMRepository.Item {
-
-		String getItemId();
-
-		String getNode();
-
-		void setMessage(Element message);
-
-	}
+	void addMAMItem(BareJID serviceJid, String nodeName, String uuid, Element message, String itemId) throws RepositoryException;
 
 	interface RootCollectionSetIfc {
 

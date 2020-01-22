@@ -24,17 +24,18 @@ import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.IItems;
-import tigase.pubsub.repository.IPubSubRepository;
+import tigase.pubsub.utils.Logic;
 import tigase.server.Packet;
 import tigase.util.datetime.TimestampHelper;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
+import tigase.xmpp.rsm.RSM;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -73,7 +74,7 @@ public class RetrieveItemsModule
 			}
 
 			// XXX CHECK RIGHTS AUTH ETC
-			logic.checkAccessPermission(toJid, nodeName, senderJid);
+			logic.checkRole(toJid, nodeName, senderJid, Logic.Action.retrieveItems);
 
 			final Element rpubsub = new Element("pubsub", new String[]{"xmlns"},
 												new String[]{"http://jabber.org/protocol/pubsub"});
@@ -83,59 +84,52 @@ public class RetrieveItemsModule
 				final Element ritems = new Element("items", new String[]{"node"}, new String[]{nodeName});
 				IItems nodeItems = getRepository().getNodeItems(toJid, nodeName);
 				for (String id : requestedId) {
-					Element payload = nodeItems.getItem(id);
-					if (payload != null) {
-						ritems.addChild(payload);
+					IItems.IItem item = nodeItems.getItem(id);
+					if (item != null && item.getItem() != null) {
+						ritems.addChild(item.getItem());
 					}
 				}
 				rpubsub.addChild(ritems);
 			} else {
-				Query query = getRepository().newQuery();
-				query.setComponentJID(packet.getStanzaTo());
-				query.setQuestionerJID(senderJid);
-				query.setPubsubNode(nodeName);
+				RSM rsm = new RSM();
 
+				Date before = null;
+				Date after = null;
 				final Integer maxItems = asInteger(items.getAttributeStaticStr("max_items"));
 				final Element rsmGet = pubsub.getChild("set", "http://jabber.org/protocol/rsm");
 				if (rsmGet != null) {
-					query.getRsm().fromElement(rsmGet);
+					rsm.fromElement(rsmGet);
 					Element m = rsmGet.getChild("dt_after", "http://tigase.org/pubsub");
 					if (m != null) {
-						query.setStart(timestampHelper.parseTimestamp(m.getCData()));
+						after = timestampHelper.parseTimestamp(m.getCData());
 					}
 					m = rsmGet.getChild("dt_before", "http://tigase.org/pubsub");
 					if (m != null) {
-						query.setEnd(timestampHelper.parseTimestamp(m.getCData()));
+						before = timestampHelper.parseTimestamp(m.getCData());
 					}
 				} else {
 					if (maxItems != null) {
-						query.getRsm().setHasBefore(true);
-						query.getRsm().setMax(maxItems);
+						rsm.setHasBefore(true);
+						rsm.setMax(maxItems);
 					}
 				}
 
-				List<IPubSubRepository.Item> queryResults = new ArrayList<>();
-				getRepository().queryItems(query, (query1, item) -> {
-					queryResults.add(item);
-					if (query.getRsm().getFirst() == null) {
-						query.getRsm().setFirst(item.getId());
-					}
-					query.getRsm().setLast(item.getId());
-				});
-
+				List<IItems.IItem> queryResults = getRepository().getNodeItems(
+						packet.getStanzaTo().getBareJID(), nodeName, senderJid, after, before, rsm);
+				
 				queryResults.stream()
 						.collect(Collectors.groupingBy(item -> item.getNode()))
 						.forEach((rnodeName, rnodeItems) -> {
 							final Element ritems = new Element("items", new String[]{"node"}, new String[]{rnodeName});
-							for (IPubSubRepository.Item ritem : rnodeItems) {
-								ritems.addChild(ritem.getMessage());
+							for (IItems.IItem ritem : rnodeItems) {
+								ritems.addChild(ritem.getItem());
 							}
 							rpubsub.addChild(ritems);
 						});
 
-				if (query.getRsm().getCount() > 0) {
+				if (rsm.getCount() > 0) {
 					if (maxItems == null) {
-						rpubsub.addChild(query.getRsm().toElement());
+						rpubsub.addChild(rsm.toElement());
 					}
 				} else {
 					rpubsub.addChild(new Element("items", new String[]{"node"}, new String[]{nodeName}));

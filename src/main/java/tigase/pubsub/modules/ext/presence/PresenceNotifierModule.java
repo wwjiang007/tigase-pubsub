@@ -30,8 +30,6 @@ import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.modules.PublishItemModule;
-import tigase.pubsub.repository.IAffiliations;
-import tigase.pubsub.repository.ISubscriptions;
 import tigase.server.Packet;
 import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
@@ -40,6 +38,7 @@ import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Level;
 
 @Bean(name = "presenceNotifierModule", parent = PubSubComponent.class, active = true)
@@ -147,44 +146,26 @@ public class PresenceNotifierModule
 	}
 
 	protected void publish(BareJID serviceJID, String nodeName, Element itemToSend) throws RepositoryException {
-		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJID, nodeName);
-		final IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJID, nodeName);
-		final ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(serviceJID, nodeName);
-
-		Element items = new Element("items");
-		items.addAttribute("node", nodeName);
-
 		Element item = new Element("item");
-		items.addChild(item);
 		item.addChild(itemToSend);
 
-		publishItemModule.sendNotifications(items, JID.jidInstance(serviceJID), nodeName, nodeConfig, nodeAffiliations,
-											nodeSubscriptions);
+		publishItemModule.generateNotifications(serviceJID, nodeName, Collections.singletonList(item), null, false);
 	}
 
 	protected void publishToOne(BareJID serviceJID, String nodeName, JID destinationJID) throws RepositoryException {
 		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJID, nodeName);
 
 		Collection<JID> occupants = presencePerNodeExtension.getNodeOccupants(serviceJID, nodeName);
-		for (JID jid : occupants) {
-
-			if (jid.equals(destinationJID)) {
-				continue;
-			}
-
-			Packet p = presencePerNodeExtension.getPresence(serviceJID, nodeName, jid);
+		if (occupants.contains(destinationJID)) {
+			Packet p = presencePerNodeExtension.getPresence(serviceJID, nodeName, destinationJID);
 			if (p == null) {
-				continue;
+				return;
 			}
 
-			Element items = new Element("items");
-			items.addAttribute("node", nodeName);
 			Element item = new Element("item");
-			items.addChild(item);
-			item.addChild(createPresenceNotificationItem(serviceJID, nodeName, jid, p));
+			item.addChild(createPresenceNotificationItem(serviceJID, nodeName, destinationJID, p));
 
-			publishItemModule.sendNotifications(new JID[]{destinationJID}, items, JID.jidInstance(serviceJID),
-												nodeConfig, nodeName, null);
+			publishItemModule.sendNotification(serviceJID, nodeName, item, null, null, destinationJID);
 		}
 	}
 }

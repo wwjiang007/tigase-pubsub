@@ -107,7 +107,7 @@ public class PubSubItemsConverter
 	@Override
 	public boolean storeEntity(PubSubItemEntity entity) throws Exception {
 		IItems nodeItems = repository.getNodeItems(entity.getService(), entity.getNode());
-		nodeItems.writeItem(System.currentTimeMillis(), entity.getItemid(), entity.getPublisher(), entity.getPayload());
+		nodeItems.writeItem(System.currentTimeMillis(), entity.getItemid(), entity.getPublisher(), entity.getPayload(), null);
 		return true;
 	}
 

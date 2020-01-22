@@ -17,15 +17,12 @@
  */
 package tigase.pubsub.modules.mam;
 
-import tigase.pubsub.CollectionItemsOrdering;
-
 /**
  * Created by andrzej on 22.12.2016.
  */
 public class Query
 		extends tigase.xmpp.mam.QueryImpl {
 
-	private CollectionItemsOrdering order = CollectionItemsOrdering.byUpdateDate;
 	private String pubsubNode;
 
 	public String getPubsubNode() {
@@ -35,13 +32,5 @@ public class Query
 	public void setPubsubNode(String pubsubNode) {
 		this.pubsubNode = pubsubNode;
 	}
-
-	public CollectionItemsOrdering getOrder() {
-		return order;
-	}
-
-	public void setOrder(CollectionItemsOrdering order) {
-		this.order = order;
-	}
-
+	
 }

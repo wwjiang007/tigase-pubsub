@@ -22,14 +22,13 @@ import tigase.pubsub.Utils;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xmpp.jid.BareJID;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * Implementation of PubSub node subscription handling.
@@ -104,28 +103,15 @@ public abstract class NodeSubscriptions
 	}
 
 	@Override
-	public UsersSubscription[] getSubscriptions() {
+	public Stream<UsersSubscription> getSubscriptions() {
 		synchronized (this.subs) {
-			final UsersSubscription[] toArray = this.subs.values().toArray(new UsersSubscription[]{});
-			if (log.isLoggable(Level.FINEST)) {
-				log.log(Level.FINEST, "getSubscriptions: {0}, toArray:{1}",
-						new Object[]{subs, Arrays.toString(toArray)});
-			}
-			return toArray;
+			return this.subs.values().stream();
 		}
 	}
 
 	@Override
-	public UsersSubscription[] getSubscriptionsForPublish() {
-
-		UsersSubscription[] subscriptions = getSubscriptions();
-
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "getSubscriptionsForPublish, subs: {0}, subscriptions: {1}",
-					new Object[]{subs, Arrays.toString(subscriptions)});
-		}
-
-		return subscriptions;
+	public Stream<UsersSubscription> getSubscriptionsForPublish() {
+		return getSubscriptions();
 	}
 
 	public Map<BareJID, UsersSubscription> getSubscriptionsMap() {

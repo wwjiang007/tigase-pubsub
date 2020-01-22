@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 public class NodeSubscriptions
 		extends tigase.pubsub.repository.NodeSubscriptions {
@@ -66,14 +67,14 @@ public class NodeSubscriptions
 	}
 
 	@Override
-	public UsersSubscription[] getSubscriptions() {
+	public Stream<UsersSubscription> getSubscriptions() {
 		final Set<UsersSubscription> result = new HashSet<UsersSubscription>();
 
 		result.addAll(this.subs.values());
 
 		result.addAll(this.changedSubs().values());
 
-		return result.toArray(new UsersSubscription[]{});
+		return result.stream();
 	}
 
 	@Override

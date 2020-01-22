@@ -22,6 +22,7 @@ import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xmpp.jid.BareJID;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 public interface ISubscriptions {
 
@@ -33,9 +34,9 @@ public interface ISubscriptions {
 
 	public abstract String getSubscriptionId(BareJID jid);
 
-	public abstract UsersSubscription[] getSubscriptions();
+	public abstract Stream<UsersSubscription> getSubscriptions();
 
-	public abstract UsersSubscription[] getSubscriptionsForPublish();
+	public abstract Stream<UsersSubscription> getSubscriptionsForPublish();
 
 	public boolean isChanged();
 

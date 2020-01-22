@@ -36,7 +36,7 @@ import tigase.server.Command
 import tigase.server.Iq
 import tigase.server.Packet
 import tigase.xml.Element
-import tigase.xmpp.Authorization;
+import tigase.xmpp.Authorization
 
 Kernel kernel = (Kernel) kernel;
 PubSubComponent component = (PubSubComponent) component
@@ -75,7 +75,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 											  "Node " + node + " was not found")
 				};
 				def items = pubsubRepository.getNodeItems(p.getStanzaTo().getBareJID(), node);
-				def itemsIds = items.getItemsIds() ?: [ ];
+				def itemsIds = items.getItemsIds(nodeConfig.getCollectionItemsOrdering()) ?: [ ];
 				Command.addFieldMultiValue(result, "items", itemsIds as List);
 				result.getElement().
 						getChild('command').

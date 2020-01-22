@@ -19,14 +19,9 @@ package tigase.pubsub.modules.mam;
 
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.utils.Logic;
-import tigase.xml.Element;
 import tigase.xmpp.mam.MAMRepository;
 import tigase.xmpp.mam.Query;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by andrzej on 25.12.2016.
@@ -42,17 +37,6 @@ public class MAMItemHandler
 
 	@Override
 	public void itemFound(Query query, MAMRepository.Item item) {
-		if (item instanceof IPubSubRepository.Item) {
-			Map<String, String> headers = new HashMap<>();
-			headers.put("Collection", ((IPubSubRepository.Item) item).getNode());
-			Element itemEl = item.getMessage();
-			Element itemsEl = new Element("items", new String[]{"node"},
-										  new String[]{((IPubSubRepository.Item) item).getNode()});
-			itemsEl.addChild(itemEl);
-			Element message = logic.prepareNotificationMessage(query.getComponentJID(), query.getQuestionerJID(),
-															   String.valueOf(++this.idCounter), itemsEl, headers);
-			((IPubSubRepository.Item) item).setMessage(message);
-		}
 		super.itemFound(query, item);
 	}
 }

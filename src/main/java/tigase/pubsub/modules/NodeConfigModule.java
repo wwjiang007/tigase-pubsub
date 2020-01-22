@@ -27,9 +27,7 @@ import tigase.kernel.beans.Inject;
 import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.repository.IAffiliations;
-import tigase.pubsub.repository.ISubscriptions;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.utils.Logic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -37,6 +35,7 @@ import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.logging.Level;
 
@@ -123,22 +122,14 @@ public class NodeConfigModule
 				throw new PubSubException(element, Authorization.ITEM_NOT_FOUND);
 			}
 
-			final IAffiliations nodeAffiliations = this.getRepository().getNodeAffiliations(toJid, nodeName);
 			JID jid = packet.getStanzaFrom();
 
-			if (!this.config.isAdmin(jid)) {
-				UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(jid.getBareJID());
-
-				if (senderAffiliation.getAffiliation() != Affiliation.owner) {
-					throw new PubSubException(element, Authorization.FORBIDDEN);
-				}
-			}
+			logic.checkRole(toJid, nodeName, jid, Logic.Action.manageNode);
 
 			// TODO 8.2.3.4 No Configuration Options
 
 			// final Element result = createResultIQ(element);
 			final Packet result = packet.okResult((Element) null, 0);
-			ISubscriptions nodeSubscriptions = this.getRepository().getNodeSubscriptions(toJid, nodeName);
 
 			if (type == StanzaType.get) {
 				Element rPubSub = new Element("pubsub", new String[]{"xmlns"},
@@ -176,15 +167,10 @@ public class NodeConfigModule
 						getRepository().update(toJid, colNodeConfig.getNodeName(), colNodeConfig);
 						getRepository().removeFromRootCollection(toJid, nodeName);
 
-						IAffiliations colNodeAffiliations = getRepository().getNodeAffiliations(toJid,
-																								colNodeConfig.getNodeName());
-						ISubscriptions colNodeSubscriptions = getRepository().getNodeSubscriptions(toJid,
-																								   colNodeConfig.getNodeName());
 						Element associateNotification = createAssociateNotification(colNodeConfig.getNodeName(),
 																					nodeName);
 
-						publishModule.sendNotifications(associateNotification, packet.getStanzaTo(), nodeName,
-														colNodeConfig, colNodeAffiliations, colNodeSubscriptions);
+						publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(associateNotification), null, false);
 					}
 					if (nodeConfig.getCollection().equals("")) {
 						AbstractNodeConfig colNodeConfig = getRepository().getNodeConfig(toJid, collectionOld);
@@ -194,14 +180,9 @@ public class NodeConfigModule
 						}
 						getRepository().addToRootCollection(toJid, nodeName);
 
-						IAffiliations colNodeAffiliations = getRepository().getNodeAffiliations(toJid,
-																								colNodeConfig.getNodeName());
-						ISubscriptions colNodeSubscriptions = getRepository().getNodeSubscriptions(toJid,
-																								   colNodeConfig.getNodeName());
 						Element disassociateNotification = createDisassociateNotification(collectionOld, nodeName);
 
-						publishModule.sendNotifications(disassociateNotification, packet.getStanzaTo(), nodeName,
-														colNodeConfig, colNodeAffiliations, colNodeSubscriptions);
+						publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(disassociateNotification), null, false);
 					}
 				}
 				if (nodeConfig instanceof CollectionNodeConfig) {
@@ -227,8 +208,7 @@ public class NodeConfigModule
 
 						Element associateNotification = createAssociateNotification(nodeName, ann);
 
-						publishModule.sendNotifications(associateNotification, packet.getStanzaTo(), nodeName,
-														nodeConfig, nodeAffiliations, nodeSubscriptions);
+						publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(associateNotification), null, false);
 					}
 					for (String rnn : removedChildNodes) {
 						AbstractNodeConfig nc = getRepository().getNodeConfig(toJid, rnn);
@@ -240,8 +220,7 @@ public class NodeConfigModule
 						if ((rnn != null) && (rnn.length() != 0)) {
 							Element disassociateNotification = createDisassociateNotification(nodeName, rnn);
 
-							publishModule.sendNotifications(disassociateNotification, packet.getStanzaTo(), nodeName,
-															nodeConfig, nodeAffiliations, nodeSubscriptions);
+							publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(disassociateNotification), null, false);
 						}
 					}
 				}
@@ -252,8 +231,7 @@ public class NodeConfigModule
 				if (nodeConfig.isNotify_config()) {
 					Element configuration = new Element("configuration", new String[]{"node"}, new String[]{nodeName});
 
-					this.publishModule.sendNotifications(configuration, packet.getStanzaTo(), nodeName, nodeConfig,
-														 nodeAffiliations, nodeSubscriptions);
+					publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(configuration), null, false);
 				}
 			} else {
 				throw new PubSubException(element, Authorization.BAD_REQUEST);

@@ -25,16 +25,14 @@ import tigase.kernel.beans.Inject;
 import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.utils.Logic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -83,14 +81,8 @@ public class RetractItemModule
 				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
 										  new PubSubErrorCondition("unsupported", "retract-items"));
 			}
-
-			IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(toJid, nodeName);
-			UsersAffiliation affiliation = nodeAffiliations.getSubscriberAffiliation(
-					packet.getStanzaFrom().getBareJID());
-
-			if (!affiliation.getAffiliation().isDeleteItem()) {
-				throw new PubSubException(Authorization.FORBIDDEN);
-			}
+			
+			logic.checkRole(toJid, nodeName, packet.getStanzaTo(), Logic.Action.retractItems);
 
 			LeafNodeConfig leafNodeConfig = (LeafNodeConfig) nodeConfig;
 
@@ -115,6 +107,10 @@ public class RetractItemModule
 				throw new PubSubException(Authorization.BAD_REQUEST, PubSubErrorCondition.ITEM_REQUIRED);
 			}
 
+			if (logic.isMAMEnabled(toJid, nodeName) && itemsToDelete.size() > 1) {
+				throw new PubSubException(Authorization.NOT_ALLOWED, "Bulk retraction not allowed");
+			}
+
 			Packet result = packet.okResult((Element) null, 0);
 
 			IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
@@ -122,9 +118,9 @@ public class RetractItemModule
 			List<Element> itemsToSend = new ArrayList<>(itemsToDelete.size());
 			try {
 				for (String id : itemsToDelete) {
-					Date date = nodeItems.getItemCreationDate(id);
+					IItems.IItem item = nodeItems.getItem(id);
 
-					if (date != null) {
+					if (item != null) {
 						nodeItems.deleteItem(id);
 
 						Element notification = new Element("retract", new String[]{"id"}, new String[]{id});
@@ -135,7 +131,7 @@ public class RetractItemModule
 					}
 				}
 			} finally {
-				publishModule.sendNotifications(packet.getStanzaTo().getBareJID(), nodeName, itemsToSend);
+				publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, itemsToSend, null, false);
 			}
 
 			packetWriter.write(result);

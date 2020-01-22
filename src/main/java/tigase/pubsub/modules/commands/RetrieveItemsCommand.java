@@ -26,6 +26,7 @@ import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
+import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IItems;
@@ -37,7 +38,6 @@ import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -128,16 +128,16 @@ public class RetrieveItemsCommand
 							nodeItems = repository.getNodeItems(request.getIq().getTo().getBareJID(), nodeName);
 						}
 						if (null != nodeId) {
-							final String[] itemsIds = nodeItems.getItemsIds();
+							final String[] itemsIds = nodeItems.getItemsIds(repository.getNodeConfig(BareJID.bareJIDInstance(serviceName), nodeName).getCollectionItemsOrdering());
 							if (null != itemsIds && Arrays.asList(itemsIds).contains(nodeId)) {
-								Element i = nodeItems.getItem(nodeId);
+								IItems.IItem i = nodeItems.getItem(nodeId);
 								Element field = new Element("field", new String[]{"var"}, new String[]{"item"});
-								field.addChild(new Element("value", new Element[]{i}, null, null));
+								field.addChild(new Element("value", new Element[]{i.getItem()}, null, null));
 
 								f.addChild(field);
 							}
 						} else {
-							String[] allItems = nodeItems.getItemsIdsSince(timestamp);
+							String[] allItems = nodeItems.getItemsIdsSince(CollectionItemsOrdering.byUpdateDate,timestamp);
 							for (String id : allItems) {
 								Element i = new Element("item");
 								Element fi = new Element("field", new String[]{"var"}, new String[]{"id"});
