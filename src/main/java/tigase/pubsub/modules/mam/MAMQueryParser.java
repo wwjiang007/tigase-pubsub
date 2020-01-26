@@ -17,16 +17,16 @@
  */
 package tigase.pubsub.modules.mam;
 
+import tigase.pubsub.IPubSubConfig;
 import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IPubSubRepository;
-import tigase.pubsub.utils.Logic;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Iq;
 import tigase.server.Packet;
 import tigase.xmpp.Authorization;
@@ -51,10 +51,10 @@ public class MAMQueryParser
 	private IPubSubRepository pubSubRepository;
 
 	@Inject
-	private Logic logic;
+	private PubSubLogic pubSubLogic;
 
 	@Inject
-	private PubSubConfig pubSubConfig;
+	private IPubSubConfig pubSubConfig;
 
 	@Override
 	public Set<String> getXMLNSs() {
@@ -68,7 +68,7 @@ public class MAMQueryParser
 			throw new PubSubException(Authorization.BAD_REQUEST, PubSubErrorCondition.NODEID_REQUIRED);
 		}
 		try {
-			if (!logic.isMAMEnabled(packet.getStanzaTo().getBareJID(), node)) {
+			if (!pubSubLogic.isMAMEnabled(packet.getStanzaTo().getBareJID(), node)) {
 				throw new PubSubException(Authorization.NOT_ALLOWED);
 			}
 		} catch (RepositoryException ex) {

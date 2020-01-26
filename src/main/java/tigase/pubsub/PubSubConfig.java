@@ -34,11 +34,11 @@ import java.util.logging.Logger;
  * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:10:54 GMT
  */
-@Bean(name = "pubsubConfig", parent = PubSubComponent.class, active = true)
-public class PubSubConfig {
+@Bean(name = "config", parent = PubSubComponent.class, active = true)
+public class PubSubConfig implements IPubSubConfig {
 
 	public static final String ADMINS_KEY = "admin";
-	private static final String MAX_CACHE_SIZE = "pubsub-repository-cache-size";
+	public static final String MAX_CACHE_SIZE = "pubsub-repository-cache-size";
 	private static final String AUTO_SUBSCRIBE_NODE_CREATOR = "auto-subscribe-node-creator";
 	private static final String PUBSUB_HIGH_MEMORY_USAGE_LEVEL_KEY = "pubsub-high-memory-usage-level";
 	private static final String PUBSUB_LOW_MEMORY_DELAY_KEY = "pubsub-low-memory-delay";
@@ -165,7 +165,7 @@ public class PubSubConfig {
 		return subscribeByPresenceFilteredNotifications;
 	}
 
-	private boolean isHighMemoryUsage() {
+	public boolean isHighMemoryUsage() {
 		return TigaseRuntime.getTigaseRuntime().getHeapMemUsage() > highMemoryUsageLevel;
 	}
 

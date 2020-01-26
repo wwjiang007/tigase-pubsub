@@ -17,13 +17,17 @@
  */
 package tigase.pubsub.modules;
 
+import tigase.pubsub.IPubSubConfig;
 import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.*;
+import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.NodeType;
+import tigase.pubsub.PubSubComponent;
+import tigase.pubsub.Utils;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
@@ -50,7 +54,7 @@ public class DiscoveryModule
 	private final SimpleDateFormat formatter;
 
 	@Inject
-	private PubSubConfig config;
+	private IPubSubConfig config;
 	@Inject
 	private IPubSubRepository repository;
 

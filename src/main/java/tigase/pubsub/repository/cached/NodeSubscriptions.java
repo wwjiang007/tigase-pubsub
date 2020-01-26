@@ -22,23 +22,20 @@ import tigase.pubsub.Utils;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xmpp.jid.BareJID;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public class NodeSubscriptions
-		extends tigase.pubsub.repository.NodeSubscriptions {
+		extends tigase.pubsub.repository.NodeSubscriptions implements ISubscriptionsCached {
 
 	protected final ThreadLocal<Map<BareJID, UsersSubscription>> changedSubs = new ThreadLocal<Map<BareJID, UsersSubscription>>();
 
 	public NodeSubscriptions() {
 	}
 
-	public NodeSubscriptions(tigase.pubsub.repository.NodeSubscriptions nodeSubscriptions) {
-		subs.putAll(nodeSubscriptions.getSubscriptionsMap());
+	public NodeSubscriptions(Map<BareJID, UsersSubscription> subscriptions) {
+		super(subscriptions);
 	}
 
 	@Override
@@ -62,8 +59,14 @@ public class NodeSubscriptions
 		}
 	}
 
+	@Override
+	public void changeSubscription(UsersSubscription subscription) {
+		changedSubs().put(subscription.getJid(), subscription);
+	}
+
+	@Override
 	public Map<BareJID, UsersSubscription> getChanged() {
-		return changedSubs();
+		return Collections.unmodifiableMap(changedSubs());
 	}
 
 	@Override

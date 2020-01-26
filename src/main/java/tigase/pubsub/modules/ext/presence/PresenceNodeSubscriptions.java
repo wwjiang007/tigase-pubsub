@@ -18,7 +18,7 @@
 package tigase.pubsub.modules.ext.presence;
 
 import tigase.pubsub.Subscription;
-import tigase.pubsub.repository.ISubscriptions;
+import tigase.pubsub.repository.cached.ISubscriptionsCached;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Packet;
 import tigase.xmpp.StanzaType;
@@ -31,14 +31,14 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public class PresenceNodeSubscriptions
-		implements ISubscriptions {
+		implements ISubscriptionsCached {
 
 	private final PresencePerNodeExtension extension;
 	private final String nodeName;
 	private final BareJID serviceJID;
-	private final ISubscriptions subscriptions;
+	private final ISubscriptionsCached subscriptions;
 
-	public PresenceNodeSubscriptions(BareJID serviceJid, String nodeName, ISubscriptions subscriptions,
+	public PresenceNodeSubscriptions(BareJID serviceJid, String nodeName, ISubscriptionsCached subscriptions,
 									 PresenceNotifierModule presenceExtensionModule) {
 		this.serviceJID = serviceJid;
 		this.nodeName = nodeName;
@@ -114,13 +114,33 @@ public class PresenceNodeSubscriptions
 	}
 
 	@Override
+	public int size() {
+		return subscriptions.size();
+	}
+
+	@Override
+	public void changeSubscription(UsersSubscription subscription) {
+		subscriptions.changeSubscription(subscription);
+	}
+
+	@Override
 	public boolean isChanged() {
 		return subscriptions.isChanged();
 	}
 
 	@Override
-	public String serialize(Map<BareJID, UsersSubscription> fragment) {
-		return subscriptions.serialize(fragment);
+	public Map<BareJID, UsersSubscription> getChanged() {
+		return subscriptions.getChanged();
+	}
+
+	@Override
+	public void merge() {
+		subscriptions.merge();
+	}
+
+	@Override
+	public void resetChangedFlag() {
+		subscriptions.resetChangedFlag();
 	}
 
 	@Override

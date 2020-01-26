@@ -15,21 +15,39 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.pubsub.repository;
+package tigase.pubsub;
 
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.jid.JID;
 
-public interface IAffiliations {
+public interface IPubSubConfig {
 
-	void addAffiliation(BareJID jid, Affiliation affiliation);
+	String[] getAdmins();
 
-	void changeAffiliation(BareJID jid, Affiliation affiliation);
+	JID getComponentJID();
 
-	UsersAffiliation[] getAffiliations();
+	long getDelayOnLowMemory();
 
-	UsersAffiliation getSubscriberAffiliation(BareJID jid);
+	Integer getMaxCacheSize();
 
-	int size();
+	BareJID getServiceBareJID();
+
+	boolean isAutoSubscribeNodeCreator();
+
+	boolean isAdmin(final BareJID jid);
+
+	boolean isAdmin(final JID jid);
+
+	boolean isMAMEnabled();
+
+	boolean isPepPeristent();
+
+	boolean isPepRemoveEmptyGeoloc();
+
+	boolean isSendLastPublishedItemOnPresence();
+
+	public boolean isSubscribeByPresenceFilteredNotifications();
+
+	boolean isHighMemoryUsage();
+
 }

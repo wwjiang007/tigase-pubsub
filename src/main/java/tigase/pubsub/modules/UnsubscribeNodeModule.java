@@ -20,12 +20,13 @@ package tigase.pubsub.modules;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.kernel.beans.Bean;
-import tigase.pubsub.*;
+import tigase.pubsub.AbstractPubSubModule;
+import tigase.pubsub.PubSubComponent;
+import tigase.pubsub.Subscription;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -64,26 +65,10 @@ public class UnsubscribeNodeModule
 		final String subid = unsubscribe.getAttributeStaticStr("subid");
 
 		try {
-			AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(toJid, nodeName);
-
-			if (nodeConfig == null) {
-				throw new PubSubException(element, Authorization.ITEM_NOT_FOUND);
+			if (!senderJid.getBareJID().equals(jid)) {
+				pubSubLogic.checkPermission(toJid, nodeName, senderJid, PubSubLogic.Action.manageNode);
 			}
-
-			IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(toJid, nodeName);
-			UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(senderJid.getBareJID());
-			UsersAffiliation affiliation = nodeAffiliations.getSubscriberAffiliation(jid);
-
-			if (!this.config.isAdmin(senderJid) && (senderAffiliation.getAffiliation() != Affiliation.owner) &&
-					!jid.equals(senderJid.getBareJID())) {
-				throw new PubSubException(element, Authorization.BAD_REQUEST, PubSubErrorCondition.INVALID_JID);
-			}
-			if (affiliation != null) {
-				if (affiliation.getAffiliation() == Affiliation.outcast) {
-					throw new PubSubException(Authorization.FORBIDDEN);
-				}
-			}
-
+			
 			ISubscriptions nodeSubscriptions = this.getRepository().getNodeSubscriptions(toJid, nodeName);
 
 			if (subid != null) {
@@ -101,9 +86,7 @@ public class UnsubscribeNodeModule
 				throw new PubSubException(Authorization.UNEXPECTED_REQUEST, PubSubErrorCondition.NOT_SUBSCRIBED);
 			}
 			nodeSubscriptions.changeSubscription(jid, Subscription.none);
-			if (nodeSubscriptions.isChanged()) {
-				this.getRepository().update(toJid, nodeName, nodeSubscriptions);
-			}
+			this.getRepository().update(toJid, nodeName, nodeSubscriptions);
 
 			packetWriter.write(packet.okResult((Element) null, 0));
 		} catch (PubSubException e1) {

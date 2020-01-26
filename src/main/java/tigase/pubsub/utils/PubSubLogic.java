@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * <p>
  * Created by andrzej on 25.12.2016.
  */
-public interface Logic {
+public interface PubSubLogic {
 	
 	boolean hasSenderSubscription(final BareJID bareJid, final IAffiliations affiliations) throws RepositoryException;
 
@@ -44,11 +44,8 @@ public interface Logic {
 
 	Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName, List<Element> itemsToSend,
 									   Map<String, String> headers);
-
-	default void checkNodeCreationAllowed(BareJID serviceJid, BareJID userJid, String node, String collection) throws PubSubException {
-	}
-
-	void checkRole(BareJID serviceJid, String nodeName, JID senderJid, Action action) throws PubSubException, RepositoryException;
+	
+	void checkPermission(BareJID serviceJid, String nodeName, JID senderJid, Action action) throws PubSubException, RepositoryException;
 
 	Stream<JID> subscribersOfNotifications(BareJID serviceJid, String nodeName) throws RepositoryException;
 
@@ -58,6 +55,7 @@ public interface Logic {
 
 	enum Action {
 		subscribe,
+		unsubscribe,
 		retrieveItems,
 		publishItems,
 		retractItems,

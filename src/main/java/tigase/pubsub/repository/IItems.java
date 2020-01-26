@@ -19,7 +19,9 @@ package tigase.pubsub.repository;
 
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.CollectionItemsOrdering;
+import tigase.pubsub.exceptions.PubSubException;
 import tigase.xml.Element;
+import tigase.xmpp.jid.BareJID;
 
 import java.util.Date;
 import java.util.List;
@@ -36,8 +38,8 @@ public interface IItems {
 
 	public abstract List<ItemMeta> getItemsMeta() throws RepositoryException;
 
-	public abstract void writeItem(long timeInMilis, String id, String publisher, Element item, String uuid)
-			throws RepositoryException;
+	public abstract void writeItem(String id, String publisher, Element item, String uuid)
+			throws RepositoryException, PubSubException;
 
 	interface IItemBase {
 
@@ -120,4 +122,14 @@ public interface IItems {
 
 	}
 
+	interface IListnener {
+
+		void itemWritten(BareJID serviceJID, String node, String id, String publisher, Element item, String uuid);
+
+		void itemDeleted(BareJID serviceJID, String node, String id);
+
+		default void validateItem(BareJID serviceJID, String node, String id, String publisher, Element item) throws
+																										 PubSubException {}
+
+	}
 }

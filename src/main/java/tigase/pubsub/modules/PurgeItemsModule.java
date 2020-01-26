@@ -24,9 +24,8 @@ import tigase.kernel.beans.Inject;
 import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -68,6 +67,8 @@ public class PurgeItemsModule
 				throw new PubSubException(Authorization.BAD_REQUEST, PubSubErrorCondition.NODE_REQUIRED);
 			}
 
+			pubSubLogic.checkPermission(toJid, nodeName, packet.getStanzaTo(), PubSubLogic.Action.purgeNode);
+
 			AbstractNodeConfig nodeConfig = this.getRepository().getNodeConfig(toJid, nodeName);
 
 			if (nodeConfig == null) {
@@ -75,14 +76,6 @@ public class PurgeItemsModule
 			} else if (nodeConfig.getNodeType() == NodeType.collection) {
 				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
 										  new PubSubErrorCondition("unsupported", "purge-nodes"));
-			}
-
-			IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(toJid, nodeName);
-			UsersAffiliation affiliation = nodeAffiliations.getSubscriberAffiliation(
-					packet.getStanzaFrom().getBareJID());
-
-			if (!affiliation.getAffiliation().isPurgeNode()) {
-				throw new PubSubException(Authorization.FORBIDDEN);
 			}
 
 			LeafNodeConfig leafNodeConfig = (LeafNodeConfig) nodeConfig;

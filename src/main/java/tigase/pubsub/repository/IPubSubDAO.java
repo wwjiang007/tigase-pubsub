@@ -69,18 +69,15 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 
 	List<IItems.ItemMeta> getItemsMeta(BareJID serviceJid, T nodeId, String nodeName) throws RepositoryException;
 
-	NodeAffiliations getNodeAffiliations(BareJID serviceJid, T nodeId) throws RepositoryException;
-
-	@Deprecated
-	T getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException;
-
+	Map<BareJID, UsersAffiliation> getNodeAffiliations(BareJID serviceJid, T nodeId) throws RepositoryException;
+	
 	INodeMeta<T> getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	long getNodesCount(BareJID serviceJid) throws RepositoryException;
 
 	String[] getNodesList(BareJID serviceJid, String nodeName) throws RepositoryException;
 
-	NodeSubscriptions getNodeSubscriptions(BareJID serviceJid, T nodeId) throws RepositoryException;
+	Map<BareJID, UsersSubscription> getNodeSubscriptions(BareJID serviceJid, T nodeId) throws RepositoryException;
 
 	Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid) throws RepositoryException;
 

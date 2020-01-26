@@ -78,41 +78,42 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 
 	@Test
 	public void test01_createNode() throws RepositoryException {
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		if (nodeId != null) {
-			dao.deleteNode(serviceJid, nodeId);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		if (node != null) {
+			dao.deleteNode(serviceJid, node.getNodeId());
 		}
 
 		LeafNodeConfig nodeCfg = new LeafNodeConfig(nodeName);
 		dao.createNode(serviceJid, nodeName, senderJid.getBareJID(), nodeCfg, NodeType.leaf, null, "pubsub");
 
-		nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not retrieve nodeId for newly created node", nodeId);
+		node = dao.getNodeMeta(serviceJid, nodeName);
+		Assert.assertNotNull("Could not retrieve nodeId for newly created node", node);
 	}
 
 	@Test()
 	public void test02_subscribeNode() throws RepositoryException {
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not fined nodeId", nodeId);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", node);
 		UsersSubscription subscr = new UsersSubscription(subscriberJid.getBareJID(), "sub-1", Subscription.subscribed);
-		dao.updateNodeSubscription(serviceJid, nodeId, nodeName, subscr);
+		dao.updateNodeSubscription(serviceJid, node.getNodeId(), nodeName, subscr);
 
-		NodeSubscriptions nodeSubscr = dao.getNodeSubscriptions(serviceJid, nodeId);
+		Map<BareJID, UsersSubscription> nodeSubscr = dao.getNodeSubscriptions(serviceJid, node.getNodeId());
 		Assert.assertNotNull("Not found subscriptions for node", nodeSubscr);
-		Subscription subscription = nodeSubscr.getSubscription(subscriberJid.getBareJID());
-		Assert.assertEquals("Bad subscription type for user", Subscription.subscribed, subscription);
+		UsersSubscription usersSubscription = nodeSubscr.get(subscriberJid.getBareJID());
+		assertNotNull(usersSubscription);
+		Assert.assertEquals("Bad subscription type for user", Subscription.subscribed, usersSubscription.getSubscription());
 	}
 
 	@Test
 	public void test03_affiliateNode() throws RepositoryException {
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not fined nodeId", nodeId);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", node);
 		UsersAffiliation affil = new UsersAffiliation(subscriberJid.getBareJID(), Affiliation.publisher);
-		dao.updateNodeAffiliation(serviceJid, nodeId, nodeName, affil);
+		dao.updateNodeAffiliation(serviceJid, node.getNodeId(), nodeName, affil);
 
-		NodeAffiliations nodeAffils = dao.getNodeAffiliations(serviceJid, nodeId);
+		Map<BareJID, UsersAffiliation> nodeAffils = dao.getNodeAffiliations(serviceJid, node.getNodeId());
 		Assert.assertNotNull("Not found affiliations for node", nodeAffils);
-		affil = nodeAffils.getSubscriberAffiliation(subscriberJid.getBareJID());
+		affil = nodeAffils.get(subscriberJid.getBareJID());
 		Assert.assertNotNull("Not found affiliation for user", affil);
 		Affiliation affiliation = affil.getAffiliation();
 		Assert.assertEquals("Bad affiliation type for user", Affiliation.publisher, affiliation);
@@ -120,8 +121,8 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 
 	@Test
 	public void test04_userSubscriptions() throws RepositoryException {
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not fined nodeId", nodeId);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", node);
 		Map<String, UsersSubscription> map = dao.getUserSubscriptions(serviceJid, subscriberJid.getBareJID());
 		Assert.assertNotNull("No subscriptions for user", map);
 		UsersSubscription subscr = map.get(nodeName);
@@ -131,8 +132,8 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 
 	@Test
 	public void test05_userAffiliations() throws RepositoryException {
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not fined nodeId", nodeId);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", node);
 		Map<String, UsersAffiliation> map = dao.getUserAffiliations(serviceJid, subscriberJid.getBareJID());
 		Assert.assertNotNull("No affiliation for user", map);
 		UsersAffiliation affil = map.get(nodeName);
@@ -152,7 +153,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 	public void test06_getNodeMeta() throws RepositoryException {
 		INodeMeta meta = dao.getNodeMeta(serviceJid, nodeName);
 		assertNotNull(meta);
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
+		Object nodeId = dao.getNodeMeta(serviceJid, nodeName);
 		assertEquals(nodeId, meta.getNodeId());
 		assertEquals(nodeName, meta.getNodeConfig().getNodeName());
 		assertEquals(senderJid.getBareJID(), meta.getCreator());
@@ -169,53 +170,53 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 		}
 		item.addChild(new Element("payload", payloadCData, new String[]{"xmlns"}, new String[]{"test-xmlns"}));
 
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not fined nodeId", nodeId);
-		dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), itemId, nodeNameWithoutEmoji, item, null);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", node);
+		dao.writeItem(serviceJid, node.getNodeId(), System.currentTimeMillis(), itemId, nodeNameWithoutEmoji, item, null);
 
-		String[] itemsIds = dao.getItemsIds(serviceJid, nodeId, CollectionItemsOrdering.byUpdateDate);
+		String[] itemsIds = dao.getItemsIds(serviceJid, node.getNodeId(), CollectionItemsOrdering.byUpdateDate);
 		Assert.assertArrayEquals("Added item id not listed in list of item ids", new String[]{itemId}, itemsIds);
 
-		Element el = Optional.ofNullable(dao.getItem(serviceJid, nodeId, itemId)).map(IItems.IItem::getItem).orElse(null);
+		Element el = Optional.ofNullable(dao.getItem(serviceJid, node.getNodeId(), itemId)).map(IItems.IItem::getItem).orElse(null);
 		Assert.assertEquals("Element retrieved from store do not match to element added to store", item, el);
 
-		dao.deleteItem(serviceJid, nodeId, itemId);
-		el = Optional.ofNullable(dao.getItem(serviceJid, nodeId, itemId)).map(IItems.IItem::getItem).orElse(null);
+		dao.deleteItem(serviceJid, node.getNodeId(), itemId);
+		el = Optional.ofNullable(dao.getItem(serviceJid, node.getNodeId(), itemId)).map(IItems.IItem::getItem).orElse(null);
 		assertNull("Element still available in store after removal", el);
 	}
 	
 	@Test
 	public void test09_subscribeNodeRemoval() throws RepositoryException {
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not fined nodeId", nodeId);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", node);
 		UsersSubscription subscr = new UsersSubscription(subscriberJid.getBareJID(), "sub-1", Subscription.none);
-		dao.updateNodeSubscription(serviceJid, nodeId, nodeName, subscr);
+		dao.updateNodeSubscription(serviceJid, node.getNodeId(), nodeName, subscr);
 
-		NodeSubscriptions nodeSubscr = dao.getNodeSubscriptions(serviceJid, nodeId);
+		Map<BareJID, UsersSubscription> nodeSubscr = dao.getNodeSubscriptions(serviceJid, node.getNodeId());
 		Assert.assertNotNull("Not found subscriptions for node", nodeSubscr);
-		Subscription subscription = nodeSubscr.getSubscription(subscriberJid.getBareJID());
-		Assert.assertEquals("Bad subscription type for user", Subscription.none, subscription);
+		UsersSubscription subscription = nodeSubscr.get(subscriberJid.getBareJID());
+		Assert.assertEquals("Bad subscription type for user", Subscription.none, subscription.getSubscription());
 	}
 
 	@Test
 	public void test09_affiliateNodeRemoval() throws RepositoryException {
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not fined nodeId", nodeId);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", node);
 		UsersAffiliation affil = new UsersAffiliation(subscriberJid.getBareJID(), Affiliation.none);
-		dao.updateNodeAffiliation(serviceJid, nodeId, nodeName, affil);
+		dao.updateNodeAffiliation(serviceJid, node.getNodeId(), nodeName, affil);
 
-		NodeAffiliations nodeAffils = dao.getNodeAffiliations(serviceJid, nodeId);
+		Map<BareJID, UsersAffiliation> nodeAffils = dao.getNodeAffiliations(serviceJid, node.getNodeId());
 		Assert.assertNotNull("Not found affiliations for node", nodeAffils);
-		affil = nodeAffils.getSubscriberAffiliation(subscriberJid.getBareJID());
+		affil = nodeAffils.get(subscriberJid.getBareJID());
 		Assert.assertEquals("Bad affiliation for user", Affiliation.none, affil.getAffiliation());
 	}
 
 	@Test
 	public void test10_nodeRemoval() throws RepositoryException {
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		dao.deleteNode(serviceJid, nodeId);
-		nodeId = dao.getNodeId(serviceJid, nodeName);
-		assertNull("Node not removed", nodeId);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		dao.deleteNode(serviceJid, node.getNodeId());
+		node = dao.getNodeMeta(serviceJid, nodeName);
+		assertNull("Node not removed", node);
 	}
 
 	@Override
@@ -228,8 +229,8 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 			throws RepositoryException, InterruptedException, ComponentException {
 		List<Element> publishedItems = new ArrayList<>();
 
-		Object nodeId = dao.getNodeId(serviceJid, nodeName);
-		Assert.assertNotNull("Could not fined nodeId", nodeId);
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		Assert.assertNotNull("Could not fined nodeId", node);
 
 		Map<String,String> uuids = new HashMap<>();
 
@@ -246,9 +247,9 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 					new Element("payload", payloadCData + "-" + i, new String[]{"xmlns"}, new String[]{"test-xmlns"}));
 
 			String uuid = UUID.randomUUID().toString().toLowerCase();
-			dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), itemId, senderJid.getBareJID().toString(),
+			dao.writeItem(serviceJid, node.getNodeId(), System.currentTimeMillis(), itemId, senderJid.getBareJID().toString(),
 						  item, uuid);
-			dao.addMAMItem(serviceJid, nodeId, uuid, item, itemId);
+			dao.addMAMItem(serviceJid, node.getNodeId(), uuid, item, itemId);
 			uuids.put(itemId, uuid);
 
 			publishedItems.add(item);
@@ -267,7 +268,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 		query.setQuestionerJID(senderJid);
 		query.getRsm().setMax(10);
 		results.clear();
-		dao.queryItems(query, nodeId, (query1, item) -> {
+		dao.queryItems(query, node.getNodeId(), (query1, item) -> {
 			results.add((IPubSubRepository.Item) item);
 		});
 
@@ -280,7 +281,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 
 		query.setWith(senderJid.copyWithoutResource());
 		results.clear();
-		dao.queryItems(query, nodeId, (query1, item) -> {
+		dao.queryItems(query, node.getNodeId(), (query1, item) -> {
 			results.add((IPubSubRepository.Item) item);
 		});
 
@@ -295,7 +296,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 		String after = results.get(4).getId();
 		query.getRsm().setAfter(after);
 		results.clear();
-		dao.queryItems(query, nodeId, (query1, item) -> {
+		dao.queryItems(query, node.getNodeId(), (query1, item) -> {
 			results.add((IPubSubRepository.Item) item);
 		});
 
@@ -309,7 +310,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 		query.getRsm().setAfter(null);
 		query.getRsm().setHasBefore(true);
 		results.clear();
-		dao.queryItems(query, nodeId, (query1, item) -> {
+		dao.queryItems(query, node.getNodeId(), (query1, item) -> {
 			results.add((IPubSubRepository.Item) item);
 		});
 
@@ -320,15 +321,16 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 			assertEquals(publishedItems.get(i + 10), item.getMessage());
 		}
 
-		String[] itemsIds = dao.getItemsIds(serviceJid, nodeId, CollectionItemsOrdering.byUpdateDate);
+		String[] itemsIds = dao.getItemsIds(serviceJid, node.getNodeId(), CollectionItemsOrdering.byUpdateDate);
 		Arrays.sort(itemsIds);
 		String[] tmp = Arrays.copyOf(publishedItemIds, publishedItemIds.length);
 		Arrays.sort(tmp);
 		Assert.assertArrayEquals("Added item id not listed in list of item ids", tmp, itemsIds);
 
 		for (String itemId : publishedItemIds) {
-			dao.deleteItem(serviceJid, nodeId, itemId);
-			Element el = Optional.ofNullable(dao.getItem(serviceJid, nodeId, itemId)).map(IItems.IItem::getItem).orElse(null);
+			dao.deleteItem(serviceJid, node.getNodeId(), itemId);
+			Element el = Optional.ofNullable(dao.getItem(serviceJid, node.getNodeId(), itemId)).map(
+					IItems.IItem::getItem).orElse(null);
 			assertNull("Element still available in store after removal", el);
 		}
 	}

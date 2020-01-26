@@ -21,7 +21,7 @@ import tigase.component.PacketWriter;
 import tigase.component.modules.Module;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.repository.IPubSubRepository;
-import tigase.pubsub.utils.Logic;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.stats.StatisticHolderImpl;
 import tigase.xml.Element;
@@ -42,9 +42,9 @@ public abstract class AbstractPubSubModule
 
 	protected final static Logger log = Logger.getLogger(AbstractPubSubModule.class.getName());
 	@Inject
-	protected PubSubConfig config;
+	protected IPubSubConfig config;
 	@Inject
-	protected Logic logic;
+	protected PubSubLogic pubSubLogic;
 	@Inject
 	protected PacketWriter packetWriter;
 	@Inject(nullAllowed = false)

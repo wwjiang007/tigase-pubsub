@@ -17,6 +17,7 @@
  */
 package tigase.pubsub.modules.commands;
 
+import tigase.pubsub.IPubSubConfig;
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -28,7 +29,6 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.LeafNodeConfig;
 import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.modules.NodeConfigModule;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -44,7 +44,7 @@ public class DefaultConfigCommand
 
 	protected Logger log = Logger.getLogger(this.getClass().getName());
 	@Inject
-	private PubSubConfig config;
+	private IPubSubConfig config;
 
 	@Inject
 	private EventBus eventbus;

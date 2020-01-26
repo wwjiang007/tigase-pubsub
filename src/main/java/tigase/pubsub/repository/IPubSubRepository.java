@@ -21,6 +21,7 @@ import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
+import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xml.Element;
@@ -47,13 +48,11 @@ public interface IPubSubRepository
 	void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	void createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-					NodeType nodeType, String collection) throws RepositoryException;
+					NodeType nodeType, String collection) throws RepositoryException, PubSubException;
 
 	void deleteNode(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	void destroy();
-
-	void forgetConfiguration(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	void setComponentName(String componentName);
 	
@@ -86,7 +85,8 @@ public interface IPubSubRepository
 
 	void removeFromRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException;
 
-	void update(BareJID serviceJid, String nodeName, AbstractNodeConfig nodeConfig) throws RepositoryException;
+	void update(BareJID serviceJid, String nodeName, AbstractNodeConfig nodeConfig)
+			throws RepositoryException, PubSubException;
 
 	void update(BareJID serviceJid, String nodeName, IAffiliations affiliations) throws RepositoryException;
 
@@ -104,5 +104,11 @@ public interface IPubSubRepository
 
 		Set<String> values();
 		
+	}
+
+	interface RepositorySupplier<T> {
+
+		T get() throws RepositoryException;
+
 	}
 }

@@ -17,6 +17,7 @@
  */
 package tigase.pubsub.modules;
 
+import tigase.pubsub.IPubSubConfig;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.eventbus.EventBus;
@@ -24,10 +25,13 @@ import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.*;
+import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.CollectionNodeConfig;
+import tigase.pubsub.PubSubComponent;
+import tigase.pubsub.SendLastPublishedItem;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.utils.Logic;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -67,7 +71,7 @@ public class NodeConfigModule
 		return r.toArray(new String[]{});
 	}
 
-	public static void parseConf(final AbstractNodeConfig conf, final Element configure, final PubSubConfig config)
+	public static void parseConf(final AbstractNodeConfig conf, final Element configure, final IPubSubConfig config)
 			throws PubSubException {
 		Element x = configure.getChild("x", "jabber:x:data");
 		Form foo = new Form(x);
@@ -124,7 +128,7 @@ public class NodeConfigModule
 
 			JID jid = packet.getStanzaFrom();
 
-			logic.checkRole(toJid, nodeName, jid, Logic.Action.manageNode);
+			pubSubLogic.checkPermission(toJid, nodeName, jid, PubSubLogic.Action.manageNode);
 
 			// TODO 8.2.3.4 No Configuration Options
 
@@ -152,13 +156,11 @@ public class NodeConfigModule
 				parseConf(nodeConfig, configure, config);
 				if (!collectionOld.equals(nodeConfig.getCollection())) {
 					if (collectionOld.equals("")) {
+						pubSubLogic.checkPermission(toJid, nodeConfig.getCollection(), jid, PubSubLogic.Action.manageNode);
+
 						AbstractNodeConfig colNodeConfig = getRepository().getNodeConfig(toJid,
 																						 nodeConfig.getCollection());
 
-						if (colNodeConfig == null) {
-							throw new PubSubException(Authorization.ITEM_NOT_FOUND,
-													  "(#1) Node '" + nodeConfig.getCollection() + "' doesn't exists");
-						}
 						if (!(colNodeConfig instanceof CollectionNodeConfig)) {
 							throw new PubSubException(Authorization.NOT_ALLOWED,
 													  "(#1) Node '" + nodeConfig.getCollection() +

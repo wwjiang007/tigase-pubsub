@@ -19,7 +19,7 @@ package tigase.pubsub.modules.mam;
 
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.utils.Logic;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.xmpp.mam.MAMRepository;
 import tigase.xmpp.mam.Query;
 
@@ -33,7 +33,7 @@ public class MAMItemHandler
 	private long idCounter = 0;
 
 	@Inject
-	private Logic logic;
+	private PubSubLogic pubSubLogic;
 
 	@Override
 	public void itemFound(Query query, MAMRepository.Item item) {

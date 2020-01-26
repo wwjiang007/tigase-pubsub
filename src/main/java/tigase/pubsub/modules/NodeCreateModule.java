@@ -27,6 +27,7 @@ import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -99,9 +100,6 @@ public class NodeCreateModule
 			if (getRepository().getNodeConfig(toJid, nodeName) != null) {
 				throw new PubSubException(element, Authorization.CONFLICT);
 			}
-			if (toJid.getLocalpart() != null && !toJid.equals(packet.getStanzaFrom().getBareJID())) {
-				throw new PubSubException(Authorization.FORBIDDEN);
-			}
 
 			NodeType nodeType = NodeType.leaf;
 			String collection = null;
@@ -145,7 +143,8 @@ public class NodeCreateModule
 				}
 			}
 
-			logic.checkNodeCreationAllowed(toJid, packet.getStanzaFrom().getBareJID(), nodeName, collection);
+			pubSubLogic.checkPermission(toJid, collection, packet.getStanzaFrom(), PubSubLogic.Action.manageNode);
+
 
 			if (nodeType == NodeType.collection) {
 				Form f = nodeConfig.getForm();
@@ -191,8 +190,6 @@ public class NodeCreateModule
 			Packet result = packet.okResult((Element) null, 0);
 
 			if (collection != null) {
-				ISubscriptions colNodeSubscriptions = this.getRepository().getNodeSubscriptions(toJid, collection);
-				IAffiliations colNodeAffiliations = this.getRepository().getNodeAffiliations(toJid, collection);
 				Element colE = new Element("collection", new String[]{"node"}, new String[]{collection});
 
 				colE.addChild(new Element("associate", new String[]{"node"}, new String[]{nodeName}));

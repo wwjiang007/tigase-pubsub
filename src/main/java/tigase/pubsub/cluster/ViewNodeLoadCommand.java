@@ -17,13 +17,13 @@
  */
 package tigase.pubsub.cluster;
 
+import tigase.pubsub.IPubSubConfig;
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
 import tigase.component.adhoc.AdhHocRequest;
 import tigase.form.Field;
 import tigase.form.Form;
-import tigase.pubsub.PubSubConfig;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.JID;
 
@@ -37,11 +37,11 @@ public class ViewNodeLoadCommand
 
 	public static final Logger log = Logger.getLogger(ViewNodeLoadCommand.class.getName());
 
-	private final PubSubConfig config;
+	private final IPubSubConfig config;
 
 	private final ClusterNodeMap nodeMap;
 
-	public ViewNodeLoadCommand(PubSubConfig config, ClusterNodeMap nodeMap) {
+	public ViewNodeLoadCommand(IPubSubConfig config, ClusterNodeMap nodeMap) {
 		this.config = config;
 		this.nodeMap = nodeMap;
 	}

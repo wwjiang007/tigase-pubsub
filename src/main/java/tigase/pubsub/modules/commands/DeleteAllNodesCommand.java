@@ -17,6 +17,7 @@
  */
 package tigase.pubsub.modules.commands;
 
+import tigase.pubsub.IPubSubConfig;
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -29,7 +30,6 @@ import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.server.AbstractMessageReceiver;
 import tigase.xml.Element;
@@ -57,7 +57,7 @@ public class DeleteAllNodesCommand
 	private AbstractMessageReceiver component;
 	
 	@Inject
-	private PubSubConfig config;
+	private IPubSubConfig config;
 
 	@Inject
 	private IPubSubDAO<?, ?, ?> dao;

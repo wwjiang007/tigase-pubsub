@@ -35,7 +35,7 @@ import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.pubsub.utils.Logic;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.util.datetime.TimestampHelper;
 import tigase.util.stringprep.TigaseStringprepException;
@@ -113,10 +113,10 @@ public class PublishItemModule
 	}
 
 	public void doPublishItems(BareJID serviceJID, String nodeName, LeafNodeConfig leafNodeConfig, String publisher,
-							   List<Element> itemsToSend) throws RepositoryException {
+							   List<Element> itemsToSend) throws RepositoryException, PubSubException {
 		String uuid = null;
 		if (leafNodeConfig.isPersistItem()) {
-			if (logic.isMAMEnabled(serviceJID, nodeName)) {
+			if (pubSubLogic.isMAMEnabled(serviceJID, nodeName)) {
 				uuid = UUID.randomUUID().toString().toLowerCase();
 			}
 			IItems nodeItems = getRepository().getNodeItems(serviceJID, nodeName);
@@ -125,18 +125,18 @@ public class PublishItemModule
 				final String id = item.getAttributeStaticStr("id");
 
 				if (!config.isPepRemoveEmptyGeoloc()) {
-					nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item, uuid);
+					nodeItems.writeItem(id, publisher, item, uuid);
 				} else {
 					Element geoloc = item.findChildStaticStr(new String[]{"item", "geoloc"});
 					if (geoloc != null && (geoloc.getChildren() == null || geoloc.getChildren().size() == 0)) {
 						nodeItems.deleteItem(id);
 					} else {
-						nodeItems.writeItem(System.currentTimeMillis(), id, publisher, item, uuid);
+						nodeItems.writeItem(id, publisher, item, uuid);
 					}
 				}
 			}
 			if (leafNodeConfig.getMaxItems() != null) {
-				trimItems(nodeItems, leafNodeConfig.getMaxItems(), leafNodeConfig.getCollectionItemsOrdering());
+				trimItems(serviceJID, nodeName, leafNodeConfig.getMaxItems(), leafNodeConfig.getCollectionItemsOrdering());
 			}
 		}
 
@@ -152,7 +152,7 @@ public class PublishItemModule
 				headers = new HashMap<>();
 				headers.put("Collection", collection);
 			}
-			Element message = logic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, itemsToSend,  headers);
+			Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, itemsToSend, headers);
 
 			// JUST AN IDEA: MAM2 should work only for leaf nodes... (full query of subtrees is complicated and makes it impossible to satisfy constraints!
 			// MAM cannot work with batch publication of items and this should be forbidden (bad-request)
@@ -174,14 +174,14 @@ public class PublishItemModule
 	}
 
 	public void sendNotification(BareJID serviceJID, String nodeName, Element item, String uuid, Map<String,String> headers, JID recipient) {
-		Element message = logic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, Collections.singletonList(item), headers);
+		Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, Collections.singletonList(item), headers);
 		packetWriter.write(Packet.packetInstance(message, JID.jidInstance(serviceJID), recipient));
 	}
 
 	public void broadcastNotification(BareJID serviceJID, String nodeName, Element message)
 			throws RepositoryException {
 		JID senderJid = JID.jidInstance(serviceJID);
-		logic.subscribersOfNotifications(serviceJID, nodeName).forEach(subscriberJid -> {
+		pubSubLogic.subscribersOfNotifications(serviceJID, nodeName).forEach(subscriberJid -> {
 			Element clone = message.clone();
 			packetWriter.write(Packet.packetInstance(clone, senderJid, subscriberJid));
 		});
@@ -214,7 +214,7 @@ public class PublishItemModule
 		return CRIT_PUBLISH;
 	}
 
-	public List<String> getCollectionsForNotification(final BareJID serviceJid, final String nodeName) throws RepositoryException {
+	private List<String> getCollectionsForNotification(final BareJID serviceJid, final String nodeName) throws RepositoryException {
 		ArrayList<String> result = new ArrayList<String>();
 		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
 		String cn = nodeConfig.getCollection();
@@ -266,99 +266,14 @@ public class PublishItemModule
 				return;
 			}
 
-			AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(toJid, nodeName);
-			
-			if (nodeConfig == null) {
-				if (packet.getStanzaTo().getLocalpart() == null || !config.isPepPeristent()) {
-					throw new PubSubException(element, Authorization.ITEM_NOT_FOUND);
-				} else {
-					// this is PubSub service for particular user - we should
-					// autocreate node
-					nodeConfig = createPepNode(toJid, nodeName, packet.getStanzaFrom().getBareJID(), publishOptions);
-				}
-			} else {
-				if (nodeConfig.getNodeType() == NodeType.collection) {
-					throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
-											  new PubSubErrorCondition("unsupported", "publish"));
-				}
-			}
+			pubSubLogic.checkPermission(toJid, nodeName, packet.getStanzaFrom(), PubSubLogic.Action.publishItems);
 
-			logic.checkRole(toJid, nodeName, packet.getStanzaFrom(), Logic.Action.publishItems);
-
-			if (publishOptions != null) {
-				if (publishOptions.findChild(
-						el -> el.getName() == "field" && "FORM_TYPE" == el.getAttributeStaticStr("var") &&
-								"http://jabber.org/protocol/pubsub#publish-option".equals(
-										el.getCData(FIELD_VALUE_PATH))) == null) {
-					for (Element field : publishOptions.getChildren()) {
-						String key = field.getAttributeStaticStr("var");
-						if ("FORM_TYPE".equals(key)) {
-							continue;
-						}
-
-						Field f = nodeConfig.getForm().get(key);
-						if (f == null) {
-							throw new PubSubException(Authorization.CONFLICT,
-													  PubSubErrorCondition.PRECONDITION_NOT_MET);
-						}
-						switch (f.getType()) {
-							case bool:
-								String v1 = field.getCData(FIELD_VALUE_PATH);
-								if (!(("true".equals(v1) || "1".equals(v1)) ==
-										("true".equals(f.getValue()) || "1".equals(f.getValue())))) {
-									throw new PubSubException(Authorization.CONFLICT,
-															  PubSubErrorCondition.PRECONDITION_NOT_MET);
-								}
-								break;
-							case jid_multi:
-							case text_multi:
-								List<String> reqValues = Optional.ofNullable(
-										field.mapChildren(el -> el.getName() == "value", el -> el.getCData()))
-										.orElse(Collections.EMPTY_LIST);
-								String[] values = f.getValues();
-								if (values == null) {
-									if (!reqValues.isEmpty()) {
-										throw new PubSubException(Authorization.CONFLICT,
-																  PubSubErrorCondition.PRECONDITION_NOT_MET);
-									} else {
-										continue;
-									}
-								}
-								if (reqValues.size() != values.length) {
-									throw new PubSubException(Authorization.CONFLICT,
-															  PubSubErrorCondition.PRECONDITION_NOT_MET);
-								}
-								for (String v2 : values) {
-									if (!reqValues.contains(v2)) {
-										throw new PubSubException(Authorization.CONFLICT,
-																  PubSubErrorCondition.PRECONDITION_NOT_MET);
-									}
-								}
-								break;
-							default:
-								String reqValue = field.getCData(FIELD_VALUE_PATH);
-								String value = f.getValue();
-								if (!((reqValue == null && value == null) ||
-										(reqValue != null && reqValue.equals(value)))) {
-									throw new PubSubException(Authorization.CONFLICT,
-															  PubSubErrorCondition.PRECONDITION_NOT_MET);
-								}
-								break;
-						}
-					}
-				}
-			}
-
-			LeafNodeConfig leafNodeConfig = (LeafNodeConfig) nodeConfig;
 			List<Element> itemsToSend = makeItemsToSend(publish);
-			if (logic.isMAMEnabled(toJid, nodeName) && itemsToSend.size() > 1) {
-				throw new PubSubException(Authorization.NOT_ALLOWED, "Bulk publication not allowed");
-			}
+			List<String> itemIds = publishItems(toJid, nodeName, packet.getStanzaFrom(), itemsToSend, publishOptions);
+
 			final Packet resultIq = packet.okResult((Element) null, 0);
 
-			if (leafNodeConfig.isPersistItem()) {
-
-				// checking ID
+			if (itemIds != null) {
 				Element resPubsub = new Element("pubsub", new String[]{"xmlns"},
 												new String[]{"http://jabber.org/protocol/pubsub"});
 
@@ -367,22 +282,9 @@ public class PublishItemModule
 				Element resPublish = new Element("publish", new String[]{"node"}, new String[]{nodeName});
 
 				resPubsub.addChild(resPublish);
-				for (Element item : itemsToSend) {
-					String id = item.getAttributeStaticStr("id");
-
-					if (id == null) {
-						id = Utils.createUID();
-
-						// throw new PubSubException(Authorization.BAD_REQUEST,
-						// PubSubErrorCondition.ITEM_REQUIRED);
-						item.setAttribute("id", id);
-					}
-					resPublish.addChild(new Element("item", new String[]{"id"}, new String[]{id}));
-				}
+				itemIds.stream().map(id -> new Element("item", new String[]{"id"}, new String[]{id})).forEach(resPublish::addChild);
 			}
 			packetWriter.write(resultIq);
-
-			doPublishItems(toJid, nodeName, leafNodeConfig, element.getAttributeStaticStr("from"), itemsToSend);
 		} catch (PubSubException e1) {
 			throw e1;
 		} catch (Exception e) {
@@ -391,11 +293,121 @@ public class PublishItemModule
 			throw new RuntimeException(e);
 		}
 	}
-	
+
+
+	public List<String> publishItems(BareJID toJid, String nodeName, JID publisher, List<Element> itemsToPublish, Element publishOptions) throws RepositoryException, PubSubException {
+		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(toJid, nodeName);
+
+		if (nodeConfig == null) {
+			if (toJid.getLocalpart() == null || !config.isPepPeristent()) {
+				throw new PubSubException(Authorization.ITEM_NOT_FOUND);
+			} else {
+				// this is PubSub service for particular user - we should
+				// autocreate node
+				nodeConfig = createPepNode(toJid, nodeName, publisher.getBareJID(), publishOptions);
+			}
+		} else {
+			if (nodeConfig.getNodeType() == NodeType.collection) {
+				throw new PubSubException(Authorization.FEATURE_NOT_IMPLEMENTED,
+										  new PubSubErrorCondition("unsupported", "publish"));
+			}
+		}
+		
+		if (publishOptions != null) {
+			if (publishOptions.findChild(
+					el -> el.getName() == "field" && "FORM_TYPE" == el.getAttributeStaticStr("var") &&
+							"http://jabber.org/protocol/pubsub#publish-option".equals(
+									el.getCData(FIELD_VALUE_PATH))) == null) {
+				for (Element field : publishOptions.getChildren()) {
+					String key = field.getAttributeStaticStr("var");
+					if ("FORM_TYPE".equals(key)) {
+						continue;
+					}
+
+					Field f = nodeConfig.getForm().get(key);
+					if (f == null) {
+						throw new PubSubException(Authorization.CONFLICT,
+												  PubSubErrorCondition.PRECONDITION_NOT_MET);
+					}
+					switch (f.getType()) {
+						case bool:
+							String v1 = field.getCData(FIELD_VALUE_PATH);
+							if (!(("true".equals(v1) || "1".equals(v1)) ==
+									("true".equals(f.getValue()) || "1".equals(f.getValue())))) {
+								throw new PubSubException(Authorization.CONFLICT,
+														  PubSubErrorCondition.PRECONDITION_NOT_MET);
+							}
+							break;
+						case jid_multi:
+						case text_multi:
+							List<String> reqValues = Optional.ofNullable(
+									field.mapChildren(el -> el.getName() == "value", el -> el.getCData()))
+									.orElse(Collections.EMPTY_LIST);
+							String[] values = f.getValues();
+							if (values == null) {
+								if (!reqValues.isEmpty()) {
+									throw new PubSubException(Authorization.CONFLICT,
+															  PubSubErrorCondition.PRECONDITION_NOT_MET);
+								} else {
+									continue;
+								}
+							}
+							if (reqValues.size() != values.length) {
+								throw new PubSubException(Authorization.CONFLICT,
+														  PubSubErrorCondition.PRECONDITION_NOT_MET);
+							}
+							for (String v2 : values) {
+								if (!reqValues.contains(v2)) {
+									throw new PubSubException(Authorization.CONFLICT,
+															  PubSubErrorCondition.PRECONDITION_NOT_MET);
+								}
+							}
+							break;
+						default:
+							String reqValue = field.getCData(FIELD_VALUE_PATH);
+							String value = f.getValue();
+							if (!((reqValue == null && value == null) ||
+									(reqValue != null && reqValue.equals(value)))) {
+								throw new PubSubException(Authorization.CONFLICT,
+														  PubSubErrorCondition.PRECONDITION_NOT_MET);
+							}
+							break;
+					}
+				}
+			}
+		}
+
+		LeafNodeConfig leafNodeConfig = (LeafNodeConfig) nodeConfig;
+		if (pubSubLogic.isMAMEnabled(toJid, nodeName) && itemsToPublish.size() > 1) {
+			throw new PubSubException(Authorization.NOT_ALLOWED, "Bulk publication not allowed");
+		}
+
+		List<String> itemIds = null;
+		if (leafNodeConfig.isPersistItem()) {
+			itemIds = new ArrayList<>();
+			for (Element item : itemsToPublish) {
+				String id = item.getAttributeStaticStr("id");
+
+				if (id == null) {
+					id = Utils.createUID();
+
+					// throw new PubSubException(Authorization.BAD_REQUEST,
+					// PubSubErrorCondition.ITEM_REQUIRED);
+					item.setAttribute("id", id);
+				}
+				itemIds.add(id);
+			}
+		}
+		
+		doPublishItems(toJid, nodeName, leafNodeConfig, publisher.toString(), itemsToPublish);
+
+		return itemIds;
+	}
+
 	public void publishLastItem(BareJID serviceJid, AbstractNodeConfig nodeConfig, JID destinationJID)
 			throws RepositoryException {
 		try {
-			logic.checkRole(serviceJid, nodeConfig.getNodeName(), destinationJID, Logic.Action.retrieveItems);
+			pubSubLogic.checkPermission(serviceJid, nodeConfig.getNodeName(), destinationJID, PubSubLogic.Action.retrieveItems);
 		} catch (Exception ex) {
 			return;
 		}
@@ -419,7 +431,8 @@ public class PublishItemModule
 		}
 	}
 	
-	public void trimItems(final IItems nodeItems, final Integer maxItems, CollectionItemsOrdering collectionItemsOrdering) throws RepositoryException {
+	public void trimItems(final BareJID serviceJid, final String nodeName, final Integer maxItems, CollectionItemsOrdering collectionItemsOrdering) throws RepositoryException {
+		IItems nodeItems = getRepository().getNodeItems(serviceJid, nodeName);
 		final String[] ids = nodeItems.getItemsIds(collectionItemsOrdering);
 
 		if ((ids == null) || (ids.length <= maxItems)) {
@@ -634,7 +647,7 @@ public class PublishItemModule
 		final Element item = publish.getChild("item");
 		String nodeName = publish.getAttributeStaticStr("node");
 
-		Element message = logic.prepareNotificationMessage(senderJid.copyWithoutResource(), String.valueOf(++counter), null, nodeName, Collections.singletonList(item),  null);
+		Element message = pubSubLogic.prepareNotificationMessage(senderJid.copyWithoutResource(), String.valueOf(++counter), null, nodeName, Collections.singletonList(item), null);
 
 		for (JID jid : subscribers) {
 			Element clone = message.clone();

@@ -185,9 +185,7 @@ public class ManageSubscriptionModule
 																	  usersSubscription.getSubscription().name()}))
 				.forEach(afr::addChild);
 
-		if (nodeSubscriptions.isChanged()) {
-			getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeSubscriptions);
-		}
+		getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeSubscriptions);
 
 		packetWriter.write(iq);
 	}
@@ -227,9 +225,7 @@ public class ManageSubscriptionModule
 			}
 		}
 
-		if (nodeSubscriptions.isChanged()) {
-			getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeSubscriptions);
-		}
+		getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeSubscriptions);
 
 		for (Map.Entry<JID, Subscription> entry : changedSubscriptions.entrySet()) {
 			if (nodeConfig.isTigaseNotifyChangeSubscriptionAffiliationState()) {

@@ -159,7 +159,7 @@ public class PubSubComponent
 	@HandleEvent
 	public void onChangeDefaultNodeConfig(DefaultConfigCommand.DefaultNodeConfigurationChangedEvent event) {
 		try {
-			PubSubConfig componentConfig = kernel.getInstance(PubSubConfig.class);
+			IPubSubConfig componentConfig = kernel.getInstance(IPubSubConfig.class);
 			UserRepository userRepository = kernel.getInstance(UserRepository.class);
 
 			this.defaultNodeConfig.read(userRepository, componentConfig, DEFAULT_LEAF_NODE_CONFIG_KEY);
