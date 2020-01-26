@@ -140,11 +140,10 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				if (leafNodeConfig.isPersistItem()) {
 					def nodeItems = pubsubRepository.getNodeItems(toJid, node);
 
-					nodeItems.writeItem(System.currentTimeMillis(), id,
-										p.getAttributeStaticStr("from"), item, null);
+					nodeItems.writeItem(id, p.getAttributeStaticStr("from"), item, null);
 
 					if (leafNodeConfig.getMaxItems() != null) {
-						publishNodeModule.trimItems(nodeItems, leafNodeConfig.getMaxItems(), leafNodeConfig.getCollectionItemsOrdering());
+						publishNodeModule.trimItems(toJid, node, leafNodeConfig.getMaxItems(), leafNodeConfig.getCollectionItemsOrdering());
 					}
 				}
 
@@ -152,7 +151,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				itemsToSend += item;
 
 				eventBus.fire(
-						new PublishItemModule.ItemPublishedEvent(p.getStanzaTo().getBareJID(), node, p.getAttributeStaticStr("from"), itemsToSend));
+						new PublishItemModule.ItemPublishedEvent(p.getStanzaTo().getBareJID(), node, p.getAttributeStaticStr("from"), null, itemsToSend));
 
 				Command.addTextField(result, "Note", "Operation successful");
 				Command.addFieldValue(result, "item-id", "" + id, "fixed", "Item ID")

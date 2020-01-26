@@ -30,6 +30,7 @@ import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Message;
 import tigase.server.Packet;
 import tigase.xml.Element;
@@ -96,26 +97,15 @@ public class ManageAffiliationsModule
 				throw new PubSubException(Authorization.BAD_REQUEST, PubSubErrorCondition.NODE_REQUIRED);
 			}
 
-			final AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(toJid, nodeName);
-
-			if (nodeConfig == null) {
-				throw new PubSubException(Authorization.ITEM_NOT_FOUND);
-			}
+			JID senderJid = packet.getStanzaFrom();
+			pubSubLogic.checkPermission(toJid, nodeName, senderJid, PubSubLogic.Action.manageNode);
 
 			final IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(toJid, nodeName);
-			JID senderJid = packet.getStanzaFrom();
 
-			if (!this.config.isAdmin(senderJid)) {
-				UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(senderJid.getBareJID());
-
-				if (senderAffiliation.getAffiliation() != Affiliation.owner) {
-					throw new PubSubException(element, Authorization.FORBIDDEN);
-				}
-			}
 			if (type == StanzaType.get) {
 				processGet(packet, affiliations, nodeName, nodeAffiliations, packetWriter);
 			} else if (type == StanzaType.set) {
-				processSet(packet, affiliations, nodeName, nodeConfig, nodeAffiliations, packetWriter);
+				processSet(packet, affiliations, nodeName, nodeAffiliations, packetWriter);
 			}
 
 		} catch (PubSubException e1) {
@@ -157,16 +147,14 @@ public class ManageAffiliationsModule
 			}
 		}
 
-		if (nodeAffiliations.isChanged()) {
-			getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeAffiliations);
-		}
+		getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeAffiliations);
 
 		packetWriter.write(iq);
 	}
 
-	private void processSet(final Packet packet, final Element affiliations, final String nodeName,
-							final AbstractNodeConfig nodeConfig, final IAffiliations nodeAffiliations,
+	private void processSet(final Packet packet, final Element affiliations, final String nodeName, final IAffiliations nodeAffiliations,
 							PacketWriter packetWriter) throws PubSubException, RepositoryException {
+		final AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(packet.getStanzaTo().getBareJID(), nodeName);
 		List<Element> affs = affiliations.getChildren();
 
 		for (Element a : affs) {
@@ -199,9 +187,7 @@ public class ManageAffiliationsModule
 			}
 		}
 
-		if (nodeAffiliations.isChanged()) {
-			getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeAffiliations);
-		}
+		getRepository().update(packet.getStanzaTo().getBareJID(), nodeName, nodeAffiliations);
 
 		for (Map.Entry<JID, Affiliation> entry : changedAffiliations.entrySet()) {
 			if (nodeConfig.isTigaseNotifyChangeSubscriptionAffiliationState()) {

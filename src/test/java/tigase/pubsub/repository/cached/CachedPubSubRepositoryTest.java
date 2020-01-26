@@ -31,11 +31,9 @@ import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.*;
-import tigase.pubsub.repository.NodeAffiliations;
-import tigase.pubsub.repository.NodeSubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
-import tigase.pubsub.utils.Logic;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.xml.Element;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
@@ -193,10 +191,10 @@ public class CachedPubSubRepositoryTest {
 
 	protected CachedPubSubRepository createCachedPubSubRepository(PubSubDAO dao) {
 		kernel.registerBean("pubsubDao").asInstance(dao).exec();
-		kernel.registerBean("logic").asInstance(new Logic() {
+		kernel.registerBean("logic").asInstance(new PubSubLogic() {
 
 			@Override
-			public void checkRole(BareJID serviceJid, String nodeName, JID senderJid, Action action)
+			public void checkPermission(BareJID serviceJid, String nodeName, JID senderJid, Action action)
 					throws PubSubException, RepositoryException {
 				
 			}
@@ -306,15 +304,10 @@ public class CachedPubSubRepositoryTest {
 		}
 		
 		@Override
-		public NodeAffiliations getNodeAffiliations(BareJID serviceJid, Object nodeId) throws RepositoryException {
+		public Map<BareJID, UsersAffiliation> getNodeAffiliations(BareJID serviceJid, Object nodeId) throws RepositoryException {
 			return null;
 		}
 		
-		@Override
-		public Object getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
-			return null;
-		}
-
 		@Override
 		public INodeMeta getNodeMeta(BareJID serviceJid, String nodeName) throws RepositoryException {
 			return null;
@@ -331,7 +324,7 @@ public class CachedPubSubRepositoryTest {
 		}
 
 		@Override
-		public NodeSubscriptions getNodeSubscriptions(BareJID serviceJid, Object nodeId) throws RepositoryException {
+		public Map<BareJID, UsersSubscription> getNodeSubscriptions(BareJID serviceJid, Object nodeId) throws RepositoryException {
 			return null;
 		}
 

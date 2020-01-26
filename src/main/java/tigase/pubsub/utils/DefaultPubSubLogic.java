@@ -18,6 +18,7 @@
 package tigase.pubsub.utils;
 
 import tigase.component.exceptions.RepositoryException;
+import tigase.eventbus.EventBus;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.*;
@@ -56,13 +57,16 @@ import static tigase.pubsub.modules.PublishItemModule.AMP_XMLNS;
  */
 @Bean(name = "logic", parent = PubSubComponent.class, active = true)
 public class DefaultPubSubLogic
-		implements Logic {
+		implements PubSubLogic {
+
+	@Inject
+	private EventBus eventBus;
 
 	@Inject(bean = "service")
 	private PubSubComponent component;
 
 	@Inject
-	private PubSubConfig pubSubConfig;
+	private IPubSubConfig pubSubConfig;
 
 	@Inject
 	private IPubSubRepository repository;
@@ -74,8 +78,15 @@ public class DefaultPubSubLogic
 	private XsltTool xslTransformer;
 
 	@Override
-	public void checkRole(BareJID serviceJid, String nodeName, JID senderJid, Action action)
+	public void checkPermission(BareJID serviceJid, String nodeName, JID senderJid, Action action)
 			throws PubSubException, RepositoryException {
+		if (nodeName == null || nodeName.isEmpty()) {
+			if (isServiceJidPEP(serviceJid) && !serviceJid.equals(senderJid.getBareJID())) {
+				throw new PubSubException(Authorization.FORBIDDEN);
+			}
+			return;
+		}
+
 		AbstractNodeConfig nodeConfig = repository.getNodeConfig(serviceJid, nodeName);
 		if (nodeConfig == null) {
 			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
@@ -378,7 +389,8 @@ public class DefaultPubSubLogic
 			
 			// for pubsub service for user accounts we need dynamic
 			// subscriptions based on presence
-			if (isServiceJidPEP(serviceJid) || getPubSubConfig().isSubscribeByPresenceFilteredNotifications()) {
+			boolean pep = isServiceJidPEP(serviceJid);
+			if (pep || getPubSubConfig().isSubscribeByPresenceFilteredNotifications()) {
 				switch (nodeConfig.getNodeAccessModel()) {
 					case open:
 					case presence:
@@ -403,14 +415,22 @@ public class DefaultPubSubLogic
 							}
 						}
 						break;
+					case whitelist:
 					default:
 						break;
 				}
 			}
+			if (pep) {
+				stream = Stream.concat(this.presenceCollectorModule.getAllAvailableJidsWithFeature(serviceJid,
+																								   nodeConfig.getNodeName() +
+																										   "+notify")
+											   .stream()
+											   .filter(jid -> jid.getBareJID().equals(serviceJid)), stream);
+			}
 		}
 		return stream;
 	}
-
+	
 	@Override
 	public boolean isMAMEnabled(BareJID serviceJid, String node) throws RepositoryException {
 		if (isServiceJidPEP(serviceJid) && pubSubConfig.isMAMEnabled()) {
@@ -419,7 +439,7 @@ public class DefaultPubSubLogic
 		return false;
 	}
 
-	protected PubSubConfig getPubSubConfig() {
+	protected IPubSubConfig getPubSubConfig() {
 		return pubSubConfig;
 	}
 

@@ -25,7 +25,7 @@ import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IItems;
-import tigase.pubsub.utils.Logic;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.util.datetime.TimestampHelper;
 import tigase.xml.Element;
@@ -74,7 +74,7 @@ public class RetrieveItemsModule
 			}
 
 			// XXX CHECK RIGHTS AUTH ETC
-			logic.checkRole(toJid, nodeName, senderJid, Logic.Action.retrieveItems);
+			pubSubLogic.checkPermission(toJid, nodeName, senderJid, PubSubLogic.Action.retrieveItems);
 
 			final Element rpubsub = new Element("pubsub", new String[]{"xmlns"},
 												new String[]{"http://jabber.org/protocol/pubsub"});

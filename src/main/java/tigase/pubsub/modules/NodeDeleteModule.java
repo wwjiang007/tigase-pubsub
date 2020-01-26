@@ -27,8 +27,7 @@ import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.CollectionNodeConfig;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.repository.IAffiliations;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -73,23 +72,11 @@ public class NodeDeleteModule
 				throw new PubSubException(element, Authorization.NOT_ALLOWED);
 			}
 
-			AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(toJid, nodeName);
-
-			if (nodeConfig == null) {
-				throw new PubSubException(element, Authorization.ITEM_NOT_FOUND);
-			}
-
-			final IAffiliations nodeAffiliations = this.getRepository().getNodeAffiliations(toJid, nodeName);
 			JID jid = packet.getStanzaFrom();
+			pubSubLogic.checkPermission(toJid, nodeName, jid, PubSubLogic.Action.manageNode);
 
-			if (!this.config.isAdmin(jid)) {
-				UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(jid.getBareJID());
-
-				if (!senderAffiliation.getAffiliation().isDeleteNode()) {
-					throw new PubSubException(element, Authorization.FORBIDDEN);
-				}
-			}
-
+			AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(toJid, nodeName);
+			
 			Packet result = packet.okResult((Element) null, 0);
 
 			if (nodeConfig.isNotify_config()) {

@@ -229,7 +229,7 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public NodeAffiliations getNodeAffiliations(BareJID serviceJid, T nodeId) throws RepositoryException {
+	public Map<BareJID, UsersAffiliation> getNodeAffiliations(BareJID serviceJid, T nodeId) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
@@ -241,21 +241,6 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
 		}
 		return null;
-	}
-	
-	@Override
-	public T getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
-		IPubSubDAO<T, DataSource, Q> dao = takeDao(serviceJid);
-		if (dao != null) {
-			try {
-				return dao.getNodeId(serviceJid, nodeName);
-			} finally {
-				offerDao(serviceJid, dao);
-			}
-		} else {
-			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
-			return null;
-		}
 	}
 
 	@Override
@@ -310,7 +295,7 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public NodeSubscriptions getNodeSubscriptions(BareJID serviceJid, T nodeId) throws RepositoryException {
+	public Map<BareJID, UsersSubscription> getNodeSubscriptions(BareJID serviceJid, T nodeId) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {

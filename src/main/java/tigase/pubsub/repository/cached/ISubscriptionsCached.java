@@ -15,21 +15,24 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.pubsub.repository;
+package tigase.pubsub.repository.cached;
 
-import tigase.pubsub.Affiliation;
-import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.repository.ISubscriptions;
+import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xmpp.jid.BareJID;
 
-public interface IAffiliations {
+import java.util.Map;
 
-	void addAffiliation(BareJID jid, Affiliation affiliation);
+public interface ISubscriptionsCached extends ISubscriptions {
 
-	void changeAffiliation(BareJID jid, Affiliation affiliation);
+	void changeSubscription(UsersSubscription subscription);
+	
+	boolean isChanged();
 
-	UsersAffiliation[] getAffiliations();
+	Map<BareJID, UsersSubscription> getChanged();
 
-	UsersAffiliation getSubscriberAffiliation(BareJID jid);
+	void merge();
 
-	int size();
+	void resetChangedFlag();
+
 }

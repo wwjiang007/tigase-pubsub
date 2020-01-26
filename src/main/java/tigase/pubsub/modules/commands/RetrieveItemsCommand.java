@@ -17,6 +17,7 @@
  */
 package tigase.pubsub.modules.commands;
 
+import tigase.pubsub.IPubSubConfig;
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -28,7 +29,6 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.util.datetime.TimestampHelper;
@@ -59,7 +59,7 @@ public class RetrieveItemsCommand
 	public static final String TIGASE_PUBSUB_TIMESTAMP_KEY = "tigase-pubsub#timestamp";
 	private final TimestampHelper dtf = new TimestampHelper();
 	@Inject
-	private PubSubConfig config;
+	private IPubSubConfig config;
 	@Inject
 	private IPubSubRepository repository;
 

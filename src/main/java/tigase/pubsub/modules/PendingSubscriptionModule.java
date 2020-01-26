@@ -29,6 +29,7 @@ import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Message;
 import tigase.server.Packet;
 import tigase.xml.Element;
@@ -75,23 +76,12 @@ public class PendingSubscriptionModule
 				return;
 			}
 
-			AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(toJid, node);
-
-			if (nodeConfig == null) {
-				throw new PubSubException(element, Authorization.ITEM_NOT_FOUND);
-			}
-
-			final ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(toJid, node);
-			final IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(toJid, node);
 			JID jid = message.getStanzaFrom();
 
-			if (!this.config.isAdmin(jid)) {
-				UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(jid.getBareJID());
-
-				if (senderAffiliation.getAffiliation() != Affiliation.owner) {
-					throw new PubSubException(element, Authorization.FORBIDDEN);
-				}
-			}
+			pubSubLogic.checkPermission(toJid, node, jid, PubSubLogic.Action.manageNode);
+			
+			final ISubscriptions nodeSubscriptions = getRepository().getNodeSubscriptions(toJid, node);
+			final IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(toJid, node);
 
 			String userSubId = nodeSubscriptions.getSubscriptionId(subscriberJid);
 
@@ -116,12 +106,8 @@ public class PendingSubscriptionModule
 				subscription = Subscription.none;
 				nodeSubscriptions.changeSubscription(subscriberJid, subscription);
 			}
-			if (nodeSubscriptions.isChanged()) {
-				this.getRepository().update(toJid, node, nodeSubscriptions);
-			}
-			if (nodeAffiliations.isChanged()) {
-				this.getRepository().update(toJid, node, nodeAffiliations);
-			}
+			this.getRepository().update(toJid, node, nodeSubscriptions);
+			this.getRepository().update(toJid, node, nodeAffiliations);
 
 			Packet msg = Message.getMessage(message.getStanzaTo(), JID.jidInstance(subscriberJid), null, null, null,
 											null, Utils.createUID(subscriberJid));

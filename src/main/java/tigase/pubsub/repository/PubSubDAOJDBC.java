@@ -496,7 +496,7 @@ public class PubSubDAOJDBC
 	}
 	
 	@Override
-	public NodeAffiliations getNodeAffiliations(BareJID serviceJid, Long nodeId) throws RepositoryException {
+	public Map<BareJID, UsersAffiliation> getNodeAffiliations(BareJID serviceJid, Long nodeId) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Getting node affiliation: serviceJid: {0}, nodeId: {1}",
 					new Object[]{serviceJid, nodeId});
@@ -511,13 +511,14 @@ public class PubSubDAOJDBC
 				try {
 					get_node_affiliations_sp.setLong(1, nodeId);
 					rs = get_node_affiliations_sp.executeQuery();
-					ArrayDeque<UsersAffiliation> data = new ArrayDeque<UsersAffiliation>();
+					Map<BareJID, UsersAffiliation> data = new HashMap<>();
+
 					while (rs.next()) {
 						BareJID jid = BareJID.bareJIDInstanceNS(rs.getString(1));
 						Affiliation affil = Affiliation.valueOf(rs.getString(2));
-						data.offer(new UsersAffiliation(jid, affil));
+						data.put(jid, new UsersAffiliation(jid, affil));
 					}
-					return NodeAffiliations.create(data);
+					return data;
 				} finally {
 					release(null, rs);
 				}
@@ -529,8 +530,7 @@ public class PubSubDAOJDBC
 		}
 	}
 
-	@Override
-	public Long getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
+	private Long getNodeId(BareJID serviceJid, String nodeName) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Getting Node ID: serviceJid: {0}, nodeName: {1}",
 					new Object[]{serviceJid, nodeName});
@@ -692,7 +692,7 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public NodeSubscriptions getNodeSubscriptions(BareJID serviceJid, Long nodeId) throws RepositoryException {
+	public Map<BareJID, UsersSubscription> getNodeSubscriptions(BareJID serviceJid, Long nodeId) throws RepositoryException {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Getting node subscriptions: serviceJid: {0}, nodeId: {1}",
 					new Object[]{serviceJid, nodeId});
@@ -700,7 +700,6 @@ public class PubSubDAOJDBC
 		HashCode hash = null;
 		try {
 			ResultSet rs = null;
-			final NodeSubscriptions ns = NodeSubscriptions.create();
 			hash = takeDao();
 			PreparedStatement get_node_subscriptions_sp = data_repo.getPreparedStatement(hash.hashCode(),
 																						 GET_NODE_SUBSCRIPTIONS_QUERY);
@@ -708,15 +707,14 @@ public class PubSubDAOJDBC
 				try {
 					get_node_subscriptions_sp.setLong(1, nodeId);
 					rs = get_node_subscriptions_sp.executeQuery();
-					ArrayDeque<UsersSubscription> data = new ArrayDeque<UsersSubscription>();
+					Map<BareJID, UsersSubscription> data = new HashMap<>();
 					while (rs.next()) {
 						BareJID jid = BareJID.bareJIDInstanceNS(rs.getString(1));
 						Subscription subscr = Subscription.valueOf(rs.getString(2));
 						String subscrId = rs.getString(3);
-						data.offer(new UsersSubscription(jid, subscrId, subscr));
+						data.put(jid, new UsersSubscription(jid, subscrId, subscr));
 					}
-					ns.init(data);
-					return ns;
+					return data;
 				} finally {
 					release(null, rs);
 				}

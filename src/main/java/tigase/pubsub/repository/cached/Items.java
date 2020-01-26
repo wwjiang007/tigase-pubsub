@@ -19,6 +19,7 @@ package tigase.pubsub.repository.cached;
 
 import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.CollectionItemsOrdering;
+import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.xml.Element;
@@ -29,7 +30,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class Items<T>
+public class Items<T>
 		implements IItems {
 
 	private static final Logger log = Logger.getLogger(Items.class.getName());
@@ -42,7 +43,9 @@ class Items<T>
 
 	private final BareJID serviceJid;
 
-	public Items(T nodeId, BareJID serviceJid, String nodeName, IPubSubDAO dao) {
+	private final IListnener itemsListener;
+
+	public Items(T nodeId, BareJID serviceJid, String nodeName, IPubSubDAO dao, IListnener listnener) {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "Constructing Items, serviceJid: {0}, nodeName: {1}, nodeId: {2}, dao: {3}",
 					new Object[]{serviceJid, nodeName, nodeId, dao});
@@ -51,6 +54,7 @@ class Items<T>
 		this.dao = dao;
 		this.nodeName = nodeName;
 		this.serviceJid = serviceJid;
+		this.itemsListener = listnener;
 	}
 
 	@Override
@@ -60,6 +64,7 @@ class Items<T>
 					new Object[]{serviceJid, id, nodeId, dao});
 		}
 		this.dao.deleteItem(serviceJid, nodeId, id);
+		itemsListener.itemDeleted(serviceJid, nodeName, id);
 	}
 
 	@Override
@@ -99,13 +104,16 @@ class Items<T>
 	}
 	
 	@Override
-	public void writeItem(long timeInMilis, String id, String publisher, Element item, String uuid) throws RepositoryException {
+	public void writeItem(String id, String publisher, Element item, String uuid)
+			throws RepositoryException, PubSubException {
+		itemsListener.validateItem(serviceJid, nodeName, id,publisher, item);
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST,
 					"writeItem, serviceJid: {0}, nodeId: {1}, dao: {2}, id: {3}, publisher: {4}, item: {5}",
 					new Object[]{serviceJid, nodeId, dao, id, publisher, item});
 		}
-		this.dao.writeItem(serviceJid, nodeId, timeInMilis, id, publisher, item, uuid);
+		this.dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), id, publisher, item, uuid);
+		itemsListener.itemWritten(serviceJid, nodeName, id, publisher, item, uuid);
 	}
 
 }

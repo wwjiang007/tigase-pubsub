@@ -17,6 +17,7 @@
  */
 package tigase.pubsub.modules.commands;
 
+import tigase.pubsub.IPubSubConfig;
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -26,7 +27,6 @@ import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.xml.Element;
@@ -45,7 +45,7 @@ public class ReadAllNodesCommand
 	public static final Logger log = Logger.getLogger(ReadAllNodesCommand.class.getName());
 
 	@Inject
-	private PubSubConfig config;
+	private IPubSubConfig config;
 	@Inject
 	private IPubSubDAO<?, ?, ?> dao;
 	@Inject

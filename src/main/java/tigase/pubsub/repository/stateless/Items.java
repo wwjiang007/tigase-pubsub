@@ -69,10 +69,10 @@ class Items
 	public List<ItemMeta> getItemsMeta() throws RepositoryException {
 		return this.dao.getItemsMeta(serviceJid, nodeId, nodeName);
 	}
-	
+
 	@Override
-	public void writeItem(long timeInMilis, String id, String publisher, Element item, String uuid) throws RepositoryException {
-		this.dao.writeItem(serviceJid, nodeId, timeInMilis, id, publisher, item, uuid);
+	public void writeItem(String id, String publisher, Element item, String uuid) throws RepositoryException {
+		this.writeItem(id, publisher, item, uuid);
 	}
 
 }

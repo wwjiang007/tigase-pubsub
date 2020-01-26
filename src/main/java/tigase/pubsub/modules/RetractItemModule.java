@@ -17,6 +17,7 @@
  */
 package tigase.pubsub.modules;
 
+import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.eventbus.EventBus;
@@ -26,7 +27,7 @@ import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IItems;
-import tigase.pubsub.utils.Logic;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -82,7 +83,7 @@ public class RetractItemModule
 										  new PubSubErrorCondition("unsupported", "retract-items"));
 			}
 			
-			logic.checkRole(toJid, nodeName, packet.getStanzaTo(), Logic.Action.retractItems);
+			pubSubLogic.checkPermission(toJid, nodeName, packet.getStanzaFrom(), PubSubLogic.Action.retractItems);
 
 			LeafNodeConfig leafNodeConfig = (LeafNodeConfig) nodeConfig;
 
@@ -107,32 +108,13 @@ public class RetractItemModule
 				throw new PubSubException(Authorization.BAD_REQUEST, PubSubErrorCondition.ITEM_REQUIRED);
 			}
 
-			if (logic.isMAMEnabled(toJid, nodeName) && itemsToDelete.size() > 1) {
+			if (pubSubLogic.isMAMEnabled(toJid, nodeName) && itemsToDelete.size() > 1) {
 				throw new PubSubException(Authorization.NOT_ALLOWED, "Bulk retraction not allowed");
 			}
 
 			Packet result = packet.okResult((Element) null, 0);
 
-			IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
-
-			List<Element> itemsToSend = new ArrayList<>(itemsToDelete.size());
-			try {
-				for (String id : itemsToDelete) {
-					IItems.IItem item = nodeItems.getItem(id);
-
-					if (item != null) {
-						nodeItems.deleteItem(id);
-
-						Element notification = new Element("retract", new String[]{"id"}, new String[]{id});
-
-						eventBus.fire(
-								new ItemRetractedEvent(packet.getStanzaTo().getBareJID(), nodeName, notification));
-						itemsToSend.add(notification);
-					}
-				}
-			} finally {
-				publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, itemsToSend, null, false);
-			}
+			retractItems(toJid, nodeName, itemsToDelete);
 
 			packetWriter.write(result);
 		} catch (PubSubException e1) {
@@ -140,6 +122,29 @@ public class RetractItemModule
 		} catch (Exception e) {
 			log.log(Level.FINE, "Error processing retract item packet", e);
 			throw new RuntimeException(e);
+		}
+	}
+
+	public void retractItems(BareJID toJid, String nodeName, List<String> itemsToDelete) throws RepositoryException {
+		IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
+
+		List<Element> itemsToSend = new ArrayList<>(itemsToDelete.size());
+		try {
+			for (String id : itemsToDelete) {
+				IItems.IItem item = nodeItems.getItem(id);
+
+				if (item != null) {
+					nodeItems.deleteItem(id);
+
+					Element notification = new Element("retract", new String[]{"id"}, new String[]{id});
+
+					eventBus.fire(
+							new RetractItemModule.ItemRetractedEvent(toJid, nodeName, notification));
+					itemsToSend.add(notification);
+				}
+			}
+		} finally {
+			publishModule.generateNotifications(toJid, nodeName, itemsToSend, null, false);
 		}
 	}
 

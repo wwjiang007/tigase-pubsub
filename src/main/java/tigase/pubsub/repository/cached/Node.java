@@ -18,6 +18,7 @@
 package tigase.pubsub.repository.cached;
 
 import tigase.pubsub.AbstractNodeConfig;
+import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.INodeMeta;
 import tigase.xmpp.jid.BareJID;
 
@@ -38,13 +39,14 @@ public class Node<T>
 	private boolean conNeedsWriting = false;
 	private boolean deleted = false;
 	private String name;
-	private NodeAffiliations nodeAffiliations;
+	private IAffiliationsCached nodeAffiliations;
 
 	// private Long nodeAffiliationsChangeTimestamp;
 
 	private AbstractNodeConfig nodeConfig;
 	private final T nodeId;
-	private NodeSubscriptions nodeSubscriptions;
+	private ISubscriptionsCached nodeSubscriptions;
+	private IItems nodeItems;
 
 	// private Long nodeConfigChangeTimestamp;
 
@@ -53,8 +55,8 @@ public class Node<T>
 
 	// private Long nodeSubscriptionsChangeTimestamp;
 
-	public Node(T nodeId, BareJID serviceJid, AbstractNodeConfig nodeConfig, NodeAffiliations nodeAffiliations,
-				NodeSubscriptions nodeSubscriptions, BareJID creator, Date creationTime) {
+	public Node(T nodeId, BareJID serviceJid, AbstractNodeConfig nodeConfig, IAffiliationsCached nodeAffiliations,
+				ISubscriptionsCached nodeSubscriptions, IItems nodeItems, BareJID creator, Date creationTime) {
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST,
 					"Constructing Node, serviceJid: {0}, nodeConfig: {1}, nodeId: {2}, nodeAffiliations: {3}, nodeSubscriptions: {4}",
@@ -69,17 +71,18 @@ public class Node<T>
 		this.name = nodeConfig.getNodeName();
 		this.creator = creator;
 		this.creationTime = creationTime;
+		this.nodeItems = nodeItems;
 	}
 
-	public void affiliationsMerge() {
+	protected void affiliationsMerge() {
 		nodeAffiliations.merge();
 	}
 
-	public boolean affiliationsNeedsWriting() {
+	protected boolean affiliationsNeedsWriting() {
 		return nodeAffiliations.isChanged();
 	}
 
-	public void affiliationsSaved() {
+	protected void affiliationsSaved() {
 		// affNeedsWriting = false;
 		affiliationsMerge();
 	}
@@ -133,7 +136,7 @@ public class Node<T>
 		return name;
 	}
 
-	public NodeAffiliations getNodeAffiliations() {
+	public IAffiliationsCached getNodeAffiliations() {
 		return nodeAffiliations;
 	}
 
@@ -149,7 +152,11 @@ public class Node<T>
 		return nodeId;
 	}
 
-	public NodeSubscriptions getNodeSubscriptions() {
+	public IItems getNodeItems() {
+		return nodeItems;
+	}
+
+	public ISubscriptionsCached getNodeSubscriptions() {
 		return nodeSubscriptions;
 	}
 

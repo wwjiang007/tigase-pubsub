@@ -104,12 +104,8 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 					nodeAffiliations.changeAffiliation(jid, affiliation);
 				}
 
-				if (nodeSubscriptions.isChanged()) {
-					pubsubRepository.update(toJid, node, nodeSubscriptions);
-				}
-				if (nodeAffiliations.isChanged()) {
-					pubsubRepository.update(toJid, node, nodeAffiliations);
-				}
+				pubsubRepository.update(toJid, node, nodeSubscriptions);
+				pubsubRepository.update(toJid, node, nodeAffiliations);
 
 			}
 

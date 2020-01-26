@@ -17,6 +17,7 @@
  */
 package tigase.pubsub.modules.commands;
 
+import tigase.pubsub.IPubSubConfig;
 import tigase.component.adhoc.AdHocCommand;
 import tigase.component.adhoc.AdHocCommandException;
 import tigase.component.adhoc.AdHocResponse;
@@ -31,7 +32,6 @@ import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.Affiliation;
 import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
@@ -55,7 +55,7 @@ public class LoadTestCommand
 	private AbstractMessageReceiver component;
 
 	@Inject
-	private PubSubConfig config;
+	private IPubSubConfig config;
 
 	@Inject
 	private IPubSubRepository repository;

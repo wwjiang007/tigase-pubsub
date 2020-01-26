@@ -234,7 +234,7 @@ public abstract class AbstractNodeConfig {
 		return form.getAsBoolean(PUBSUB + "notify_sub_aff_state");
 	}
 
-	public void read(final UserRepository repository, final PubSubConfig config, final String subnode)
+	public void read(final UserRepository repository, final IPubSubConfig config, final String subnode)
 			throws UserNotFoundException, TigaseDBException {
 		if (repository == null) {
 			return;
@@ -318,7 +318,7 @@ public abstract class AbstractNodeConfig {
 		return "AbstractNodeConfig{" + "form=" + form + ", nodeName=" + nodeName + '}';
 	}
 
-	public void write(final UserRepository repo, final PubSubConfig config, final String subnode)
+	public void write(final UserRepository repo, final IPubSubConfig config, final String subnode)
 			throws UserNotFoundException, TigaseDBException {
 		if (repo == null) {
 			return;

@@ -26,7 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class NodeAffiliations
-		extends tigase.pubsub.repository.NodeAffiliations {
+		extends tigase.pubsub.repository.NodeAffiliations implements IAffiliationsCached {
 
 	private static final Logger log = Logger.getLogger(NodeAffiliations.class.getName());
 
@@ -35,10 +35,10 @@ public class NodeAffiliations
 	public NodeAffiliations() {
 	}
 
-	public NodeAffiliations(tigase.pubsub.repository.NodeAffiliations nodeAffiliations) {
-		affs.putAll(nodeAffiliations.getAffiliationsMap());
+	public NodeAffiliations(Map<BareJID, UsersAffiliation> affs) {
+		super(affs);
 	}
-
+		
 	@Override
 	public void addAffiliation(BareJID bareJid, Affiliation affiliation) {
 		UsersAffiliation a = new UsersAffiliation(bareJid, affiliation);
@@ -81,21 +81,15 @@ public class NodeAffiliations
 	}
 
 	public Map<BareJID, UsersAffiliation> getChanged() {
-		return changedAffs();
+		return Collections.unmodifiableMap(changedAffs());
 	}
-
-	public void init(Queue<UsersAffiliation> data) {
-		UsersAffiliation a = null;
-		while ((a = data.poll()) != null) {
-			affs.put(a.getJid(), a);
-		}
-	}
-
+	
 	@Override
 	public boolean isChanged() {
 		return changedAffs().size() > 0;
 	}
 
+	@Override
 	public void merge() {
 		Map<BareJID, UsersAffiliation> changedAffs = changedAffs();
 		for (Map.Entry<BareJID, UsersAffiliation> entry : changedAffs.entrySet()) {

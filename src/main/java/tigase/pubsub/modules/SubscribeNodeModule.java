@@ -27,7 +27,7 @@ import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
-import tigase.pubsub.utils.Logic;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -101,7 +101,7 @@ public class SubscribeNodeModule
 		try {
 			AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
 
-			logic.checkRole(serviceJid, nodeName, senderJid, Logic.Action.subscribe);
+			pubSubLogic.checkPermission(serviceJid, nodeName, senderJid, PubSubLogic.Action.subscribe);
 
 			IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJid, nodeName);
 			UsersAffiliation senderAffiliation = nodeAffiliations.getSubscriberAffiliation(senderJid.getBareJID());
@@ -170,12 +170,8 @@ public class SubscribeNodeModule
 			// getRepository().setData(config.getServiceName(), nodeName,
 			// "owner",
 			// JIDUtils.getNodeID(element.getAttribute("from")));
-			if (nodeSubscriptions.isChanged()) {
-				this.getRepository().update(serviceJid, nodeName, nodeSubscriptions);
-			}
-			if (nodeAffiliations.isChanged()) {
-				this.getRepository().update(serviceJid, nodeName, nodeAffiliations);
-			}
+			this.getRepository().update(serviceJid, nodeName, nodeSubscriptions);
+			this.getRepository().update(serviceJid, nodeName, nodeAffiliations);
 			Packet result = packet.okResult(makeSubscription(nodeName, jid, newSubscription, subid), 0);
 
 			results.add(result);
