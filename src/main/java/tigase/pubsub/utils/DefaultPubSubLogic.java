@@ -449,6 +449,7 @@ public class DefaultPubSubLogic
 
 	@Override
 	public boolean isServiceJidPEP(BareJID serivceJid) {
-		return serivceJid.getLocalpart() != null && !serivceJid.getDomain().startsWith(component.getName()+".");
+		return pubSubConfig.isPepPeristent() && serivceJid.getLocalpart() != null &&
+				!serivceJid.getDomain().startsWith(component.getName() + ".");
 	}
 }
