@@ -22,6 +22,7 @@ public class LeafNodeConfig
 
 	public LeafNodeConfig(final String nodeName) {
 		super(nodeName);
+		this.setNodeType(NodeType.leaf);
 	}
 
 	public LeafNodeConfig(final String nodeName, AbstractNodeConfig config) {

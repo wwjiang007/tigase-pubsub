@@ -103,7 +103,7 @@ public class CachedPubSubRepository<T>
 			log.log(Level.FINEST, "Addint to root collection, serviceJid: {0}, nodeName: {1}",
 					new Object[]{serviceJid, nodeName});
 		}
-		if (serviceJid.getLocalpart() == null) {
+		if (!pubSubLogic.isServiceJidPEP(serviceJid)) {
 			this.getRootCollectionSet(serviceJid).add(nodeName);
 		}
 	}
@@ -348,7 +348,7 @@ public class CachedPubSubRepository<T>
 
 	@Override
 	public String[] getRootCollection(BareJID serviceJid) throws RepositoryException {
-		if (serviceJid.getLocalpart() != null) {
+		if (pubSubLogic.isServiceJidPEP(serviceJid)) {
 			return dao.getChildNodes(serviceJid, null);
 		} else {
 			RootCollectionSetIfc rootCollection = getRootCollectionSet(serviceJid);
@@ -501,7 +501,7 @@ public class CachedPubSubRepository<T>
 
 	@Override
 	public void removeFromRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException {
-		if (serviceJid.getLocalpart() == null) {
+		if (!pubSubLogic.isServiceJidPEP(serviceJid)) {
 			RootCollectionSetIfc rootCollectionSet = getRootCollectionSet(serviceJid);
 			if (rootCollectionSet != null) {
 				rootCollectionSet.remove(nodeName);
@@ -754,14 +754,15 @@ public class CachedPubSubRepository<T>
 		} catch (RepositoryException ex) {
 			// ignoring...
 		}
-		if (userJid.getLocalpart() == null) {
+		if (!pubSubLogic.isServiceJidPEP(userJid)) {
 			rootCollection.remove(userJid);
 		}
+		boolean isPEP = pubSubLogic.isServiceJidPEP(userJid);
 		NodeKey[] keys = this.nodes.keySet().toArray(new NodeKey[0]);
 		for (NodeKey key : keys) {
 			if (userJid.equals(key.serviceJid)) {
 				this.nodes.remove(key);
-			} else {
+			} else if (isPEP) {
 				Node node = this.nodes.get(key);
 				if (node != null) {
 					ISubscriptionsCached nodeSubscriptions = node.getNodeSubscriptions();

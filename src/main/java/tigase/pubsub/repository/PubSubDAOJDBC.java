@@ -52,7 +52,7 @@ public class PubSubDAOJDBC
 	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 	private static final String REMOVE_NODE_QUERY = "{ call TigPubSubRemoveNode(?) }";
 	private static final String CREATE_SERVICE_QUERY = "{ call TigPubSubCreateService(?, ?, ?) }";
-	private static final String REMOVE_SERVICE_QUERY = "{ call TigPubSubRemoveService(?, ?) }";
+	private static final String REMOVE_SERVICE_QUERY = "{ call TigPubSubRemoveService(?) }";
 	private static final String GET_SERVICES_QUERY = "{ call TigPubSubGetServices(?,?) }";
 	private static final String GET_NODE_ID_QUERY = "{ call TigPubSubGetNodeId(?, ?) }";
 	private static final String GET_NODE_META_QUERY = "{ call TigPubSubGetNodeMeta(?, ?) }";
