@@ -49,9 +49,11 @@ public class PubSubDAOJDBC
 		extends PubSubDAO<Long, DataRepository, Query>
 		implements RepositoryVersionAware {
 
-	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?, ?) }";
+	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 	private static final String REMOVE_NODE_QUERY = "{ call TigPubSubRemoveNode(?) }";
+	private static final String CREATE_SERVICE_QUERY = "{ call TigPubSubCreateService(?, ?, ?) }";
 	private static final String REMOVE_SERVICE_QUERY = "{ call TigPubSubRemoveService(?, ?) }";
+	private static final String GET_SERVICES_QUERY = "{ call TigPubSubGetServices(?,?) }";
 	private static final String GET_NODE_ID_QUERY = "{ call TigPubSubGetNodeId(?, ?) }";
 	private static final String GET_NODE_META_QUERY = "{ call TigPubSubGetNodeMeta(?, ?) }";
 	private static final String GET_ITEM_QUERY = "{ call TigPubSubGetItem(?, ?) }";
@@ -93,7 +95,7 @@ public class PubSubDAOJDBC
 
 	@Override
 	public Long createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-						   NodeType nodeType, Long collectionId, String componentName) throws RepositoryException {
+						   NodeType nodeType, Long collectionId, boolean autocreateService) throws RepositoryException {
 		Long nodeId = null;
 		HashCode hash = null;
 		try {
@@ -119,7 +121,8 @@ public class PubSubDAOJDBC
 						create_node_sp.setLong(6, collectionId);
 					}
 					data_repo.setTimestamp(create_node_sp, 7, new Timestamp(System.currentTimeMillis()));
-					create_node_sp.setString(8, componentName);
+					create_node_sp.setString(8, serviceJid.getDomain());
+					create_node_sp.setInt(9, autocreateService ? 1 : 0);
 
 					switch (this.data_repo.getDatabaseType()) {
 						case sqlserver:
@@ -151,6 +154,69 @@ public class PubSubDAOJDBC
 		}
 
 		return nodeId;
+	}
+
+	@Override
+	public void createService(BareJID serviceJID, boolean isPublic) throws RepositoryException {
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "creating service: serviceJid: {0}, component: {1}, public: {2}",
+					new Object[]{serviceJID, serviceJID.getDomain(), isPublic});
+		}
+		HashCode hash = null;
+		try {
+			hash = takeDao();
+			PreparedStatement createServiceStmt = data_repo.getPreparedStatement(hash.hashCode(), CREATE_SERVICE_QUERY);
+			synchronized (createServiceStmt) {
+				createServiceStmt.setString(1, serviceJID.toString());
+				createServiceStmt.setString(2, serviceJID.getDomain());
+				createServiceStmt.setInt(3, isPublic ? 1 : 0);
+				createServiceStmt.execute();
+			}
+		} catch (SQLException e) {
+			throw new RepositoryException("Item removing error", e);
+		} finally {
+			if (hash != null) {
+				offerDao(hash);
+			}
+		}
+
+	}
+
+	@Override
+	public List<BareJID> getServices(BareJID domain, Boolean isPublic) throws RepositoryException {
+		HashCode hash = null;
+		try {
+			ResultSet rs;
+			hash = takeDao();
+			PreparedStatement getServicesStmt = data_repo.getPreparedStatement(hash.hashCode(), GET_SERVICES_QUERY);
+			synchronized (getServicesStmt) {
+				try {
+					getServicesStmt.setString(1, domain.toString());
+					if (isPublic != null) {
+						getServicesStmt.setInt(2, isPublic ? 1 : 0);
+					} else {
+						getServicesStmt.setNull(2, Types.INTEGER);
+					}
+
+					rs = getServicesStmt.executeQuery();
+					List<BareJID> results = new ArrayList<>();
+					while (rs.next()) {
+						results.add(BareJID.bareJIDInstanceNS(rs.getString(1)));
+					}
+					return results;
+				} finally {
+					if (hash != null) {
+						offerDao(hash);
+					}
+				}
+			}
+		} catch (SQLException e) {
+			throw new RepositoryException("Item removing error", e);
+		} finally {
+			if (hash != null) {
+				offerDao(hash);
+			}
+		}
 	}
 
 	@Override
@@ -887,14 +953,13 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public void removeService(BareJID serviceJid, String componentName) throws RepositoryException {
+	public void deleteService(BareJID serviceJid) throws RepositoryException {
 		HashCode hash = null;
 		try {
 			hash = takeDao();
 			PreparedStatement remove_service_sp = data_repo.getPreparedStatement(hash.hashCode(), REMOVE_SERVICE_QUERY);
 			synchronized (remove_service_sp) {
 				remove_service_sp.setString(1, serviceJid.toString());
-				remove_service_sp.setString(2, componentName);
 				remove_service_sp.execute();
 			}
 		} catch (SQLException e) {
@@ -1165,7 +1230,9 @@ public class PubSubDAOJDBC
 
 		data_repo.initPreparedStatement(CREATE_NODE_QUERY, CREATE_NODE_QUERY);
 		data_repo.initPreparedStatement(REMOVE_NODE_QUERY, REMOVE_NODE_QUERY);
+		data_repo.initPreparedStatement(CREATE_SERVICE_QUERY,CREATE_SERVICE_QUERY);
 		data_repo.initPreparedStatement(REMOVE_SERVICE_QUERY, REMOVE_SERVICE_QUERY);
+		data_repo.initPreparedStatement(GET_SERVICES_QUERY, GET_SERVICES_QUERY);
 		data_repo.initPreparedStatement(GET_NODE_ID_QUERY, GET_NODE_ID_QUERY);
 		data_repo.initPreparedStatement(GET_NODE_META_QUERY, GET_NODE_META_QUERY);
 		data_repo.initPreparedStatement(GET_ITEM_QUERY, GET_ITEM_QUERY);

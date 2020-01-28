@@ -76,7 +76,7 @@ public class CachedPubSubRepositoryTest {
 		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
-			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, "pubsub");
+			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, true);
 		}
 
 		try {
@@ -114,7 +114,7 @@ public class CachedPubSubRepositoryTest {
 		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
-			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, "pubsub");
+			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, true);
 		}
 
 		Arrays.sort(nodes);
@@ -146,7 +146,7 @@ public class CachedPubSubRepositoryTest {
 		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
-			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, "pubsub");
+			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, true);
 		}
 
 		try {
@@ -156,7 +156,7 @@ public class CachedPubSubRepositoryTest {
 		Thread.sleep(1000);
 		assertEquals(10, cachedPubSubRepository.getRootCollection(serviceJid).length);
 
-		cachedPubSubRepository.onUserRemoved(serviceJid);
+		cachedPubSubRepository.deleteService(serviceJid);
 
 		try {
 			cachedPubSubRepository.getRootCollection(serviceJid);
@@ -178,12 +178,12 @@ public class CachedPubSubRepositoryTest {
 		for (int i = 0; i < 10; i++) {
 			String node = "node-" + UUID.randomUUID().toString();
 			nodes[i] = node;
-			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, "pubsub");
+			dao.createNode(serviceJid, node, serviceJid, null, NodeType.leaf, null, true);
 		}
 
 		assertEquals(10, cachedPubSubRepository.getRootCollection(serviceJid).length);
 
-		cachedPubSubRepository.onUserRemoved(serviceJid);
+		cachedPubSubRepository.deleteService(serviceJid);
 
 		assertEquals(0, cachedPubSubRepository.getRootCollection(serviceJid).length);
 		assertNull(dao.getChildNodes(serviceJid, null));
@@ -253,11 +253,22 @@ public class CachedPubSubRepositoryTest {
 		
 		@Override
 		public Object createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-								 NodeType nodeType, Object collectionId, String componentName) throws RepositoryException {
+								 NodeType nodeType, Object collectionId, boolean autocreateService) throws RepositoryException {
 			synchronized (rootCollections) {
 				Set<String> nodes = rootCollections.computeIfAbsent(serviceJid, bareJID -> new HashSet<String>());
 				nodes.add(nodeName);
 			}
+			return null;
+		}
+
+		@Override
+		public void createService(BareJID serviceJID, boolean isPublic)
+				throws RepositoryException {
+			
+		}
+
+		@Override
+		public List<BareJID> getServices(BareJID domain, Boolean isPublic) throws RepositoryException {
 			return null;
 		}
 
@@ -360,7 +371,7 @@ public class CachedPubSubRepositoryTest {
 		}
 		
 		@Override
-		public void removeService(BareJID serviceJid, String componentName) throws RepositoryException {
+		public void deleteService(BareJID serviceJid) throws RepositoryException {
 			rootCollections.remove(serviceJid);
 		}
 		

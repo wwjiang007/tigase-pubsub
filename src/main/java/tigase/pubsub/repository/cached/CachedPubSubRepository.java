@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:20:46 GMT
  */
-@Bean(name = "pubsubRepository", parent = PubSubComponent.class, active = true)
+@Bean(name = "repository", parent = PubSubComponent.class, active = true)
 public class CachedPubSubRepository<T>
 		implements IPubSubRepository, StatisticHolder, Initializable, IItems.IListnener {
 	
@@ -87,12 +87,14 @@ public class CachedPubSubRepository<T>
 	private long updateSubscriptionsCalled = 0;
 	private long writingTime = 0;
 
-	private String componentName = null;
-
 	protected final AtomicLong nodesCount = new AtomicLong(0);
 
 	public CachedPubSubRepository() {
 
+	}
+
+	protected boolean isServiceAutoCreated() {
+		return true;
 	}
 
 	@Override
@@ -125,7 +127,7 @@ public class CachedPubSubRepository<T>
 			collectionId = collectionNode.getNodeId();
 		}
 
-		T nodeId = this.dao.createNode(serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collectionId, componentName);
+		T nodeId = this.dao.createNode(serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collectionId, isServiceAutoCreated());
 		if (null == nodeId) {
 			throw new RepositoryException("Creating node failed!");
 		}
@@ -154,6 +156,16 @@ public class CachedPubSubRepository<T>
 		++nodes_added;
 		nodesCount.incrementAndGet();
 		writingTime += (end - start);
+	}
+
+	@Override
+	public void createService(BareJID serviceJID, boolean isPublic) throws RepositoryException {
+		dao.createService(serviceJID, isPublic);
+	}
+
+	@Override
+	public List<BareJID> getServices(BareJID domain, Boolean isPublic) throws RepositoryException {
+		return dao.getServices(domain, isPublic);
 	}
 
 	@Override
@@ -221,10 +233,6 @@ public class CachedPubSubRepository<T>
 
 	public Collection<Node> getAllNodes() {
 		return Collections.unmodifiableCollection(nodes.values());
-	}
-
-	public void setComponentName(String componentName) {
-		this.componentName = componentName;
 	}
 
 	public String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException {
@@ -576,8 +584,8 @@ public class CachedPubSubRepository<T>
 	}
 
 	@Override
-	public void onUserRemoved(BareJID userJid) throws RepositoryException {
-		dao.removeService(userJid, componentName);
+	public void deleteService(BareJID userJid) throws RepositoryException {
+		dao.deleteService(userJid);
 		userRemoved(userJid);
 	}
 

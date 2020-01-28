@@ -61,14 +61,14 @@ public class StoredProcedures {
 	}
 
 	public static void tigPubSubCreateNode(String serviceJid, String nodeName, Integer nodeType, String nodeCreator,
-										   String nodeConf, Long collectionId, Timestamp ts, String componentName, ResultSet[] data)
+										   String nodeConf, Long collectionId, Timestamp ts, String domain, Integer autocreateService, ResultSet[] data)
 			throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
-			long serviceJidId = tigPubSubEnsureServiceJid(serviceJid, componentName);
+			long serviceJidId = tigPubSubEnsureServiceJid(serviceJid, domain, autocreateService);
 			long nodeCreatorId = tigPubSubEnsureJid(nodeCreator);
 			PreparedStatement ps = conn.prepareStatement(
 					"insert into tig_pubsub_nodes (service_id,name,type,creator_id,creation_date,configuration,collection_id)" +
@@ -212,7 +212,7 @@ public class StoredProcedures {
 		return null;
 	}
 
-	public static Long tigPubSubEnsureServiceJid(String serviceJid, String componentName) throws SQLException {
+	public static Long tigPubSubEnsureServiceJid(String serviceJid, String domain, Integer autocreateService) throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
@@ -226,13 +226,13 @@ public class StoredProcedures {
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
 				return rs.getLong(1);
-			} else {
+			} else if (autocreateService > 0) {
 				ps = conn.prepareStatement(
-						"insert into tig_pubsub_service_jids (service_jid, service_jid_sha1, component_name) values (?, ?, ?)",
+						"insert into tig_pubsub_service_jids (service_jid, service_jid_sha1, domain) values (?, ?, ?)",
 						Statement.RETURN_GENERATED_KEYS);
 				ps.setString(1, serviceJid);
 				ps.setString(2, serviceJidSha1);
-				ps.setString(3, componentName);
+				ps.setString(3, domain);
 				ps.executeUpdate();
 				rs = ps.getGeneratedKeys();
 				if (rs.next()) {
@@ -1035,6 +1035,51 @@ public class StoredProcedures {
 				ps.setString(1, serviceJidSha1);
 			}
 			data[0] = ps.executeQuery();
+		} catch (SQLException e) {
+			// log.log(Level.SEVERE, "SP error", e);
+			throw e;
+		} finally {
+			conn.close();
+		}
+	}
+
+	public static void tigPubSubGetServices(String domain, Integer isPublic, ResultSet[] data) throws SQLException {
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			PreparedStatement ps = conn.prepareStatement("select service_jid, is_public from tig_pubsub_service_jids where domain = ? and (? is null or is_public = ?)");
+			ps.setString(1, domain);
+			if (isPublic != null) {
+				ps.setInt(2, isPublic);
+			} else {
+				ps.setNull(2, Types.INTEGER);
+			}
+			data[0] = ps.executeQuery();
+		} catch (SQLException e) {
+			// log.log(Level.SEVERE, "SP error", e);
+			throw e;
+		} finally {
+			conn.close();
+		}
+	}
+
+	public static void tigPubSubCreateService(String serviceJid, String domain, Integer isPublic, ResultSet[] data) throws SQLException {
+		String serviceJidSha1 = sha1OfLower(serviceJid);
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			PreparedStatement ps = conn.prepareStatement(
+					"insert into tig_pubsub_service_jids (service_jid, service_jid_sha1, domain, is_public) values (?, ?, ?, ?)",
+					Statement.RETURN_GENERATED_KEYS);
+			ps.setString(1, serviceJid);
+			ps.setString(2, serviceJidSha1);
+			ps.setString(3, domain);
+			ps.setInt(4, isPublic);
+			ps.executeUpdate();
 		} catch (SQLException e) {
 			// log.log(Level.SEVERE, "SP error", e);
 			throw e;

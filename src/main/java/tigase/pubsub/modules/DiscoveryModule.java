@@ -17,17 +17,13 @@
  */
 package tigase.pubsub.modules;
 
-import tigase.pubsub.IPubSubConfig;
 import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.NodeType;
-import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.Utils;
+import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.IItems;
@@ -35,7 +31,6 @@ import tigase.pubsub.repository.INodeMeta;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.cached.CachedPubSubRepository;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
-import tigase.server.Iq;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -149,19 +144,10 @@ public class DiscoveryModule
 	private static final String[] EMPTY_NODES = new String[0];
 
 	@Override
-	protected void processDiscoItems(Packet packet, JID jid, String nodeName, JID senderJID)
+	protected List<Element> prepareDiscoItems(JID toJid, String nodeName, JID senderJid, RSM rsm)
 			throws ComponentException, RepositoryException {
 		log.finest("Asking about Items of node " + nodeName);
-
-		final JID senderJid = packet.getStanzaFrom();
-		final JID toJid = packet.getStanzaTo();
-		final Element element = packet.getElement();
-
-		Element resultQuery = new Element("query", new String[]{"xmlns"},
-										  new String[]{"http://jabber.org/protocol/disco#items"});
-
-		Packet resultIq = packet.okResult(resultQuery, 0);
-
+		
 		AbstractNodeConfig nodeConfig = (nodeName == null)
 										? null
 										: repository.getNodeConfig(toJid.getBareJID(), nodeName);
@@ -170,25 +156,16 @@ public class DiscoveryModule
 		if (nodeName != null && nodeConfig == null) {
 			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
 		}
-
-		Element rsmEl = element.getChildStaticStr(Iq.QUERY_NAME, "http://jabber.org/protocol/disco#items").getChildStaticStr("set", RSM.XMLNS);
-		RSM rsm = null;
-		if (rsmEl != null) {
-			rsm = RSM.parseRootElement(element.getChild("query"));
-		}
-
+		
 		if ((nodeName == null) || ((nodeConfig != null) && (nodeConfig.getNodeType() == NodeType.collection))) {
-			String parentName;
 
 			if (nodeName == null) {
-				parentName = "";
 				try {
 					nodes = repository.getRootCollection(toJid.getBareJID());
 				} catch (CachedPubSubRepository.RootCollectionSet.IllegalStateException e) {
 					throw new PubSubException(Authorization.RESOURCE_CONSTRAINT);
 				}
 			} else {
-				parentName = nodeName;
 				nodes = repository.getChildNodes(toJid.getBareJID(), nodeName);
 			}
 
@@ -215,7 +192,7 @@ public class DiscoveryModule
 						nodes = tmp.toArray(new String[tmp.size()]);
 					}
 				}
-				
+
 				List<Element> results = new ArrayList<>();
 				for (String node : nodes) {
 					AbstractNodeConfig childNodeConfig = this.repository.getNodeConfig(toJid.getBareJID(), node);
@@ -224,14 +201,14 @@ public class DiscoveryModule
 						boolean allowed = ((senderJid == null) || (childNodeConfig == null))
 										  ? true
 										  : Utils.isAllowedDomain(senderJid.getBareJID(), childNodeConfig.getDomains());
-						
+
 						if (allowed) {
 							String name = childNodeConfig.getTitle();
 
 							name = ((name == null) || (name.length() == 0)) ? node : name;
 
 							Element item = new Element("item", new String[]{"jid", "node", "name"},
-													   new String[]{element.getAttributeStaticStr("to"), node, name});
+													   new String[]{toJid.toString(), node, name});
 
 							results.add(item);
 							if (rsm != null && results.size() >= rsm.getMax()) {
@@ -242,7 +219,7 @@ public class DiscoveryModule
 						}
 					}
 				}
-				
+
 				if (inverted) {
 					index = nodes.length - results.size();
 					Collections.reverse(results);
@@ -251,11 +228,10 @@ public class DiscoveryModule
 					rsm.setResults(count, results.get(0).getAttributeStaticStr("node"),
 								   results.get(results.size() - 1).getAttributeStaticStr("node"));
 					rsm.setIndex(index);
-					resultQuery.addChildren(results);
-					resultQuery.addChild(rsm.toElement());
-				} else {
-					resultQuery.addChildren(results);
 				}
+				return results;
+			} else {
+				return Collections.emptyList();
 			}
 		} else {
 			boolean allowed = ((senderJid == null) || (nodeConfig == null))
@@ -265,22 +241,23 @@ public class DiscoveryModule
 			if (!allowed) {
 				throw new PubSubException(Authorization.FORBIDDEN);
 			}
-			resultQuery.addAttribute("node", nodeName);
 
 			IItems items = repository.getNodeItems(toJid.getBareJID(), nodeName);
 			String[] itemsId = items.getItemsIds(nodeConfig.getCollectionItemsOrdering());
 
 			if (itemsId != null) {
+				List<Element> results = new ArrayList<>();
 				for (String itemId : itemsId) {
-					resultQuery.addChild(new Element("item", new String[]{"jid", "name"},
-													 new String[]{element.getAttributeStaticStr("to"), itemId}));
+					results.add(new Element("item", new String[]{"jid", "name"},
+													 new String[]{toJid.toString(), itemId}));
 				}
+				return results;
 			}
+			
+			return Collections.emptyList();
 		}
-
-		write(resultIq);
 	}
-
+	
 	protected String[] prefilterNodesWithRSM(String[] nodes, RSM rsm) throws PubSubException {
 		Integer start = null;
 		if (rsm.getAfter() != null) {
@@ -336,5 +313,9 @@ public class DiscoveryModule
 			}
 		}
 		return result;
+	}
+
+	protected IPubSubRepository getRepository() {
+		return repository;
 	}
 }

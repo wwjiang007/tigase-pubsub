@@ -23,8 +23,8 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
 import tigase.kernel.beans.UnregisterAware;
+import tigase.pubsub.IPubSubConfig;
 import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.modules.PresenceCollectorModule;
 import tigase.server.Packet;
 import tigase.xml.Element;
@@ -54,7 +54,7 @@ public class PresencePerNodeExtension
 	@Inject
 	private EventBus eventBus;
 	@Inject
-	private PubSubConfig pubsubContext;
+	private IPubSubConfig pubsubContext;
 
 	public EventBus getEventBus() {
 		return eventBus;

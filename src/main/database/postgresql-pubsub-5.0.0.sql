@@ -21,21 +21,17 @@
 -- QUERY START:
 do $$
 begin
-if not exists (select 1 from information_schema.columns where table_catalog = current_database() and table_schema = 'public' and table_name = 'tig_pubsub_service_jids' and column_name = 'component_name') then
-    alter table tig_pubsub_service_jids add column component_name varchar(190);
+if not exists (select 1 from information_schema.columns where table_catalog = current_database() and table_schema = 'public' and table_name = 'tig_pubsub_service_jids' and column_name = 'domain') then
+    alter table tig_pubsub_service_jids add column domain varchar(1024);
+    alter table tig_pubsub_service_jids add column is_public int default 0;
 
-    update tig_pubsub_service_jids set component_name = (select name from (
-        select name
-        from (
-            select distinct LEFT(service_jid, POSITION('.' in service_jid)) as name
-            from tig_pubsub_service_jids where service_jid not like '%@%' and POSITION('.' in service_jid) > 0
-        ) x
-        union
-        select 'pubsub' as name
-    ) y limit 1) where component_name is null;
+    update tig_pubsub_service_jids set domain = CASE POSITION('@' in service_jid)
+        WHEN 0 THEN service_jid
+        ELSE SUBSTRING(service_jid, POSITION('@' in service_jid) + 1)
+        end;
 
-    alter table tig_pubsub_service_jids alter column component_name set not null;
-    create index tig_pubsub_service_jids_component_name on tig_pubsub_service_jids ( component_name );
+    alter table tig_pubsub_service_jids alter column domain set not null;
+    create index tig_pubsub_service_jids_domain_is_public on tig_pubsub_service_jids ( domain, is_public );
 end if;
 end$$;
 -- QUERY END:
@@ -67,15 +63,16 @@ drop function if exists TigPubSubEnsureServiceJid(varchar(2049));
 -- QUERY END:
 
 -- QUERY START:
-create or replace function TigPubSubEnsureServiceJid(varchar(2049),varchar(190)) returns bigint as '
+create or replace function TigPubSubEnsureServiceJid(varchar(2049),varchar(1024),int) returns bigint as '
 declare
 	_service_jid alias for $1;
-	_component_name alias for $2;
+	_domain alias for $2;
+	_createService alias for $3;
 	_service_id bigint;
 begin
 	select service_id into _service_id from tig_pubsub_service_jids where lower(service_jid) = lower(_service_jid);
-	if (_service_id is null) then
-		insert into tig_pubsub_service_jids (service_jid, component_name) values (_service_jid,_component_name);
+	if (_service_id is null) and _createService > 0 then
+		insert into tig_pubsub_service_jids (service_jid, domain, is_public) values (_service_jid,_domain,_is_public);
 		select currval(''tig_pubsub_service_jids_service_id_seq'') into _service_id;
 	end if;
 	return _service_id;
@@ -88,13 +85,13 @@ drop function if exists TigPubSubCreateNode(varchar,varchar,int,varchar,text,big
 -- QUERY END:
 
 -- QUERY START:
-create or replace function TigPubSubCreateNode(_service_jid varchar(2049), _node_name varchar(1024), _node_type int, _node_creator varchar(2049), _node_conf text, _collection_id bigint, _ts timestamp with time zone, _component_name varchar(190)) returns bigint as $$
+create or replace function TigPubSubCreateNode(_service_jid varchar(2049), _node_name varchar(1024), _node_type int, _node_creator varchar(2049), _node_conf text, _collection_id bigint, _ts timestamp with time zone, _domain varchar(1024), _createService int) returns bigint as $$
 declare
     _service_id bigint;
     _node_creator_id bigint;
     _node_id bigint;
 begin
-	select TigPubSubEnsureServiceJid(_service_jid, _component_name) into _service_id;
+	select TigPubSubEnsureServiceJid(_service_jid, _domain, _createService) into _service_id;
 	select TigPubSubEnsureJid(_node_creator) into _node_creator_id;
 	insert into tig_pubsub_nodes (service_id, name, "type", creator_id, creation_date, configuration, collection_id)
 		values (_service_id, _node_name, _node_type, _node_creator_id, _ts, _node_conf, _collection_id);
@@ -105,28 +102,24 @@ $$ LANGUAGE 'plpgsql';
 -- QUERY END:
 
 -- QUERY START:
-drop function if exists TigPubSubRemoveService(varchar(2049));
--- QUERY END:
-
--- QUERY START:
-create or replace function TigPubSubRemoveService(varchar(2049),varchar(190)) returns void as $$
+create or replace function TigPubSubRemoveService(varchar(2049)) returns void as $$
 delete from tig_pubsub_items where node_id in (
     select n.node_id from tig_pubsub_nodes n
                               inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id
-    where lower(sj.service_jid) = lower($1) and sj.component_name = $2);
+    where lower(sj.service_jid) = lower($1));
 delete from tig_pubsub_affiliations where node_id in (
     select n.node_id from tig_pubsub_nodes n
                               inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id
-    where lower(sj.service_jid) = lower($1) and sj.component_name = $2);
+    where lower(sj.service_jid) = lower($1));
 delete from tig_pubsub_subscriptions where node_id in (
     select n.node_id from tig_pubsub_nodes n
                               inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id
-    where lower(sj.service_jid) = lower($1) and sj.component_name = $2);
+    where lower(sj.service_jid) = lower($1));
 delete from tig_pubsub_nodes where node_id in (
     select n.node_id from tig_pubsub_nodes n
                               inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id
-    where lower(sj.service_jid) = lower($1) and sj.component_name = $2);
-delete from tig_pubsub_service_jids where lower(service_jid) = lower($1) and component_name = $2;
+    where lower(sj.service_jid) = lower($1));
+delete from tig_pubsub_service_jids where lower(service_jid) = lower($1);
 delete from tig_pubsub_affiliations where jid_id in (select j.jid_id from tig_pubsub_jids j where lower(j.jid) = lower($1));
 delete from tig_pubsub_subscriptions where jid_id in (select j.jid_id from tig_pubsub_jids j where lower(j.jid) = lower($1));
 $$ LANGUAGE SQL;
@@ -411,5 +404,19 @@ end$$;
 create or replace function TigPubSubGetNodeItemsMeta(bigint)
 		returns table (id varchar(1024), creation_date timestamp with time zone, update_date timestamp with time zone, uuid varchar(32)) as $$
 	select id, creation_date, update_date, concat(uuid, '') from tig_pubsub_items where node_id = $1 order by creation_date
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubGetServices(varchar(1024),int)
+		returns table (service_jid varchar(2049), is_public int) as $$
+	select service_jid, is_public from tig_pubsub_service_jids where domain = $1 and ($2 is null or is_public = $2) order by service_jid;
+$$ LANGUAGE SQL;
+-- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubCreateService(varchar(2049),varchar(1024),int)
+		returns void as $$
+	insert into tig_pubsub_service_jids (service_jid, domain, is_public) values ($1, $2, $3);
 $$ LANGUAGE SQL;
 -- QUERY END:

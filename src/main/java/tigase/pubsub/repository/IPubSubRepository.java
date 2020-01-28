@@ -50,12 +50,14 @@ public interface IPubSubRepository
 	void createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
 					NodeType nodeType, String collection) throws RepositoryException, PubSubException;
 
+	void createService(BareJID serviceJID, boolean isPublic) throws RepositoryException;
+
+	List<BareJID> getServices(BareJID domain, Boolean isPublic) throws RepositoryException;
+
 	void deleteNode(BareJID serviceJid, String nodeName) throws RepositoryException;
 
 	void destroy();
 
-	void setComponentName(String componentName);
-	
 	String[] getChildNodes(BareJID serviceJid, String node) throws RepositoryException;
 
 	IAffiliations getNodeAffiliations(BareJID serviceJid, String nodeName) throws RepositoryException;
@@ -91,8 +93,8 @@ public interface IPubSubRepository
 	void update(BareJID serviceJid, String nodeName, IAffiliations affiliations) throws RepositoryException;
 
 	void update(BareJID serviceJid, String nodeName, ISubscriptions subscriptions) throws RepositoryException;
-
-	void onUserRemoved(BareJID userJid) throws RepositoryException;
+	
+	void deleteService(BareJID serviceJID) throws RepositoryException;
 
 	void addMAMItem(BareJID serviceJid, String nodeName, String uuid, Element message, String itemId) throws RepositoryException;
 
