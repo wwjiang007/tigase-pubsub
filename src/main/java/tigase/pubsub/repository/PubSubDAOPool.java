@@ -71,16 +71,45 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 
 	@Override
 	public T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-						NodeType nodeType, T collectionId, String componentName) throws RepositoryException {
+						NodeType nodeType, T collectionId, boolean autocreateService) throws RepositoryException {
 		IPubSubDAO<T, DataSource, Q> dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
-				return dao.createNode(serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collectionId, componentName);
+				return dao.createNode(serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collectionId, autocreateService);
 			} finally {
 				offerDao(serviceJid, dao);
 			}
 		} else {
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
+			return null;
+		}
+	}
+
+	@Override
+	public void createService(BareJID serviceJID, boolean isPublic) throws RepositoryException {
+		IPubSubDAO<T, DataSource, Q> dao = takeDao(serviceJID);
+		if (dao != null) {
+			try {
+				dao.createService(serviceJID, isPublic);
+			} finally {
+				offerDao(serviceJID, dao);
+			}
+		} else {
+			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJID));
+		}
+	}
+
+	@Override
+	public List<BareJID> getServices(BareJID domain, Boolean isPublic) throws RepositoryException {
+		IPubSubDAO<T, DataSource, Q> dao = takeDao(domain);
+		if (dao != null) {
+			try {
+				return dao.getServices(domain, isPublic);
+			} finally {
+				offerDao(domain, dao);
+			}
+		} else {
+			log.warning("dao is NULL, pool empty? - " + getPoolDetails(domain));
 			return null;
 		}
 	}
@@ -479,11 +508,11 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 	}
 
 	@Override
-	public void removeService(BareJID serviceJid, String componentName) throws RepositoryException {
+	public void deleteService(BareJID serviceJid) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
 			try {
-				dao.removeService(serviceJid, componentName);
+				dao.deleteService(serviceJid);
 			} finally {
 				offerDao(serviceJid, dao);
 			}

@@ -19,34 +19,35 @@
 --
 
 -- QUERY START:
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE name = 'component_name' AND object_id = object_id('dbo.tig_pubsub_service_jids'))
-    ALTER TABLE [tig_pubsub_service_jids] ADD [component_name] [nvarchar](190);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE name = 'domain' AND object_id = object_id('dbo.tig_pubsub_service_jids'))
+BEGIN
+    ALTER TABLE [tig_pubsub_service_jids] ADD [domain] [nvarchar](1024);
+    ALTER TABLE [tig_pubsub_service_jids] ADD [domain_sha1] [varbinary](40);
+    ALTER TABLE [tig_pubsub_service_jids] ADD [is_public] [int] not null default 0;
+END
 -- QUERY END:
 GO
 
 -- QUERY START:
-IF (SELECT count(1) FROM [tig_pubsub_service_jids] WHERE component_name IS NULL) > 0
-    update tig_pubsub_service_jids set component_name = (select TOP 1 name from (
-        select name
-        from (
-            select distinct LEFT(service_jid, CHARINDEX('.', service_jid)) as name
-            from tig_pubsub_service_jids where service_jid not like '%@%' and CHARINDEX('.', service_jid) > 0
-        ) x
-        union
-        select 'pubsub' as name
-    ) y) where component_name is null;
+IF (SELECT count(1) FROM [tig_pubsub_service_jids] WHERE domain IS NULL) > 0
+    update tig_pubsub_service_jids set domain = CASE CHARINDEX('@', service_jid)
+        WHEN 0 THEN service_jid
+        ELSE SUBSTRING(service_jid, CHARINDEX('@', service_jid) + 1, LEN(service_jid))
+        end;
+    update tig_pubsub_service_jids set domain_sha1 = HASHBYTES('SHA1', LOWER(domain));
 -- QUERY END:
 GO
 
 -- QUERY START:
-IF EXISTS (SELECT * FROM sys.columns WHERE name = 'component_name' AND object_id = object_id('dbo.tig_pubsub_service_jids') AND is_nullable = 1)
-    ALTER TABLE [tig_pubsub_service_jids] ALTER COLUMN [component_name] [nvarchar](190) NOT NULL ;
+IF EXISTS (SELECT * FROM sys.columns WHERE name = 'domain' AND object_id = object_id('dbo.tig_pubsub_service_jids') AND is_nullable = 1)
+    ALTER TABLE [tig_pubsub_service_jids] ALTER COLUMN [domain] [nvarchar](1024) NOT NULL;
+    ALTER TABLE [tig_pubsub_service_jids] ALTER COLUMN [domain_sha1] [varbinary](40) NOT NULL;
 -- QUERY END:
 GO
 
 -- QUERY START:
-IF NOT EXISTS(SELECT * FROM sys.indexes WHERE object_id = object_id('dbo.tig_pubsub_service_jids') AND NAME ='IX_tig_pubsub_service_jids_component_name')
-    CREATE INDEX IX_tig_pubsub_service_jids_component_name ON [tig_pubsub_service_jids](component_name);
+IF NOT EXISTS(SELECT * FROM sys.indexes WHERE object_id = object_id('dbo.tig_pubsub_service_jids') AND NAME ='IX_tig_pubsub_service_jids_domain_is_public')
+    CREATE INDEX IX_tig_pubsub_service_jids_domain_is_public ON [tig_pubsub_service_jids](domain, is_public);
 -- QUERY END:
 GO
 
@@ -59,33 +60,27 @@ GO
 -- QUERY START:
 create procedure dbo.TigPubSubEnsureServiceJid
 	@_service_jid nvarchar(2049),
-	@_component_name nvarchar(190),
+	@_domain nvarchar(1024),
+	@_autocreateService int,
 	@_service_id bigint OUTPUT
 AS
 begin
 	declare @_service_jid_sha1 varbinary(20);
 
-		set @_service_jid_sha1 = HASHBYTES('SHA1', LOWER(@_service_jid));
-		select @_service_id=service_id from tig_pubsub_service_jids
-			where service_jid_sha1 = @_service_jid_sha1;
-		if @_service_id is null
+	set @_service_jid_sha1 = HASHBYTES('SHA1', LOWER(@_service_jid));
+
+	begin transaction;
+    select @_service_id=service_id from tig_pubsub_service_jids
+		where service_jid_sha1 = @_service_jid_sha1;
+
+	if @_service_id is null and @_autocreateService > 0
 		begin
-	BEGIN TRY
-			insert into tig_pubsub_service_jids (service_jid,service_jid_sha1,component_name)
-				select @_service_jid, @_service_jid_sha1, @_component_name where not exists(
-							select 1 from tig_pubsub_service_jids where service_jid_sha1 = @_service_jid_sha1);
+			insert into tig_pubsub_service_jids (service_jid,service_jid_sha1,domain,domain_sha1)
+				select @_service_jid, @_service_jid_sha1, @_domain, HASHBYTES('SHA1', LOWER(@_domain));
 			set @_service_id = @@IDENTITY
-			END TRY
-			BEGIN CATCH
-					IF ERROR_NUMBER() = 2627
-						select @_service_id=service_id from tig_pubsub_service_jids
-							where service_jid_sha1 = @_service_jid_sha1;
-					ELSE
-						declare @ErrorMessage nvarchar(max), @ErrorSeverity int, @ErrorState int;
-						select @ErrorMessage = ERROR_MESSAGE() + ' Line ' + cast(ERROR_LINE() as nvarchar(5)), @ErrorSeverity = ERROR_SEVERITY(), @ErrorState = ERROR_STATE();
-						raiserror (@ErrorMessage, @ErrorSeverity, @ErrorState);
-			END CATCH
 		end
+
+	commit transaction;
 end
 -- QUERY END:
 GO
@@ -105,32 +100,24 @@ create procedure dbo.TigPubSubCreateNode
 	@_node_conf nvarchar(max),
 	@_collection_id bigint,
 	@_ts datetime,
-	@_component_name nvarchar(190)
+	@_domain nvarchar(1024),
+	@_autocreateService int
 AS
 begin
 	declare @_service_id bigint;
 	declare @_node_creator_id bigint;
 
-	exec TigPubSubEnsureServiceJid @_service_jid=@_service_jid, @_component_name=@_component_name, @_service_id=@_service_id output;
 	exec TigPubSubEnsureJid @_jid=@_node_creator, @_jid_id=@_node_creator_id output;
 
-	BEGIN TRY
-		insert into dbo.tig_pubsub_nodes (service_id, name, name_sha1, type, creator_id, creation_date, configuration, collection_id)
-				select @_service_id, @_node_name, HASHBYTES('SHA1', @_node_name), @_node_type, @_node_creator_id, @_ts, @_node_conf, @_collection_id where not exists(
-							select 1 from tig_pubsub_nodes where service_id=@_service_id AND name_sha1=HASHBYTES('SHA1', @_node_name));
+    begin transaction;
+	exec TigPubSubEnsureServiceJid @_service_jid=@_service_jid, @_domain=@_domain, @_autocreateService=@_autocreateService, @_service_id=@_service_id output;
 
-		select @@IDENTITY as node_id;
+	insert into dbo.tig_pubsub_nodes (service_id, name, name_sha1, type, creator_id, creation_date, configuration, collection_id)
+			values (@_service_id, @_node_name, HASHBYTES('SHA1', @_node_name), @_node_type, @_node_creator_id, @_ts, @_node_conf, @_collection_id);
 
-  END TRY
-  BEGIN CATCH
-      IF ERROR_NUMBER() = 2627
-				select node_id from tig_pubsub_nodes where service_id=@_service_id AND name_sha1=HASHBYTES('SHA1', @_node_name)
-			ELSE
-					declare @ErrorMessage nvarchar(max), @ErrorSeverity int, @ErrorState int;
-					select @ErrorMessage = ERROR_MESSAGE() + ' Line ' + cast(ERROR_LINE() as nvarchar(5)), @ErrorSeverity = ERROR_SEVERITY(), @ErrorState = ERROR_STATE();
-					raiserror (@ErrorMessage, @ErrorSeverity, @ErrorState);
-  END CATCH
+	select @@IDENTITY as node_id;
 
+    commit transaction;
 end
 -- QUERY END:
 GO
@@ -143,13 +130,12 @@ GO
 
 -- QUERY START:
 create procedure dbo.TigPubSubRemoveService
-	@_service_jid nvarchar(2049),
-	@_component_name nvarchar(190)
+	@_service_jid nvarchar(2049)
 AS
 begin
 	declare @_service_id bigint;
 
-	select @_service_id=service_id from tig_pubsub_service_jids where service_jid_sha1 = HASHBYTES('SHA1', @_service_jid) and component_name = @_component_name;
+	select @_service_id=service_id from tig_pubsub_service_jids where service_jid_sha1 = HASHBYTES('SHA1', @_service_jid);
 
 	delete from dbo.tig_pubsub_items where node_id in (
 		select n.node_id from tig_pubsub_nodes n where n.service_id = @_service_id);
@@ -525,5 +511,43 @@ begin
 end
 -- QUERY END:
 GO
+
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubGetServices')
+	DROP PROCEDURE TigPubSubGetServices
+-- QUERY END:
+GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubGetServices
+	@_domain nvarchar(1024),
+	@_is_public int
+AS
+begin
+    select service_jid, is_public from tig_pubsub_service_jids where domain_sha1 = HASHBYTES('SHA1', @_domain) and (@_is_public is null or is_public = @_is_public) order by service_jid;
+end
+-- QUERY END:
+GO
+
+
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubCreateService')
+	DROP PROCEDURE TigPubSubCreateService
+-- QUERY END:
+GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubCreateService
+	@_service_jid nvarchar(2049),
+	@_domain nvarchar(1024),
+	@_is_public int
+AS
+begin
+	insert into tig_pubsub_service_jids (service_jid,service_jid_sha1,domain,domain_sha1,is_public)
+		values (@_service_jid, HASHBYTES('SHA1', LOWER(@_service_jid)), @_domain, HASHBYTES('SHA1', LOWER(@_domain)), @_is_public);
+end
+-- QUERY END:
+GO
+
 
 

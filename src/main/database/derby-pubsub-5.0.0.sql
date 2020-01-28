@@ -70,3 +70,21 @@ create procedure TigPubSubQueryItemsCount(nodes_ids varchar(32672), since timest
 	DYNAMIC RESULT SETS 1
 	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubQueryItemsCount';
 -- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubGetServices(domain varchar(1024), is_public int)
+	PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	READS SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubGetServices';
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubCreateService(service_jid varchar(2049), domain varchar(1024), is_public int)
+	PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	MODIFIES SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubCreateService';
+-- QUERY END:

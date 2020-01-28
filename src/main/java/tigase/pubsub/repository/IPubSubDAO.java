@@ -47,13 +47,19 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 		extends DataSourceAware<S> {
 	
 	T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
-				 NodeType nodeType, T collectionId, String componentName) throws RepositoryException;
+				 NodeType nodeType, T collectionId, boolean autocreateService) throws RepositoryException;
+
+	void createService(BareJID serviceJID, boolean isPublic) throws RepositoryException;
 
 	void deleteItem(BareJID serviceJid, T nodeId, String id) throws RepositoryException;
 
 	void deleteNode(BareJID serviceJid, T nodeId) throws RepositoryException;
 
+	void deleteService(BareJID serviceJid) throws RepositoryException;
+	
 	void destroy();
+
+	List<BareJID> getServices(BareJID domain, Boolean isPublic) throws RepositoryException;
 
 	String[] getAllNodesList(BareJID serviceJid) throws RepositoryException;
 	
@@ -92,8 +98,6 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 	void queryItems(Q query, T nodeId, MAMRepository.ItemHandler<Q, MAMRepository.Item> itemHandler)
 			throws RepositoryException, ComponentException;
 	
-	void removeService(BareJID serviceJid, String componentName) throws RepositoryException;
-
 	void removeNodeSubscription(BareJID serviceJid, T nodeId, BareJID jid) throws RepositoryException;
 
 	void updateNodeAffiliation(BareJID serviceJid, T nodeId, String nodeName, UsersAffiliation userAffiliation)

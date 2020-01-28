@@ -84,7 +84,7 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 		}
 
 		LeafNodeConfig nodeCfg = new LeafNodeConfig(nodeName);
-		dao.createNode(serviceJid, nodeName, senderJid.getBareJID(), nodeCfg, NodeType.leaf, null, "pubsub");
+		dao.createNode(serviceJid, nodeName, senderJid.getBareJID(), nodeCfg, NodeType.leaf, null, true);
 
 		node = dao.getNodeMeta(serviceJid, nodeName);
 		Assert.assertNotNull("Could not retrieve nodeId for newly created node", node);
@@ -153,8 +153,9 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 	public void test06_getNodeMeta() throws RepositoryException {
 		INodeMeta meta = dao.getNodeMeta(serviceJid, nodeName);
 		assertNotNull(meta);
-		Object nodeId = dao.getNodeMeta(serviceJid, nodeName);
-		assertEquals(nodeId, meta.getNodeId());
+		INodeMeta node = dao.getNodeMeta(serviceJid, nodeName);
+		assertNotNull(node);
+		assertEquals(node.getNodeId(), meta.getNodeId());
 		assertEquals(nodeName, meta.getNodeConfig().getNodeName());
 		assertEquals(senderJid.getBareJID(), meta.getCreator());
 		assertNotNull(meta.getCreationTime());
@@ -208,7 +209,14 @@ public abstract class AbstractPubSubDAOTest<DS extends DataSource> extends Abstr
 		Map<BareJID, UsersAffiliation> nodeAffils = dao.getNodeAffiliations(serviceJid, node.getNodeId());
 		Assert.assertNotNull("Not found affiliations for node", nodeAffils);
 		affil = nodeAffils.get(subscriberJid.getBareJID());
-		Assert.assertEquals("Bad affiliation for user", Affiliation.none, affil.getAffiliation());
+		Assert.assertEquals("Bad affiliation for user", Affiliation.none, Optional.ofNullable(affil).map(UsersAffiliation::getAffiliation).orElse(Affiliation.none));
+	}
+
+	@Test
+	public void test09_servicesRetrieval() throws RepositoryException {
+		List<BareJID> services = dao.getServices(BareJID.bareJIDInstanceNS(serviceJid.getDomain()), null);
+		assertNotNull(services);
+		assertEquals(Arrays.asList(serviceJid), services);
 	}
 
 	@Test

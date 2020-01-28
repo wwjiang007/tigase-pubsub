@@ -199,13 +199,9 @@ public class PubSubComponent
 	@Override
 	public void setName(String name) {
 		super.setName(name);
-		if (pubsubRepository != null) {
-			this.pubsubRepository.setComponentName(name);
-		}
 	}
 
 	public void setPubsubRepository(IPubSubRepository pubsubRepository) {
-		pubsubRepository.setComponentName(getName());
 		this.pubsubRepository = pubsubRepository;
 	}
 
@@ -225,7 +221,7 @@ public class PubSubComponent
 	public void onUserRemoved(UserRepository.UserRemovedEvent event) {
 		try {
 			IPubSubRepository pubsubRepository = kernel.getInstance(IPubSubRepository.class);
-			pubsubRepository.onUserRemoved(event.jid);
+			pubsubRepository.deleteService(event.jid);
 		} catch (RepositoryException ex) {
 			log.log(Level.WARNING, "could not remove PubSub data for removed user " + event.jid, ex);
 		}

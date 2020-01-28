@@ -126,7 +126,7 @@ public class DeleteAllNodesCommand
 
 	private void startRemoving(BareJID serviceJid)
 			throws RepositoryException, UserNotFoundException, TigaseDBException {
-		dao.removeService(serviceJid, component.getName());
+		dao.deleteService(serviceJid);
 		userRepo.removeSubnode(config.getServiceBareJID(), "nodes");
 	}
 }
