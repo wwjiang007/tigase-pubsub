@@ -65,8 +65,7 @@ to compile the project and run unit tests.
 
 # License
 
-<img alt="Tigase Tigase Logo" src="https://github.com/tigase/website-assets/blob/master/tigase/images/tigase-logo.png?raw=true" width="25"/>
-Official <a href="https://tigase.net/">Tigase</a> repository is available at: https://github.com/tigase/tigase-pubsub/.
+<img alt="Tigase Tigase Logo" src="https://github.com/tigase/website-assets/blob/master/tigase/images/tigase-logo.png?raw=true" width="25"/> Official <a href="https://tigase.net/">Tigase</a> repository is available at: https://github.com/tigase/tigase-pubsub/.
 
 Copyright (c) 2004 Tigase, Inc.
 
