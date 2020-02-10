@@ -48,3 +48,7 @@ begin
 end;
 $$ LANGUAGE 'plpgsql';
 -- QUERY END:
+
+-- QUERY START:
+select TigSetComponentVersion('pubsub', '4.1.0');
+-- QUERY END:

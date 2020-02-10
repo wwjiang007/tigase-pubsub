@@ -35,3 +35,7 @@ create procedure TigPubSubGetNodeItemsIdsSince(node_id bigint, itemsOrder int, s
 	DYNAMIC RESULT SETS 1
 	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubGetNodeItemIdsSince';
 -- QUERY END:
+
+-- QUERY START:
+call TigSetComponentVersion('pubsub', '4.1.0');
+-- QUERY END:

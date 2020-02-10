@@ -52,3 +52,7 @@ end //
 -- QUERY END:
 
 delimiter ;
+
+-- QUERY START:
+call TigSetComponentVersion('pubsub', '4.1.0');
+-- QUERY END:
