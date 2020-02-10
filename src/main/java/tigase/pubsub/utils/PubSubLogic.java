@@ -36,6 +36,10 @@ import java.util.stream.Stream;
  * Created by andrzej on 25.12.2016.
  */
 public interface PubSubLogic {
+
+	boolean isServiceAutoCreated();
+
+	void checkNodeConfig(AbstractNodeConfig nodeConfig) throws PubSubException;
 	
 	boolean hasSenderSubscription(final BareJID bareJid, final IAffiliations affiliations) throws RepositoryException;
 

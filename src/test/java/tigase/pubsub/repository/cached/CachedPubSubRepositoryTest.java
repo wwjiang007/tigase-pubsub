@@ -194,6 +194,16 @@ public class CachedPubSubRepositoryTest {
 		kernel.registerBean("logic").asInstance(new PubSubLogic() {
 
 			@Override
+			public boolean isServiceAutoCreated() {
+				return true;
+			}
+
+			@Override
+			public void checkNodeConfig(AbstractNodeConfig nodeConfig) throws PubSubException {
+				
+			}
+
+			@Override
 			public void checkPermission(BareJID serviceJid, String nodeName, JID senderJid, Action action)
 					throws PubSubException, RepositoryException {
 				

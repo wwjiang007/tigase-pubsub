@@ -89,12 +89,18 @@ public class CachedPubSubRepository<T>
 
 	protected final AtomicLong nodesCount = new AtomicLong(0);
 
+	@Inject(nullAllowed = true)
+	private IListener listener;
+
+	@Inject(nullAllowed = true)
+	private NodeAffiliationProvider<T> nodeAffiliationProvider;
+
 	public CachedPubSubRepository() {
 
 	}
 
 	protected boolean isServiceAutoCreated() {
-		return true;
+		return pubSubLogic.isServiceAutoCreated();
 	}
 
 	@Override
@@ -117,6 +123,8 @@ public class CachedPubSubRepository<T>
 					"Creating node, serviceJid: {0}, nodeName: {1}, ownerJid: {2}, nodeConfig: {3}, nodeType: {4}, collection: {5}",
 					new Object[]{serviceJid, nodeName, ownerJid, nodeConfig, nodeType, collection});
 		}
+		pubSubLogic.checkNodeConfig(nodeConfig);
+
 		long start = System.currentTimeMillis();
 		T collectionId = null;
 		if (collection != null && !collection.equals("")) {
@@ -520,6 +528,7 @@ public class CachedPubSubRepository<T>
 	@Override
 	public void update(BareJID serviceJid, String nodeName, AbstractNodeConfig nodeConfig)
 			throws RepositoryException, PubSubException {
+		pubSubLogic.checkNodeConfig(nodeConfig);
 		Node node = getNode(serviceJid, nodeName);
 
 		if (node != null) {
@@ -586,7 +595,7 @@ public class CachedPubSubRepository<T>
 	@Override
 	public void deleteService(BareJID userJid) throws RepositoryException {
 		dao.deleteService(userJid);
-		userRemoved(userJid);
+		serviceRemoved(userJid);
 	}
 
 	@Override
@@ -600,12 +609,16 @@ public class CachedPubSubRepository<T>
 
 	@Override
 	public void itemWritten(BareJID serviceJID, String node, String id, String publisher, Element item, String uuid) {
-
+		if (listener != null) {
+			listener.itemWritten(serviceJID, node, id, publisher, item, uuid);
+		}
 	}
 
 	@Override
 	public void itemDeleted(BareJID serviceJID, String node, String id) {
-
+		if (listener != null) {
+			listener.itemDeleted(serviceJID, node, id);
+		}
 	}
 
 	protected NodeKey createKey(BareJID serviceJid, String nodeName) {
@@ -667,6 +680,12 @@ public class CachedPubSubRepository<T>
 	}
 
 	protected IAffiliationsCached newNodeAffiliations(BareJID serviceJid, String nodeName, T nodeId, RepositorySupplier<Map<BareJID, UsersAffiliation>> affiliationSupplier) throws RepositoryException {
+		if (nodeAffiliationProvider != null) {
+			IAffiliationsCached affiliationsCached = nodeAffiliationProvider.newNodeAffiliations(serviceJid, nodeName, nodeId, affiliationSupplier);
+			if (affiliationsCached != null) {
+				return affiliationsCached;
+			}
+		}
 		return new NodeAffiliations(affiliationSupplier.get());
 	}
 
@@ -747,8 +766,11 @@ public class CachedPubSubRepository<T>
 		}
 	}
 
-	protected void userRemoved(BareJID userJid) {
+	protected void serviceRemoved(BareJID userJid) {
 		// clearing in memory caches
+		if (listener != null) {
+			listener.serviceRemoved(userJid);
+		}
 		try {
 			nodesCount.set(dao.getNodesCount(null));
 		} catch (RepositoryException ex) {
@@ -1135,6 +1157,10 @@ public class CachedPubSubRepository<T>
 		protected boolean removeEldestEntry(Map.Entry<NodeKey, Node> eldest) {
 			return (size() > maxCacheSize) && !eldest.getValue().needsWriting();
 		}
+	}
+
+	public interface NodeAffiliationProvider<T> {
+		IAffiliationsCached newNodeAffiliations(BareJID serviceJid, String nodeName, T nodeId, RepositorySupplier<Map<BareJID, UsersAffiliation>> affiliationSupplier) throws RepositoryException;
 	}
 
 }

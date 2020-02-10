@@ -74,9 +74,9 @@ public class PubSubDAOJDBC
 	private static final String GET_USER_AFFILIATIONS_QUERY = "{ call TigPubSubGetUserAffiliations(?, ?) }";
 	private static final String GET_USER_SUBSCRIPTIONS_QUERY = "{ call TigPubSubGetUserSubscriptions(?, ?) }";
 
-	private static final String COUNT_NODES_ITEMS_QUERY = "{ call TigPubSubQueryItemsCount(?,?,?) }";
-	private static final String GET_NODES_ITEMS_QUERY = "{ call TigPubSubQueryItems(?,?,?,?) }";
-	private static final String GET_NODES_ITEMS_POSITION_QUERY = "{ call TigPubSubQueryItemPosition(?,?,?,?,?) }";
+	private static final String COUNT_NODES_ITEMS_QUERY = "{ call TigPubSubQueryItemsCount(?,?,?,?) }";
+	private static final String GET_NODES_ITEMS_QUERY = "{ call TigPubSubQueryItems(?,?,?,?,?,?) }";
+	private static final String GET_NODES_ITEMS_POSITION_QUERY = "{ call TigPubSubQueryItemPosition(?,?,?,?) }";
 
 	private DataRepository data_repo;
 	@ConfigField(desc = "Add entry to MAM repository", alias = "mam-add-item-query")

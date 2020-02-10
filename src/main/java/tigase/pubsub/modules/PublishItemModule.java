@@ -169,6 +169,7 @@ public class PublishItemModule
 				}
 				getRepository().addMAMItem(serviceJID, collection == null ? nodeName : collection, uuid, message, itemId);
 			}
+			eventBus.fire(new BroadcastNotificationEvent(serviceJID, nodeName, message));
 			broadcastNotification(serviceJID, nodeName, message);
 		}
 	}
@@ -448,7 +449,9 @@ public class PublishItemModule
 
 	@Override
 	public void beforeUnregister() {
-		eventBus.unregisterAll(this);
+		if (eventBus != null) {
+			eventBus.unregisterAll(this);
+		}
 	}
 	
 	protected JID[] getValidBuddies(BareJID id) throws RepositoryException {
@@ -685,5 +688,18 @@ public class PublishItemModule
 			this.uuid = uuid;
 		}
 
+	}
+
+	public static class BroadcastNotificationEvent {
+
+		public final BareJID serviceJid;
+		public final String node;
+		public final Element notificationMessage;
+
+		public BroadcastNotificationEvent(BareJID serviceJid, String node, Element notificationMessage) {
+			this.serviceJid = serviceJid;
+			this.node = node;
+			this.notificationMessage = notificationMessage;
+		}
 	}
 }

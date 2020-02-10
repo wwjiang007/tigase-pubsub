@@ -89,7 +89,13 @@ public class DefaultPubSubLogic
 
 		AbstractNodeConfig nodeConfig = repository.getNodeConfig(serviceJid, nodeName);
 		if (nodeConfig == null) {
-			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
+			if (isServiceJidPEP(serviceJid)) {
+				if (!serviceJid.equals(senderJid.getBareJID())) {
+					throw new PubSubException(Authorization.FORBIDDEN);
+				}
+			} else {
+				throw new PubSubException(Authorization.ITEM_NOT_FOUND);
+			}
 		}
 
 		if (pubSubConfig.isAdmin(senderJid)) {
@@ -282,6 +288,16 @@ public class DefaultPubSubLogic
 
 
 		return message;
+	}
+
+	@Override
+	public boolean isServiceAutoCreated() {
+		return true;
+	}
+
+	@Override
+	public void checkNodeConfig(AbstractNodeConfig nodeConfig) throws PubSubException {
+		// nothing to do here...
 	}
 
 	public boolean hasSenderSubscription(final BareJID bareJid, final IAffiliations affiliations) throws RepositoryException {
