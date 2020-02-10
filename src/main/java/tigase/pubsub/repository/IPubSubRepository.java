@@ -113,4 +113,10 @@ public interface IPubSubRepository
 		T get() throws RepositoryException;
 
 	}
+
+	interface IListener extends IItems.IListnener {
+
+		void serviceRemoved(BareJID serviceJID);
+
+	}
 }
