@@ -207,7 +207,7 @@ end$$;
 
 -- QUERY START:
 create or replace function TigPubSubMamQueryItems(_node_id bigint, _since timestamp with time zone , _to timestamp with time zone, _limit int, _offset int) returns table (
-    uuid varchar(32),
+    uuid varchar(36),
     ts timestamp with time zone,
     payload text
 ) as $$
@@ -232,7 +232,7 @@ end$$;
 -- QUERY END:
 
 -- QUERY START:
-create or replace function TigPubSubMamQueryItemPosition(_node_id bigint, _since timestamp with time zone, _to timestamp with time zone, _uuid varchar(32)) returns table (
+create or replace function TigPubSubMamQueryItemPosition(_node_id bigint, _since timestamp with time zone, _to timestamp with time zone, _uuid varchar(36)) returns table (
     "position" bigint
 ) as $$
     select x.position from (
@@ -280,7 +280,7 @@ end$$;
 
 -- QUERY START:
 create or replace function TigPubSubGetItem(bigint,varchar(1024)) returns table (
-	"data" text, jid varchar(2049), uuid varchar(32)
+	"data" text, jid varchar(2049), uuid varchar(36)
 ) as $$
 	select "data", pn.name, concat(pi.uuid, '')
 		from tig_pubsub_items pi
@@ -402,7 +402,7 @@ end$$;
 
 -- QUERY START:
 create or replace function TigPubSubGetNodeItemsMeta(bigint)
-		returns table (id varchar(1024), creation_date timestamp with time zone, update_date timestamp with time zone, uuid varchar(32)) as $$
+		returns table (id varchar(1024), creation_date timestamp with time zone, update_date timestamp with time zone, uuid varchar(36)) as $$
 	select id, creation_date, update_date, concat(uuid, '') from tig_pubsub_items where node_id = $1 order by creation_date
 $$ LANGUAGE SQL;
 -- QUERY END:
