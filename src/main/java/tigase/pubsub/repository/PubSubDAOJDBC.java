@@ -507,7 +507,7 @@ public class PubSubDAOJDBC
 						String node = rs.getString(1);
 						String itemId = rs.getString(2);
 						String itemUuid = rs.getString(3);
-						Element itemEl = itemDataToElement(rs.getString(5));
+						Element itemEl = itemDataToElement(rs.getString(4));
 
 						results.add(new IItems.Item(node, itemId, itemUuid, itemEl));
 					}
