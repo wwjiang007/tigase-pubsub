@@ -165,7 +165,7 @@ public class PresenceNotifierModule
 			Element item = new Element("item");
 			item.addChild(createPresenceNotificationItem(serviceJID, nodeName, destinationJID, p));
 
-			publishItemModule.sendNotification(serviceJID, nodeName, item, null, null, destinationJID);
+			publishItemModule.sendNotification(serviceJID, nodeName, item, null, null, destinationJID, StanzaType.headline);
 		}
 	}
 }

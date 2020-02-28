@@ -23,6 +23,7 @@ import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IAffiliations;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.xml.Element;
+import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
@@ -47,7 +48,7 @@ public interface PubSubLogic {
 								  final ISubscriptions subscriptions) throws RepositoryException;
 
 	Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName, List<Element> itemsToSend,
-									   Map<String, String> headers);
+									   Map<String, String> headers, StanzaType stanzaType);
 	
 	void checkPermission(BareJID serviceJid, String nodeName, JID senderJid, Action action) throws PubSubException, RepositoryException;
 
