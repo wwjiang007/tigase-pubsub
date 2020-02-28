@@ -388,13 +388,9 @@ public class PublishItemModule
 		if (leafNodeConfig.isPersistItem()) {
 			itemIds = new ArrayList<>();
 			for (Element item : itemsToPublish) {
-				String id = item.getAttributeStaticStr("id");
+				String id = pubSubLogic.validateItemId(toJid, nodeName, item.getAttributeStaticStr("id"));
 
-				if (id == null) {
-					id = Utils.createUID();
-
-					// throw new PubSubException(Authorization.BAD_REQUEST,
-					// PubSubErrorCondition.ITEM_REQUIRED);
+				if (id.equals(item.getAttributeStaticStr("id"))) {
 					item.setAttribute("id", id);
 				}
 				itemIds.add(id);
