@@ -67,6 +67,8 @@ public interface PubSubLogic {
 		purgeNode,
 		manageNode
 	}
+
+	String validateItemId(BareJID toJid, String nodeName, String id);
 //	enum Role {
 //		none,
 //		subscriber,

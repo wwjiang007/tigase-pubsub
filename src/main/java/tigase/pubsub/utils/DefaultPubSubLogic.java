@@ -472,4 +472,12 @@ public class DefaultPubSubLogic
 		return pubSubConfig.isPepPeristent() && serivceJid.getLocalpart() != null &&
 				!serivceJid.getDomain().startsWith(component.getName() + ".");
 	}
+
+	@Override
+	public String validateItemId(BareJID toJid, String nodeName, String id) {
+		if (id != null) {
+			return id;
+		}
+		return Utils.createUID();
+	}
 }
