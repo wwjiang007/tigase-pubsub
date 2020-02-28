@@ -20,6 +20,7 @@ package tigase.pubsub.modules;
 import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
+import tigase.db.util.SchemaManager;
 import tigase.eventbus.EventBus;
 import tigase.eventbus.HandleEvent;
 import tigase.form.Field;
@@ -146,13 +147,13 @@ public class PublishItemModule
 
 	public void generateNotifications(BareJID serviceJID, String nodeName, List<Element> itemsToSend, String uuid, boolean persistInMAM)
 			throws RepositoryException {
-		for (String collection : getCollectionsForNotification(serviceJID, nodeName)) {
+		for (SchemaManager.Pair<String, StanzaType> pair : getCollectionsForNotification(serviceJID, nodeName)) {
 			Map<String, String> headers = null;
-			if (collection != null) {
+			if (pair.getKey() != null) {
 				headers = new HashMap<>();
-				headers.put("Collection", collection);
+				headers.put("Collection", pair.getKey());
 			}
-			Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, itemsToSend, headers);
+			Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, itemsToSend, headers, pair.getValue());
 
 			// JUST AN IDEA: MAM2 should work only for leaf nodes... (full query of subtrees is complicated and makes it impossible to satisfy constraints!
 			// MAM cannot work with batch publication of items and this should be forbidden (bad-request)
@@ -167,15 +168,15 @@ public class PublishItemModule
 				if (itemsToSend.size() > 0) {
 					itemId = itemsToSend.get(0).getAttributeStaticStr("id");
 				}
-				getRepository().addMAMItem(serviceJID, collection == null ? nodeName : collection, uuid, message, itemId);
+				getRepository().addMAMItem(serviceJID, pair.getKey() == null ? nodeName : pair.getKey(), uuid, message, itemId);
 			}
 			eventBus.fire(new BroadcastNotificationEvent(serviceJID, nodeName, message));
 			broadcastNotification(serviceJID, nodeName, message);
 		}
 	}
 
-	public void sendNotification(BareJID serviceJID, String nodeName, Element item, String uuid, Map<String,String> headers, JID recipient) {
-		Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, Collections.singletonList(item), headers);
+	public void sendNotification(BareJID serviceJID, String nodeName, Element item, String uuid, Map<String,String> headers, JID recipient, StanzaType stanzaType) {
+		Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, Collections.singletonList(item), headers, stanzaType);
 		packetWriter.write(Packet.packetInstance(message, JID.jidInstance(serviceJID), recipient));
 	}
 
@@ -215,17 +216,17 @@ public class PublishItemModule
 		return CRIT_PUBLISH;
 	}
 
-	private List<String> getCollectionsForNotification(final BareJID serviceJid, final String nodeName) throws RepositoryException {
-		ArrayList<String> result = new ArrayList<String>();
+	private List<SchemaManager.Pair<String,StanzaType>> getCollectionsForNotification(final BareJID serviceJid, final String nodeName) throws RepositoryException {
+		ArrayList<SchemaManager.Pair<String,StanzaType>> result = new ArrayList<>();
 		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
 		String cn = nodeConfig.getCollection();
 
-		result.add(null);
+		result.add(new SchemaManager.Pair(null, nodeConfig.getNotificationType()));
 
 		while ((cn != null) && !"".equals(cn)) {
-			result.add(cn);
 
 			AbstractNodeConfig nc = getRepository().getNodeConfig(serviceJid, cn);
+			result.add(new SchemaManager.Pair(cn, nc.getNotificationType()));
 
 			cn = nc.getCollection();
 		}
@@ -421,7 +422,7 @@ public class PublishItemModule
 				String lastID = ids[ids.length - 1];
 				IItems.IItem item = nodeItems.getItem(lastID);
 				if (item != null && item.getItem() != null) {
-					sendNotification(serviceJid, nodeConfig.getNodeName(), item.getItem(), item.getUUID(), null, destinationJID);
+					sendNotification(serviceJid, nodeConfig.getNodeName(), item.getItem(), item.getUUID(), null, destinationJID, nodeConfig.getNotificationType());
 				} else {
 					if (log.isLoggable(Level.FINEST)) {
 						log.log(Level.FINEST, "There is no payload for item with id '" + lastID + "' at '" + nodeConfig.getNodeName() +
@@ -650,7 +651,7 @@ public class PublishItemModule
 		final Element item = publish.getChild("item");
 		String nodeName = publish.getAttributeStaticStr("node");
 
-		Element message = pubSubLogic.prepareNotificationMessage(senderJid.copyWithoutResource(), String.valueOf(++counter), null, nodeName, Collections.singletonList(item), null);
+		Element message = pubSubLogic.prepareNotificationMessage(senderJid.copyWithoutResource(), String.valueOf(++counter), null, nodeName, Collections.singletonList(item), null, StanzaType.headline);
 
 		for (JID jid : subscribers) {
 			Element clone = message.clone();

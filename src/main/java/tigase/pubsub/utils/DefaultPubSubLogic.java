@@ -34,6 +34,7 @@ import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
+import tigase.xmpp.StanzaType;
 import tigase.xmpp.impl.roster.RosterAbstract;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.jid.BareJID;
@@ -231,9 +232,12 @@ public class DefaultPubSubLogic
 
 	@Override
 	public Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName, List<Element> itemsToSend,
-											  Map<String, String> headers) {
+											  Map<String, String> headers, StanzaType stanzaType) {
 		Element message = new Element("message", new String[]{"xmlns", "from", "id"},
 									  new String[]{Packet.CLIENT_XMLNS, from.toString(), id});
+		if (stanzaType != null && stanzaType != StanzaType.normal) {
+			message.setAttribute("type", stanzaType.name());
+		}
 		Element event = new Element("event", new String[]{"xmlns"},
 									new String[]{"http://jabber.org/protocol/pubsub#event"});
 

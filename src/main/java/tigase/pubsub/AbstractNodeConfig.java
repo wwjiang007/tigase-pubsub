@@ -24,6 +24,7 @@ import tigase.form.Field;
 import tigase.form.Field.FieldType;
 import tigase.form.Form;
 import tigase.xml.Element;
+import tigase.xmpp.StanzaType;
 
 /**
  * Common implementation of PubSub node configuration handler.
@@ -171,6 +172,14 @@ public abstract class AbstractNodeConfig {
 
 	public void setNodeType(NodeType nodeType) {
 		form.get("pubsub#node_type").setValues(new String[]{nodeType.name()});
+	}
+
+	public StanzaType getNotificationType() {
+		String type = form.getAsString("pubsub#notification_type");
+		if (type == null) {
+			return StanzaType.headline;
+		}
+		return StanzaType.valueOf(type);
 	}
 
 	public PublisherModel getPublisherModel() {
@@ -393,6 +402,9 @@ public abstract class AbstractNodeConfig {
 				Field.fieldListSingle(TIGASE + "collection_items_odering", CollectionItemsOrdering.byUpdateDate.name(),
 									  "Whether to sort collection items by creation date or update time", null,
 									  asStrinTable(CollectionItemsOrdering.values())));
-
+		form.addField(Field.fieldListSingle(PUBSUB + "notification_type", StanzaType.headline.name(),
+											"Specify the delivery style for notifications",
+											new String[]{"Messages of type headline", "Messages of type normal"},
+											asStrinTable(new Enum[]{StanzaType.headline, StanzaType.normal})));
 	}
 }
