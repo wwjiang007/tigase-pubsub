@@ -390,7 +390,7 @@ public class PublishItemModule
 			for (Element item : itemsToPublish) {
 				String id = pubSubLogic.validateItemId(toJid, nodeName, item.getAttributeStaticStr("id"));
 
-				if (id.equals(item.getAttributeStaticStr("id"))) {
+				if (!id.equals(item.getAttributeStaticStr("id"))) {
 					item.setAttribute("id", id);
 				}
 				itemIds.add(id);
