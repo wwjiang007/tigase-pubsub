@@ -23,6 +23,7 @@ import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.modules.mam.Query;
+import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xml.Element;
 import tigase.xmpp.impl.roster.RosterElement;
@@ -79,6 +80,8 @@ public interface IPubSubRepository
 
 	String[] getRootCollection(BareJID serviceJid) throws RepositoryException;
 
+	Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid) throws RepositoryException;
+		
 	Map<BareJID, RosterElement> getUserRoster(BareJID owner) throws RepositoryException;
 
 	Map<String, UsersSubscription> getUserSubscriptions(BareJID serviceJid, BareJID userJid) throws RepositoryException;
