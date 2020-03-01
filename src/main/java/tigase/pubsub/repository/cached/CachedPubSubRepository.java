@@ -452,6 +452,18 @@ public class CachedPubSubRepository<T>
 	}
 
 	@Override
+	public Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid)
+			throws RepositoryException {
+		if (nodeAffiliationProvider != null) {
+			Map<String, UsersAffiliation> results = nodeAffiliationProvider.getUserAffiliations(serviceJid, jid);
+			if (results != null) {
+				return results;
+			}
+		}
+		return this.dao.getUserAffiliations(serviceJid, jid);
+	}
+
+	@Override
 	public Map<BareJID, RosterElement> getUserRoster(BareJID owner) throws RepositoryException {
 		return this.dao.getUserRoster(owner);
 	}
@@ -1160,6 +1172,9 @@ public class CachedPubSubRepository<T>
 	}
 
 	public interface NodeAffiliationProvider<T> {
+
+		Map<String, UsersAffiliation> getUserAffiliations(BareJID serviceJid, BareJID jid) throws RepositoryException;
+
 		IAffiliationsCached newNodeAffiliations(BareJID serviceJid, String nodeName, T nodeId, RepositorySupplier<Map<BareJID, UsersAffiliation>> affiliationSupplier) throws RepositoryException;
 	}
 

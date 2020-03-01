@@ -70,8 +70,7 @@ public class RetrieveAffiliationsModule
 
 			pubsubResult.addChild(affiliationsResult);
 
-			IPubSubDAO directRepo = this.getRepository().getPubSubDAO();
-			Map<String, UsersAffiliation> userAffiliations = directRepo.getUserAffiliations(serviceJid, senderBareJid);
+			Map<String, UsersAffiliation> userAffiliations = getRepository().getUserAffiliations(serviceJid, senderBareJid);
 			for (Map.Entry<String, UsersAffiliation> entry : userAffiliations.entrySet()) {
 				Affiliation affiliation = entry.getValue().getAffiliation();
 				Element a = new Element("affiliation", new String[]{"node", "affiliation"},

@@ -53,7 +53,7 @@ public class ManageAffiliationsModule
 			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub#owner"))
 			.add(ElementCriteria.name("affiliations"));
 
-	private static Packet createAffiliationNotification(JID fromJid, JID toJid, String nodeName,
+	public static Packet createAffiliationNotification(JID fromJid, JID toJid, String nodeName,
 														Affiliation affilation) {
 		Packet message = Message.getMessage(fromJid, toJid, null, null, null, null, null);
 		Element pubsub = new Element("pubsub", new String[]{"xmlns"},
