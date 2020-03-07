@@ -19,6 +19,7 @@ package tigase.pubsub.modules;
 
 import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
+import tigase.criteria.Criteria;
 import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
@@ -40,6 +41,7 @@ import tigase.xmpp.rsm.RSM;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @Bean(name = DiscoveryModule.ID, parent = PubSubComponent.class, active = true)
@@ -52,12 +54,25 @@ public class DiscoveryModule
 	private IPubSubConfig config;
 	@Inject
 	private IPubSubRepository repository;
+	@Inject(nullAllowed = true)
+	private Predicate<Packet> packetFilter;
 
 	public DiscoveryModule() {
 		this.formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		this.formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 
+	@Override
+	public boolean canHandle(Packet packet) {
+		if (packetFilter != null) {
+			if (!packetFilter.test(packet)) {
+				return false;
+			}
+		}
+		Criteria criteria = getModuleCriteria();
+		return criteria != null && criteria.match(packet.getElement());
+	}
+	
 	@Override
 	protected void processDiscoInfo(final Packet packet, final JID jid, final String node, final JID senderJID)
 			throws ComponentException, RepositoryException {
