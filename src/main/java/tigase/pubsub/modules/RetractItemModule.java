@@ -127,24 +127,24 @@ public class RetractItemModule
 
 	public void retractItems(BareJID toJid, String nodeName, List<String> itemsToDelete) throws RepositoryException {
 		IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
+		if (nodeItems != null) {
+			List<Element> itemsToSend = new ArrayList<>(itemsToDelete.size());
+			try {
+				for (String id : itemsToDelete) {
+					IItems.IItem item = nodeItems.getItem(id);
 
-		List<Element> itemsToSend = new ArrayList<>(itemsToDelete.size());
-		try {
-			for (String id : itemsToDelete) {
-				IItems.IItem item = nodeItems.getItem(id);
+					if (item != null) {
+						nodeItems.deleteItem(id);
 
-				if (item != null) {
-					nodeItems.deleteItem(id);
+						Element notification = new Element("retract", new String[]{"id"}, new String[]{id});
 
-					Element notification = new Element("retract", new String[]{"id"}, new String[]{id});
-
-					eventBus.fire(
-							new RetractItemModule.ItemRetractedEvent(toJid, nodeName, notification));
-					itemsToSend.add(notification);
+						eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, nodeName, notification));
+						itemsToSend.add(notification);
+					}
 				}
+			} finally {
+				publishModule.generateNotifications(toJid, nodeName, itemsToSend, null, false);
 			}
-		} finally {
-			publishModule.generateNotifications(toJid, nodeName, itemsToSend, null, false);
 		}
 	}
 

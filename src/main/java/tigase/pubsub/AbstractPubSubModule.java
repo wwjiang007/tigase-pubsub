@@ -19,6 +19,7 @@ package tigase.pubsub;
 
 import tigase.component.PacketWriter;
 import tigase.component.modules.Module;
+import tigase.criteria.Criteria;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.utils.PubSubLogic;
@@ -28,6 +29,7 @@ import tigase.xml.Element;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 /**
@@ -49,6 +51,8 @@ public abstract class AbstractPubSubModule
 	protected PacketWriter packetWriter;
 	@Inject(nullAllowed = false)
 	private IPubSubRepository repository;
+	@Inject(nullAllowed = true)
+	private Predicate<Packet> packetFilter;
 	
 	public static List<Element> makeArray(Element... elements) {
 		LinkedList<Element> result = new LinkedList<Element>();
@@ -72,6 +76,17 @@ public abstract class AbstractPubSubModule
 
 	public AbstractPubSubModule() {
 		this.setStatisticsPrefix(getClass().getSimpleName());
+	}
+
+	@Override
+	public boolean canHandle(Packet packet) {
+		if (packetFilter != null) {
+			if (!packetFilter.test(packet)) {
+				return false;
+			}
+		}
+		Criteria criteria = getModuleCriteria();
+		return criteria != null && criteria.match(packet.getElement());
 	}
 
 	protected IPubSubRepository getRepository() {
