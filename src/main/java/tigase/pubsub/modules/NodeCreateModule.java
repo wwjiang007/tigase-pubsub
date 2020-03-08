@@ -104,7 +104,7 @@ public class NodeCreateModule
 			NodeType nodeType = NodeType.leaf;
 			String collection = null;
 			AbstractNodeConfig defaultNodeConfig = this.defaultNodeConfig;
-			if (toJid.getLocalpart() != null) {
+			if (pubSubLogic.isServiceJidPEP(toJid)) {
 				defaultNodeConfig = this.defaultPepNodeConfig;
 			}
 

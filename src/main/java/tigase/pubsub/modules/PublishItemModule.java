@@ -301,7 +301,7 @@ public class PublishItemModule
 		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(toJid, nodeName);
 
 		if (nodeConfig == null) {
-			if (toJid.getLocalpart() == null || !config.isPepPeristent()) {
+			if ((!pubSubLogic.isServiceJidPEP(toJid)) || !config.isPepPeristent()) {
 				throw new PubSubException(Authorization.ITEM_NOT_FOUND);
 			} else {
 				// this is PubSub service for particular user - we should
