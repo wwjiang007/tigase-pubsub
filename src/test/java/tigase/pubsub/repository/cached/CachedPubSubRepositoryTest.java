@@ -35,6 +35,7 @@ import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.pubsub.utils.PubSubLogic;
 import tigase.xml.Element;
+import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 import tigase.xmpp.mam.MAMRepository;
@@ -229,7 +230,8 @@ public class CachedPubSubRepositoryTest {
 
 			@Override
 			public Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName,
-													  List<Element> itemsToSend, Map<String, String> headers) {
+													  List<Element> itemsToSend, Map<String, String> headers,
+													  StanzaType stanzaType) {
 				return null;
 			}
 			
@@ -241,6 +243,11 @@ public class CachedPubSubRepositoryTest {
 			@Override
 			public boolean isMAMEnabled(BareJID serviceJid, String node) throws RepositoryException {
 				return false;
+			}
+
+			@Override
+			public String validateItemId(BareJID toJid, String nodeName, String id) {
+				return null;
 			}
 		}).exec();
 		kernel.registerBean("config").asInstance(new PubSubConfig()).exec();
