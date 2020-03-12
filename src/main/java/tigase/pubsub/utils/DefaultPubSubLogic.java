@@ -90,13 +90,7 @@ public class DefaultPubSubLogic
 
 		AbstractNodeConfig nodeConfig = repository.getNodeConfig(serviceJid, nodeName);
 		if (nodeConfig == null) {
-			if (isServiceJidPEP(serviceJid)) {
-				if (!serviceJid.equals(senderJid.getBareJID())) {
-					throw new PubSubException(Authorization.FORBIDDEN);
-				}
-			} else {
-				throw new PubSubException(Authorization.ITEM_NOT_FOUND);
-			}
+			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
 		}
 
 		if (pubSubConfig.isAdmin(senderJid)) {
