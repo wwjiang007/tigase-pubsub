@@ -290,11 +290,19 @@ $$ LANGUAGE SQL;
 -- QUERY END:
 
 -- QUERY START:
+do $$
+begin
+if exists( select 1 from pg_proc where proname = lower('TigPubSubQueryItems') and pg_get_function_result(oid) = 'TABLE(node_name character varying, node_id bigint, item_id character varying, creation_date timestamp with time zone, payload text)') then
+    drop function TigPubSubQueryItems(text, timestamp with time zone, timestamp with time zone, int, int, int);
+end if;
+end$$;
+-- QUERY END:
+
+-- QUERY START:
 create or replace function TigPubSubQueryItems(_nodes_ids text, _since timestamp with time zone , _to timestamp with time zone, _order int, _limit int, _offset int) returns table (
     node_name varchar(1024),
-    node_id bigint,
     item_id varchar(1024),
-    creation_date timestamp with time zone,
+    uuid varchar(36),
     payload text
 ) as $$
 declare
@@ -303,7 +311,7 @@ begin
     nodesIds := '{' || _nodes_ids || '}';
 
     if _order = 0 then
-        return query select pn.name, pi.node_id, pi.id, pi.creation_date, pi.data
+        return query select pn.name, pi.id, cast(concat(pi.uuid, '') as varchar(36)) as uuid, pi.data
         from tig_pubsub_items pi
             inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
         where
@@ -313,7 +321,7 @@ begin
         order by pi.creation_date
         limit _limit offset _offset;
     else
-        return query select pn.name, pi.node_id, pi.id, pi.update_date, pi.data
+        return query select pn.name, pi.id, cast(concat(pi.uuid, '') as varchar(36)) as uuid, pi.data
         from tig_pubsub_items pi
             inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
         where
