@@ -17,7 +17,6 @@
  */
 package tigase.pubsub.repository.cached;
 
-import tigase.pubsub.IPubSubConfig;
 import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.db.DataSource;
@@ -34,6 +33,8 @@ import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.*;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
+import tigase.pubsub.utils.Cache;
+import tigase.pubsub.utils.LRUCacheWithFuture;
 import tigase.pubsub.utils.PubSubLogic;
 import tigase.stats.Counter;
 import tigase.stats.StatisticHolder;
@@ -73,7 +74,7 @@ public class CachedPubSubRepository<T>
 	protected Logger log = Logger.getLogger(this.getClass().getName());
 	@Inject
 	protected PubSubLogic pubSubLogic;
-	protected Map<NodeKey, Node> nodes;
+	protected Cache<NodeKey, Node> nodes;
 	private StatisticHolder cacheStats;
 	@ConfigField(desc = "Delayed load of root nodes collections", alias = "delayed-root-collection-loading")
 	private boolean delayedRootCollectionLoading = false;
@@ -239,10 +240,6 @@ public class CachedPubSubRepository<T>
 		}
 	}
 
-	public Collection<Node> getAllNodes() {
-		return Collections.unmodifiableCollection(nodes.values());
-	}
-
 	public String[] getChildNodes(BareJID serviceJid, String nodeName) throws RepositoryException {
 		Node node = this.getNode(serviceJid, nodeName);
 		if (node == null) {
@@ -382,20 +379,9 @@ public class CachedPubSubRepository<T>
 
 		long subscriptionsCount = 0;
 		long affiliationsCount = 0;
-
-		// synchronized (mutex) {
-		Map<NodeKey, Node> tmp = null;
-
-		synchronized (nodes) {
-			tmp = new LinkedHashMap<NodeKey, Node>(nodes);
-		}
-
-		for (Node nd : tmp.values()) {
-			subscriptionsCount += nd.getNodeSubscriptions().size();
-			affiliationsCount += nd.getNodeAffiliations().size();
-		}
-
-		// }
+		
+		affiliationsCount += nodes.values().map(Node::getNodeAffiliations).mapToInt(IAffiliations::size).sum();
+		subscriptionsCount += nodes.values().map(Node::getNodeSubscriptions).mapToInt(ISubscriptions::size).sum();
 
 		if (updateSubscriptionsCalled > 0) {
 			stats.add(name, "Update subscriptions calls", updateSubscriptionsCalled, Level.FINE);
@@ -483,9 +469,9 @@ public class CachedPubSubRepository<T>
 	public void initialize() {
 		Integer maxCacheSize = config.getMaxCacheSize();
 
-		final SizedCache cache = new SizedCache(maxCacheSize);
+		Cache<NodeKey, Node> cache = new LRUCacheWithFuture<>(maxCacheSize);
 		cacheStats = cache;
-		nodes = Collections.synchronizedMap(cache);
+		nodes = cache;
 
 		// Runtime.getRuntime().addShutdownHook(makeLazyWriteThread(true));
 		log.config(
@@ -639,20 +625,22 @@ public class CachedPubSubRepository<T>
 
 	protected Node getNode(BareJID serviceJid, String nodeName) throws RepositoryException {
 		NodeKey key = createKey(serviceJid, nodeName);
-		Node<T> node = this.nodes.get(key);
-
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "Getting node, serviceJid: {0}, nodeName: {1}, key: {2}, node: {3}",
-					new Object[]{serviceJid, nodeName, key, node});
-		}
-
-		if (node == null) {
-			node = loadNode(serviceJid, nodeName);
-			if (node != null) {
-				this.nodes.putIfAbsent(key, node);
+		try {
+			Node<T> node = this.nodes.computeIfAbsent(key, () -> {
+				try {
+					return loadNode(serviceJid, nodeName);
+				} catch (RepositoryException ex) {
+					throw new Cache.CacheException(ex);
+				}
+			});
+			if (log.isLoggable(Level.FINEST)) {
+				log.log(Level.FINEST, "Getting node, serviceJid: {0}, nodeName: {1}, key: {2}, node: {3}",
+						new Object[]{serviceJid, nodeName, key, node});
 			}
+			return node;
+		} catch (Cache.CacheException ex) {
+			throw new RepositoryException(ex.getMessage(), ex);
 		}
-		return node;
 	}
 
 	protected Node loadNode(BareJID serviceJid, String nodeName) throws RepositoryException {
@@ -1097,8 +1085,8 @@ public class CachedPubSubRepository<T>
 		}
 	}
 	
-	public static class SizedCache
-			extends LinkedHashMap<NodeKey, Node>
+	public static class SizedCache<V>
+			extends LinkedHashMap<NodeKey, V>
 			implements StatisticHolder {
 
 		private static final long serialVersionUID = 1L;
@@ -1132,8 +1120,8 @@ public class CachedPubSubRepository<T>
 		}
 
 		@Override
-		public Node get(Object key) {
-			Node val = super.get(key);
+		public V get(Object key) {
+			V val = super.get(key);
 			requestsCounter.inc();
 			if (val != null) {
 				hitsCounter.inc();
@@ -1166,8 +1154,8 @@ public class CachedPubSubRepository<T>
 		}
 
 		@Override
-		protected boolean removeEldestEntry(Map.Entry<NodeKey, Node> eldest) {
-			return (size() > maxCacheSize) && !eldest.getValue().needsWriting();
+		protected boolean removeEldestEntry(Map.Entry<NodeKey, V> eldest) {
+			return (size() > maxCacheSize);// && !eldest.getValue().needsWriting();
 		}
 	}
 
