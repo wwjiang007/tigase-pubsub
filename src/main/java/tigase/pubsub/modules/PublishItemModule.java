@@ -392,26 +392,27 @@ public class PublishItemModule
 			return;
 		}
 		IItems nodeItems = this.getRepository().getNodeItems(serviceJid, nodeConfig.getNodeName());
-		String[] ids = nodeItems.getItemsIds(nodeConfig.getCollectionItemsOrdering());
+		if (nodeItems != null) {
+			String[] ids = nodeItems.getItemsIds(nodeConfig.getCollectionItemsOrdering());
 
-		if (ids != null && ids.length > 0) {
-			String lastID = ids[ids.length - 1];
-			Element payload = nodeItems.getItem(lastID);
-			if (payload != null) {
-				Element items = new Element("items");
-				items.addAttribute("node", nodeConfig.getNodeName());
-				items.addChild(payload);
+			if (ids != null && ids.length > 0) {
+				String lastID = ids[ids.length - 1];
+				Element payload = nodeItems.getItem(lastID);
+				if (payload != null) {
+					Element items = new Element("items");
+					items.addAttribute("node", nodeConfig.getNodeName());
+					items.addChild(payload);
 
-				sendNotifications(new JID[]{destinationJID}, items, JID.jidInstance(serviceJid), nodeConfig, nodeConfig.getNodeName(), null);
-			} else {
-				if (log.isLoggable(Level.FINEST)) {
-					log.log(Level.FINEST,
-							"There is no payload for item with id '" + lastID + "' at '" + nodeConfig.getNodeName() +
-									"' for '" + serviceJid + "'");
+					sendNotifications(new JID[]{destinationJID}, items, JID.jidInstance(serviceJid), nodeConfig,
+									  nodeConfig.getNodeName(), null);
+				} else {
+					if (log.isLoggable(Level.FINEST)) {
+						log.log(Level.FINEST, "There is no payload for item with id '" + lastID + "' at '" + nodeConfig.getNodeName() +
+								"' for '" + serviceJid + "'");
+					}
 				}
 			}
 		}
-
 	}
 
 	public void sendNotifications(Element itemToSend, final JID jidFrom, final String publisherNodeName,
