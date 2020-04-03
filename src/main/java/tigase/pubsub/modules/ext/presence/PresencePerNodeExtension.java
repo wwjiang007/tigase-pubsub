@@ -134,6 +134,9 @@ public class PresencePerNodeExtension
 
 	@HandleEvent
 	public void onPresenceEvent(PresenceCollectorModule.PresenceChangeEvent event) {
+		if (!event.componentName.equals(pubsubContext.getComponentName())) {
+			return;
+		}
 		process(event.packet);
 	}
 
@@ -182,9 +185,9 @@ public class PresencePerNodeExtension
 		addJidToOccupants(serviceJID, nodeName, sender);
 
 		if (isUpdate) {
-			eventBus.fire(new UpdatePresenceEvent(serviceJID, nodeName, packet));
+			eventBus.fire(new UpdatePresenceEvent(pubsubContext.getComponentName(), serviceJID, nodeName, packet));
 		} else {
-			eventBus.fire(new LoginToNodeEvent(serviceJID, nodeName, packet));
+			eventBus.fire(new LoginToNodeEvent(pubsubContext.getComponentName(), serviceJID, nodeName, packet));
 		}
 	}
 
@@ -283,11 +286,13 @@ public class PresencePerNodeExtension
 		for (String node : nodes.keySet()) {
 			removeJidFromOccupants(serviceJID, node, sender);
 
-			eventBus.fire(new LogoffFromNodeEvent(serviceJID, node, sender, presenceStanza));
+			eventBus.fire(new LogoffFromNodeEvent(pubsubContext.getComponentName(), serviceJID, node, sender, presenceStanza));
 		}
 	}
 
 	public static class LoginToNodeEvent {
+
+		public final String componentName;
 
 		public final String node;
 
@@ -297,7 +302,8 @@ public class PresencePerNodeExtension
 
 		public final BareJID serviceJID;
 
-		public LoginToNodeEvent(BareJID serviceJID, String node, Packet presenceStanza) {
+		public LoginToNodeEvent(String componentName, BareJID serviceJID, String node, Packet presenceStanza) {
+			this.componentName = componentName;
 			this.occupantJID = presenceStanza.getStanzaFrom();
 			this.node = node;
 			this.presenceStanza = presenceStanza;
@@ -307,6 +313,8 @@ public class PresencePerNodeExtension
 
 	public static class LogoffFromNodeEvent {
 
+		public final String componentName;
+
 		public final String node;
 
 		public final JID occupantJID;
@@ -315,7 +323,8 @@ public class PresencePerNodeExtension
 
 		public final BareJID serviceJID;
 
-		public LogoffFromNodeEvent(BareJID serviceJID, String node, JID occupandJID, Packet presenceStanza) {
+		public LogoffFromNodeEvent(String componentName, BareJID serviceJID, String node, JID occupandJID, Packet presenceStanza) {
+			this.componentName = componentName;
 			this.occupantJID = occupandJID;
 			this.node = node;
 			this.presenceStanza = presenceStanza;
@@ -325,6 +334,8 @@ public class PresencePerNodeExtension
 
 	public static class UpdatePresenceEvent {
 
+		public final String componentName;
+
 		public final String node;
 
 		public final JID occupantJID;
@@ -333,7 +344,8 @@ public class PresencePerNodeExtension
 
 		public final BareJID serviceJID;
 
-		public UpdatePresenceEvent(BareJID serviceJID, String node, Packet presenceStanza) {
+		public UpdatePresenceEvent(String componentName, BareJID serviceJID, String node, Packet presenceStanza) {
+			this.componentName = componentName;
 			this.occupantJID = presenceStanza.getStanzaFrom();
 			this.node = node;
 			this.presenceStanza = presenceStanza;

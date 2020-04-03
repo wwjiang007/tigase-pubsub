@@ -111,7 +111,7 @@ public class NodeDeleteModule
 			log.fine("Delete node [" + nodeName + "]");
 			getRepository().deleteNode(toJid, nodeName);
 
-			eventBus.fire(new NodeDeletedEvent(toJid, nodeName));
+			eventBus.fire(new NodeDeletedEvent(config.getComponentName(), toJid, nodeName));
 
 			packetWriter.write(result);
 		} catch (PubSubException e1) {
@@ -125,10 +125,12 @@ public class NodeDeleteModule
 
 	public static class NodeDeletedEvent {
 
+		public final String componentName;
 		public final String node;
 		public final BareJID serviceJid;
 
-		public NodeDeletedEvent(BareJID serviceJid, String node) {
+		public NodeDeletedEvent(String componentName, BareJID serviceJid, String node) {
+			this.componentName = componentName;
 			this.serviceJid = serviceJid;
 			this.node = node;
 		}

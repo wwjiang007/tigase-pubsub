@@ -141,7 +141,7 @@ public class PublishItemModule
 			}
 		}
 
-		eventBus.fire(new ItemPublishedEvent(serviceJID, nodeName, publisher, uuid, itemsToSend));
+		eventBus.fire(new ItemPublishedEvent(config.getComponentName(), serviceJID, nodeName, publisher, uuid, itemsToSend));
 		generateNotifications(serviceJID, nodeName, itemsToSend, uuid, true);
 	}
 
@@ -170,7 +170,7 @@ public class PublishItemModule
 				}
 				getRepository().addMAMItem(serviceJID, pair.getKey() == null ? nodeName : pair.getKey(), uuid, message, itemId);
 			}
-			eventBus.fire(new BroadcastNotificationEvent(serviceJID, nodeName, message));
+			eventBus.fire(new BroadcastNotificationEvent(config.getComponentName(), serviceJID, nodeName, message));
 			broadcastNotification(serviceJID, nodeName, message);
 		}
 	}
@@ -471,6 +471,9 @@ public class PublishItemModule
 
 	@HandleEvent
 	protected void onCapsChange(PresenceCollectorModule.CapsChangeEvent event) throws TigaseStringprepException {
+		if (!event.componentName.equals(config.getComponentName())) {
+			return;
+		}
 		final Collection<String> newFeatures = event.newFeatures;
 
 		if (newFeatures == null || newFeatures.isEmpty() || !config.isSendLastPublishedItemOnPresence()) {
@@ -529,6 +532,10 @@ public class PublishItemModule
 	@HandleEvent
 	protected void onPresenceChangeEvent(PresenceCollectorModule.PresenceChangeEvent event)
 			throws TigaseStringprepException {
+		if (!event.componentName.equals(config.getComponentName())) {
+			return;
+		}
+
 		Packet packet = event.packet;
 		// PEP services are using CapsChangeEvent - but we should process
 		// this here as well
@@ -671,13 +678,15 @@ public class PublishItemModule
 
 	public static class ItemPublishedEvent {
 
+		public final String componentName;
 		public final List<Element> itemsToSend;
 		public final String uuid;
 		public final String node;
 		public final String publisher;
 		public final BareJID serviceJid;
 
-		public ItemPublishedEvent(BareJID serviceJid, String node, String publisher, String uuid, List<Element> itemsToSend) {
+		public ItemPublishedEvent(String componentName, BareJID serviceJid, String node, String publisher, String uuid, List<Element> itemsToSend) {
+			this.componentName = componentName;
 			this.serviceJid = serviceJid;
 			this.node = node;
 			this.publisher = publisher;
@@ -689,11 +698,13 @@ public class PublishItemModule
 
 	public static class BroadcastNotificationEvent {
 
+		public final String componentName;
 		public final BareJID serviceJid;
 		public final String node;
 		public final Element notificationMessage;
 
-		public BroadcastNotificationEvent(BareJID serviceJid, String node, Element notificationMessage) {
+		public BroadcastNotificationEvent(String componentName, BareJID serviceJid, String node, Element notificationMessage) {
+			this.componentName = componentName;
 			this.serviceJid = serviceJid;
 			this.node = node;
 			this.notificationMessage = notificationMessage;

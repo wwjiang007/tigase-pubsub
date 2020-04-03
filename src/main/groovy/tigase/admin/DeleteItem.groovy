@@ -101,7 +101,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 
 						removed = true;
 						nodeItems.deleteItem(id);
-						eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, node, notification));
+						eventBus.fire(new RetractItemModule.ItemRetractedEvent(component.getName(), toJid, node, notification));
 
 						def publishNodeModule = kernel.getInstance(PublishItemModule.class);
 						publishNodeModule.generateNotifications(p.getStanzaTo().getBareJID(), node, [notification], null, false);

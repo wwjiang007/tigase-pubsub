@@ -185,7 +185,7 @@ public class NodeCreateModule
 				getRepository().addToRootCollection(toJid, nodeName);
 			}
 
-			eventBus.fire(new NodeCreatedEvent(toJid, nodeName));
+			eventBus.fire(new NodeCreatedEvent(config.getComponentName(), toJid, nodeName));
 
 			Packet result = packet.okResult((Element) null, 0);
 
@@ -218,10 +218,12 @@ public class NodeCreateModule
 
 	public static class NodeCreatedEvent {
 
+		public final String componentName;
 		public final String node;
 		public final BareJID serviceJid;
 
-		public NodeCreatedEvent(BareJID serviceJid, String node) {
+		public NodeCreatedEvent(String componentName, BareJID serviceJid, String node) {
+			this.componentName = componentName;
 			this.serviceJid = serviceJid;
 			this.node = node;
 		}

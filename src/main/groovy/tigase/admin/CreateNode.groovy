@@ -146,7 +146,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				pubsubRepository.update(toJid, collection, colNodeConfig);
 			}
 
-			NodeCreateModule.NodeCreatedEvent event = new NodeCreateModule.NodeCreatedEvent(toJid, node);
+			NodeCreateModule.NodeCreatedEvent event = new NodeCreateModule.NodeCreatedEvent(component.getName(), toJid, node);
 			eventBus.fire(event);
 
 			if (collection != '') {

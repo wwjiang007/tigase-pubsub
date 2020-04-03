@@ -343,16 +343,16 @@ public class PresenceCollectorModule
 	}
 
 	private void fireBuddyVisibilityEvent(BareJID bareJid, boolean b) {
-		eventBus.fire(new BuddyVisibilityEvent(bareJid, b));
+		eventBus.fire(new BuddyVisibilityEvent(config.getComponentName(), bareJid, b));
 	}
 
 	private void fireCapsChangeEvent(BareJID serviceJid, JID jid, String[] caps, String[] oldCaps,
 									 Set<String> newFeatures) {
-		eventBus.fire(new CapsChangeEvent(serviceJid, jid, caps, oldCaps, newFeatures));
+		eventBus.fire(new CapsChangeEvent(config.getComponentName(), serviceJid, jid, caps, oldCaps, newFeatures));
 	}
 
 	private void firePresenceChangeEvent(Packet packet) {
-		eventBus.fire(new PresenceChangeEvent(packet));
+		eventBus.fire(new PresenceChangeEvent(config.getComponentName(), packet));
 	}
 
 	private Packet preparePresence(final Packet presence, StanzaType type) {
@@ -376,10 +376,12 @@ public class PresenceCollectorModule
 
 	public static class BuddyVisibilityEvent {
 
+		public final String componentName;
 		public final boolean becomeOnline;
 		public final BareJID buddyJID;
 
-		public BuddyVisibilityEvent(BareJID buddyJID, boolean becomeOnline) {
+		public BuddyVisibilityEvent(String componentName, BareJID buddyJID, boolean becomeOnline) {
+			this.componentName = componentName;
 			this.buddyJID = buddyJID;
 			this.becomeOnline = becomeOnline;
 		}
@@ -388,14 +390,16 @@ public class PresenceCollectorModule
 
 	public static class CapsChangeEvent {
 
+		public final String componentName;
 		public final JID buddyJid;
 		public final String[] newCaps;
 		public final Set<String> newFeatures;
 		public final String[] oldCaps;
 		public final BareJID serviceJid;
 
-		public CapsChangeEvent(BareJID serviceJid, JID buddyJid, String[] newCaps, String[] oldCaps,
+		public CapsChangeEvent(String componentName, BareJID serviceJid, JID buddyJid, String[] newCaps, String[] oldCaps,
 							   Set<String> newFeatures) {
+			this.componentName = componentName;
 			this.serviceJid = serviceJid;
 			this.buddyJid = buddyJid;
 			this.newCaps = newCaps;
@@ -408,8 +412,10 @@ public class PresenceCollectorModule
 	public static class PresenceChangeEvent {
 
 		public final Packet packet;
+		public final String componentName;
 
-		public PresenceChangeEvent(Packet packet) {
+		public PresenceChangeEvent(String componentName, Packet packet) {
+			this.componentName = componentName;
 			this.packet = packet;
 		}
 

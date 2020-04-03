@@ -138,7 +138,7 @@ public class RetractItemModule
 
 						Element notification = new Element("retract", new String[]{"id"}, new String[]{id});
 
-						eventBus.fire(new RetractItemModule.ItemRetractedEvent(toJid, nodeName, notification));
+						eventBus.fire(new RetractItemModule.ItemRetractedEvent(config.getComponentName(), toJid, nodeName, notification));
 						itemsToSend.add(notification);
 					}
 				}
@@ -150,11 +150,13 @@ public class RetractItemModule
 
 	public static class ItemRetractedEvent {
 
+		public final String componentName;
 		public final String node;
 		public final Element notification;
 		public final BareJID serviceJid;
 
-		public ItemRetractedEvent(BareJID serviceJid, String node, Element notification) {
+		public ItemRetractedEvent(String componentName, BareJID serviceJid, String node, Element notification) {
+			this.componentName = componentName;
 			this.serviceJid = serviceJid;
 			this.node = node;
 			this.notification = notification;

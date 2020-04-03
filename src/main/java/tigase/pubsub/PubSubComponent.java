@@ -158,6 +158,9 @@ public class PubSubComponent
 
 	@HandleEvent
 	public void onChangeDefaultNodeConfig(DefaultConfigCommand.DefaultNodeConfigurationChangedEvent event) {
+		if (!event.componentName.equals(getName())) {
+			return;
+		}
 		try {
 			IPubSubConfig componentConfig = kernel.getInstance(IPubSubConfig.class);
 			UserRepository userRepository = kernel.getInstance(UserRepository.class);

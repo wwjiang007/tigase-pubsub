@@ -24,6 +24,8 @@ public interface IPubSubConfig {
 
 	String[] getAdmins();
 
+	String getComponentName();
+
 	JID getComponentJID();
 
 	long getDelayOnLowMemory();

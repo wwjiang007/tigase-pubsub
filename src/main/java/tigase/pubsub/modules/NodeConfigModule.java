@@ -228,7 +228,7 @@ public class NodeConfigModule
 				}
 				getRepository().update(toJid, nodeName, nodeConfig);
 
-				eventBus.fire(new NodeConfigurationChangedEvent(toJid, nodeName));
+				eventBus.fire(new NodeConfigurationChangedEvent(config.getComponentName(), toJid, nodeName));
 
 				if (nodeConfig.isNotify_config()) {
 					Element configuration = new Element("configuration", new String[]{"node"}, new String[]{nodeName});
@@ -283,10 +283,12 @@ public class NodeConfigModule
 
 	public static class NodeConfigurationChangedEvent {
 
+		public final String componentName;
 		public final String node;
 		public final BareJID serviceJid;
 
-		public NodeConfigurationChangedEvent(BareJID serviceJid, String node) {
+		public NodeConfigurationChangedEvent(String componentName, BareJID serviceJid, String node) {
+			this.componentName = componentName;
 			this.serviceJid = serviceJid;
 			this.node = node;
 		}

@@ -21,12 +21,14 @@ import org.junit.Before;
 import org.junit.Test;
 import tigase.eventbus.EventBus;
 import tigase.eventbus.EventBusFactory;
+import tigase.pubsub.PubSubConfig;
 import tigase.server.Packet;
 import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 
 import static org.junit.Assert.*;
@@ -43,8 +45,18 @@ public class PresencePerNodeExtensionTest {
 	public void setUp() throws Exception {
 		final EventBus bus = EventBusFactory.getInstance();
 
+		PubSubConfig config = new PubSubConfig() {
+			@Override
+			public String getComponentName() {
+				return "pubsub";
+			}
+		};
+		
 		this.ext = new PresencePerNodeExtension();
 		this.ext.setEventBus(bus);
+		Field f = PresencePerNodeExtension.class.getDeclaredField("pubsubContext");
+		f.setAccessible(true);
+		f.set(ext, config);
 	}
 
 	@Test

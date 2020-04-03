@@ -89,6 +89,11 @@ public class PubSubConfig implements IPubSubConfig {
 		this.admins = strings;
 	}
 
+	@Override
+	public String getComponentName() {
+		return component.getName();
+	}
+
 	public JID getComponentJID() {
 		return this.component.getComponentId();
 	}

@@ -124,7 +124,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 
 			pubsubRepository.deleteNode(toJid, node);
 
-			NodeDeleteModule.NodeDeletedEvent event = new NodeDeleteModule.NodeDeletedEvent(toJid, node);
+			NodeDeleteModule.NodeDeletedEvent event = new NodeDeleteModule.NodeDeletedEvent(component.getName(), toJid, node);
 			eventBus.fire(event);
 
 			Command.addTextField(result, "Note", "Operation successful");

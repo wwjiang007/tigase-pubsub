@@ -91,7 +91,7 @@ public class CapsModule
 				if (node != null) {
 					String[] features = PresenceCapabilitiesManager.getNodeFeatures(node);
 					if (features != null) {
-						eventBus.fire(new PresenceCollectorModule.CapsChangeEvent(serviceJid, packet.getStanzaFrom(), new String[] { node }, EMPTY_FEATURES,
+						eventBus.fire(new PresenceCollectorModule.CapsChangeEvent(config.getComponentName(), serviceJid, packet.getStanzaFrom(), new String[] { node }, EMPTY_FEATURES,
 																				  new HashSet<>(Arrays.asList(features))));
 					}
 				}

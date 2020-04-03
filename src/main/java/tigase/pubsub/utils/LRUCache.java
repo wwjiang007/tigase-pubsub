@@ -136,7 +136,7 @@ public class LRUCache<K,V> implements Cache<K,V> {
 		synchronized (this) {
 			Node<K, V> node = cache.get(key);
 			if (node != null && node.value == value) {
-				cache.remove(node);
+				cache.remove(key, node);
 				removeFromQueue(node);
 				size.decrementAndGet();
 				return true;

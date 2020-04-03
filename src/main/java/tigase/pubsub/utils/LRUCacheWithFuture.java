@@ -19,6 +19,7 @@ package tigase.pubsub.utils;
 
 import tigase.stats.StatisticsList;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -53,8 +54,11 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 		}
 		
 		try {
-			newFuture.complete(supplier.get());
-			cache.remove(key, newFuture);
+			V value = supplier.get();
+			newFuture.complete(value);
+			if (value == null) {
+				cache.remove(key, newFuture);
+			}
 			return newFuture.join();
 		} catch (CancellationException ex) {
 			return computeIfAbsent(key, supplier);
@@ -133,7 +137,7 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 	}
 
 	public Stream<V> values() {
-		return cache.values().filter(CompletableFuture::isDone).map(CompletableFuture::join);
+		return cache.values().filter(CompletableFuture::isDone).map(CompletableFuture::join).filter(Objects::nonNull);
 	}
 
 	public int size() {

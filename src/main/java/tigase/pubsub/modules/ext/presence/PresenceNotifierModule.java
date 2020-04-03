@@ -84,16 +84,25 @@ public class PresenceNotifierModule
 
 	@HandleEvent
 	public void onLoginToNode(PresencePerNodeExtension.LoginToNodeEvent event) {
+		if (!event.componentName.equals(config.getComponentName())) {
+			return;
+		}
 		onLoginToNode(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
 	}
 
 	@HandleEvent
 	public void onLogoffFromNodeH(PresencePerNodeExtension.LogoffFromNodeEvent event) {
+		if (!event.componentName.equals(config.getComponentName())) {
+			return;
+		}
 		onLogoffFromNode(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
 	}
 
 	@HandleEvent
 	public void onUpdatePresence(PresencePerNodeExtension.UpdatePresenceEvent event) {
+		if (!event.componentName.equals(config.getComponentName())) {
+			return;
+		}
 		onPresenceUpdate(event.serviceJID, event.node, event.occupantJID, event.presenceStanza);
 	}
 

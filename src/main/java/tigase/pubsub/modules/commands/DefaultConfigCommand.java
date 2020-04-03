@@ -76,7 +76,7 @@ public class DefaultConfigCommand
 
 					nodeConfig.write(userRepository, config, PubSubComponent.DEFAULT_LEAF_NODE_CONFIG_KEY);
 
-					eventbus.fire(new DefaultNodeConfigurationChangedEvent());
+					eventbus.fire(new DefaultNodeConfigurationChangedEvent(config.getComponentName()));
 
 					Form f = new Form("result", "Info", "Default config saved.");
 
@@ -108,7 +108,11 @@ public class DefaultConfigCommand
 	}
 
 	public static class DefaultNodeConfigurationChangedEvent {
+		public final String componentName;
 
+		public DefaultNodeConfigurationChangedEvent(String componentName) {
+			this.componentName = componentName;
+		}
 	}
 
 }
