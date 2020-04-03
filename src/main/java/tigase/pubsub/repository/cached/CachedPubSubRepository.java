@@ -931,7 +931,7 @@ public class CachedPubSubRepository<T>
 
 		@Override
 		public int hashCode() {
-			return serviceJid.hashCode() * 31 + node.hashCode();
+			return Objects.hash(serviceJid, node);
 		}
 
 		@Override

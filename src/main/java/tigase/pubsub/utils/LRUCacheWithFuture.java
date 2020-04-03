@@ -20,6 +20,7 @@ package tigase.pubsub.utils;
 import tigase.stats.StatisticsList;
 
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Stream;
@@ -42,12 +43,21 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 		CompletableFuture<V> newFuture = new CompletableFuture<>();
 		CompletableFuture<V> oldFuture = cache.putIfAbsent(key, newFuture);
 		if (oldFuture != null) {
-			return oldFuture.join();
+			try {
+				return oldFuture.join();
+			} catch (CancellationException ex) {
+				return computeIfAbsent(key, supplier);
+			} catch (CompletionException ex) {
+				throw ex;
+			}
 		}
-
+		
 		try {
 			newFuture.complete(supplier.get());
+			cache.remove(key, newFuture);
 			return newFuture.join();
+		} catch (CancellationException ex) {
+			return computeIfAbsent(key, supplier);
 		} catch (CacheException ex) {
 			newFuture.completeExceptionally(ex);
 			cache.remove(key);
@@ -56,6 +66,10 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 	}
 
 	public V get(K key) {
+		return get(key, true);
+	}
+	
+	private V get(K key, boolean retry) {
 		CompletableFuture<V> future = cache.get(key);
 		if (future == null) {
 			return null;
@@ -67,6 +81,8 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 		}
 		try {
 			return future.join();
+		} catch (CancellationException ex) {
+			return get(key, false);
 		} catch (CompletionException ex) {
 			cache.remove(key);
 			throw ex;
@@ -76,6 +92,9 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 	public V put(K key, V value) {
 		CompletableFuture<V> node = cache.put(key, CompletableFuture.completedFuture(value));
 		try {
+			if (node != null) {
+				node.cancel(true);
+			}
 			return (node == null || node.isCompletedExceptionally()) ? null : node.join();
 		} catch (CompletionException ex) {
 			cache.remove(key);
@@ -86,6 +105,9 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 	public V putIfAbsent(K key, V value) {
 		CompletableFuture<V> node = cache.putIfAbsent(key, CompletableFuture.completedFuture(value));
 		try {
+			if (node != null) {
+				node.cancel(true);
+			}
 			return (node == null || node.isCompletedExceptionally()) ? null : node.join();
 		} catch (CompletionException ex) {
 			cache.remove(key);
@@ -96,6 +118,9 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 	public V remove(K key) {
 		CompletableFuture<V> node = cache.remove(key);
 		try {
+			if (node != null) {
+				node.cancel(true);
+			}
 			return (node == null || node.isCompletedExceptionally()) ? null : node.join();
 		} catch (CompletionException ex) {
 			cache.remove(key);
