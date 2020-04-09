@@ -68,7 +68,7 @@ public class PresenceCollectorRepository {
 
 		if (resource != null) {
 			Entries resources = presenceByUser.computeIfAbsent(bareJid, (k) -> new Entries());
-			resources.add(resource, caps);
+			return resources.add(resource, caps);
 		}
 		return null;
 	}
