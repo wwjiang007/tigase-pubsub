@@ -17,15 +17,16 @@
  */
 package tigase.pubsub.modules.ext.presence;
 
+import tigase.criteria.Criteria;
+import tigase.criteria.ElementCriteria;
 import tigase.eventbus.EventBus;
-import tigase.eventbus.HandleEvent;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
 import tigase.kernel.beans.UnregisterAware;
+import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.IPubSubConfig;
 import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.modules.PresenceCollectorModule;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.StanzaType;
@@ -37,11 +38,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Bean(name = "presencePerNodeExtension", parent = PubSubComponent.class, active = true)
-public class PresencePerNodeExtension
+@Bean(name = "presencePerNodeExtension", parent = PubSubComponent.class, active = false)
+public class PresencePerNodeExtension extends AbstractPubSubModule
 		implements Initializable, UnregisterAware {
 
 	public static final String XMLNS_EXTENSION = "tigase:pubsub:1";
+	private static final Criteria CRIT = ElementCriteria.name("presence");
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 	/**
 	 * (ServiceJID, (NodeName, {OccupantJID}))
@@ -130,14 +132,6 @@ public class PresencePerNodeExtension
 	@Override
 	public void initialize() {
 		eventBus.registerAll(this);
-	}
-
-	@HandleEvent
-	public void onPresenceEvent(PresenceCollectorModule.PresenceChangeEvent event) {
-		if (!event.componentName.equals(pubsubContext.getComponentName())) {
-			return;
-		}
-		process(event.packet);
 	}
 
 	@Override
@@ -252,7 +246,25 @@ public class PresencePerNodeExtension
 		}
 	}
 
-	protected void process(Packet packet) {
+	@Override
+	public boolean canHandle(Packet packet) {
+		if (packet.getStanzaTo() == null || packet.getStanzaTo().getResource() == null) {
+			return false;
+		}
+		if (super.canHandle(packet)) {
+			return packet.getType() == null || packet.getType() == StanzaType.available ||
+					packet.getType() == StanzaType.unavailable;
+		}
+		return false;
+	}
+
+	@Override
+	public Criteria getModuleCriteria() {
+		return CRIT;
+	}
+
+	@Override
+	public void process(Packet packet) {
 		final StanzaType type = packet.getType();
 		final BareJID serviceJID = packet.getStanzaTo().getBareJID();
 		final JID stanzaFrom = packet.getStanzaFrom();

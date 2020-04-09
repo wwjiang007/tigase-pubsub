@@ -41,7 +41,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.logging.Level;
 
-@Bean(name = "presenceNotifierModule", parent = PubSubComponent.class, active = true)
+@Bean(name = "presenceNotifierModule", parent = PubSubComponent.class, active = false)
 public class PresenceNotifierModule
 		extends AbstractPubSubModule
 		implements Initializable, UnregisterAware {

@@ -25,6 +25,7 @@ import tigase.kernel.beans.Inject;
 import tigase.pubsub.AbstractPubSubModule;
 import tigase.pubsub.PubSubComponent;
 import tigase.pubsub.exceptions.PubSubException;
+import tigase.pubsub.repository.PresenceCollectorRepository;
 import tigase.server.Packet;
 import tigase.server.Presence;
 import tigase.xml.Element;
@@ -33,191 +34,102 @@ import tigase.xmpp.impl.PresenceCapabilitiesManager;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Bean(name = "presenceCollectorModule", parent = PubSubComponent.class, active = true)
 public class PresenceCollectorModule
 		extends AbstractPubSubModule {
 
-	private static final ConcurrentMap<String, String[]> CAPS_MAP = new ConcurrentHashMap<String, String[]>();
 	private static final Criteria CRIT = ElementCriteria.name("presence");
-	private static final String[] EMPTY_CAPS = {};
-	private final ConcurrentMap<BareJID, ConcurrentMap<BareJID, Map<String, String[]>>> presenceByService = new ConcurrentHashMap<>();
 	@Inject
 	private CapsModule capsModule;
 	@Inject
 	private EventBus eventBus;
-	
+	@Inject
+	private PresenceCollectorRepository presenceByService;
+
 	public boolean addJid(final BareJID serviceJid, final JID jid, String[] caps) {
 		if (jid == null) {
 			return false;
 		}
+		
+		String[] oldCaps = presenceByService.add(serviceJid, jid,caps);
+		boolean added = oldCaps == null;
+		log.finest("for service " + serviceJid + " - Contact " + jid + " is collected.");
 
-		// here we are using CAPS_MAP to cache instances of CAPS to reduce
-		// memory footprint
-		if (caps == null || caps.length == 0) {
-			caps = EMPTY_CAPS;
-		} else {
-			StringBuilder sb = new StringBuilder();
-			for (String item : caps) {
-				sb.append(item);
-			}
-			String key = sb.toString();
-			String[] cachedCaps = CAPS_MAP.putIfAbsent(key, caps);
-			if (cachedCaps != null) {
-				caps = cachedCaps;
-			}
-		}
+		// we are firing CapsChangeEvent only for PEP services
+		if (this.config.isPepPeristent() && this.config.isSendLastPublishedItemOnPresence() &&
+				(serviceJid.getLocalpart() != null || config.isSubscribeByPresenceFilteredNotifications()) &&
+				oldCaps != caps && caps != null) {
+			// calculating new features and firing event
+			Set<String> newFeatures = new HashSet<String>();
+			for (String node : caps) {
+				// ignore searching for features if same node exists in old
+				// caps
+				if (oldCaps != null && Arrays.binarySearch(oldCaps, node) >= 0) {
+					continue;
+				}
 
-		boolean added = false;
-		final BareJID bareJid = jid.getBareJID();
-		final String resource = jid.getResource();
-
-		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
-			ConcurrentMap<BareJID, Map<String, String[]>> tmp = new ConcurrentHashMap<>();
-			presenceByUser = presenceByService.putIfAbsent(serviceJid, tmp);
-			if (presenceByUser == null) {
-				presenceByUser = tmp;
-			}
-		}
-
-		if (resource != null) {
-			Map<String, String[]> resources = presenceByUser.get(bareJid);
-
-			if (resources == null) {
-				Map<String, String[]> tmp = new HashMap<>();
-				resources = presenceByUser.putIfAbsent(bareJid, tmp);
-				if (resources == null) {
-					resources = tmp;
+				String[] features = PresenceCapabilitiesManager.getNodeFeatures(node);
+				if (features != null) {
+					for (String feature : features) {
+						newFeatures.add(feature);
+					}
 				}
 			}
-
-			String[] oldCaps;
-			String[] availableCaps = caps;
-			synchronized (resources) {
-				oldCaps = resources.put(resource, caps);
-				added = oldCaps == null;
-			}
-			log.finest("for service " + serviceJid + " - Contact " + jid + " is collected.");
-
-			// we are firing CapsChangeEvent only for PEP services
-			if (this.config.isPepPeristent() && this.config.isSendLastPublishedItemOnPresence() &&
-					(serviceJid.getLocalpart() != null || config.isSubscribeByPresenceFilteredNotifications()) && oldCaps != caps && caps != null) {
-				// calculating new features and firing event
-				Set<String> newFeatures = new HashSet<String>();
-				for (String node : caps) {
-					// ignore searching for features if same node exists in old
-					// caps
-					if (oldCaps != null && Arrays.binarySearch(oldCaps, node) >= 0) {
+			if (oldCaps != null) {
+				for (String node : oldCaps) {
+					// ignore searching for features if same node exists in
+					// new caps
+					if (Arrays.binarySearch(caps, node) >= 0) {
 						continue;
 					}
-
 					String[] features = PresenceCapabilitiesManager.getNodeFeatures(node);
 					if (features != null) {
 						for (String feature : features) {
-							newFeatures.add(feature);
+							newFeatures.remove(feature);
 						}
 					}
 				}
-				if (oldCaps != null) {
-					for (String node : oldCaps) {
-						// ignore searching for features if same node exists in
-						// new caps
-						if (Arrays.binarySearch(caps, node) >= 0) {
-							continue;
-						}
-						String[] features = PresenceCapabilitiesManager.getNodeFeatures(node);
-						if (features != null) {
-							for (String feature : features) {
-								newFeatures.remove(feature);
-							}
-						}
-					}
-				}
+			}
 
-				if (!newFeatures.isEmpty()) {
-					fireCapsChangeEvent(serviceJid, jid, caps, oldCaps, newFeatures);
-				}
+			if (!newFeatures.isEmpty()) {
+				fireCapsChangeEvent(serviceJid, jid, caps, oldCaps, newFeatures);
 			}
 		}
 
-		// onlineUsers.add(jid);
 		return added;
 	}
 
-	public List<JID> getAllAvailableJids(final BareJID serviceJid) {
-		ArrayList<JID> result = new ArrayList<JID>();
-
-		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser != null) {
-			for (Entry<BareJID, Map<String, String[]>> entry : presenceByUser.entrySet()) {
-				for (String reource : entry.getValue().keySet()) {
-					JID jid = JID.jidInstanceNS(entry.getKey(), reource);
-					if (isAvailableLocally(jid)) {
-						result.add(jid);
-					}
-				}
-			}
+	@Override
+	public boolean canHandle(Packet packet) {
+		if (packet.getStanzaTo() == null || packet.getStanzaTo().getResource() != null) {
+			return false;
 		}
+		return super.canHandle(packet);
+	}
 
-		return result;
+	public List<JID> getAllAvailableJids(final BareJID serviceJid) {
+		return presenceByService.getAllAvailableJids(serviceJid, (x) -> true)
+				.filter(this::isAvailableLocally)
+				.collect(Collectors.toList());
 	}
 
 	public List<JID> getAllAvailableJidsWithFeature(final BareJID serviceJid, final String feature) {
-		final List<JID> result = new ArrayList<>();
-		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
-			return result;
-		}
-
 		Set<String> nodesWithFeature = PresenceCapabilitiesManager.getNodesWithFeature(feature);
-		for (Map.Entry<BareJID, Map<String, String[]>> pe : presenceByUser.entrySet()) {
-			Map<String, String[]> jid_resources = pe.getValue();
-			if (jid_resources != null) {
-				synchronized (jid_resources) {
-					for (Map.Entry<String, String[]> e : jid_resources.entrySet()) {
-						String[] caps = e.getValue();
-						boolean match = false;
-						for (String node : caps) {
-							match |= nodesWithFeature.contains(node);
-						}
-						if (match) {
-							JID jid = JID.jidInstanceNS(pe.getKey(), e.getKey());
-							if (isAvailableLocally(jid)) {
-								result.add(jid);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return result;
+		return presenceByService.getAllAvailableJids(serviceJid, nodesWithFeature::contains)
+				.collect(Collectors.toList());
 	}
 
 	public List<JID> getAllAvailableResources(final BareJID serviceJid, final BareJID bareJid) {
-		final List<JID> result = new ArrayList<JID>();
-		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
-			return result;
-		}
-
-		final Map<String, String[]> jid_resources = presenceByUser.get(bareJid);
-
-		if (jid_resources != null) {
-			for (String reource : jid_resources.keySet()) {
-				JID jid = JID.jidInstanceNS(bareJid, reource);
-				if (isAvailableLocally(jid)) {
-					result.add(jid);
-				}
-			}
-		}
-
-		return result;
+		return presenceByService.getAllAvailableResources(serviceJid, bareJid)
+				.stream()
+				.filter(this::isAvailableLocally)
+				.collect(Collectors.toList());
 	}
 
 	@Override
@@ -231,13 +143,7 @@ public class PresenceCollectorModule
 	}
 
 	public boolean isJidAvailable(final BareJID serviceJid, final BareJID bareJid) {
-		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
-			return false;
-		}
-		final Map<String, String[]> resources = presenceByUser.get(bareJid);
-
-		return (resources != null) && (resources.size() > 0);
+		return presenceByService.isAvailable(serviceJid, bareJid);
 	}
 
 	@Override
@@ -311,39 +217,9 @@ public class PresenceCollectorModule
 			return false;
 		}
 
-		final BareJID bareJid = jid.getBareJID();
-		final String resource = jid.getResource();
-		boolean removed = false;
-
-		ConcurrentMap<BareJID, Map<String, String[]>> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
-			return false;
-		}
-
-		// onlineUsers.remove(jid);
-		if (resource == null) {
-			presenceByUser.remove(bareJid);
-			fireBuddyVisibilityEvent(bareJid, false);
-		} else {
-			Map<String, String[]> resources = presenceByUser.get(bareJid);
-
-			if (resources != null) {
-				synchronized (resources) {
-					removed = resources.remove(resource) != null;
-					log.finest("for service " + serviceJid + " - Contact " + jid + " is removed from collection.");
-					if (resources.isEmpty()) {
-						presenceByUser.remove(bareJid);
-						fireBuddyVisibilityEvent(bareJid, false);
-					}
-				}
-			}
-		}
+		boolean removed = presenceByService.remove(serviceJid, jid);
 
 		return removed;
-	}
-
-	private void fireBuddyVisibilityEvent(BareJID bareJid, boolean b) {
-		eventBus.fire(new BuddyVisibilityEvent(config.getComponentName(), bareJid, b));
 	}
 
 	private void fireCapsChangeEvent(BareJID serviceJid, JID jid, String[] caps, String[] oldCaps,
@@ -372,20 +248,6 @@ public class PresenceCollectorModule
 		}
 
 		return null;
-	}
-
-	public static class BuddyVisibilityEvent {
-
-		public final String componentName;
-		public final boolean becomeOnline;
-		public final BareJID buddyJID;
-
-		public BuddyVisibilityEvent(String componentName, BareJID buddyJID, boolean becomeOnline) {
-			this.componentName = componentName;
-			this.buddyJID = buddyJID;
-			this.becomeOnline = becomeOnline;
-		}
-
 	}
 
 	public static class CapsChangeEvent {

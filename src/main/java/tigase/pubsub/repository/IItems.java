@@ -36,6 +36,8 @@ public interface IItems {
 	
 	public abstract String[] getItemsIdsSince(CollectionItemsOrdering order, Date since) throws RepositoryException;
 
+	public abstract IItem getLastItem(CollectionItemsOrdering order) throws RepositoryException;
+
 	public abstract List<ItemMeta> getItemsMeta() throws RepositoryException;
 
 	public abstract void writeItem(String id, String publisher, Element item, String uuid)

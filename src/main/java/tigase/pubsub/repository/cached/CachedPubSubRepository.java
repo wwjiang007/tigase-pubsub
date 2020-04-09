@@ -29,6 +29,7 @@ import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.modules.ext.presence.PresenceNodeSubscriptions;
 import tigase.pubsub.modules.ext.presence.PresenceNotifierModule;
+import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension;
 import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.*;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
@@ -324,7 +325,12 @@ public class CachedPubSubRepository<T>
 		if (presenceNotifierModule == null || xx == null) {
 			return xx;
 		} else {
-			return new PresenceNodeSubscriptions(serviceJid, nodeName, xx, presenceNotifierModule);
+			PresencePerNodeExtension extension = presenceNotifierModule.getPresencePerNodeExtension();
+			if (extension != null) {
+				return new PresenceNodeSubscriptions(serviceJid, nodeName, xx, extension);
+			} else {
+				return xx;
+			}
 		}
 	}
 

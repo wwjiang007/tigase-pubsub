@@ -71,6 +71,15 @@ class Items
 	}
 
 	@Override
+	public IItem getLastItem(CollectionItemsOrdering order) throws RepositoryException {
+		String[] itemIds = this.getItemsIds(order);
+		if (itemIds != null && itemIds.length > 0) {
+			return getItem(itemIds[itemIds.length - 1]);
+		}
+		return null;
+	}
+
+	@Override
 	public void writeItem(String id, String publisher, Element item, String uuid) throws RepositoryException {
 		this.writeItem(id, publisher, item, uuid);
 	}

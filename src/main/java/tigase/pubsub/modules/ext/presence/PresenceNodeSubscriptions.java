@@ -39,11 +39,11 @@ public class PresenceNodeSubscriptions
 	private final ISubscriptionsCached subscriptions;
 
 	public PresenceNodeSubscriptions(BareJID serviceJid, String nodeName, ISubscriptionsCached subscriptions,
-									 PresenceNotifierModule presenceExtensionModule) {
+									 PresencePerNodeExtension extension) {
 		this.serviceJID = serviceJid;
 		this.nodeName = nodeName;
 		this.subscriptions = subscriptions;
-		this.extension = presenceExtensionModule.getPresencePerNodeExtension();
+		this.extension = extension;
 	}
 
 	@Override
