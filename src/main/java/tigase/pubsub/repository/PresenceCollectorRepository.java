@@ -142,7 +142,8 @@ public class PresenceCollectorRepository {
 		public synchronized String[] add(String resource, String[] caps) {
 			String[] oldCaps = null;
 			for (int i=0; i<entries.size(); i++) {
-				if (resource.equals(entries.get(i).resource)) {
+				Entry e = entries.get(i);
+				if (e.matches(resource)) {
 					oldCaps = entries.remove(i).caps;
 					break;
 				}
@@ -153,7 +154,7 @@ public class PresenceCollectorRepository {
 
 		public synchronized boolean remove(String resource) {
 			for (int i=0; i<entries.size(); i++) {
-				if (resource.equals(entries.get(i).resource)) {
+				if (entries.get(i).matches(resource)) {
 					entries.remove(i);
 					return true;
 				}
@@ -210,6 +211,14 @@ public class PresenceCollectorRepository {
 
 		public String[] getCaps() {
 			return caps;
+		}
+
+		protected boolean matches(String resource) {
+			if (resource == null) {
+				return this.resource == null;
+			} else {
+				return resource.equals(this.resource);
+			}
 		}
 	}
 }
