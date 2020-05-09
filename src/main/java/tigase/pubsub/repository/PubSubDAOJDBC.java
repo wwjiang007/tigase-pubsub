@@ -33,6 +33,7 @@ import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.jid.JID;
 import tigase.xmpp.mam.MAMRepository;
 
 import java.sql.*;
@@ -956,6 +957,14 @@ public class PubSubDAOJDBC
 						  final String publisher, final Element item) throws RepositoryException {
 		HashCode hash = null;
 		try {
+			String publisherValue = publisher;
+			if (publisher != null && data_repo.getDatabaseType() == DataRepository.dbTypes.mysql) {
+				JID jid = JID.jidInstanceNS(publisher);
+				if (jid.hasResource()) {
+					String resource = Utils.removeMySQLNonUtf8mb3Codepoints(jid.getResource());
+					publisherValue = JID.jidInstanceNS(jid.getBareJID(), resource).toString();
+				}
+			}
 			hash = takeDao();
 			PreparedStatement write_item_sp = data_repo.getPreparedStatement(hash.hashCode(), WRITE_ITEM_QUERY);
 			ResultSet rs = null;
@@ -963,7 +972,7 @@ public class PubSubDAOJDBC
 				try {
 					write_item_sp.setLong(1, nodeId);
 					write_item_sp.setString(2, id);
-					write_item_sp.setString(3, publisher);
+					write_item_sp.setString(3, publisherValue);
 					write_item_sp.setString(4, item.toString());
 					data_repo.setTimestamp(write_item_sp, 5, new Timestamp(System.currentTimeMillis()));
 					write_item_sp.execute();

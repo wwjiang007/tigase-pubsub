@@ -21,9 +21,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -32,10 +33,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 public class UtilsTest {
+
+    @Test
+    public void testRemoveMySQLNonUtf8mb3Codepoints() {
+        String input = "7??0??1??\uD83D\uDCB2";
+        String output = Utils.removeMySQLNonUtf8mb3Codepoints(input);
+        System.out.println(Base64.getEncoder().encodeToString(input.getBytes(Charset.forName("UTF-8"))) + " - " +  input.getBytes(Charset.forName("UTF-8")).length);
+        System.out.println(Base64.getEncoder().encodeToString(output.getBytes(Charset.forName("UTF-8"))) + " - " +  output.getBytes(Charset.forName("UTF-8")).length);
+        assertNotEquals(input, output);
+        assertEquals(input.getBytes(Charset.forName("UTF8")).length - 3, output.getBytes(Charset.forName("UTF8")).length);
+        assertEquals("7??0??1??_", output);
+    }
 
     @Ignore
     @Test

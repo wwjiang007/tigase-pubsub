@@ -102,7 +102,22 @@ public class Utils {
 		return "" + (hours > 0 ? hours + "h, " : "") + (mins > 0 ? mins + "m, " : "") +
 				(secs > 0 ? secs + "sec, " : "") + (millis > 0 ? millis + "ms" : "");
 	}
-
+	
+	public static String removeMySQLNonUtf8mb3Codepoints(String resource) {
+		StringBuilder sb = new StringBuilder();
+		resource.codePoints().forEach(codepoint -> {
+			if (Character.isBmpCodePoint(codepoint)) {
+				char[] chars = Character.toChars(codepoint);
+				for (char c : chars) {
+					sb.append(c);
+				}
+			} else {
+				sb.append("_");
+			}
+		});
+		return sb.toString();
+	}
+	
 	public static void main(String[] args) {
 		System.out.println(createUID("null"));
 	}
