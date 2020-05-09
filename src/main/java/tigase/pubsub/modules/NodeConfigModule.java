@@ -17,7 +17,6 @@
  */
 package tigase.pubsub.modules;
 
-import tigase.pubsub.IPubSubConfig;
 import tigase.criteria.Criteria;
 import tigase.criteria.ElementCriteria;
 import tigase.eventbus.EventBus;
@@ -25,10 +24,7 @@ import tigase.form.Field;
 import tigase.form.Form;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
-import tigase.pubsub.AbstractNodeConfig;
-import tigase.pubsub.CollectionNodeConfig;
-import tigase.pubsub.PubSubComponent;
-import tigase.pubsub.SendLastPublishedItem;
+import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.utils.PubSubLogic;
@@ -39,7 +35,6 @@ import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.logging.Level;
 
@@ -172,7 +167,7 @@ public class NodeConfigModule
 						Element associateNotification = createAssociateNotification(colNodeConfig.getNodeName(),
 																					nodeName);
 
-						publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(associateNotification), null, false);
+						publishModule.generateNodeNotifications(packet.getStanzaTo().getBareJID(), nodeName, associateNotification, null, false);
 					}
 					if (nodeConfig.getCollection().equals("")) {
 						AbstractNodeConfig colNodeConfig = getRepository().getNodeConfig(toJid, collectionOld);
@@ -184,7 +179,7 @@ public class NodeConfigModule
 
 						Element disassociateNotification = createDisassociateNotification(collectionOld, nodeName);
 
-						publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(disassociateNotification), null, false);
+						publishModule.generateNodeNotifications(packet.getStanzaTo().getBareJID(), nodeName, disassociateNotification, null, false);
 					}
 				}
 				if (nodeConfig instanceof CollectionNodeConfig) {
@@ -210,7 +205,7 @@ public class NodeConfigModule
 
 						Element associateNotification = createAssociateNotification(nodeName, ann);
 
-						publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(associateNotification), null, false);
+						publishModule.generateNodeNotifications(packet.getStanzaTo().getBareJID(), nodeName, associateNotification, null, false);
 					}
 					for (String rnn : removedChildNodes) {
 						AbstractNodeConfig nc = getRepository().getNodeConfig(toJid, rnn);
@@ -222,7 +217,7 @@ public class NodeConfigModule
 						if ((rnn != null) && (rnn.length() != 0)) {
 							Element disassociateNotification = createDisassociateNotification(nodeName, rnn);
 
-							publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(disassociateNotification), null, false);
+							publishModule.generateNodeNotifications(packet.getStanzaTo().getBareJID(), nodeName, disassociateNotification, null, false);
 						}
 					}
 				}
@@ -233,7 +228,7 @@ public class NodeConfigModule
 				if (nodeConfig.isNotify_config()) {
 					Element configuration = new Element("configuration", new String[]{"node"}, new String[]{nodeName});
 
-					publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(configuration), null, false);
+					publishModule.generateNodeNotifications(packet.getStanzaTo().getBareJID(), nodeName, configuration, null, false);
 				}
 			} else {
 				throw new PubSubException(element, Authorization.BAD_REQUEST);

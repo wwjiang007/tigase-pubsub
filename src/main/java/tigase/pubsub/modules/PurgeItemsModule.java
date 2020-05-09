@@ -31,7 +31,6 @@ import tigase.xml.Element;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
-import java.util.Collections;
 import java.util.logging.Level;
 
 @Bean(name = "purgeItemsModule", parent = PubSubComponent.class, active = true)
@@ -90,8 +89,9 @@ public class PurgeItemsModule
 			final IItems nodeItems = this.getRepository().getNodeItems(toJid, nodeName);
 			String[] itemsToDelete = nodeItems.getItemsIds(CollectionItemsOrdering.byUpdateDate);
 
-			publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections
-					.singletonList(new Element("purge", new String[]{"node"}, new String[]{nodeName})), null, false);
+			publishModule.generateNodeNotifications(packet.getStanzaTo().getBareJID(), nodeName,
+													new Element("purge", new String[]{"node"}, new String[]{nodeName}),
+													null, false);
 
 			log.info("Purging node " + nodeName);
 			if (itemsToDelete != null) {

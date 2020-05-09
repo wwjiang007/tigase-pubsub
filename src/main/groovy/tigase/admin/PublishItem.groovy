@@ -134,7 +134,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				item.addChildren((LinkedList<Element>) handler.getParsedElements());
 
 				def publishNodeModule = kernel.getInstance(PublishItemModule.class);
-				publishNodeModule.generateNotifications(p.getStanzaTo().getBareJID(), node, [item], null, false);
+				publishNodeModule.generateItemsNotifications(p.getStanzaTo().getBareJID(), node, [item], null, false);
 				
 				def leafNodeConfig = (LeafNodeConfig) nodeConfig;
 				if (leafNodeConfig.isPersistItem()) {

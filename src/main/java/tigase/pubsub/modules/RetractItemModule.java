@@ -143,7 +143,7 @@ public class RetractItemModule
 					}
 				}
 			} finally {
-				publishModule.generateNotifications(toJid, nodeName, itemsToSend, null, false);
+				publishModule.generateItemsNotifications(toJid, nodeName, itemsToSend, null, false);
 			}
 		}
 	}

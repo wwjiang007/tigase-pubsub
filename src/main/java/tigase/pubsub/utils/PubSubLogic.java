@@ -27,7 +27,6 @@ import tigase.xmpp.StanzaType;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -47,7 +46,7 @@ public interface PubSubLogic {
 	boolean isSenderInRosterGroup(BareJID bareJid, AbstractNodeConfig nodeConfig, IAffiliations affiliations,
 								  final ISubscriptions subscriptions) throws RepositoryException;
 
-	Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName, List<Element> itemsToSend,
+	Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName, Element items, String expireAt,
 									   Map<String, String> headers, StanzaType stanzaType);
 	
 	void checkPermission(BareJID serviceJid, String nodeName, JID senderJid, Action action) throws PubSubException, RepositoryException;

@@ -34,7 +34,6 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.Collections;
 import java.util.logging.Level;
 
 @Bean(name = "nodeDeleteModule", parent = PubSubComponent.class, active = true)
@@ -82,7 +81,7 @@ public class NodeDeleteModule
 			if (nodeConfig.isNotify_config()) {
 				Element del = new Element("delete", new String[]{"node"}, new String[]{nodeName});
 
-				this.publishModule.generateNotifications(packet.getStanzaTo().getBareJID(), nodeName, Collections.singletonList(del), null, false);
+				this.publishModule.generateNodeNotifications(packet.getStanzaTo().getBareJID(), nodeName, del, null, false);
 			}
 
 			final String parentNodeName = nodeConfig.getCollection();

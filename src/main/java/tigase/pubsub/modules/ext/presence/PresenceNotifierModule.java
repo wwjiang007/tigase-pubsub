@@ -158,7 +158,7 @@ public class PresenceNotifierModule
 		Element item = new Element("item");
 		item.addChild(itemToSend);
 
-		publishItemModule.generateNotifications(serviceJID, nodeName, Collections.singletonList(item), null, false);
+		publishItemModule.generateItemsNotifications(serviceJID, nodeName, Collections.singletonList(item), null, false);
 	}
 
 	protected void publishToOne(BareJID serviceJID, String nodeName, JID destinationJID) throws RepositoryException {

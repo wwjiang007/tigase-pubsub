@@ -161,7 +161,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				colE.addChild(associateEl);
 
 				def publishNodeModule = kernel.getInstance(PublishItemModule.class);
-				publishNodeModule.generateNotifications(p.getStanzaTo().getBareJID(), collection, [colE], null, false);
+				publishNodeModule.generateNodeNotifications(p.getStanzaTo().getBareJID(), collection, colE, null, false);
 			}
 
 			Command.addTextField(result, "Note", "Operation successful");

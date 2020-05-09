@@ -142,18 +142,33 @@ public class PublishItemModule
 		}
 
 		eventBus.fire(new ItemPublishedEvent(config.getComponentName(), serviceJID, nodeName, publisher, uuid, itemsToSend));
-		generateNotifications(serviceJID, nodeName, itemsToSend, uuid, true);
+		generateItemsNotifications(serviceJID, nodeName, itemsToSend, uuid, true);
 	}
 
-	public void generateNotifications(BareJID serviceJID, String nodeName, List<Element> itemsToSend, String uuid, boolean persistInMAM)
+	public void generateItemsNotifications(BareJID serviceJID, String nodeName, List<Element> itemsToSend, String uuid, boolean persistInMAM)
 			throws RepositoryException {
+
+		final Element items = new Element("items", new String[]{"node"}, new String[]{nodeName});
+		items.addChildren(itemsToSend);
+
+		generateNotifications(serviceJID, nodeName, items,
+							  itemsToSend.isEmpty() ? null : itemsToSend.get(0).getAttributeStaticStr("id"),
+							  itemsToSend.isEmpty() ? null : itemsToSend.get(0).getAttributeStaticStr("expire-at"),
+							  uuid, persistInMAM);
+	}
+
+	public void generateNodeNotifications(BareJID serviceJID, String nodeName, Element payload, String uuid, boolean persistInMAM) throws RepositoryException {
+		generateNotifications(serviceJID, nodeName, payload, null, null, uuid, persistInMAM);
+	}
+
+	private void generateNotifications(BareJID serviceJID, String nodeName, Element payload, String itemId, String expireAt, String uuid, boolean persistInMAM) throws RepositoryException {
 		for (SchemaManager.Pair<String, StanzaType> pair : getCollectionsForNotification(serviceJID, nodeName)) {
 			Map<String, String> headers = null;
 			if (pair.getKey() != null) {
 				headers = new HashMap<>();
 				headers.put("Collection", pair.getKey());
 			}
-			Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, itemsToSend, headers, pair.getValue());
+			Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, payload, expireAt, headers, pair.getValue());
 
 			// JUST AN IDEA: MAM2 should work only for leaf nodes... (full query of subtrees is complicated and makes it impossible to satisfy constraints!
 			// MAM cannot work with batch publication of items and this should be forbidden (bad-request)
@@ -164,10 +179,6 @@ public class PublishItemModule
 			// should we store "retraction" notifications? or even "collection reassignments"?
 			// we should not according to the XEP-0313, while it would be useful.. (at least retractions)
 			if (uuid != null && persistInMAM) {
-				String itemId = null;
-				if (itemsToSend.size() > 0) {
-					itemId = itemsToSend.get(0).getAttributeStaticStr("id");
-				}
 				getRepository().addMAMItem(serviceJID, pair.getKey() == null ? nodeName : pair.getKey(), uuid, message, itemId);
 			}
 			eventBus.fire(new BroadcastNotificationEvent(config.getComponentName(), serviceJID, nodeName, message));
@@ -176,7 +187,10 @@ public class PublishItemModule
 	}
 
 	public void sendNotification(BareJID serviceJID, String nodeName, Element item, String uuid, Map<String,String> headers, JID recipient, StanzaType stanzaType) {
-		Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, Collections.singletonList(item), headers, stanzaType);
+		final Element items = new Element("items", new String[]{"node"}, new String[]{nodeName});
+		items.addChild(item);
+		
+		Element message = pubSubLogic.prepareNotificationMessage(JID.jidInstance(serviceJID), uuid == null ? String.valueOf(++counter) : uuid, uuid, nodeName, items, null, headers, stanzaType);
 		packetWriter.write(Packet.packetInstance(message, JID.jidInstance(serviceJID), recipient));
 	}
 
@@ -653,8 +667,10 @@ public class PublishItemModule
 
 		final Element item = publish.getChild("item");
 		String nodeName = publish.getAttributeStaticStr("node");
-
-		Element message = pubSubLogic.prepareNotificationMessage(senderJid.copyWithoutResource(), String.valueOf(++counter), null, nodeName, Collections.singletonList(item), null, StanzaType.headline);
+		final Element items = new Element("items", new String[]{"node"}, new String[]{nodeName});
+		items.addChild(item);
+		
+		Element message = pubSubLogic.prepareNotificationMessage(senderJid.copyWithoutResource(), String.valueOf(++counter), null, nodeName, items, null, null, StanzaType.headline);
 
 		for (JID jid : subscribers) {
 			Element clone = message.clone();

@@ -229,8 +229,8 @@ public class CachedPubSubRepositoryTest {
 			}
 
 			@Override
-			public Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName,
-													  List<Element> itemsToSend, Map<String, String> headers,
+			public Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName, Element items,
+													  String expireAt, Map<String, String> headers,
 													  StanzaType stanzaType) {
 				return null;
 			}

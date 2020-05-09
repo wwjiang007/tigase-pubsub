@@ -225,7 +225,7 @@ public class DefaultPubSubLogic
 
 
 	@Override
-	public Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName, List<Element> itemsToSend,
+	public Element prepareNotificationMessage(JID from, String id, String uuid, String nodeName, Element items, String expireAt,
 											  Map<String, String> headers, StanzaType stanzaType) {
 		Element message = new Element("message", new String[]{"xmlns", "from", "id"},
 									  new String[]{Packet.CLIENT_XMLNS, from.toString(), id});
@@ -240,17 +240,12 @@ public class DefaultPubSubLogic
 										 new String[]{"urn:xmpp:sid:0", uuid, from.getBareJID().toString()}));
 		}
 
-		final Element items = new Element("items", new String[]{"node"}, new String[]{nodeName});
-		items.addChildren(itemsToSend);
 		event.addChild(items);
-		if (itemsToSend.size() > 0) {
-			String expireAt = itemsToSend.get(0).getAttributeStaticStr("expire-at");
-			if (expireAt != null) {
-				Element amp = new Element("amp");
-				amp.setXMLNS(AMP_XMLNS);
-				amp.addChild(new Element("rule", new String[]{"condition", "action", "value"}, new String[]{"expire-at", "drop", expireAt}));
-				message.addChild(amp);
-			}
+		if (expireAt != null) {
+			Element amp = new Element("amp");
+			amp.setXMLNS(AMP_XMLNS);
+			amp.addChild(new Element("rule", new String[]{"condition", "action", "value"}, new String[]{"expire-at", "drop", expireAt}));
+			message.addChild(amp);
 		}
 		message.addChild(event);
 		if ((headers != null) && (headers.size() > 0)) {
@@ -268,14 +263,17 @@ public class DefaultPubSubLogic
 		try {
 			AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(from.getBareJID(), nodeName);
 			if ((this.xslTransformer != null) && (nodeConfig != null)) {
-				for (Element itemToSend : itemsToSend) {
-					try {
-						List<Element> elems = this.xslTransformer.transform(itemToSend, nodeConfig);
-						if (elems != null) {
-							message.addChildren(elems);
+				List<Element> itemsToSend = items.getChildren(el -> el.getName() == "item");
+				if (itemsToSend != null) {
+					for (Element itemToSend : itemsToSend) {
+						try {
+							List<Element> elems = this.xslTransformer.transform(itemToSend, nodeConfig);
+							if (elems != null) {
+								message.addChildren(elems);
+							}
+						} catch (Exception e) {
+							log.log(Level.WARNING, "Problem with generating BODY", e);
 						}
-					} catch (Exception e) {
-						log.log(Level.WARNING, "Problem with generating BODY", e);
 					}
 				}
 			}
