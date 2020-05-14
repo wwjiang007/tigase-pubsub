@@ -512,6 +512,17 @@ public class PublishItemModule
 							}
 						}
 						break;
+					case whitelist:
+						List<JID> jids1 = this.presenceCollector.getAllAvailableJidsWithFeature(jidFrom.getBareJID(), nodeConfig.getNodeName() +
+								"+notify");
+						if (!jids1.isEmpty()) {
+							for (JID jid : jids1) {
+								if (jidFrom.getBareJID().equals(jid.getBareJID())) {
+									s.add(jid);
+								}
+							}
+						}
+						break;
 					default:
 						break;
 				}
