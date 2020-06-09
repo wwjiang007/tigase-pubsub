@@ -195,14 +195,15 @@ public class NodeCreateModule
 				publishModule.generateNodeNotifications(packet.getStanzaTo().getBareJID(), collection,
 													colE, null, false);
 			}
-			if (instantNode) {
-				Element ps = new Element("pubsub", new String[]{"xmlns"},
-										 new String[]{"http://jabber.org/protocol/pubsub"});
-				Element cr = new Element("create", new String[]{"node"}, new String[]{nodeName});
 
-				ps.addChild(cr);
-				result.getElement().addChild(ps);
-			}
+			// result should contain "node" attribute and <create/> element, however it is allowed to omit i
+			// either way it would be better to have that, just in case
+			Element ps = new Element("pubsub", new String[]{"xmlns"},
+										 new String[]{"http://jabber.org/protocol/pubsub"});
+			Element cr = new Element("create", new String[]{"node"}, new String[]{nodeName});
+
+			ps.addChild(cr);
+			result.getElement().addChild(ps);
 
 			packetWriter.write(result);
 
