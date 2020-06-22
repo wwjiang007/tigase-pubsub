@@ -247,7 +247,8 @@ public class PepPlugin
 		}
 
 		// if packet is not for this session then we need to forward it
-		if (session != null && packet.getStanzaTo() != null && !session.isUserId(packet.getStanzaTo().getBareJID())) {
+		if (session != null && session.isAuthorized() && packet.getStanzaTo() != null &&
+				!session.isUserId(packet.getStanzaTo().getBareJID())) {
 			results.offer(packet.copyElementOnly());
 			return;
 		}
@@ -293,7 +294,8 @@ public class PepPlugin
 		results.offer(result);
 
 		if (vcardTempProcessor != null && pubsubEl != null && packet.getType() == StanzaType.set && session != null &&
-				packet.getStanzaFrom() != null && session.isUserId(packet.getStanzaFrom().getBareJID())) {
+				packet.getStanzaFrom() != null && session.isAuthorized() &&
+				session.isUserId(packet.getStanzaFrom().getBareJID())) {
 			Element publishEl = pubsubEl.getChild("publish");
 			if (publishEl != null && "urn:xmpp:avatar:metadata".equals(publishEl.getAttributeStaticStr("node"))) {
 				String itemId = publishEl.getChildAttributeStaticStr("item", "id");
@@ -307,7 +309,8 @@ public class PepPlugin
 			}
 		}
 		if (jabberIqPrivateProcessor != null && packet.getType() == StanzaType.set && session != null &&
-				packet.getStanzaFrom() != null && session.isUserId(packet.getStanzaFrom().getBareJID())) {
+				packet.getStanzaFrom() != null && session.isAuthorized() &&
+				session.isUserId(packet.getStanzaFrom().getBareJID())) {
 			Element publishEl = pubsubEl.getChild("publish");
 			if (publishEl != null && "storage:bookmarks".equals(publishEl.getAttributeStaticStr("node"))) {
 				Element storageEl = publishEl.findChildStaticStr(new String[] { "publish", "item", "storage" });
@@ -345,8 +348,8 @@ public class PepPlugin
 
 			Packet result = packet.copyElementOnly();
 			if (packet.getStanzaTo() == null || packet.getStanzaFrom() == null) {
-				if (session == null ||
-						(packet.getStanzaTo() != null && session.isUserId(packet.getStanzaTo().getBareJID()))) {
+				if (session == null || (packet.getStanzaTo() != null && session.isAuthorized() &&
+						session.isUserId(packet.getStanzaTo().getBareJID()))) {
 					return;
 				}
 				// in case if packet is from local user without from/to
