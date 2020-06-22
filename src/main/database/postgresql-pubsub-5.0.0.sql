@@ -81,6 +81,22 @@ end;
 -- QUERY END:
 
 -- QUERY START:
+create or replace function TigPubSubEnsureJid(varchar(2049)) returns bigint as '
+declare
+	_jid alias for $1;
+	_jid_id bigint;
+begin
+	select jid_id into _jid_id from tig_pubsub_jids where lower(jid) = lower(_jid);
+	if _jid_id is null then
+		insert into tig_pubsub_jids (jid) values (_jid) on conflict do nothing;
+		select jid_id into _jid_id from tig_pubsub_jids where lower(jid) = lower(_jid);
+	end if;
+	return _jid_id;
+end;
+' LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
 drop function if exists TigPubSubCreateNode(varchar,varchar,int,varchar,text,bigint);
 -- QUERY END:
 
