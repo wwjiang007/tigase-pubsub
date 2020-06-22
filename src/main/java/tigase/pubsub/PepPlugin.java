@@ -247,8 +247,8 @@ public class PepPlugin
 		}
 
 		// if packet is not for this session then we need to forward it
-		if (session != null && session.isAuthorized() && packet.getStanzaTo() != null &&
-				!session.isUserId(packet.getStanzaTo().getBareJID())) {
+		if (session != null && packet.getStanzaTo() != null &&
+				!(session.isAuthorized() && session.isUserId(packet.getStanzaTo().getBareJID()))) {
 			results.offer(packet.copyElementOnly());
 			return;
 		}
