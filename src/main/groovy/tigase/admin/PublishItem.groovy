@@ -125,7 +125,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 					}
 				}
 
-				def data = entry.join("\n")
+				def data = tigase.xml.XMLUtils.unescape(entry.join("\n"));
 				def chars = ((String) data).toCharArray();
 
 				def handler = new DomBuilderHandler();

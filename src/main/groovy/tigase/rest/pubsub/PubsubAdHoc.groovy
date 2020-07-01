@@ -21,6 +21,7 @@ import tigase.http.rest.Service
 import tigase.server.Iq
 import tigase.server.Packet
 import tigase.xml.Element
+import tigase.xml.XMLUtils
 import tigase.xmpp.StanzaType
 import tigase.xmpp.jid.BareJID
 
@@ -126,11 +127,11 @@ As a result you will receive response in form of JSON or XML similar to followin
 					if (field.value) {
 						if (field.value instanceof Collection) {
 							field.value.each { val ->
-								Element valueEl = new Element("value", val);
+								Element valueEl = new Element("value", XMLUtils.escape(val));
 								fieldEl.addChild(valueEl);
 							}
 						} else {
-							Element valueEl = new Element("value", field.value);
+							Element valueEl = new Element("value", XMLUtils.escape(field.value));
 							fieldEl.addChild(valueEl);
 						}
 					}
@@ -154,12 +155,12 @@ As a result you will receive response in form of JSON or XML similar to followin
 
 				def titleEl = data.getChild("title");
                 if (titleEl) {
-                    results.title = titleEl.getCData()
+                    results.title = XMLUtils.unescape(titleEl.getCData());
                 };
 
 				def instructionsEl = data.getChild("instructions");
                 if (instructionsEl) {
-                    results.instructions = instructionsEl.getCData()
+                    results.instructions = XMLUtils.unescape(instructionsEl.getCData());
                 };
 
 				def noteEl = command.getChild("note");
@@ -184,10 +185,10 @@ As a result you will receive response in form of JSON or XML similar to followin
 
 					def valueElems = fieldEl.getChildren().findAll({ it.getName() == "value" });
 					if (valueElems.size() == 1) {
-						field.value = valueElems.get(0).getCData();
+						field.value = XMLUtils.unescape(valueElems.get(0).getCData());
 					} else if (valueElems.size() > 1) {
 						field.value = [ ];
-						valueElems.each { valueEl -> field.value.add(valueEl.getCData());
+						valueElems.each { valueEl -> field.value.add(XMLUtils.unescape(valueEl.getCData()));
 						}
 					}
 
@@ -195,7 +196,7 @@ As a result you will receive response in form of JSON or XML similar to followin
 					if (!optionElems.isEmpty()) {
 						field.options = [ ];
 						optionElems.each { optionEl ->
-							def item = [ value: optionEl.getChild("value").getCData() ];
+							def item = [ value: XMLUtils.unescape(optionEl.getChild("value").getCData()) ];
                             if (optionEl.getAttribute("label")) {
                                 item.label = optionEl.getAttribute("label")
                             };
