@@ -73,9 +73,9 @@ public class PublishItemModule
 	private static final Criteria CRIT_PUBLISH = ElementCriteria.nameType("iq", "set")
 			.add(ElementCriteria.name("pubsub", "http://jabber.org/protocol/pubsub"))
 			.add(ElementCriteria.name("publish"));
-	private final LeafNodeConfig defaultPepNodeConfig;
+	protected final LeafNodeConfig defaultPepNodeConfig;
 	private final TimestampHelper dtf = new TimestampHelper();
-	private final Set<String> pepNodes = new HashSet<String>();
+	protected final Set<String> pepNodes = new HashSet<String>();
 	@Inject
 	private EventBus eventBus;
 	private long idCounter = 0;
