@@ -227,7 +227,7 @@ create or replace function TigPubSubMamQueryItems(_node_id bigint, _since timest
     ts timestamp with time zone,
     payload text
 ) as $$
-    select concat(pm.uuid, ''), pm.ts, pm.data
+    select pm.uuid::text, pm.ts, pm.data
         from tig_pubsub_mam pm
         where
             pm.node_id = _node_id
@@ -298,7 +298,7 @@ end$$;
 create or replace function TigPubSubGetItem(bigint,varchar(1024)) returns table (
 	"data" text, jid varchar(2049), uuid varchar(36)
 ) as $$
-	select "data", pn.name, concat(pi.uuid, '')
+	select "data", pn.name, pi.uuid::text
 		from tig_pubsub_items pi
 		inner join tig_pubsub_nodes pn on pn.node_id = pi.node_id
 		where pi.node_id = $1 and pi.id = $2
@@ -327,7 +327,7 @@ begin
     nodesIds := '{' || _nodes_ids || '}';
 
     if _order = 0 then
-        return query select pn.name, pi.id, cast(concat(pi.uuid, '') as varchar(36)) as uuid, pi.data
+        return query select pn.name, pi.id, cast(pi.uuid::text as varchar(36)) as uuid, pi.data
         from tig_pubsub_items pi
             inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
         where
@@ -337,7 +337,7 @@ begin
         order by pi.creation_date
         limit _limit offset _offset;
     else
-        return query select pn.name, pi.id, cast(concat(pi.uuid, '') as varchar(36)) as uuid, pi.data
+        return query select pn.name, pi.id, cast(pi.uuid::text as varchar(36)) as uuid, pi.data
         from tig_pubsub_items pi
             inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
         where
@@ -427,7 +427,7 @@ end$$;
 -- QUERY START:
 create or replace function TigPubSubGetNodeItemsMeta(bigint)
 		returns table (id varchar(1024), creation_date timestamp with time zone, update_date timestamp with time zone, uuid varchar(36)) as $$
-	select id, creation_date, update_date, concat(uuid, '') from tig_pubsub_items where node_id = $1 order by creation_date
+	select id, creation_date, update_date, uuid::text from tig_pubsub_items where node_id = $1 order by creation_date
 $$ LANGUAGE SQL;
 -- QUERY END:
 
