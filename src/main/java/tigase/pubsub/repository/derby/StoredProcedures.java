@@ -811,7 +811,7 @@ public class StoredProcedures {
 		}
 	}
 
-	public static void tigPubSubRemoveService(String serviceJid, String componentName, ResultSet[] data) throws SQLException {
+	public static void tigPubSubRemoveService(String serviceJid, ResultSet[] data) throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:default:connection");
 
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
@@ -821,35 +821,30 @@ public class StoredProcedures {
 			PreparedStatement ps = conn.prepareStatement(
 					"delete from tig_pubsub_items where node_id in (" + "select n.node_id from tig_pubsub_nodes n" +
 							" inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" +
-							" where sj.service_jid_sha1 = ? and sj.component_name = ?)");
+							" where sj.service_jid_sha1 = ?)");
 			ps.setString(1, serviceJidSha1);
-			ps.setString(2, componentName);
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_affiliations where node_id in (" +
 											   "select n.node_id from tig_pubsub_nodes n" +
 											   " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" +
-											   " where sj.service_jid_sha1 = ? and sj.component_name = ?)");
+											   " where sj.service_jid_sha1 = ?)");
 			ps.setString(1, serviceJidSha1);
-			ps.setString(2, componentName);
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_subscriptions where node_id in (" +
 											   "select n.node_id from tig_pubsub_nodes n" +
 											   " inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" +
-											   " where sj.service_jid_sha1 = ? and sj.component_name = ?)");
+											   " where sj.service_jid_sha1 = ?)");
 			ps.setString(1, serviceJidSha1);
-			ps.setString(2, componentName);
 			ps.executeUpdate();
 			ps = conn.prepareStatement(
 					"delete from tig_pubsub_nodes where node_id in (" + "select n.node_id from tig_pubsub_nodes n" +
 							" inner join tig_pubsub_service_jids sj on n.service_id = sj.service_id" +
-							" where sj.service_jid_sha1 = ? and sj.component_name = ?)");
+							" where sj.service_jid_sha1 = ?)");
 			ps.setString(1, serviceJidSha1);
-			ps.setString(2, componentName);
 			ps.executeUpdate();
 
-			ps = conn.prepareStatement("delete from tig_pubsub_service_jids where service_jid_sha1 = ? and component_name = ?");
+			ps = conn.prepareStatement("delete from tig_pubsub_service_jids where service_jid_sha1 = ?");
 			ps.setString(1, serviceJidSha1);
-			ps.setString(2, componentName);
 			ps.executeUpdate();
 			ps = conn.prepareStatement(
 					"delete from tig_pubsub_affiliations where jid_id in (select j.jid_id from tig_pubsub_jids j where j.jid_sha1 = ?)");
