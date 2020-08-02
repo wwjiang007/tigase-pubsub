@@ -90,6 +90,10 @@ public class DefaultPubSubLogic
 
 		AbstractNodeConfig nodeConfig = repository.getNodeConfig(serviceJid, nodeName);
 		if (nodeConfig == null) {
+			if (isServiceJidPEP(serviceJid)) {
+				// autocreation for PEP nodes is required
+				return;
+			}
 			throw new PubSubException(Authorization.ITEM_NOT_FOUND);
 		}
 
@@ -445,8 +449,13 @@ public class DefaultPubSubLogic
 	
 	@Override
 	public boolean isMAMEnabled(BareJID serviceJid, String node) throws RepositoryException {
-		if (isServiceJidPEP(serviceJid) && pubSubConfig.isMAMEnabled()) {
-			return true;
+		if (pubSubConfig.isMAMEnabled()) {
+			if (pubSubConfig.isMAMEnabledForGenericService()) {
+				return true;
+			}
+			if (isServiceJidPEP(serviceJid)) {
+				return true;
+			}
 		}
 		return false;
 	}

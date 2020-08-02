@@ -63,8 +63,11 @@ public class PubSubConfig implements IPubSubConfig {
 	@ConfigField(desc = "Max Cache size", alias = MAX_CACHE_SIZE)
 	private Integer maxCacheSize = 2000;
 
-	@ConfigField(desc = "MAM enabled")
+	@ConfigField(desc = "MAM enabled", alias = "mam-enabled")
 	private boolean mamEnabled = false;
+	
+	@ConfigField(desc = "MAM enabled for generic PubSub service", alias = "mam-enabled-for-generic-service")
+	private boolean mamEnabledForGenericService = false;
 
 	@ConfigField(desc = "PEP Remove Empty Geoloc", alias = PUBSUB_PEP_REMOVE_EMPTY_GEOLOC_KEY)
 	private boolean pepRemoveEmptyGeoloc = false;
@@ -152,6 +155,10 @@ public class PubSubConfig implements IPubSubConfig {
 
 	public boolean isMAMEnabled() {
 		return mamEnabled;
+	}
+
+	public boolean isMAMEnabledForGenericService() {
+		return mamEnabledForGenericService;
 	}
 
 	public boolean isPepPeristent() {

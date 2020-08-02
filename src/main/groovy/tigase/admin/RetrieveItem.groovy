@@ -31,6 +31,7 @@ import tigase.kernel.core.Kernel
 import tigase.pubsub.PubSubComponent
 import tigase.pubsub.PubSubConfig
 import tigase.pubsub.exceptions.PubSubException
+import tigase.pubsub.repository.IItems
 import tigase.pubsub.repository.IPubSubRepository
 import tigase.server.Command
 import tigase.server.Iq
@@ -78,13 +79,13 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 					throw new PubSubException(Authorization.ITEM_NOT_FOUND,
 											  "Node " + node + " was not found")
 				};
-				def items = pubsubRepository.getNodeItems(p.getStanzaTo().getBareJID(), node);
-				def item = items.getItem(itemId);
+				IItems items = pubsubRepository.getNodeItems(p.getStanzaTo().getBareJID(), node);
+				IItems.IItem item = items.getItem(itemId);
 				if (item == null) {
 					throw new PubSubException(Authorization.ITEM_NOT_FOUND,
 											  "Item " + itemId + " was not found")
 				};
-				Command.addFieldValue(result, "item", item.toString(), "text-multi", "Item");
+				Command.addFieldValue(result, "item", item.getItem().toString(), "text-multi", "Item");
 			} else {
 				throw new PubSubException(Authorization.FORBIDDEN,
 										  "You do not have enough " + "permissions to retrieve item from a node.");

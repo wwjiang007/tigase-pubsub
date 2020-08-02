@@ -42,6 +42,8 @@ public interface IPubSubConfig {
 
 	boolean isMAMEnabled();
 
+	boolean isMAMEnabledForGenericService();
+
 	boolean isPepPeristent();
 
 	boolean isPepRemoveEmptyGeoloc();
