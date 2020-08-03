@@ -211,6 +211,10 @@ drop procedure if exists TigPubSubCreateService;
 drop procedure if exists TigPubSubRemoveService;
 -- QUERY END:
 
+-- QUERY START:
+drop procedure if exists TigPubSubRemoveNode;
+-- QUERY END:
+
 delimiter //
 
 -- QUERY START:
@@ -473,6 +477,19 @@ begin
 	    join tig_pubsub_jids j on j.jid_id = s.jid_id
 	    where j.jid_sha1 = SHA1(LOWER(_service_jid));
 	COMMIT;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubRemoveNode(_node_id bigint)
+begin
+    START TRANSACTION;
+    delete from tig_pubsub_mam where node_id = _node_id;
+    delete from tig_pubsub_items where node_id = _node_id;
+    delete from tig_pubsub_subscriptions where node_id = _node_id;
+    delete from tig_pubsub_affiliations where node_id = _node_id;
+    delete from tig_pubsub_nodes where node_id = _node_id;
+    COMMIT;
 end //
 -- QUERY END:
 

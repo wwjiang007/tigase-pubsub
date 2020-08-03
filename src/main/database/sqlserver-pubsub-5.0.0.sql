@@ -549,5 +549,26 @@ end
 -- QUERY END:
 GO
 
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubRemoveNode')
+DROP PROCEDURE TigPubSubRemoveNode
+-- QUERY END:
+    GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubRemoveNode
+    @_node_id bigint
+AS
+begin
+    delete from dbo.tig_pubsub_mam where node_id = @_node_id;
+    delete from dbo.tig_pubsub_items where node_id = @_node_id;
+    delete from dbo.tig_pubsub_subscriptions where node_id = @_node_id;
+    delete from dbo.tig_pubsub_affiliations where node_id = @_node_id;
+    delete from dbo.tig_pubsub_nodes where node_id = @_node_id;
+end
+-- QUERY END:
+GO
+
+
 
 

@@ -791,7 +791,10 @@ public class StoredProcedures {
 		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 		try {
-			PreparedStatement ps = conn.prepareStatement("delete from tig_pubsub_items where node_id = ?");
+			PreparedStatement ps = conn.prepareStatement("delete from tig_pubsub_mam where node_id = ?");
+			ps.setLong(1, nodeId);
+			ps.executeUpdate();
+			ps = conn.prepareStatement("delete from tig_pubsub_items where node_id = ?");
 			ps.setLong(1, nodeId);
 			ps.executeUpdate();
 			ps = conn.prepareStatement("delete from tig_pubsub_subscriptions where node_id = ?");

@@ -444,3 +444,18 @@ create or replace function TigPubSubCreateService(varchar(2049),varchar(1024),in
 	insert into tig_pubsub_service_jids (service_jid, domain, is_public) values ($1, $2, $3);
 $$ LANGUAGE SQL;
 -- QUERY END:
+
+-- QUERY START:
+create or replace function TigPubSubRemoveNode(bigint) returns void as '
+declare
+	_node_id alias for $1;
+begin
+    delete from tig_pubsub_mam where node_id = _node_id;
+	delete from tig_pubsub_items where node_id = _node_id;
+	delete from tig_pubsub_subscriptions where node_id = _node_id;
+	delete from tig_pubsub_affiliations where node_id = _node_id;
+	delete from tig_pubsub_nodes where node_id = _node_id;
+end;
+' LANGUAGE 'plpgsql';
+-- QUERY END:
+
