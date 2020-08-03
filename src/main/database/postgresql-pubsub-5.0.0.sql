@@ -72,7 +72,7 @@ declare
 begin
 	select service_id into _service_id from tig_pubsub_service_jids where lower(service_jid) = lower(_service_jid);
 	if (_service_id is null) and _createService > 0 then
-		insert into tig_pubsub_service_jids (service_jid, domain, is_public) values (_service_jid,_domain,_is_public);
+		insert into tig_pubsub_service_jids (service_jid, domain) values (_service_jid,_domain);
 		select currval(''tig_pubsub_service_jids_service_id_seq'') into _service_id;
 	end if;
 	return _service_id;
