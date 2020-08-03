@@ -260,6 +260,19 @@ $$ LANGUAGE 'plpgsql';
 -- QUERY END:
 
 -- QUERY START:
+create or replace function TigPubSubRemoveNode(bigint) returns void as '
+declare
+	_node_id alias for $1;
+begin
+	delete from tig_pubsub_items where node_id = _node_id;
+	delete from tig_pubsub_subscriptions where node_id = _node_id;
+	delete from tig_pubsub_affiliations where node_id = _node_id;
+	delete from tig_pubsub_nodes where node_id = _node_id;
+end;
+' LANGUAGE 'plpgsql';
+-- QUERY END:
+
+-- QUERY START:
 create or replace function TigPubSubDeleteItem(bigint,varchar(1024)) returns void as $$
 	delete from tig_pubsub_items where node_id = $1 and id = $2
 $$ LANGUAGE SQL;
