@@ -396,7 +396,7 @@ begin
 	set @params_def = N'@_since datetime, @_to datetime,  @_offset int, @_limit int';
 
 	set @query_sql = N';with results_cte as(
-	    select pn.name, pi.node_id, pi.id, pi.' + @_ts + ', pi.data, row_number() over (order by pi.' + @_ts + ') as row_num
+	    select pn.name, pi.node_id, pi.uuid, pi.data, row_number() over (order by pi.' + @_ts + ') as row_num
         from tig_pubsub_items pi
             inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
         where
