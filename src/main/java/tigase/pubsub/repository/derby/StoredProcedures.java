@@ -737,7 +737,7 @@ public class StoredProcedures {
 											  Integer order, Integer limit, Integer offset, ResultSet[] data)
 			throws SQLException {
 		String ts = order == 1 ? "update_date" : "creation_date";
-		String query = "select pn.name, pi.node_id, pi.id, pi." + ts + ", pi.data" + " from tig_pubsub_items pi" +
+		String query = "select pn.name, pi.node_id, pi.id, pi.uuid, pi.data" + " from tig_pubsub_items pi" +
 				" inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id" + " where pi.node_id in (" + nodesIds +
 				")" + " and (? is null or pi." + ts + " >= ?)" + " and (? is null or pi." + ts + " <= ?)" +
 				" order by pi." + ts +

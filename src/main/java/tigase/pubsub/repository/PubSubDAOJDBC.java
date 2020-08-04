@@ -77,7 +77,7 @@ public class PubSubDAOJDBC
 
 	private static final String COUNT_NODES_ITEMS_QUERY = "{ call TigPubSubQueryItemsCount(?,?,?,?) }";
 	private static final String GET_NODES_ITEMS_QUERY = "{ call TigPubSubQueryItems(?,?,?,?,?,?) }";
-	private static final String GET_NODES_ITEMS_POSITION_QUERY = "{ call TigPubSubQueryItemPosition(?,?,?,?) }";
+	private static final String GET_NODES_ITEMS_POSITION_QUERY = "{ call TigPubSubQueryItemPosition(?,?,?,?,?,?) }";
 
 	private DataRepository data_repo;
 	@ConfigField(desc = "Add entry to MAM repository", alias = "mam-add-item-query")
@@ -451,7 +451,8 @@ public class PubSubDAOJDBC
 						data_repo.setTimestamp(st, i++,
 											   beforeDate == null ? null : new Timestamp(beforeDate.getTime()));
 						st.setInt(i++, ordering.value());
-						st.setString(i++, rsm.getAfter());
+						st.setLong(i++, IItemsItem.getNodeIdFromRsmId(rsm.getAfter()));
+						st.setString(i++, IItemsItem.getItemIdFromRsmId(rsm.getAfter()));
 						rs = st.executeQuery();
 						if (rs.next()) {
 							after = rs.getInt(1);
@@ -473,7 +474,8 @@ public class PubSubDAOJDBC
 						data_repo.setTimestamp(st, i++,
 											   beforeDate == null ? null : new Timestamp(beforeDate.getTime()));
 						st.setInt(i++, ordering.value());
-						st.setString(i++, rsm.getBefore());
+						st.setLong(i++, IItemsItem.getNodeIdFromRsmId(rsm.getBefore()));
+						st.setString(i++, IItemsItem.getItemIdFromRsmId(rsm.getBefore()));
 						rs = st.executeQuery();
 						if (rs.next()) {
 							before = rs.getInt(1);
@@ -505,23 +507,58 @@ public class PubSubDAOJDBC
 
 					while (rs.next()) {
 						String node = rs.getString(1);
-						String itemId = rs.getString(2);
-						String itemUuid = rs.getString(3);
-						Element itemEl = itemDataToElement(rs.getString(4));
+						long nodeId = rs.getLong(2);
+						String itemId = rs.getString(3);
+						String itemUuid = rs.getString(4);
+						Element itemEl = itemDataToElement(rs.getString(5));
 
-						results.add(new IItems.Item(node, itemId, itemUuid, itemEl));
+						results.add(new IItemsItem(node, nodeId, itemId, itemUuid, itemEl));
 					}
 				} finally {
 					data_repo.release(null, rs);
 				}
 			}
 			if (results.size() > 0) {
-				rsm.setLast(results.get(results.size() - 1).getId());
-				rsm.setFirst(results.get(0).getId());
+				rsm.setLast(((IItemsItem) results.get(results.size() - 1)).getRsmId());
+				rsm.setFirst(((IItemsItem) results.get(0)).getRsmId());
 			}
 			return results;
 		} catch (SQLException ex) {
 			throw new TigaseDBException("Cound not retrieve items", ex);
+		}
+	}
+
+	private static class IItemsItem extends IItems.Item {
+
+		private final long nodeId;
+
+		public IItemsItem(String node, long nodeId, String id, String uuid, Element item) {
+			super(node, id, uuid, item);
+			this.nodeId = nodeId;
+		}
+
+		public long getNodeId() {
+			return nodeId;
+		}
+
+		public String getRsmId() {
+			return "" + nodeId + "#" + getId();
+		}
+
+		public static long getNodeIdFromRsmId(String rsmId) {
+			int idx = rsmId.indexOf('#');
+			if (idx <= 0) {
+				return 0;
+			}
+			return Long.parseLong(rsmId.substring(0, idx-1));
+		}
+
+		public static String getItemIdFromRsmId(String rsmId) {
+			int idx = rsmId.indexOf('#');
+			if (idx <= 0 || rsmId.length() < (idx+1)) {
+				return rsmId;
+			}
+			return rsmId.substring(idx + 1);
 		}
 	}
 

@@ -332,7 +332,7 @@ begin
 	    set @ts = 'update_date';
 	end if;
 
-	set @query = CONCAT('select pn.name, pi.id, TigPubSubOrderedToUuid(pi.uuid), pi.data
+	set @query = CONCAT('select pn.name, pi.node_id, pi.id, TigPubSubOrderedToUuid(pi.uuid), pi.data
         from tig_pubsub_items pi
             inner join tig_pubsub_nodes pn on pi.node_id = pn.node_id
         where
