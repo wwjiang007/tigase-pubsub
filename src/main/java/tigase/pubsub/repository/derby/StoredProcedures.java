@@ -627,8 +627,8 @@ public class StoredProcedures {
 			st.setLong(1, nodeId);
 			st.setTimestamp(2, since);
 			st.setTimestamp(3, since);
+			st.setTimestamp(4, to);
 			st.setTimestamp(5, to);
-			st.setTimestamp(6, to);
 
 			int i = 0;
 			try (ResultSet rs = st.executeQuery()) {
@@ -666,8 +666,8 @@ public class StoredProcedures {
 			st.setTimestamp(3, since);
 			st.setTimestamp(4, to);
 			st.setTimestamp(5, to);
-			st.setInt(7, offset);
-			st.setInt(8, limit);
+			st.setInt(6, offset);
+			st.setInt(7, limit);
 
 			data[0] = st.executeQuery();
 		} finally {
@@ -686,10 +686,10 @@ public class StoredProcedures {
 		try {
 			PreparedStatement st = conn.prepareStatement(query);
 			st.setLong(1, nodeId);
-			st.setTimestamp(1, since);
 			st.setTimestamp(2, since);
-			st.setTimestamp(3, to);
+			st.setTimestamp(3, since);
 			st.setTimestamp(4, to);
+			st.setTimestamp(5, to);
 
 			data[0] = st.executeQuery();
 		} finally {
@@ -753,8 +753,8 @@ public class StoredProcedures {
 			st.setTimestamp(2, since);
 			st.setTimestamp(3, to);
 			st.setTimestamp(4, to);
-			st.setInt(7, offset);
-			st.setInt(8, limit);
+			st.setInt(5, offset);
+			st.setInt(6, limit);
 
 			data[0] = st.executeQuery();
 		} finally {
