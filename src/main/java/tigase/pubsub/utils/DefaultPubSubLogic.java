@@ -90,7 +90,7 @@ public class DefaultPubSubLogic
 
 		AbstractNodeConfig nodeConfig = repository.getNodeConfig(serviceJid, nodeName);
 		if (nodeConfig == null) {
-			if (isServiceJidPEP(serviceJid)) {
+			if (action == Action.publishItems && isServiceJidPEP(serviceJid)) {
 				// autocreation for PEP nodes is required
 				return;
 			}
