@@ -94,7 +94,7 @@ end //
 
 -- QUERY START:
 create procedure TigPubSubCreateNode(_service_jid varchar(2049), _node_name varchar(1024) charset utf8mb4 collate utf8mb4_bin, _node_type int,
-	_node_creator varchar(2049), _node_conf text charset utf8mb4 collate utf8mb4_bin, _collection_id bigint, _ts timestamp(6), _domain varchar(1024), _createService int)
+	_node_creator varchar(2049), _node_conf mediumtext charset utf8mb4 collate utf8mb4_bin, _collection_id bigint, _ts timestamp(6), _domain varchar(1024), _createService int)
 begin
 	declare _service_id bigint;
 	declare _node_creator_id bigint;
