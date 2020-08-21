@@ -81,6 +81,8 @@ public class PublishItemModule
 	private EventBus eventBus;
 	private long idCounter = 0;
 	@Inject
+	private NotificationBroadcaster notificationBroadcaster;
+	@Inject
 	private PresenceCollectorModule presenceCollector;
 	@Inject(nullAllowed = false)
 	private IPubSubRepository repository;
@@ -196,11 +198,7 @@ public class PublishItemModule
 
 	public void broadcastNotification(BareJID serviceJID, String nodeName, Element message)
 			throws RepositoryException {
-		JID senderJid = JID.jidInstance(serviceJID);
-		pubSubLogic.subscribersOfNotifications(serviceJID, nodeName).forEach(subscriberJid -> {
-			Element clone = message.clone();
-			packetWriter.write(Packet.packetInstance(clone, senderJid, subscriberJid));
-		});
+		notificationBroadcaster.broadcastNotification(serviceJID, nodeName, message);
 	}
 
 	public AbstractNodeConfig ensurePepNode(BareJID toJid, String nodeName, BareJID ownerJid, Element publishOptions) throws PubSubException {
