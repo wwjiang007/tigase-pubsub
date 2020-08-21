@@ -107,6 +107,19 @@ public class DiscoveryModule
 			}
 			resultQuery.addChild(new Element("identity", new String[]{"category", "type"},
 											 new String[]{"pubsub", nodeConfigClone.getNodeType().name()}));
+			switch (nodeConfigClone.getNodeType()) {
+				case leaf:
+					resultQuery.addChild(new Element("identity", new String[]{"category", "type"},
+							new String[]{"hierarchy", "leaf"}));
+					break;
+				case collection:
+					resultQuery.addChild(new Element("identity", new String[]{"category", "type"},
+							new String[]{"hierarchy", "branch"}));
+					break;
+				default:
+					// this should not happen..
+					break;
+			}
 			resultQuery.addChild(
 					new Element("feature", new String[]{"var"}, new String[]{"http://jabber.org/protocol/pubsub"}));
 
