@@ -634,7 +634,7 @@ public class StoredProcedures {
 			try (ResultSet rs = st.executeQuery()) {
 				while (rs.next()) {
 					if (uuid.equalsIgnoreCase(rs.getString(1))) {
-						i = rs.getInt(3);
+						i = rs.getInt(2);
 					}
 				}
 			}
