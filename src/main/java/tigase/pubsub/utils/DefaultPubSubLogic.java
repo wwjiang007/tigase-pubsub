@@ -361,6 +361,9 @@ public class DefaultPubSubLogic
 	private static final Logger log = Logger.getLogger(DefaultPubSubLogic.class.getCanonicalName());
 
 	protected Stream<JID> getActiveSubscribers(ISubscriptions subscriptions, final IAffiliations affiliations) {
+		if (subscriptions == null) {
+			return Stream.empty();
+		}
 		Stream<UsersSubscription> stream = subscriptions.getSubscriptionsForPublish();
 
 		return stream.filter(subscription -> subscription.getSubscription() == Subscription.subscribed)
