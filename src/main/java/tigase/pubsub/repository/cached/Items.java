@@ -23,6 +23,7 @@ import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.repository.IItems;
 import tigase.pubsub.repository.IPubSubDAO;
 import tigase.xml.Element;
+import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
 import java.util.Date;
@@ -115,14 +116,16 @@ public class Items<T>
 	@Override
 	public void writeItem(String id, String publisher, Element item, String uuid)
 			throws RepositoryException, PubSubException {
-		itemsListener.validateItem(serviceJid, nodeName, id,publisher, item);
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST,
-					"writeItem, serviceJid: {0}, nodeId: {1}, dao: {2}, id: {3}, publisher: {4}, item: {5}",
-					new Object[]{serviceJid, nodeId, dao, id, publisher, item});
+		if (itemsListener.validateItem(serviceJid, nodeName, id,publisher, item)) {
+			if (log.isLoggable(Level.FINEST)) {
+				log.log(Level.FINEST,
+						"writeItem, serviceJid: {0}, nodeId: {1}, dao: {2}, id: {3}, publisher: {4}, item: {5}", new Object[]{serviceJid, nodeId, dao, id, publisher, item});
+			}
+			this.dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), id, publisher, item, uuid);
+			itemsListener.itemWritten(serviceJid, nodeName, id, publisher, item, uuid);
+		} else {
+			throw new PubSubException(Authorization.FORBIDDEN, "Provided item did not pass validation");
 		}
-		this.dao.writeItem(serviceJid, nodeId, System.currentTimeMillis(), id, publisher, item, uuid);
-		itemsListener.itemWritten(serviceJid, nodeName, id, publisher, item, uuid);
 	}
 
 }
