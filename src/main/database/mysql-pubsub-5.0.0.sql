@@ -427,8 +427,6 @@ end //
 -- QUERY START:
 create procedure TigPubSubRemoveService(_service_jid varchar(2049))
 begin
-	declare _service_id bigint;
-
 	DECLARE exit handler for sqlexception
 		BEGIN
 			-- ERROR
@@ -437,8 +435,6 @@ begin
 	END;
 
 	START TRANSACTION;
-	select service_id into _service_id from tig_pubsub_service_jids
-		where service_jid_sha1 = SHA1(LOWER(_service_jid));
 	delete i
 	    from tig_pubsub_items i
 	    join tig_pubsub_nodes n on n.node_id = i.node_id
@@ -464,14 +460,10 @@ begin
 	    join tig_pubsub_service_jids s on n.service_id = s.service_id
 	    where s.service_jid_sha1 = SHA1(LOWER(_service_jid));
 	delete from tig_pubsub_service_jids where service_jid_sha1 = SHA1(LOWER(_service_jid));
-	COMMIT;
-	START TRANSACTION;
 	delete a
 	    from tig_pubsub_affiliations a
 	    join tig_pubsub_jids j on j.jid_id = a.jid_id
 	    where j.jid_sha1 = SHA1(LOWER(_service_jid));
-	COMMIT;
-	START TRANSACTION;
 	delete s
 	    from tig_pubsub_subscriptions s
 	    join tig_pubsub_jids j on j.jid_id = s.jid_id
