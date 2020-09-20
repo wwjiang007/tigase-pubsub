@@ -612,6 +612,15 @@ public class CachedPubSubRepository<T>
 	}
 
 	@Override
+	public boolean validateItem(BareJID serviceJID, String node, String id, String publisher, Element item)
+			throws PubSubException {
+		if (listener != null) {
+			return listener.validateItem(serviceJID, node, id,publisher, item);
+		}
+		return true;
+	}
+
+	@Override
 	public void itemWritten(BareJID serviceJID, String node, String id, String publisher, Element item, String uuid) {
 		if (listener != null) {
 			listener.itemWritten(serviceJID, node, id, publisher, item, uuid);

@@ -130,10 +130,8 @@ public interface IItems {
 
 		void itemDeleted(BareJID serviceJID, String node, String id);
 
-		default boolean validateItem(BareJID serviceJID, String node, String id, String publisher, Element item) throws
-																										 PubSubException {
-			return true;
-		}
+		boolean validateItem(BareJID serviceJID, String node, String id, String publisher, Element item) throws
+																										 PubSubException;
 
 	}
 }
