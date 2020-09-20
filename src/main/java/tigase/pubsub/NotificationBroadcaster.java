@@ -22,6 +22,7 @@ import tigase.component.exceptions.RepositoryException;
 import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Inject;
 import tigase.pubsub.utils.PubSubLogic;
+import tigase.pubsub.utils.executors.Executor;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.jid.BareJID;
@@ -34,13 +35,17 @@ public class NotificationBroadcaster {
     private PacketWriter packetWriter;
     @Inject
     private PubSubLogic pubSubLogic;
-
-    public void broadcastNotification(BareJID serviceJID, String nodeName, Element message)
+    @Inject(bean = "publishExecutor")
+    private Executor publishExecutor;
+    
+    public void broadcastNotification(Executor.Priority priority, BareJID serviceJID, String nodeName, Element message)
             throws RepositoryException {
         JID senderJid = JID.jidInstance(serviceJID);
         pubSubLogic.subscribersOfNotifications(serviceJID, nodeName).forEach(subscriberJid -> {
-            Element clone = message.clone();
-            packetWriter.write(Packet.packetInstance(clone, senderJid, subscriberJid));
+            publishExecutor.submit(Executor.Priority.normal, () -> {
+                Element clone = message.clone();
+                packetWriter.write(Packet.packetInstance(clone, senderJid, subscriberJid));
+            });
         });
     }
 

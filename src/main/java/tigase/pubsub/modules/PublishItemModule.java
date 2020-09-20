@@ -37,6 +37,7 @@ import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.ISubscriptions;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.pubsub.utils.PubSubLogic;
+import tigase.pubsub.utils.executors.Executor;
 import tigase.server.Packet;
 import tigase.util.datetime.TimestampHelper;
 import tigase.util.stringprep.TigaseStringprepException;
@@ -86,6 +87,8 @@ public class PublishItemModule
 	private PresenceCollectorModule presenceCollector;
 	@Inject(nullAllowed = false)
 	private IPubSubRepository repository;
+	@Inject(bean = "publishExecutor")
+	private Executor publishExecutor;
 
 	private static Collection<String> extractCDataItems(Element event, String[] path) {
 		ArrayList<String> result = new ArrayList<>();
@@ -184,7 +187,9 @@ public class PublishItemModule
 				getRepository().addMAMItem(serviceJID, pair.getKey() == null ? nodeName : pair.getKey(), uuid, message, itemId);
 			}
 			eventBus.fire(new BroadcastNotificationEvent(config.getComponentName(), serviceJID, nodeName, message));
-			broadcastNotification(serviceJID, nodeName, message);
+
+			// TODO: priority is for now set to `normal` but we should consider retrieving it from the PubSub node configuration
+			broadcastNotification(Executor.Priority.normal, serviceJID, nodeName, message);
 		}
 	}
 
@@ -196,9 +201,9 @@ public class PublishItemModule
 		packetWriter.write(Packet.packetInstance(message, JID.jidInstance(serviceJID), recipient));
 	}
 
-	public void broadcastNotification(BareJID serviceJID, String nodeName, Element message)
+	public void broadcastNotification(Executor.Priority priority, BareJID serviceJID, String nodeName, Element message)
 			throws RepositoryException {
-		notificationBroadcaster.broadcastNotification(serviceJID, nodeName, message);
+		notificationBroadcaster.broadcastNotification(priority, serviceJID, nodeName, message);
 	}
 
 	public AbstractNodeConfig ensurePepNode(BareJID toJid, String nodeName, BareJID ownerJid, Element publishOptions) throws PubSubException {
@@ -265,6 +270,10 @@ public class PublishItemModule
 
 	@Override
 	public void process(Packet packet) throws PubSubException {
+		if (publishExecutor.isOverloaded()) {
+			throw new PubSubException(Authorization.RESOURCE_CONSTRAINT);
+		}
+
 		final BareJID toJid = packet.getStanzaTo().getBareJID();
 		final Element element = packet.getElement();
 		final Element pubSub = element.getChild("pubsub", "http://jabber.org/protocol/pubsub");
