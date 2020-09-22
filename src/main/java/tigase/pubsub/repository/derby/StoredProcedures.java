@@ -1051,8 +1051,10 @@ public class StoredProcedures {
 			ps.setString(1, domain);
 			if (isPublic != null) {
 				ps.setInt(2, isPublic);
+				ps.setInt(3, isPublic);
 			} else {
 				ps.setNull(2, Types.INTEGER);
+				ps.setNull(3, Types.INTEGER);
 			}
 			data[0] = ps.executeQuery();
 		} catch (SQLException e) {
