@@ -376,6 +376,10 @@ public class DefaultPubSubLogic
 	public Stream<JID> subscribersOfNotifications(BareJID serviceJid, String nodeName)
 			throws RepositoryException {
 		AbstractNodeConfig nodeConfig = getRepository().getNodeConfig(serviceJid, nodeName);
+		if (nodeConfig == null) {
+			return Stream.empty();
+		}
+		
 		IAffiliations nodeAffiliations = getRepository().getNodeAffiliations(serviceJid, nodeName);
 		ISubscriptions nodesSubscriptions = getRepository().getNodeSubscriptions(serviceJid, nodeName);
 		Stream<JID> stream = getActiveSubscribers(nodesSubscriptions, nodeAffiliations);
