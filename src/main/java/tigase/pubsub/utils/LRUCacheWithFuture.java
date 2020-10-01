@@ -79,7 +79,7 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 			return null;
 		}
 
-		if (future.isCompletedExceptionally()) {
+		if (future.isCompletedExceptionally() || future.isCancelled()) {
 			cache.remove(key);
 			return null;
 		}
@@ -100,7 +100,7 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 				node.cancel(true);
 			}
 			return (node == null || node.isCompletedExceptionally()) ? null : node.join();
-		} catch (CompletionException ex) {
+		} catch (CompletionException|CancellationException ex) {
 			cache.remove(key);
 			throw ex;
 		}
@@ -113,7 +113,7 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 				node.cancel(true);
 			}
 			return (node == null || node.isCompletedExceptionally()) ? null : node.join();
-		} catch (CompletionException ex) {
+		} catch (CompletionException|CancellationException ex) {
 			cache.remove(key);
 			throw ex;
 		}
@@ -137,7 +137,12 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 	}
 
 	public Stream<V> values() {
-		return cache.values().filter(CompletableFuture::isDone).map(CompletableFuture::join).filter(Objects::nonNull);
+		return cache.values()
+				.filter(CompletableFuture::isDone)
+				.filter(future -> !future.isCompletedExceptionally())
+				.filter(future -> !future.isCancelled())
+				.map(CompletableFuture::join)
+				.filter(Objects::nonNull);
 	}
 
 	public int size() {
