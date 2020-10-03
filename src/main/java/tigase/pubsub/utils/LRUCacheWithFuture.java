@@ -47,6 +47,7 @@ public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 			try {
 				return oldFuture.join();
 			} catch (CancellationException ex) {
+				cache.remove(key, oldFuture);
 				return computeIfAbsent(key, supplier);
 			} catch (CompletionException ex) {
 				throw ex;
