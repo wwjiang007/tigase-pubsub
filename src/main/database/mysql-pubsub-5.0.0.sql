@@ -435,6 +435,7 @@ begin
 	END;
 
 	START TRANSACTION;
+    select * from tig_pubsub_service_jids where service_jid_sha1 = SHA1(LOWER(_service_jid)) for update;
 	delete i
 	    from tig_pubsub_items i
 	    join tig_pubsub_nodes n on n.node_id = i.node_id
