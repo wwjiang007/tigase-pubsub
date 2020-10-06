@@ -137,7 +137,14 @@ public class PublishItemModule
 					if (geoloc != null && (geoloc.getChildren() == null || geoloc.getChildren().size() == 0)) {
 						nodeItems.deleteItem(id);
 					} else {
-						nodeItems.writeItem(id, publisher, item, uuid);
+						try {
+							nodeItems.writeItem(id, publisher, item, uuid);
+						} catch (RepositoryException ex) {
+							if (log.isLoggable(Level.FINE)) {
+								log.log(Level.FINE, "Could not store the item", ex);
+							}
+							throw new PubSubException(Authorization.INTERNAL_SERVER_ERROR, "It was not possible to store the item", ex);
+						}
 					}
 				}
 			}
@@ -310,6 +317,9 @@ public class PublishItemModule
 			packetWriter.write(resultIq);
 		} catch (PubSubException e1) {
 			throw e1;
+		} catch (RepositoryException e1) {
+			log.log(Level.FINE, "Error processing publish packet", e1);
+			throw new PubSubException(Authorization.INTERNAL_SERVER_ERROR, "Error processing publish packet", e1);
 		} catch (Exception e) {
 			log.log(Level.FINE, "Error processing publish packet", e);
 
