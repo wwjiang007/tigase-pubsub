@@ -40,13 +40,21 @@ public class NotificationBroadcaster {
     
     public void broadcastNotification(Executor.Priority priority, BareJID serviceJID, String nodeName, Element message)
             throws RepositoryException {
-        JID senderJid = JID.jidInstance(serviceJID);
+        JID senderJid = prepareSender(serviceJID, message.getAttributeStaticStr("from"));
         pubSubLogic.subscribersOfNotifications(serviceJID, nodeName).forEach(subscriberJid -> {
             publishExecutor.submit(Executor.Priority.normal, () -> {
                 Element clone = message.clone();
                 packetWriter.write(Packet.packetInstance(clone, senderJid, subscriberJid));
             });
         });
+    }
+
+    protected JID prepareSender(BareJID serviceJID, String fromAttr) {
+        if (fromAttr != null) {
+            return JID.jidInstanceNS(fromAttr);
+        } else {
+            return JID.jidInstance(serviceJID);
+        }
     }
 
 }
