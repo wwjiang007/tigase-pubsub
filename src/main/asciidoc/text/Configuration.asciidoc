@@ -178,18 +178,20 @@ pubsub () {
 }
 ----
 
-== Tune handling of low memory
-If there is less than 10% of free heap memory available during publication of item then Tigase pubsub component will trigger Garbage Collection and it there is still very little amount of free memory will slow down delivery of notifications for published items (waiting about 1 second before continuing).
+== Throttling sending notifications
+Notifications sent by PubSub component may be sent in large batches, if you have a nodes with a lot of subscribers. In those cases, it is useful to throttle publications to improve behaviour and performance of other parts of Tigase XMPP Server.
 
-If you have assigned a lot of memory to Tigase XMPP Server or in your case this delay is not acceptable you can adjust it by pubsub component properties:
+To achieve that, PubSub throttles generate notifications to specified throughput. By default it is set to 5k packets for each CPU core available per second.
 
-* setting `pubsub-high-memory-usage-level` to percentage of heap memory accepted as near OOM state
-* setting `pubsub-low-memory-delay` to number of milliseconds to wait to throttle delivery of notifications
+To set it to a different value, you can set `limit` property of `publishExecutor` bean to the expected number of publications per second, ie. 100000;
+
+NOTE: This value is a number of total throughput, and will not be adjusted by the number of available CPU cores.
 
 ----
 pubsub () {
-    pubsub-high-memory-usage-level = 95
-    pubsub-low-memory-delay = 100
+    publishExecutor () {
+        limit = 10000
+    }
 }
 ----
 

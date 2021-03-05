@@ -22,6 +22,9 @@ import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.pubsub.PubSubComponent;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Class implements an executor limiting number of executions of submitted tasks per second.
  */
@@ -29,8 +32,10 @@ import tigase.pubsub.PubSubComponent;
 public class RateLimitingExecutor extends AbstractQueuingExecutor
 		implements Runnable, Initializable {
 
+	private static final Logger log = Logger.getLogger(RateLimitingExecutor.class.getCanonicalName());
+
 	@ConfigField(desc = "Limit of tasks executed per second")
-	private long limit = Long.MAX_VALUE;
+	private long limit = Runtime.getRuntime().availableProcessors() * 5000;
 
 	private Thread executor = null;
 	private boolean stopped = false;
@@ -46,6 +51,8 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 		this.limit = limit;
 	}
 
+	private boolean throttling = false;
+
 	@Override
 	public void run() {
 		while (!stopped) {
@@ -60,6 +67,24 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 				}
 			}
 			long end = System.currentTimeMillis();
+
+			if (log.isLoggable(Level.INFO)) {
+				int size = queue.totalSize();
+				if (size > limit) {
+					if (!throttling) {
+						log.log(Level.INFO,
+								"throttling executions started at rate " + permissions + " every " + sleepTime +
+										"ms, current queue size " + size);
+						throttling = true;
+					}
+				} else {
+					if (throttling) {
+						log.log(Level.INFO, "throttling executions ended");
+					}
+					throttling = false;
+				}
+			}
+
 			long actualSleep = sleepTime - (end - start);
 			if (actualSleep > 0) {
 				try {
