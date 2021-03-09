@@ -21,6 +21,7 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.pubsub.PubSubComponent;
+import tigase.sys.TigaseRuntime;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,6 +37,11 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 
 	@ConfigField(desc = "Limit of tasks executed per second")
 	private long limit = Runtime.getRuntime().availableProcessors() * 5000;
+
+	@ConfigField(desc = "Limit of amount of used memory that increases throttling")
+	private float highMemoryUsageLimit = 90.0f;
+	@ConfigField(desc = "Limit of amount of used memory that stops publication")
+	private float criticalMemoryUsageLimit = 99.9f;
 
 	private Thread executor = null;
 	private boolean stopped = false;
@@ -58,7 +64,8 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 		while (!stopped) {
 			long start = System.currentTimeMillis();
 			long sleepTime = getSleepTime();
-			long permissions = limit / (1000/sleepTime);
+			MemoryUsage memoryUsage = currentMemoryUsage();
+			long permissions = getPermissions(sleepTime, memoryUsage);
 			for (int i=0; i<permissions; i++) {
 				try {
 					execute();
@@ -70,11 +77,11 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 
 			if (log.isLoggable(Level.INFO)) {
 				int size = queue.totalSize();
-				if (size > limit) {
+				if (size > limit || memoryUsage != MemoryUsage.normal) {
 					if (!throttling) {
 						log.log(Level.INFO,
 								"throttling executions started at rate " + permissions + " every " + sleepTime +
-										"ms, current queue size " + size);
+										"ms, current queue size " + size + ", memory usage " + memoryUsage.name());
 						throttling = true;
 					}
 				} else {
@@ -101,14 +108,28 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 	 * @return
 	 */
 	protected long getSleepTime() {
-		if (limit > 1000) {
+		if (limit > 10000) {
 			return 1;
-		} else if (limit > 100) {
+		} else if (limit > 1000) {
 			return 10;
-		} else if (limit > 10) {
+		} else if (limit > 100) {
 			return 100;
 		} else {
 			return 1000;
+		}
+	}
+
+	protected long getPermissions(long sleepTime, MemoryUsage memoryUsage) {
+		long permissions = limit / (1000/sleepTime);
+		switch (memoryUsage) {
+			case normal:
+				return permissions;
+			case high:
+				return (long) Math.ceil((permissions * 2.0) / 3.0);
+			case veryHigh:
+				return (long) Math.ceil(permissions / 3.0);
+			case critical:
+				return 0;
 		}
 	}
 
@@ -127,5 +148,26 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 		 stopped = true;
 		 super.beforeUnregister();
 		 executor = null;
+	}
+
+	public MemoryUsage currentMemoryUsage() {
+		float usage = TigaseRuntime.getTigaseRuntime().getHeapMemUsage();
+		if (usage < highMemoryUsageLimit) {
+			return MemoryUsage.normal;
+		}
+		if (usage > criticalMemoryUsageLimit) {
+			return MemoryUsage.critical;
+		}
+		if (usage > (criticalMemoryUsageLimit + highMemoryUsageLimit) / 2) {
+			return MemoryUsage.veryHigh;
+		}
+		return MemoryUsage.high;
+	}
+
+	public enum MemoryUsage {
+		normal,
+		high,
+		veryHigh,
+		critical
 	}
 }
