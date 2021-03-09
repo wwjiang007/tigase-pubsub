@@ -131,6 +131,7 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 			case critical:
 				return 0;
 		}
+		return permissions;
 	}
 
 	@Override
