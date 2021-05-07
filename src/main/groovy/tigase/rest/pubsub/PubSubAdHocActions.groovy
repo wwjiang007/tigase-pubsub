@@ -99,10 +99,12 @@ For a content of a HTTP POST request you need to pass filled XML data retrieved 
 							fieldEl.addChild(new Element("value", XMLUtils.escape((String) v)));
 						} else if (v instanceof Element) {
 							fieldEl.addChild(new Element("value", XMLUtils.escape(((Element) v).toString())));
-						} else {
+						} else if (v != null) {
 							Element payload = new Element("payload");
 							payload.setCData(new JsonCoder().encode(v));
 							fieldEl.addChild(new Element("value", XMLUtils.escape(payload.toString())));
+						} else {
+							// nothing to do, field without <value/> is the same as field with <value/> and without CData in it
 						}
 					}
 				}
