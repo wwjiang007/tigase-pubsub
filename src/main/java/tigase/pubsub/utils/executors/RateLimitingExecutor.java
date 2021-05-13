@@ -41,7 +41,7 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 	@ConfigField(desc = "Limit of amount of used memory that increases throttling")
 	private float highMemoryUsageLimit = 90.0f;
 	@ConfigField(desc = "Limit of amount of used memory that stops publication")
-	private float criticalMemoryUsageLimit = 99.9f;
+	private float criticalMemoryUsageLimit = 98.0f;
 
 	private Thread executor = null;
 	private boolean stopped = false;

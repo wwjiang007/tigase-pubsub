@@ -195,6 +195,23 @@ pubsub () {
 }
 ----
 
+Publication rate is also adjusted to current memory usage on a 4 point scale adjusted to the value of two configuration options: `highMemoryUsageLimit` and `criticalMemoryUsageLimit` (with default values: 90% and 98% respectively):
+* `normal` - if memory usage is below `highMemoryUsageLimit` (i.e. below 90%)
+* `high` - memory usage less than halfway between `highMemoryUsageLimit` and `veryHigh` (i.e. between 90% and 94%)
+* `veryHigh` - memory usage more than halfway between `highMemoryUsageLimit` and `veryHigh` (i.e. between 94% and 98%)
+* `critical` - if memory usage is above `criticalMemoryUsageLimit` (i.e. above 98%)
+
+It's possible to adjust values of the high and critical limits in publisher bean:
+
+----
+pubsub () {
+    publishExecutor () {
+        highMemoryUsageLimit = 90
+        criticalMemoryUsageLimit = 98
+    }
+}
+----
+
 == Disable automatic subscription of node creator
 During creation of node pubsub component subscribes creator to pubsub node and delivers notifications to creator. If in your case you do not want this behavior, you may set `auto-subscribe-node-creator` property of pubsub component to `false`.
 ----
