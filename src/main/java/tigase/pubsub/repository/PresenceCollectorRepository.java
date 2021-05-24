@@ -131,7 +131,7 @@ public class PresenceCollectorRepository {
 					break;
 				}
 			}
-			entries.add(new Entry(resource, caps));
+			entries.add(new Entry(resource, caps == null ? null : caps.intern()));
 			return oldCaps;
 		}
 
