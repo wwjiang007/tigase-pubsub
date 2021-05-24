@@ -18,12 +18,15 @@
 package tigase.pubsub.repository;
 
 import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.config.ConfigField;
 import tigase.kernel.beans.selector.ClusterModeRequired;
 import tigase.pubsub.PubSubComponent;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -36,6 +39,9 @@ import java.util.stream.Stream;
 public class PresenceCollectorRepository {
 	
 	protected final ConcurrentMap<BareJID, ConcurrentMap<BareJID, Entries>> presenceByService = new ConcurrentHashMap<>();
+
+	@ConfigField(desc = "Maximal amount of last available user resources kept in cache")
+	private int maximalNoOfResources = 20;
 
 	public String add(BareJID serviceJid, JID jid, String caps) {
 		final BareJID bareJid = jid.getBareJID();
@@ -130,6 +136,11 @@ public class PresenceCollectorRepository {
 					oldCaps = entries.remove(i).caps;
 					break;
 				}
+			}
+			// limit number of kept last available resources
+			while (entries.size() >= maximalNoOfResources) {
+				// we are doing this in a synchronized block, so we are adding only one resource at once
+				entries.remove(0);
 			}
 			entries.add(new Entry(resource, caps == null ? null : caps.intern()));
 			return oldCaps;
