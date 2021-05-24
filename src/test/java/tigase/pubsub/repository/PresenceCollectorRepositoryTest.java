@@ -32,16 +32,16 @@ public class PresenceCollectorRepositoryTest {
 	public void test() {
 		BareJID recipient = BareJID.bareJIDInstanceNS("recipient@example.com");
 		JID sender = JID.jidInstanceNS("sender@example.com/res-1");
-		String[] caps = new String[] { "test+notify" };
-		String[] preCaps = repository.add(recipient, sender, caps);
-		assertTrue(preCaps == null || preCaps.length == 0);
+		String caps = "test+notify";
+		String preCaps = repository.add(recipient, sender, caps);
+		assertTrue(preCaps == null);
 
-		String[] caps1 = repository.add(recipient, sender, caps);
+		String caps1 = repository.add(recipient, sender, caps);
 		assertEquals(caps, caps1);
 
 		assertTrue(repository.remove(recipient, sender));
-		String[] caps2 = repository.add(recipient, sender, caps);
-		assertTrue(caps2 == null || caps2.length == 0);
+		String caps2 = repository.add(recipient, sender, caps);
+		assertTrue(caps2 == null);
 	}
 
 }

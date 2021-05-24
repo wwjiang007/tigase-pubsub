@@ -34,26 +34,10 @@ import java.util.stream.Stream;
 @ClusterModeRequired(active = false)
 @Bean(name = "presenceRepository", parent = PubSubComponent.class, active = true)
 public class PresenceCollectorRepository {
-
-	private static final ConcurrentMap<String, String[]> CAPS_MAP = new ConcurrentHashMap<String, String[]>();
-	private static final String[] EMPTY_CAPS = {};
-
+	
 	protected final ConcurrentMap<BareJID, ConcurrentMap<BareJID, Entries>> presenceByService = new ConcurrentHashMap<>();
 
-	public String[] add(BareJID serviceJid, JID jid, String[] caps) {
-		if (caps == null || caps.length == 0) {
-			caps = EMPTY_CAPS;
-		} else {
-			StringBuilder sb = new StringBuilder();
-			for (String item : caps) {
-				sb.append(item);
-			}
-			String key = sb.toString();
-			String[] cachedCaps = CAPS_MAP.putIfAbsent(key, caps);
-			if (cachedCaps != null) {
-				caps = cachedCaps;
-			}
-		}
+	public String add(BareJID serviceJid, JID jid, String caps) {
 		final BareJID bareJid = jid.getBareJID();
 		final String resource = jid.getResource();
 
@@ -67,8 +51,7 @@ public class PresenceCollectorRepository {
 		}
 
 		if (resource != null) {
-			Entries resources = presenceByUser.computeIfAbsent(bareJid, (k) -> new Entries());
-			return resources.add(resource, caps);
+			return presenceByUser.computeIfAbsent(bareJid, (k) -> new Entries()).add(resource, caps);
 		}
 		return null;
 	}
@@ -139,8 +122,8 @@ public class PresenceCollectorRepository {
 
 		}
 
-		public synchronized String[] add(String resource, String[] caps) {
-			String[] oldCaps = null;
+		public synchronized String add(String resource, String caps) {
+			String oldCaps = null;
 			for (int i=0; i<entries.size(); i++) {
 				Entry e = entries.get(i);
 				if (e.matches(resource)) {
@@ -189,9 +172,9 @@ public class PresenceCollectorRepository {
 
 	public class Entry {
 		private final String resource;
-		private final String[] caps;
+		private final String caps;
 
-		public Entry(String resource, String[] caps) {
+		public Entry(String resource, String caps) {
 			this.resource = resource;
 			this.caps = caps;
 		}
@@ -201,15 +184,10 @@ public class PresenceCollectorRepository {
 		}
 
 		public boolean containsCapsNode(Predicate<String> predicate) {
-			for (String node : caps) {
-				if (predicate.test(node)) {
-					return true;
-				}
-			}
-			return false;
+			return caps != null && predicate.test(caps);
 		}
 
-		public String[] getCaps() {
+		public String getCaps() {
 			return caps;
 		}
 

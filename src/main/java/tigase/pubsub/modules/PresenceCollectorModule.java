@@ -34,11 +34,9 @@ import tigase.xmpp.impl.PresenceCapabilitiesManager;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Bean(name = "presenceCollectorModule", parent = PubSubComponent.class, active = true)
 public class PresenceCollectorModule
@@ -52,12 +50,12 @@ public class PresenceCollectorModule
 	@Inject
 	private PresenceCollectorRepository presenceByService;
 
-	public boolean addJid(final BareJID serviceJid, final JID jid, String[] caps) {
+	public boolean addJid(final BareJID serviceJid, final JID jid, String caps) {
 		if (jid == null) {
 			return false;
 		}
 		
-		String[] oldCaps = presenceByService.add(serviceJid, jid,caps);
+		String oldCaps = presenceByService.add(serviceJid, jid, caps);
 		boolean added = oldCaps == null;
 		log.finest("for service " + serviceJid + " - Contact " + jid + " is collected.");
 
@@ -66,33 +64,20 @@ public class PresenceCollectorModule
 				(serviceJid.getLocalpart() != null || config.isSubscribeByPresenceFilteredNotifications()) &&
 				oldCaps != caps && caps != null) {
 			// calculating new features and firing event
-			Set<String> newFeatures = new HashSet<String>();
-			for (String node : caps) {
-				// ignore searching for features if same node exists in old
-				// caps
-				if (oldCaps != null && Arrays.binarySearch(oldCaps, node) >= 0) {
-					continue;
-				}
 
-				String[] features = PresenceCapabilitiesManager.getNodeFeatures(node);
-				if (features != null) {
-					for (String feature : features) {
-						newFeatures.add(feature);
-					}
-				}
-			}
-			if (oldCaps != null) {
-				for (String node : oldCaps) {
-					// ignore searching for features if same node exists in
-					// new caps
-					if (Arrays.binarySearch(caps, node) >= 0) {
-						continue;
-					}
-					String[] features = PresenceCapabilitiesManager.getNodeFeatures(node);
+			Set<String> newFeatures = Collections.emptySet();
+
+			if (!Objects.equals(oldCaps, caps)) {
+				if (caps != null) {
+					String[] features = caps != null ? PresenceCapabilitiesManager.getNodeFeatures(caps) : null;
+					String[] oldFeatures = oldCaps != null ? PresenceCapabilitiesManager.getNodeFeatures(oldCaps) : null;
 					if (features != null) {
-						for (String feature : features) {
-							newFeatures.remove(feature);
+						Stream<String> featuresStream = Arrays.stream(features);
+						if (oldFeatures != null) {
+							// if old features exist, remove filter out features which exist in old features
+							featuresStream = featuresStream.filter(f -> Arrays.binarySearch(oldFeatures, f) < 0);
 						}
+						newFeatures = featuresStream.collect(Collectors.toSet());
 					}
 				}
 			}
@@ -160,7 +145,7 @@ public class PresenceCollectorModule
 
 		if (type == null || type == StanzaType.available) {
 			String[] caps = config.isPepPeristent() ? capsModule.processPresence(packet) : null;
-			boolean added = addJid(toJid.getBareJID(), jid, caps);
+			boolean added = addJid(toJid.getBareJID(), jid, caps == null || caps.length == 0 ? null : caps[0]);
 			firePresenceChangeEvent(packet);
 			if (added && packet.getStanzaTo().getLocalpart() == null) {
 				Packet p = new Presence(new Element("presence", new String[]{"to", "from", Packet.XMLNS_ATT},
@@ -222,7 +207,7 @@ public class PresenceCollectorModule
 		return removed;
 	}
 
-	private void fireCapsChangeEvent(BareJID serviceJid, JID jid, String[] caps, String[] oldCaps,
+	private void fireCapsChangeEvent(BareJID serviceJid, JID jid, String caps, String oldCaps,
 									 Set<String> newFeatures) {
 		eventBus.fire(new CapsChangeEvent(config.getComponentName(), serviceJid, jid, caps, oldCaps, newFeatures));
 	}
@@ -254,12 +239,12 @@ public class PresenceCollectorModule
 
 		public final String componentName;
 		public final JID buddyJid;
-		public final String[] newCaps;
+		public final String newCaps;
 		public final Set<String> newFeatures;
-		public final String[] oldCaps;
+		public final String oldCaps;
 		public final BareJID serviceJid;
 
-		public CapsChangeEvent(String componentName, BareJID serviceJid, JID buddyJid, String[] newCaps, String[] oldCaps,
+		public CapsChangeEvent(String componentName, BareJID serviceJid, JID buddyJid, String newCaps, String oldCaps,
 							   Set<String> newFeatures) {
 			this.componentName = componentName;
 			this.serviceJid = serviceJid;
