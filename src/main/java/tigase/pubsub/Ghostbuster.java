@@ -42,8 +42,10 @@ public class Ghostbuster extends ScheduledTask {
 
 	private static final Logger log = Logger.getLogger(Ghostbuster.class.getCanonicalName());
 
-	@ConfigField(desc = "")
+	@ConfigField(desc = "Time after which presence is considered stale and ping should be send")
 	private Duration staleTime = Duration.ofHours(1);
+	@ConfigField(desc = "Limit of pings send in a single batch")
+	private int batchSize = 1000;
 
 	@Inject(bean = "service")
 	private PubSubComponent pubSubComponent;
@@ -61,7 +63,7 @@ public class Ghostbuster extends ScheduledTask {
 			presenceCollectorRepository.expiredUserResourceEntriesStream(border)
 					.filter(userResourceEntry -> shouldPing(userResourceEntry.getJid()))
 					.sorted(Comparator.comparing(PresenceCollectorRepository.UserResourceEntry::getLastSeen))
-					.limit(1000)
+					.limit(batchSize)
 					.forEach(this::ping);
 		} catch (Throwable e) {
 			log.log(Level.WARNING, e, () -> "Problem on executing ghostbuster");
@@ -79,10 +81,12 @@ public class Ghostbuster extends ScheduledTask {
 		Packet packet = Packet.packetInstance(ping, JID.jidInstanceNS(entry.getServiceJid()), entry.getJid());
 		packet.setXMLNS(Packet.CLIENT_XMLNS);
 
+		log.log(Level.FINEST, "for " + entry.getServiceJid() + " sending ping to " + entry.getJid());
 		pubSubComponent.addOutPacketWithTimeout(packet, new ReceiverTimeoutHandler() {
 			@Override
 			public void timeOutExpired(Packet data) {
 				// what should we do here? kick out? or wait a little longer?
+				log.log(Level.FINEST, "for " + entry.getServiceJid() + " ping to " + entry.getJid() + " timed out");
 			}
 
 			@Override
@@ -112,12 +116,12 @@ public class Ghostbuster extends ScheduledTask {
 	}
 
 	protected void markAsSeen(PresenceCollectorRepository.UserResourceEntry entry) {
-		log.log(Level.FINEST, "for " + entry.getServiceJid() + "marking " + entry.getJid() + " as available now");
+		log.log(Level.FINEST, "for " + entry.getServiceJid() + " marking " + entry.getJid() + " as available now");
 		entry.markAsSeen();
 	}
 
 	protected void markAsGone(PresenceCollectorRepository.UserResourceEntry entry, Authorization reason) {
-		log.log(Level.FINEST, () -> "for " + entry.getServiceJid() + "marking " + entry.getJid() + " last seen " +
+		log.log(Level.FINEST, () -> "for " + entry.getServiceJid() + " marking " + entry.getJid() + " last seen " +
 				entry.getLastSeen() + " as gone due to ping response: " + reason.getCondition());
 		presenceCollectorRepository.remove(entry.getServiceJid(), entry.getJid());
 	}
