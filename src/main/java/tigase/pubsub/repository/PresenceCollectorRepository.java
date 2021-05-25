@@ -24,13 +24,13 @@ import tigase.pubsub.PubSubComponent;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,100 +38,157 @@ import java.util.stream.Stream;
 @Bean(name = "presenceRepository", parent = PubSubComponent.class, active = true)
 public class PresenceCollectorRepository {
 	
-	protected final ConcurrentMap<BareJID, ConcurrentMap<BareJID, Entries>> presenceByService = new ConcurrentHashMap<>();
+	protected final ConcurrentMap<BareJID, ServiceEntry> entriesByService = new ConcurrentHashMap<>();
 
 	@ConfigField(desc = "Maximal amount of last available user resources kept in cache")
 	private int maximalNoOfResources = 20;
 
-	public String add(BareJID serviceJid, JID jid, String caps) {
-		final BareJID bareJid = jid.getBareJID();
-		final String resource = jid.getResource();
+	private final Object[] JID_LOCKS;
 
-		ConcurrentMap<BareJID, Entries> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
-			ConcurrentMap<BareJID, Entries> tmp = new ConcurrentHashMap<>();
-			presenceByUser = presenceByService.putIfAbsent(serviceJid, tmp);
-			if (presenceByUser == null) {
-				presenceByUser = tmp;
-			}
+	public PresenceCollectorRepository() {
+		JID_LOCKS = new Object[Runtime.getRuntime().availableProcessors() * 4];
+		for (int i=0; i<JID_LOCKS.length; i++) {
+			JID_LOCKS[i] = new Object();
 		}
+	}
 
-		if (resource != null) {
-			return presenceByUser.computeIfAbsent(bareJid, (k) -> new Entries()).add(resource, caps);
+	public String add(BareJID serviceJid, JID jid, String caps) {
+		if (jid.getResource() != null) {
+			return entriesByService.computeIfAbsent(serviceJid, ServiceEntry::new).add(jid, caps);
 		}
 		return null;
 	}
 
 	public Stream<JID> getAllAvailableJids(final BareJID serviceJid, Predicate<String> nodesPredicate) {
-		ConcurrentMap<BareJID, Entries> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
+		ServiceEntry entriesByUser = entriesByService.get(serviceJid);
+		if (entriesByUser == null) {
 			return Stream.empty();
 		}
-		return presenceByUser.entrySet().stream().flatMap(entry -> {
-			BareJID bareJID = entry.getKey();
-			List<String> resources;
-			Entries values = entry.getValue();
-			if (nodesPredicate != null) {
-				resources = values.mapEntries(Entry::getResource, e -> e.containsCapsNode(nodesPredicate));
-			} else {
-				resources = values.getResources();
-			}
-			return resources.stream().map(res -> JID.jidInstanceNS(bareJID, res));
-		});
+		Stream<UserResourceEntry> resultStream = entriesByUser.userEntriesStream().flatMap(userEntry -> userEntry.userResourceEntriesStream());
+		if (nodesPredicate != null) {
+			resultStream = resultStream.filter(entry -> entry.containsCapsNode(nodesPredicate));
+		}
+		return resultStream.map(UserResourceEntry::getJid);
 	}
 
 	public List<JID> getAllAvailableResources(final BareJID serviceJid, final BareJID bareJid) {
-		ConcurrentMap<BareJID, Entries> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
+		ServiceEntry entriesByUser = entriesByService.get(serviceJid);
+		if (entriesByUser == null) {
 			return Collections.emptyList();
 		}
-		Entries values = presenceByUser.get(bareJid);
+
+		UserEntry values = entriesByUser.get(bareJid);
 		if (values == null) {
 			return Collections.emptyList();
 		}
-		return values.getResources().stream().map(res -> JID.jidInstanceNS(bareJid, res)).collect(Collectors.toList());
+		return values.userResourceEntriesStream().map(UserResourceEntry::getJid).collect(Collectors.toList());
 	}
 
 	public boolean isAvailable(final BareJID serviceJid, final BareJID bareJid) {
-		ConcurrentMap<BareJID, Entries> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
+		ServiceEntry entriesByUser = entriesByService.get(serviceJid);
+		if (entriesByUser == null) {
 			return false;
 		}
-		final Entries resources = presenceByUser.get(bareJid);
+		
+		final UserEntry resources = entriesByUser.get(bareJid);
 
 		return (resources != null) && (resources.size() > 0);
 	}
 
 	public boolean remove(final BareJID serviceJid, final JID jid) {
-		final BareJID bareJid = jid.getBareJID();
-		final String resource = jid.getResource();
-
-		ConcurrentMap<BareJID, Entries> presenceByUser = presenceByService.get(serviceJid);
-		if (presenceByUser == null) {
+		ServiceEntry entriesByUser = entriesByService.get(serviceJid);
+		if (entriesByUser == null) {
 			return false;
 		}
 
-		Entries resources = presenceByUser.get(bareJid);
-
-		if (resources != null) {
-			return resources.remove(resource);
-		}
-
-		return false;
+		return entriesByUser.remove(jid);
 	}
 
-	public class Entries {
+	public Collection<ServiceEntry> getServiceEntries() {
+		return entriesByService.values();
+	}
 
-		private ArrayList<Entry> entries = new ArrayList<>();
+	public Stream<UserResourceEntry> userResourceEntryStream() {
+		return entriesByService.values()
+				.stream()
+				.flatMap(ServiceEntry::userEntriesStream)
+				.flatMap(UserEntry::userResourceEntriesStream);
+	}
 
-		public Entries()  {
+	public Stream<UserResourceEntry> expiredUserResourceEntriesStream(long expirationTimestamp) {
+		return userResourceEntryStream().filter(
+				userResourceEntry -> userResourceEntry.isOlderThan(expirationTimestamp));
+	}
 
+	public class ServiceEntry {
+		private final BareJID serviceJid;
+		private final ConcurrentHashMap<BareJID, UserEntry> usersEntries = new ConcurrentHashMap<>();
+
+		public ServiceEntry(BareJID serviceJid) {
+			this.serviceJid = serviceJid;
+		}
+
+		public String add(JID jid, String caps) {
+			return synchronizeOnUserJID(jid.getBareJID(), () -> usersEntries.computeIfAbsent(jid.getBareJID(), k -> new UserEntry(serviceJid, k))
+					.add(jid.getResource(), caps));
+		}
+
+		public boolean remove(JID jid) {
+			return synchronizeOnUserJID(jid.getBareJID(), () -> {
+				UserEntry entries = usersEntries.get(jid.getBareJID());
+				if (entries == null) {
+					return false;
+				}
+				boolean result = entries.remove(jid.getResource());
+				if (entries.isEmpty()) {
+					usersEntries.remove(jid.getBareJID());
+				}
+				return result;
+			});
+		}
+
+		public UserEntry get(BareJID jid) {
+			return usersEntries.get(jid);
+		}
+
+		public Collection<UserEntry> getUserEntries() {
+			return usersEntries.values();
+		}
+
+		public Stream<UserEntry> userEntriesStream() {
+			return usersEntries.values().stream();
+		}
+
+		protected <T> T synchronizeOnUserJID(BareJID jid, Supplier<T> run) {
+			synchronized (JID_LOCKS[Math.abs(jid.hashCode()) % JID_LOCKS.length]) {
+				return run.get();
+			}
+		}
+	}
+
+	public class UserEntry {
+
+		private final BareJID serviceJid;
+		private final BareJID jid;
+		private final CopyOnWriteArrayList<UserResourceEntry> entries = new CopyOnWriteArrayList<>();
+
+		public UserEntry(BareJID serviceJid, BareJID jid)  {
+			this.serviceJid = serviceJid;
+			this.jid = jid;
+		}
+
+		public BareJID getJid() {
+			return jid;
+		}
+
+		public BareJID getServiceJid() {
+			return serviceJid;
 		}
 
 		public synchronized String add(String resource, String caps) {
 			String oldCaps = null;
 			for (int i=0; i<entries.size(); i++) {
-				Entry e = entries.get(i);
+				UserResourceEntry e = entries.get(i);
 				if (e.matches(resource)) {
 					oldCaps = entries.remove(i).caps;
 					break;
@@ -142,7 +199,7 @@ public class PresenceCollectorRepository {
 				// we are doing this in a synchronized block, so we are adding only one resource at once
 				entries.remove(0);
 			}
-			entries.add(new Entry(resource, caps == null ? null : caps.intern()));
+			entries.add(new UserResourceEntry(this, resource, caps == null ? null : caps.intern()));
 			return oldCaps;
 		}
 
@@ -156,17 +213,22 @@ public class PresenceCollectorRepository {
 			return false;
 		}
 
-		public synchronized List<String> getResources() {
+		public synchronized void markAsSeen(UserResourceEntry entry) {
+			remove(entry.resource);
+			entries.add(entry);
+		}
+
+		public List<String> getResources() {
 			List<String> result = new ArrayList<>(entries.size());
-			for (Entry e : entries) {
+			for (UserResourceEntry e : entries) {
 				result.add(e.resource);
 			}
 			return result;
 		}
 
-		public synchronized <T> List<T> mapEntries(Function<Entry,T> function, Predicate<Entry> filter) {
+		public <T> List<T> mapEntries(Function<UserResourceEntry,T> function, Predicate<UserResourceEntry> filter) {
 			List<T> result = new ArrayList<>();
-			for (Entry e : entries) {
+			for (UserResourceEntry e : entries) {
 				if (!filter.test(e)) {
 					continue;
 				}
@@ -175,19 +237,41 @@ public class PresenceCollectorRepository {
 			return result;
 		}
 
-		public synchronized int size() {
+		public Stream<UserResourceEntry> getEntriesOlderThen(long timestamp) {
+			return entries.stream().filter(e -> e.isOlderThan(timestamp));
+		}
+
+		public boolean isEmpty() {
+			return entries.isEmpty();
+		}
+
+		public int size() {
 			return entries.size();
 		}
 
+		public Stream<UserResourceEntry> userResourceEntriesStream() {
+			return entries.stream();
+		}
 	}
 
-	public class Entry {
+	public class UserResourceEntry {
+		private final UserEntry entries;
 		private final String resource;
 		private final String caps;
+		private long lastSeen = System.currentTimeMillis();
 
-		public Entry(String resource, String caps) {
+		public UserResourceEntry(UserEntry entries, String resource, String caps) {
+			this.entries = entries;
 			this.resource = resource;
 			this.caps = caps;
+		}
+
+		public BareJID getServiceJid() {
+			return entries.getServiceJid();
+		}
+
+		public JID getJid() {
+			return JID.jidInstanceNS(entries.getJid(), resource);
 		}
 
 		public String getResource() {
@@ -202,12 +286,25 @@ public class PresenceCollectorRepository {
 			return caps;
 		}
 
+		public long getLastSeen() {
+			return lastSeen;
+		}
+
 		protected boolean matches(String resource) {
 			if (resource == null) {
 				return this.resource == null;
 			} else {
 				return resource.equals(this.resource);
 			}
+		}
+
+		public boolean isOlderThan(long timestamp) {
+			return lastSeen < timestamp;
+		}
+
+		public void markAsSeen() {
+			lastSeen = System.currentTimeMillis();
+			entries.markAsSeen(this);
 		}
 	}
 }
