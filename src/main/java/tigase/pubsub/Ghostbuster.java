@@ -87,6 +87,7 @@ public class Ghostbuster extends ScheduledTask {
 			public void timeOutExpired(Packet data) {
 				// what should we do here? kick out? or wait a little longer?
 				log.log(Level.FINEST, "for " + entry.getServiceJid() + " ping to " + entry.getJid() + " timed out");
+				markAsGone(entry, Authorization.REMOTE_SERVER_TIMEOUT);
 			}
 
 			@Override

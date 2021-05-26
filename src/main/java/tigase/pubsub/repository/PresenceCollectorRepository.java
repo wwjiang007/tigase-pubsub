@@ -40,8 +40,8 @@ public class PresenceCollectorRepository {
 	
 	protected final ConcurrentMap<BareJID, ServiceEntry> entriesByService = new ConcurrentHashMap<>();
 
-	@ConfigField(desc = "Maximal amount of last available user resources kept in cache")
-	private int maximalNoOfResources = 20;
+	@ConfigField(desc = "Maximum amount of last available user resources kept in cache")
+	private int maximumNoOfResources = 20;
 
 	private final Object[] JID_LOCKS;
 
@@ -195,7 +195,7 @@ public class PresenceCollectorRepository {
 				}
 			}
 			// limit number of kept last available resources
-			while (entries.size() >= maximalNoOfResources) {
+			while (entries.size() >= maximumNoOfResources) {
 				// we are doing this in a synchronized block, so we are adding only one resource at once
 				entries.remove(0);
 			}
