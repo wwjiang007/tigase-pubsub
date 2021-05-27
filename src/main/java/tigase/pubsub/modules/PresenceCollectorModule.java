@@ -119,6 +119,9 @@ public class PresenceCollectorModule
 
 	@Override
 	public String[] getFeatures() {
+		if (config.isSubscribeByPresenceFilteredNotifications()) {
+			return new String[]{"http://jabber.org/protocol/pubsub#presence-notifications", "http://jabber.org/protocol/pubsub#filtered-notifications"};
+		}
 		return new String[]{"http://jabber.org/protocol/pubsub#presence-notifications"};
 	}
 

@@ -232,7 +232,11 @@ public class PublishItemModule
 
 	@Override
 	public String[] getFeatures() {
-		return new String[]{"http://jabber.org/protocol/pubsub#publish", "http://jabber.org/protocol/pubsub#publish-options"};
+		return new String[]{"http://jabber.org/protocol/pubsub#publish",
+							"http://jabber.org/protocol/pubsub#publish-options",
+							"http://jabber.org/protocol/pubsub#multi-items",
+							"http://jabber.org/protocol/pubsub#item-ids",
+							"http://jabber.org/protocol/pubsub#persistent-items"};
 	}
 
 	@Override

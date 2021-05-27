@@ -213,6 +213,10 @@ public abstract class AbstractNodeConfig {
 		return form.getAsString("pubsub#title");
 	}
 
+	public String getDescription() {
+		return form.getAsString("pubsub#description");
+	}
+
 	public boolean isAllowToViewSubscribers() {
 		return form.getAsBoolean(TIGASE + "allow_view_subscribers");
 	}
@@ -354,6 +358,7 @@ public abstract class AbstractNodeConfig {
 		form.addField(Field.fieldListSingle(PUBSUB + "node_type", null, null, null,
 											new String[]{NodeType.leaf.name(), NodeType.collection.name()}));
 		form.addField(Field.fieldTextSingle(PUBSUB + "title", "", "A friendly name for the node"));
+		form.addField(Field.fieldTextSingle(PUBSUB + "description", "", "A description of the node"));
 		form.addField(Field.fieldBoolean(PUBSUB + "deliver_payloads", true,
 										 "Whether to deliver payloads with event notifications"));
 

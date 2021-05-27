@@ -48,7 +48,10 @@ import java.util.stream.Stream;
 public class DiscoveryModule
 		extends tigase.component.modules.impl.DiscoveryModule {
 
+	public static final String PUBSUB_FEATURE_METADATA = "http://jabber.org/protocol/pubsub#metadata";
+
 	private final SimpleDateFormat formatter;
+	private final String[] features;
 
 	@Inject
 	private IPubSubConfig config;
@@ -60,6 +63,13 @@ public class DiscoveryModule
 	public DiscoveryModule() {
 		this.formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		this.formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+		this.features = Stream.concat(Arrays.stream(super.getFeatures()), Stream.of(PUBSUB_FEATURE_METADATA))
+				.toArray(String[]::new);
+	}
+
+	@Override
+	public String[] getFeatures() {
+		return features;
 	}
 
 	@Override
@@ -162,6 +172,10 @@ public class DiscoveryModule
 			form.addField(
 					Field.fieldJidSingle("pubsub#creator", creator != null ? creator.toString() : "", "Node creator"));
 			form.addField(Field.fieldTextSingle("pubsub#creation_date", creationDateStr, "Creation date"));
+
+			form.addField(Field.fieldTextSingle("pubsub#num_subscribers", String.valueOf(
+					repository.getNodeSubscriptions(packet.getStanzaTo().getBareJID(), node).size()),
+												"Number of subscribers to this node"));
 
 			resultQuery.addChild(form.getElement());
 
