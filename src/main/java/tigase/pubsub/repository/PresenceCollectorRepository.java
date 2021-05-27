@@ -128,6 +128,10 @@ public class PresenceCollectorRepository {
 			this.serviceJid = serviceJid;
 		}
 
+		public BareJID getServiceJid() {
+			return serviceJid;
+		}
+
 		public String add(JID jid, String caps) {
 			return synchronizeOnUserJID(jid.getBareJID(), () -> usersEntries.computeIfAbsent(jid.getBareJID(), k -> new UserEntry(serviceJid, k))
 					.add(jid.getResource(), caps));
