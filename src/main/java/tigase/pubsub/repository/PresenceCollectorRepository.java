@@ -24,7 +24,10 @@ import tigase.pubsub.PubSubComponent;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -93,6 +96,20 @@ public class PresenceCollectorRepository {
 		final UserEntry resources = entriesByUser.get(bareJid);
 
 		return (resources != null) && (resources.size() > 0);
+	}
+
+	public boolean isAvailable(final BareJID serviceJid, final JID jid) {
+		ServiceEntry entriesByUser = entriesByService.get(serviceJid);
+		if (entriesByUser == null) {
+			return false;
+		}
+
+		final UserEntry resources = entriesByUser.get(jid.getBareJID());
+		if (resources == null || resources.size() == 0) {
+			return false;
+		}
+		
+		return resources.getResources().contains(jid.getResource());
 	}
 
 	public boolean remove(final BareJID serviceJid, final JID jid) {
@@ -209,7 +226,7 @@ public class PresenceCollectorRepository {
 
 		public synchronized boolean remove(String resource) {
 			for (int i=0; i<entries.size(); i++) {
-				if (entries.get(i).matches(resource)) {
+				if (entries.get(i).getResource().matches(resource)) {
 					entries.remove(i);
 					return true;
 				}

@@ -54,9 +54,10 @@ public class PresenceCollectorModule
 		if (jid == null) {
 			return false;
 		}
-		
+
+		boolean wasAvailable = presenceByService.isAvailable(serviceJid, jid);
 		String oldCaps = presenceByService.add(serviceJid, jid, caps);
-		boolean added = oldCaps == null;
+		boolean added = oldCaps == null && !wasAvailable;
 		log.finest("for service " + serviceJid + " - Contact " + jid + " is collected.");
 
 		// we are firing CapsChangeEvent only for PEP services
@@ -149,7 +150,9 @@ public class PresenceCollectorModule
 		if (type == null || type == StanzaType.available) {
 			String[] caps = config.isPepPeristent() ? capsModule.processPresence(packet) : null;
 			boolean added = addJid(toJid.getBareJID(), jid, caps == null || caps.length == 0 ? null : caps[0]);
-			firePresenceChangeEvent(packet);
+			if (added) {
+				firePresenceChangeEvent(packet);
+			}
 			if (added && packet.getStanzaTo().getLocalpart() == null) {
 				Packet p = new Presence(new Element("presence", new String[]{"to", "from", Packet.XMLNS_ATT},
 													new String[]{jid.toString(), toJid.toString(),
@@ -158,8 +161,10 @@ public class PresenceCollectorModule
 				packetWriter.write(p);
 			}
 		} else if (StanzaType.unavailable == type) {
-			removeJid(toJid.getBareJID(), jid);
-			firePresenceChangeEvent(packet);
+			boolean removed = removeJid(toJid.getBareJID(), jid);
+			if (removed) {
+				firePresenceChangeEvent(packet);
+			}
 			if (packet.getStanzaTo().getLocalpart() == null) {
 				Packet p = new Presence(new Element("presence", new String[]{"to", "from", "type", Packet.XMLNS_ATT},
 													new String[]{jid.toString(), toJid.toString(),
