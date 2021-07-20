@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 public class DiscoveryModule
 		extends tigase.component.modules.impl.DiscoveryModule {
 
-	public static final String PUBSUB_FEATURE_METADATA = "http://jabber.org/protocol/pubsub#metadata";
+	public static final String PUBSUB_FEATURE_METADATA = "http://jabber.org/protocol/pubsub#meta-data";
 
 	private final SimpleDateFormat formatter;
 	private final String[] features;
