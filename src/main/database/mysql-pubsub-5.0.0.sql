@@ -67,6 +67,18 @@ drop procedure if exists TigPubSubUpgrade;
 -- QUERY END:
 
 -- QUERY START:
+drop procedure if exists TigPubSubEnsureJid;
+-- QUERY END:
+
+-- QUERY START:
+drop function if exists TigPubSubEnsureJid;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigPubSubEnsureServiceJid;
+-- QUERY END:
+
+-- QUERY START:
 drop function if exists TigPubSubEnsureServiceJid;
 -- QUERY END:
 
@@ -74,21 +86,38 @@ drop function if exists TigPubSubEnsureServiceJid;
 drop procedure if exists TigPubSubCreateNode;
 -- QUERY END:
 
+-- QUERY START:
+drop procedure if exists TigPubSubSetNodeAffiliation;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigPubSubSetNodeSubscription;
+-- QUERY END:
+
 delimiter //
 
 -- QUERY START:
-create function TigPubSubEnsureServiceJid(_service_jid varchar(2049), _domain varchar(1024), _createService int) returns bigint DETERMINISTIC
+create procedure TigPubSubEnsureJid(_jid varchar(2049), out _jid_id bigint)
 begin
-	declare _service_id bigint;
+    select jid_id into _jid_id from tig_pubsub_jids where jid_sha1 = SHA1(LOWER(_jid));
+    if _jid_id is null then
+        insert into tig_pubsub_jids (jid, jid_sha1)
+        values (_jid, SHA1(LOWER(_jid)))
+        on duplicate key update jid_id = LAST_INSERT_ID(jid_id);
+        select LAST_INSERT_ID() into _jid_id;
+    end if;
+end //
+-- QUERY END:
 
-	select service_id into _service_id from tig_pubsub_service_jids where service_jid_sha1 = SHA1(LOWER(_service_jid));
-	if _service_id is null and _createService > 0 then
-		insert into tig_pubsub_service_jids (service_jid, service_jid_sha1, domain, domain_sha1)
-			values (_service_jid, SHA1(LOWER(_service_jid)), _domain, SHA1(LOWER(_domain)));
-		select LAST_INSERT_ID() into _service_id;
-	end if;
-
-	return (_service_id);
+-- QUERY START:
+create procedure TigPubSubEnsureServiceJid(_service_jid varchar(2049), _domain varchar(1024), _createService int, out _service_id bigint)
+begin
+    select service_id into _service_id from tig_pubsub_service_jids where service_jid_sha1 = SHA1(LOWER(_service_jid));
+    if _service_id is null and _createService > 0 then
+        insert into tig_pubsub_service_jids (service_jid, service_jid_sha1, domain, domain_sha1)
+        values (_service_jid, SHA1(LOWER(_service_jid)), _domain, SHA1(LOWER(_domain)));
+        select LAST_INSERT_ID() into _service_id;
+    end if;
 end //
 -- QUERY END:
 
@@ -99,27 +128,74 @@ begin
 	declare _service_id bigint;
 	declare _node_creator_id bigint;
 	declare _node_id bigint;
-	declare _exists int;
-
-	DECLARE exit handler for sqlexception
-		BEGIN
-			-- ERROR
-		ROLLBACK;
-		RESIGNAL;
-	END;
 
 	START TRANSACTION;
-	select TigPubSubEnsureJid(_node_creator) into _node_creator_id;
+	call TigPubSubEnsureJid(_node_creator, _node_creator_id);
 	COMMIT;
 
 	START TRANSACTION;
-	select TigPubSubEnsureServiceJid(_service_jid, _domain, _createService) into _service_id;
+	call TigPubSubEnsureServiceJid(_service_jid, _domain, _createService, _service_id);
 
 	insert into tig_pubsub_nodes (service_id,name,name_sha1,`type`,creator_id, creation_date, configuration,collection_id)
 			values (_service_id, _node_name, sha1(_node_name), _node_type, _node_creator_id, _ts, _node_conf, _collection_id);
 	select LAST_INSERT_ID() into _node_id;
 	select _node_id as node_id;
 	COMMIT;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubSetNodeAffiliation(_node_id bigint, _jid varchar(2049), _affil varchar(20))
+begin
+    declare _jid_id bigint;
+    declare _exists int;
+
+    START TRANSACTION;
+
+    select jid_id into _jid_id from tig_pubsub_jids where jid_sha1 = SHA1(LOWER(_jid));
+    if _jid_id is not null then
+        select 1 into _exists from tig_pubsub_affiliations pa where pa.node_id = _node_id and pa.jid_id = _jid_id;
+    end if;
+    if _affil != 'none' then
+        if _jid_id is null then
+            call TigPubSubEnsureJid(_jid, _jid_id);
+        end if;
+        if _exists is not null then
+            update tig_pubsub_affiliations set affiliation = _affil where node_id = _node_id and jid_id = _jid_id;
+        else
+            insert into tig_pubsub_affiliations (node_id, jid_id, affiliation)
+            values (_node_id, _jid_id, _affil);
+        end if;
+    else
+        if _exists is not null then
+            delete from tig_pubsub_affiliations where node_id = _node_id and jid_id = _jid_id;
+        end if;
+    end if;
+
+    COMMIT;
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubSetNodeSubscription(_node_id bigint, _jid varchar(2049),
+                                              _subscr varchar(20), _subscr_id varchar(40))
+begin
+    declare _jid_id bigint;
+    declare _exists int;
+
+    START TRANSACTION;
+
+    call TigPubSubEnsureJid(_jid, _jid_id);
+    select 1 into _exists from tig_pubsub_subscriptions where node_id = _node_id and jid_id = _jid_id;
+    if _exists is not null then
+        update tig_pubsub_subscriptions set subscription = _subscr
+        where node_id = _node_id and jid_id = _jid_id;
+    else
+        insert into tig_pubsub_subscriptions (node_id,jid_id,subscription,subscription_id)
+        values (_node_id,_jid_id,_subscr,_subscr_id);
+    end if;
+
+    COMMIT;
 end //
 -- QUERY END:
 
@@ -247,7 +323,7 @@ begin
 	declare _publisher_id bigint;
 
 	START TRANSACTION;
-	select TigPubSubEnsureJid(_publisher) into _publisher_id;
+	call TigPubSubEnsureJid(_publisher, _publisher_id);
 	COMMIT;
 
 	START TRANSACTION;
@@ -427,15 +503,9 @@ end //
 -- QUERY START:
 create procedure TigPubSubRemoveService(_service_jid varchar(2049))
 begin
-	DECLARE exit handler for sqlexception
-		BEGIN
-			-- ERROR
-		ROLLBACK;
-		RESIGNAL;
-	END;
-
 	START TRANSACTION;
     select * from tig_pubsub_service_jids where service_jid_sha1 = SHA1(LOWER(_service_jid)) for update;
+    select * from tig_pubsub_jids where jid_sha1 = SHA1(LOWER(_service_jid)) for update;
 	delete i
 	    from tig_pubsub_items i
 	    join tig_pubsub_nodes n on n.node_id = i.node_id
