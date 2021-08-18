@@ -160,11 +160,17 @@ public class PresenceCollectorRepository {
 				if (entries == null) {
 					return false;
 				}
-				boolean result = entries.remove(jid.getResource());
-				if (entries.isEmpty()) {
-					usersEntries.remove(jid.getBareJID());
+				if (jid.getResource() == null) {
+					boolean result = !entries.isEmpty();
+					usersEntries.clear();
+					return result;
+				} else {
+					boolean result = entries.remove(jid.getResource());
+					if (entries.isEmpty()) {
+						usersEntries.remove(jid.getBareJID());
+					}
+					return result;
 				}
-				return result;
 			});
 		}
 
