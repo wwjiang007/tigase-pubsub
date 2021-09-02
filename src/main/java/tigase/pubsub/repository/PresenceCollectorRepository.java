@@ -232,7 +232,7 @@ public class PresenceCollectorRepository {
 
 		public synchronized boolean remove(String resource) {
 			for (int i=0; i<entries.size(); i++) {
-				if (entries.get(i).getResource().matches(resource)) {
+				if (entries.get(i).getResource().equals(resource)) {
 					entries.remove(i);
 					return true;
 				}
