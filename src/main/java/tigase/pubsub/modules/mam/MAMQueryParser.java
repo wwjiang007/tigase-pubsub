@@ -57,14 +57,7 @@ public class MAMQueryParser
 	@Inject
 	private IPubSubConfig pubSubConfig;
 
-	private final boolean nullNodeAllowed;
-
 	public MAMQueryParser() {
-		this(false);
-	}
-
-	protected MAMQueryParser(boolean nullNodeAllowed) {
-		this.nullNodeAllowed = nullNodeAllowed;
 	}
 
 	@Override
@@ -74,13 +67,17 @@ public class MAMQueryParser
 
 	@Override
 	public Query parseQuery(Query query, Packet packet) throws ComponentException {
-		String node = packet.getAttributeStaticStr(Iq.IQ_QUERY_PATH, "node");
+		String node = parseQueryForNode(query, packet);
 		validateNode(packet.getStanzaTo().getBareJID(), node);
 		query.setPubsubNode(node);
 
 		super.parseQuery(query, packet);
 
 		return query;
+	}
+
+	protected String parseQueryForNode(Query query, Packet packet) throws ComponentException {
+		return packet.getAttributeStaticStr(Iq.IQ_QUERY_PATH, "node");
 	}
 
 	protected void validateNode(BareJID serviceJID, String node) throws PubSubException {
