@@ -1,0 +1,30 @@
+= Tigase PubSub 5.0.0 Release Notes
+:author: Wojciech Kapcia
+:date: 2022-02-08
+
+== Major Changes
+
+* Add publishing executor with rate limiting
+* Optimisations and fixes
+
+== All Changes
+
+* https://projects.tigase.net/issue/pubsub-102[#pubsub-102]: Add publishing executor with rate limiting
+* https://projects.tigase.net/issue/pubsub-103[#pubsub-103]: Empty message notification id attribute
+* https://projects.tigase.net/issue/pubsub-105[#pubsub-105]: NPE in RetrieveItemsModule
+* https://projects.tigase.net/issue/pubsub-106[#pubsub-106]: NPE in PubsubPublishModule?Eventbus
+* https://projects.tigase.net/issue/pubsub-107[#pubsub-107]: disco#items feature returned on disco#info request for PubSub node item
+* https://projects.tigase.net/issue/pubsub-108[#pubsub-108]: Fix Missing notification for published events
+* https://projects.tigase.net/issue/pubsub-110[#pubsub-110]: Fix Deadlock in TigPubSubRemoveService SP on MySQL
+* https://projects.tigase.net/issue/pubsub-111[#pubsub-111]: Fix SQLException: At least one parameter to the current statement is uninitialized.
+* https://projects.tigase.net/issue/pubsub-113[#pubsub-113]: Fix StackOverflowError in LRUCacheWithFuture
+* https://projects.tigase.net/issue/pubsub-114[#pubsub-114]: Fix pubsub#persist_items is not advertised
+* https://projects.tigase.net/issue/pubsub-115[#pubsub-115]: Fix Cannot add or update a child row: a foreign key constraint fails (`tigasedb`.`tig_pubsub_items`, CONSTRAINT `tig_pubsub_items_ibfk_1` FOREIGN KEY (`node_id`) REFERENCES `tig_pubsub_nodes` (`node_id`))
+* https://projects.tigase.net/issue/pubsub-119[#pubsub-119]: Fix NPE in DiscoveryModule
+* https://projects.tigase.net/issue/pubsub-120[#pubsub-120]: Fix Empty element in POST payload is incorrectly parsed
+* https://projects.tigase.net/issue/pubsub-121[#pubsub-121]: Use String.intern() for PEP CAPS nodes string
+* https://projects.tigase.net/issue/pubsub-124[#pubsub-124]: Fix PubSub sends notifications about last published item on each presence received from subscriber.
+* https://projects.tigase.net/issue/pubsub-125[#pubsub-125]: Reported features `pubsub#metadata` should be `pubsub#meta-data`
+* https://projects.tigase.net/issue/pubsub-126[#pubsub-126]: Fix Deadlocks in MySQL schema
+* https://projects.tigase.net/issue/pubsub-127[#pubsub-127]: Fix NPE in UserEntry.remove
+* https://projects.tigase.net/issue/pubsub-128[#pubsub-128]: Fix PatternSyntaxException for users with emoticons in resource

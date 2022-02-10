@@ -10,7 +10,7 @@
 Welcome to Tigase PubSub component guide
 
 include::text/Overview.asciidoc[leveloffset=+1]
-include::text/Announcement.asciidoc[leveloffset=+2]
+include::text/tigase-pubsub-release-notes.asciidoc[leveloffset=+2]
 include::text/Configuration.asciidoc[leveloffset=+2]
 include::text/Database.asciidoc[leveloffset=+2]
 include::text/Schema_Changes.asciidoc[leveloffset=+3]
