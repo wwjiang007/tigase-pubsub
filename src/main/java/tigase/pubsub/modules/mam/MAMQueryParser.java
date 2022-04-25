@@ -32,21 +32,12 @@ import tigase.server.Packet;
 import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * Created by andrzej on 22.12.2016.
  */
 @Bean(name = "mamQueryParser", parent = PubSubComponent.class, active = true)
 public class MAMQueryParser
-		extends tigase.xmpp.mam.MAMQueryParser<Query> {
-	private static final String MAM2_XMLNS = "urn:xmpp:mam:2";
-
-	protected static final Set<String> XMLNSs = Collections.unmodifiableSet(
-			new HashSet<>(Arrays.asList(MAM_XMLNS, MAM2_XMLNS)));
+		extends tigase.xmpp.mam.MAM2ExtendedQueryParser<PubSubQuery> {
 
 	@Inject
 	private IPubSubRepository pubSubRepository;
@@ -59,15 +50,10 @@ public class MAMQueryParser
 
 	public MAMQueryParser() {
 	}
-
+	
 	@Override
-	public Set<String> getXMLNSs() {
-		return XMLNSs;
-	}
-
-	@Override
-	public Query parseQuery(Query query, Packet packet) throws ComponentException {
-		String node = parseQueryForNode(query, packet);
+	public PubSubQuery parseQuery(PubSubQuery query, Packet packet) throws ComponentException {
+		String node = parseQueryForNode(packet);
 		validateNode(packet.getStanzaTo().getBareJID(), node);
 		query.setPubsubNode(node);
 
@@ -76,7 +62,7 @@ public class MAMQueryParser
 		return query;
 	}
 
-	protected String parseQueryForNode(Query query, Packet packet) throws ComponentException {
+	protected String parseQueryForNode(Packet packet) throws ComponentException {
 		return packet.getAttributeStaticStr(Iq.IQ_QUERY_PATH, "node");
 	}
 

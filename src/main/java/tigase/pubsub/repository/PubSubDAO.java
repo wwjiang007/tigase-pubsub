@@ -38,6 +38,8 @@ import tigase.xml.SingletonFactory;
 import tigase.xmpp.impl.roster.RosterElement;
 import tigase.xmpp.impl.roster.RosterFlat;
 import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.mam.util.MAMUtil;
+import tigase.xmpp.mam.util.Range;
 import tigase.xmpp.rsm.RSM;
 
 import java.lang.reflect.Constructor;
@@ -48,7 +50,7 @@ import java.util.logging.Logger;
 /**
  * @author andrzej
  */
-public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.Query>
+public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.PubSubQuery>
 		implements IPubSubDAO<T, S, Q> {
 
 	protected static final Logger log = Logger.getLogger(PubSubDAO.class.getCanonicalName());
@@ -59,29 +61,7 @@ public abstract class PubSubDAO<T, S extends DataSource, Q extends tigase.pubsub
 
 	protected static void calculateOffsetAndPosition(RSM rsm, int count, Integer before,
 																	   Integer after) {
-		int index = rsm.getIndex() == null ? 0 : rsm.getIndex();
-		int limit = rsm.getMax();
-
-		if (after != null) {
-			// it is ok, if we go out of range we will return empty result
-			index = after + 1;
-		} else if (before != null) {
-			index = before - rsm.getMax();
-			// if we go out of range we need to set index to 0 and reduce limit
-			// to return proper results
-			if (index < 0) {
-				index = 0;
-				limit = before;
-			}
-		} else if (rsm.hasBefore()) {
-			index = count - rsm.getMax();
-			if (index < 0) {
-				index = 0;
-			}
-		}
-		rsm.setIndex(index);
-		rsm.setMax(limit);
-		rsm.setCount(count);
+		MAMUtil.calculateOffsetAndPosition(rsm, count, before, after, Range.FULL);
 	}
 
 	protected PubSubDAO() {

@@ -16,3 +16,15 @@
 -- If not, see http://www.gnu.org/licenses/.
 --
 
+-- QUERY START:
+create or replace function TigPubSubMamQueryItem(_node_id bigint, _uuid varchar(36)) returns table (
+    uuid varchar(36),
+    ts timestamp with time zone,
+    payload text
+) as $$
+    select pm.uuid::text, pm.ts, pm.data
+    from tig_pubsub_mam pm
+    where
+        pm.node_id = _node_id and pm.uuid = uuid(_uuid)
+$$ LANGUAGE SQL;
+-- QUERY END:

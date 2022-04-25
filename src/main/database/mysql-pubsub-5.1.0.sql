@@ -16,3 +16,22 @@
 -- If not, see http://www.gnu.org/licenses/.
 --
 
+delimiter ;
+
+-- QUERY START:
+drop procedure if exists TigPubSubMamQueryItem;
+-- QUERY END:
+
+delimiter //
+
+-- QUERY START:
+create procedure TigPubSubMamQueryItem(_node_id bigint, _uuid varchar(36), _offset int)
+begin
+select TigPubSubOrderedToUuid(pm.uuid), pm.ts, pm.data
+from tig_pubsub_mam pm
+where
+        pm.node_id = _node_id and pm.uuid = TigPubSubUuidToOrdered(_uuid);
+end //
+-- QUERY END:
+
+delimiter ;

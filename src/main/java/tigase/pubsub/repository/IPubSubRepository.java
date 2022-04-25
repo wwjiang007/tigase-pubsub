@@ -22,7 +22,7 @@ import tigase.component.exceptions.RepositoryException;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.modules.mam.Query;
+import tigase.pubsub.modules.mam.PubSubQuery;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.xml.Element;
@@ -44,7 +44,7 @@ import java.util.Set;
  * @version 5.0.0, 2010.03.27 at 05:20:15 GMT
  */
 public interface IPubSubRepository
-		extends MAMRepository<Query, MAMRepository.Item> {
+		extends MAMRepository<PubSubQuery, MAMRepository.Item> {
 
 	void addToRootCollection(BareJID serviceJid, String nodeName) throws RepositoryException;
 

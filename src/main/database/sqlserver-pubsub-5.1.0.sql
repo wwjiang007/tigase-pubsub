@@ -16,3 +16,23 @@
 -- If not, see http://www.gnu.org/licenses/.
 --
 
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubMamQueryItem')
+DROP PROCEDURE TigPubSubMamQueryItem
+-- QUERY END:
+    GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubMamQueryItem
+    @_node_id bigint,
+	@_uuid nvarchar(36)
+AS
+begin
+    select pm.uuid, pm.ts, pm.data, row_number() over (order by pm.ts) as row_num
+    from tig_pubsub_mam pm
+    where
+            pm.node_id = @_node_id
+            and pm.uuid = convert(uniqueidentifier,@_uuid)
+end
+-- QUERY END:
+GO

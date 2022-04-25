@@ -17,21 +17,12 @@
  */
 package tigase.pubsub.modules.mam;
 
-/**
- * Created by andrzej on 22.12.2016.
- */
-public class Query
-		extends tigase.xmpp.mam.QueryImpl
-		implements PubSubQuery {
+import tigase.xmpp.mam.Query;
 
-	private String pubsubNode;
+public interface PubSubQuery extends Query {
 
-	public String getPubsubNode() {
-		return pubsubNode;
-	}
+	String getPubsubNode();
 
-	public void setPubsubNode(String pubsubNode) {
-		this.pubsubNode = pubsubNode;
-	}
-	
+	void setPubsubNode(String pubsubNode);
+
 }

@@ -25,7 +25,7 @@ import tigase.db.TigaseDBException;
 import tigase.db.util.RepositoryVersionAware;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.pubsub.*;
-import tigase.pubsub.modules.mam.Query;
+import tigase.pubsub.modules.mam.ExtendedQueryImpl;
 import tigase.pubsub.repository.stateless.NodeMeta;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
@@ -35,6 +35,8 @@ import tigase.xmpp.Authorization;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
 import tigase.xmpp.mam.MAMRepository;
+import tigase.xmpp.mam.util.MAMUtil;
+import tigase.xmpp.mam.util.Range;
 import tigase.xmpp.rsm.RSM;
 
 import java.sql.*;
@@ -46,7 +48,7 @@ import java.util.logging.Level;
 @Repository.Meta(supportedUris = {"jdbc:[^:]+:.*"})
 @Repository.SchemaId(id = Schema.PUBSUB_SCHEMA_ID, name = Schema.PUBSUB_SCHEMA_NAME)
 public class PubSubDAOJDBC
-		extends PubSubDAO<Long, DataRepository, Query>
+		extends PubSubDAO<Long, DataRepository, ExtendedQueryImpl>
 		implements RepositoryVersionAware {
 
 	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
@@ -84,6 +86,8 @@ public class PubSubDAOJDBC
 	private String mamAddItem = "{ call TigPubSubMamAddItem(?,?,?,?,?) }";
 	@ConfigField(desc = "Find item position in result set from repository", alias = "mam-query-item-position-query")
 	private String mamQueryItemPosition = "{ call TigPubSubMamQueryItemPosition(?,?,?,?) }";
+	@ConfigField(desc = "Retrieve item from repository", alias = "mam-query-item-query")
+	private String mamQueryItem = "{ call TigPubSubMamQueryItem(?,?) }";
 	@ConfigField(desc = "Retrieve items from repository", alias = "mam-query-items-query")
 	private String mamQueryItems = "{ call TigPubSubMamQueryItems(?,?,?,?,?) }";
 	@ConfigField(desc = "Count number of items from repository", alias = "mam-query-items-count-query")
@@ -929,44 +933,92 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public void queryItems(Query query, Long nodeId,
-						   MAMRepository.ItemHandler<Query, IPubSubRepository.Item> itemHandler)
+	public ExtendedQueryImpl newQuery(BareJID serviceJid) {
+		return new ExtendedQueryImpl();
+	}
+
+	@Override
+	public void queryItems(ExtendedQueryImpl query, Long nodeId,
+						   MAMRepository.ItemHandler<ExtendedQueryImpl, IPubSubRepository.Item> itemHandler)
 			throws RepositoryException, ComponentException {
-		Integer count = countMAMItems(query, nodeId);
-		if (count == null) {
-			count = 0;
-		}
-
-		Integer after = getMAMItemPosition(query, nodeId, query.getRsm().getAfter());
-		Integer before = getMAMItemPosition(query, nodeId, query.getRsm().getBefore());
-
-		calculateOffsetAndPosition(query.getRsm(), count, before, after);
-
 		try {
-			PreparedStatement st = data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(), mamQueryItems);
-
-			synchronized (st) {
-				ResultSet rs = null;
-				try {
-					int i = setStatementParamsForMAM(st, query, nodeId);
-					st.setInt(i++, query.getRsm().getMax());
-					st.setInt(i++, query.getRsm().getIndex());
-
-					rs = st.executeQuery();
-
-					while (rs.next()) {
-						String itemUuid = rs.getString(1);
-						Timestamp ts = data_repo.getTimestamp(rs, 2);
-						Element itemEl = itemDataToElement(rs.getString(3));
-
-						itemHandler.itemFound(query, new MAMItem(itemUuid, ts, itemEl));
+			if (!query.getIds().isEmpty()) {
+				ArrayDeque<MAMRepository.Item> items = new ArrayDeque<>();
+				for (String id : query.getIds()) {
+					MAMRepository.Item item = getMAMItem(query, nodeId, id);
+					if (item == null) {
+						throw new ComponentException(Authorization.ITEM_NOT_FOUND,
+													 "Item with ID '" + id + "' does not exist.");
 					}
-				} finally {
-					data_repo.release(null, rs);
+					items.add(item);
+				}
+				for (MAMRepository.Item item : items) {
+					itemHandler.itemFound(query, item);
+				}
+			} else {
+				Integer count = countMAMItems(query, nodeId);
+				if (count == null) {
+					count = 0;
+				}
+
+				Range range = MAMUtil.rangeFromPositions(getMAMItemPosition(query, nodeId, query.getAfterId()),
+														 getMAMItemPosition(query, nodeId, query.getBeforeId()));
+				Integer after = getMAMItemPosition(query, nodeId, query.getRsm().getAfter());
+				Integer before = getMAMItemPosition(query, nodeId, query.getRsm().getBefore());
+
+				MAMUtil.calculateOffsetAndPosition(query.getRsm(), count, before, after, range);
+
+				PreparedStatement st = data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
+																	  mamQueryItems);
+
+				synchronized (st) {
+					ResultSet rs = null;
+					try {
+						int i = setStatementParamsForMAM(st, query, nodeId);
+						st.setInt(i++, Math.min(range.size(), query.getRsm().getMax()));
+						st.setInt(i++, range.getLowerBound() + query.getRsm().getIndex());
+
+						rs = st.executeQuery();
+
+						while (rs.next()) {
+							String itemUuid = rs.getString(1);
+							Timestamp ts = data_repo.getTimestamp(rs, 2);
+							Element itemEl = itemDataToElement(rs.getString(3));
+
+							itemHandler.itemFound(query, new MAMItem(itemUuid, ts, itemEl));
+						}
+					} finally {
+						data_repo.release(null, rs);
+					}
 				}
 			}
 		} catch (SQLException ex) {
 			throw new TigaseDBException("Cound not retrieve items", ex);
+		}
+	}
+
+	private MAMItem getMAMItem(ExtendedQueryImpl query, Long nodeId, String stableId) throws SQLException {
+		PreparedStatement st = data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
+															  mamQueryItem);
+		synchronized (st) {
+			ResultSet rs = null;
+			try {
+				st.setLong(1, nodeId);
+				st.setString(2, stableId);
+
+				rs = st.executeQuery();
+
+				if (rs.next()) {
+					String itemUuid = rs.getString(1);
+					Timestamp ts = data_repo.getTimestamp(rs, 2);
+					Element itemEl = itemDataToElement(rs.getString(3));
+
+					return new MAMItem(itemUuid, ts, itemEl);
+				}
+				return null;
+			} finally {
+				data_repo.release(null, rs);
+			}
 		}
 	}
 	
@@ -1175,7 +1227,7 @@ public class PubSubDAOJDBC
 		}
 	}
 	
-	protected Integer countMAMItems(Query query, Long nodeId) throws TigaseDBException {
+	protected Integer countMAMItems(ExtendedQueryImpl query, Long nodeId) throws TigaseDBException {
 		try {
 			PreparedStatement st = this.data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
 																	   mamQueryItemsCount);
@@ -1200,7 +1252,7 @@ public class PubSubDAOJDBC
 		}
 	}
 
-	protected Integer getMAMItemPosition(Query query, Long nodeId, String itemUuid)
+	protected Integer getMAMItemPosition(ExtendedQueryImpl query, Long nodeId, String itemUuid)
 			throws RepositoryException, ComponentException {
 		if (itemUuid == null) {
 			return null;
@@ -1232,7 +1284,7 @@ public class PubSubDAOJDBC
 		}
 	}
 
-	protected int setStatementParamsForMAM(PreparedStatement st, Query query, Long nodeId) throws SQLException {
+	protected int setStatementParamsForMAM(PreparedStatement st, ExtendedQueryImpl query, Long nodeId) throws SQLException {
 		int i = 1;
 		st.setLong(i++, nodeId);
 		data_repo.setTimestamp(st, i++, query.getStart() == null ? null : new Timestamp(query.getStart().getTime()));

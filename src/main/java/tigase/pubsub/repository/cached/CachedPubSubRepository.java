@@ -30,7 +30,7 @@ import tigase.pubsub.exceptions.PubSubException;
 import tigase.pubsub.modules.ext.presence.PresenceNodeSubscriptions;
 import tigase.pubsub.modules.ext.presence.PresenceNotifierModule;
 import tigase.pubsub.modules.ext.presence.PresencePerNodeExtension;
-import tigase.pubsub.modules.mam.Query;
+import tigase.pubsub.modules.mam.PubSubQuery;
 import tigase.pubsub.repository.*;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
@@ -71,7 +71,7 @@ public class CachedPubSubRepository<T>
 	@Inject
 	protected IPubSubConfig config;
 	@Inject
-	protected IPubSubDAO<T, DataSource, Query> dao;
+	protected IPubSubDAO<T, DataSource, PubSubQuery> dao;
 	protected Logger log = Logger.getLogger(this.getClass().getName());
 	@Inject
 	protected PubSubLogic pubSubLogic;
@@ -348,7 +348,7 @@ public class CachedPubSubRepository<T>
 		return this.dao;
 	}
 
-	public void setDao(IPubSubDAO<T, DataSource, Query> dao) {
+	public void setDao(IPubSubDAO<T, DataSource, PubSubQuery> dao) {
 		this.dao = dao;
 		try {
 			nodesCount.set(dao.getNodesCount(null));
@@ -491,7 +491,7 @@ public class CachedPubSubRepository<T>
 	}
 	
 	@Override
-	public void queryItems(Query query, MAMRepository.ItemHandler<Query, MAMRepository.Item> itemHandler)
+	public void queryItems(PubSubQuery query, MAMRepository.ItemHandler<PubSubQuery, MAMRepository.Item> itemHandler)
 			throws RepositoryException, ComponentException {
 
 		BareJID serviceJid = query.getComponentJID().getBareJID();
@@ -506,9 +506,13 @@ public class CachedPubSubRepository<T>
 		dao.queryItems(query, node.getNodeId(), itemHandler);
 	}
 
+	public PubSubQuery newQuery() {
+		return dao.newQuery();
+	}
+
 	@Override
-	public Query newQuery() {
-		return new Query();
+	public PubSubQuery newQuery(BareJID jid) {
+		return dao.newQuery(jid);
 	}
 
 	@Override

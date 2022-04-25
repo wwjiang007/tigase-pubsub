@@ -29,7 +29,7 @@ import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubConfig;
 import tigase.pubsub.exceptions.PubSubException;
-import tigase.pubsub.modules.mam.Query;
+import tigase.pubsub.modules.mam.PubSubQuery;
 import tigase.pubsub.repository.*;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
@@ -382,7 +382,7 @@ public class CachedPubSubRepositoryTest {
 		}
 
 		@Override
-		public void queryItems(Query query, Object nodeId, MAMRepository.ItemHandler itemHandler)
+		public void queryItems(PubSubQuery query, Object nodeId, MAMRepository.ItemHandler itemHandler)
 				throws RepositoryException, ComponentException {
 
 		}

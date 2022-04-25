@@ -16,3 +16,11 @@
 -- If not, see http://www.gnu.org/licenses/.
 --
 
+-- QUERY START:
+create procedure TigPubSubQueryItem(nodes_ids varchar(32672), itemId varchar(36))
+    PARAMETER STYLE JAVA
+	LANGUAGE JAVA
+	MODIFIES SQL DATA
+	DYNAMIC RESULT SETS 1
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubQueryItem';
+-- QUERY END:

@@ -17,6 +17,7 @@
  */
 package tigase.pubsub.repository;
 
+import tigase.annotations.TigaseDeprecated;
 import tigase.component.exceptions.ComponentException;
 import tigase.component.exceptions.RepositoryException;
 import tigase.db.DataSource;
@@ -24,6 +25,7 @@ import tigase.db.DataSourceAware;
 import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.NodeType;
+import tigase.pubsub.modules.mam.PubSubQuery;
 import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
@@ -43,7 +45,7 @@ import java.util.Map;
  * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version 5.0.0, 2010.03.27 at 05:16:25 GMT
  */
-public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
+public interface IPubSubDAO<T, S extends DataSource, Q extends PubSubQuery>
 		extends DataSourceAware<S> {
 	
 	T createNode(BareJID serviceJid, String nodeName, BareJID ownerJid, AbstractNodeConfig nodeConfig,
@@ -94,6 +96,16 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends Query>
 	AbstractNodeConfig parseConfig(String nodeName, String cfgData) throws RepositoryException;
 
 	void addMAMItem(BareJID serviceJid, T nodeId, String uuid, Element message, String itemId) throws RepositoryException;
+
+	@TigaseDeprecated(since = "5.1.0", note = "Use method with `serviceJid` paramater")
+	@Deprecated
+	default Q newQuery() {
+		return (Q) new Query();
+	}
+
+	default Q newQuery(BareJID serviceJid) {
+		return newQuery();
+	}
 
 	void queryItems(Q query, T nodeId, MAMRepository.ItemHandler<Q, MAMRepository.Item> itemHandler)
 			throws RepositoryException, ComponentException;

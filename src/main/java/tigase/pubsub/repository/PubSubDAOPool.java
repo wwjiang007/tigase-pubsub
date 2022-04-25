@@ -29,6 +29,8 @@ import tigase.pubsub.AbstractNodeConfig;
 import tigase.pubsub.CollectionItemsOrdering;
 import tigase.pubsub.NodeType;
 import tigase.pubsub.PubSubComponent;
+import tigase.pubsub.modules.mam.PubSubQuery;
+import tigase.pubsub.modules.mam.Query;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
 import tigase.pubsub.repository.stateless.UsersSubscription;
 import tigase.server.BasicComponent;
@@ -45,7 +47,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Bean(name = "dao", parent = PubSubComponent.class, active = true)
-public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modules.mam.Query>
+public class PubSubDAOPool<T, S extends DataSource, Q extends PubSubQuery>
 		extends MDRepositoryBeanWithStatistics<IPubSubDAO<T, S, Q>>
 		implements IPubSubDAO<T, S, Q> {
 
@@ -391,6 +393,16 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends tigase.pubsub.modu
 			dao.addMAMItem(serviceJid, nodeId, uuid, message, itemId);
 		} else {
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
+		}
+	}
+
+	@Override
+	public Q newQuery(BareJID serviceJid) {
+		IPubSubDAO dao = takeDao(serviceJid);
+		if (dao != null) {
+			return (Q) dao.newQuery(serviceJid);
+		} else {
+			return (Q) new Query();
 		}
 	}
 
