@@ -968,27 +968,32 @@ public class PubSubDAOJDBC
 
 				MAMUtil.calculateOffsetAndPosition(query.getRsm(), count, before, after, range);
 
-				PreparedStatement st = data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
-																	  mamQueryItems);
+				int limit = Math.min(range.size(), query.getRsm().getMax());
 
-				synchronized (st) {
-					ResultSet rs = null;
-					try {
-						int i = setStatementParamsForMAM(st, query, nodeId);
-						st.setInt(i++, Math.min(range.size(), query.getRsm().getMax()));
-						st.setInt(i++, range.getLowerBound() + query.getRsm().getIndex());
+				// there is no point to execute query if limit is estimated to be 0
+				if (limit > 0) {
+					PreparedStatement st = data_repo.getPreparedStatement(query.getQuestionerJID().getBareJID(),
+																		  mamQueryItems);
 
-						rs = st.executeQuery();
+					synchronized (st) {
+						ResultSet rs = null;
+						try {
+							int i = setStatementParamsForMAM(st, query, nodeId);
+							st.setInt(i++, limit);
+							st.setInt(i++, range.getLowerBound() + query.getRsm().getIndex());
 
-						while (rs.next()) {
-							String itemUuid = rs.getString(1);
-							Timestamp ts = data_repo.getTimestamp(rs, 2);
-							Element itemEl = itemDataToElement(rs.getString(3));
+							rs = st.executeQuery();
 
-							itemHandler.itemFound(query, new MAMItem(itemUuid, ts, itemEl));
+							while (rs.next()) {
+								String itemUuid = rs.getString(1);
+								Timestamp ts = data_repo.getTimestamp(rs, 2);
+								Element itemEl = itemDataToElement(rs.getString(3));
+
+								itemHandler.itemFound(query, new MAMItem(itemUuid, ts, itemEl));
+							}
+						} finally {
+							data_repo.release(null, rs);
 						}
-					} finally {
-						data_repo.release(null, rs);
 					}
 				}
 			}
