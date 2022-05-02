@@ -1,0 +1,43 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2004-2022, Tigase, Inc
+# This file is distributed under the same license as the TigaseDoc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TigaseDoc \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-05-02 11:38-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.1\n"
+
+#: ../../Limitations.rst:2
+msgid "Limitations"
+msgstr ""
+
+#: ../../Limitations.rst:5
+msgid "Addressing"
+msgstr ""
+
+#: ../../Limitations.rst:7
+msgid ""
+"Within Tigase, all pubsub component address MUST be domain-based address "
+"and not a JID style address. This was made to simplify communications "
+"structure. Tigase will automatically set component names to "
+"``pubsub.domain``, however any messages send to ``pubsub@domain`` will "
+"result in a ``SERVICE_UNAVAILABLE`` error."
+msgstr ""
+
+#: ../../Limitations.rst:9
+msgid ""
+"Pubsub nodes within Tigase can be found as a combination of JID and node "
+"where nodes will be identified akin to service discovery. For example, to"
+" address a friendly node, use the following structure:"
+msgstr ""
+
