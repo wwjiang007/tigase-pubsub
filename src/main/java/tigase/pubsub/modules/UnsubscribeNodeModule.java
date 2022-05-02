@@ -71,6 +71,10 @@ public class UnsubscribeNodeModule
 			
 			ISubscriptions nodeSubscriptions = this.getRepository().getNodeSubscriptions(toJid, nodeName);
 
+			if (nodeSubscriptions == null) {
+				throw new PubSubException(Authorization.ITEM_NOT_FOUND);
+			}
+
 			if (subid != null) {
 				String s = nodeSubscriptions.getSubscriptionId(jid);
 
