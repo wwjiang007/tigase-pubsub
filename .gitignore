@@ -14,3 +14,6 @@ target
 
 .idea/
 /docs/
+
+src/main/restructured/locale/pl/LC_MESSAGES/*.mo
+src/main/restructured/_build/
