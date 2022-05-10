@@ -22,6 +22,10 @@ delimiter ;
 drop procedure if exists TigPubSubMamQueryItem;
 -- QUERY END:
 
+-- QUERY START:
+drop procedure if exists TigPubSubQueryItemPosition;
+-- QUERY END:
+
 delimiter //
 
 -- QUERY START:
@@ -34,4 +38,18 @@ where
 end //
 -- QUERY END:
 
+-- QUERY START:
+create procedure TigPubSubMamQueryItemPosition(_node_id bigint, _since timestamp(6), _to timestamp(6), _uuid varchar(36))
+begin
+select count(1) + 1 as position
+from tig_pubsub_mam pm1 inner join
+    (select ts, item_id from tig_pubsub_mam pm2 where pm2.node_id = _node_id and pm2.uuid = TigPubSubUuidToOrdered(_uuid)) x
+where
+    pm1.node_id = _node_id
+  and pm1.ts < x.ts
+  and (_since is null or pm1.ts >= _since)
+  and (_to is null or pm1.ts <= _to);
+end //
+-- QUERY END:
+    
 delimiter ;
