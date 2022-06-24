@@ -23,7 +23,7 @@ drop procedure if exists TigPubSubMamQueryItem;
 -- QUERY END:
 
 -- QUERY START:
-drop procedure if exists TigPubSubQueryItemPosition;
+drop procedure if exists TigPubSubMamQueryItemPosition;
 -- QUERY END:
 
 delimiter //
