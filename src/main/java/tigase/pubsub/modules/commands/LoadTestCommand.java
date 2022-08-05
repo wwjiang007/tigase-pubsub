@@ -166,11 +166,11 @@ public class LoadTestCommand
 														  length, useBlockingMethod) {
 			@Override
 			protected void onTestFinish() {
-				LoadTestCommand.this.log.info("Test finished. Published " + getCounter() + " items in " +
+				LoadTestCommand.this.log.log(Level.CONFIG, "Test finished. Published " + getCounter() + " items in " +
 													  ((getTestEndTime() - getTestStartTime()) / 1000) + " seconds.");
 			}
 		};
-		log.info("Staring load test.");
+		log.log(Level.CONFIG, "Staring load test.");
 		(new Thread(r)).start();
 
 	}

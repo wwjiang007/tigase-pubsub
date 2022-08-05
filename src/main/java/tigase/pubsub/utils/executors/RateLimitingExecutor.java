@@ -75,18 +75,18 @@ public class RateLimitingExecutor extends AbstractQueuingExecutor
 			}
 			long end = System.currentTimeMillis();
 
-			if (log.isLoggable(Level.INFO)) {
+			if (log.isLoggable(Level.CONFIG)) {
 				int size = queue.totalSize();
 				if (size > limit || memoryUsage != MemoryUsage.normal) {
 					if (!throttling) {
-						log.log(Level.INFO,
+						log.log(Level.CONFIG,
 								"throttling executions started at rate " + permissions + " every " + sleepTime +
 										"ms, current queue size " + size + ", memory usage " + memoryUsage.name());
 						throttling = true;
 					}
 				} else {
 					if (throttling) {
-						log.log(Level.INFO, "throttling executions ended");
+						log.log(Level.CONFIG, "throttling executions ended");
 					}
 					throttling = false;
 				}

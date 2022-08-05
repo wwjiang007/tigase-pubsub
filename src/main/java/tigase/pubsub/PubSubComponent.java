@@ -166,7 +166,7 @@ public class PubSubComponent
 			UserRepository userRepository = kernel.getInstance(UserRepository.class);
 
 			this.defaultNodeConfig.read(userRepository, componentConfig, DEFAULT_LEAF_NODE_CONFIG_KEY);
-			log.info("Node " + getComponentId() + " read default node configuration.");
+			log.log(Level.CONFIG, "Node " + getComponentId() + " read default node configuration.");
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Reading default config error", e);
 		}

@@ -37,7 +37,7 @@ public abstract class AbstractLoadRunner
 	public AbstractLoadRunner(long time, long frequency) {
 		this.delay = (long) ((1.0 / frequency) * 1000.0);
 		this.testTime = time;
-		log.info("Preparing load test: testTime=" + testTime + ", frequency=" + frequency + "/sec; calculatedDelay=" +
+		log.log(Level.CONFIG, "Preparing load test: testTime=" + testTime + ", frequency=" + frequency + "/sec; calculatedDelay=" +
 						 delay + " ms");
 	}
 

@@ -93,7 +93,7 @@ public class PurgeItemsModule
 													new Element("purge", new String[]{"node"}, new String[]{nodeName}),
 													null, false);
 
-			log.info("Purging node " + nodeName);
+			log.log(Level.CONFIG, "Purging node " + nodeName);
 			if (itemsToDelete != null) {
 				for (String id : itemsToDelete) {
 					nodeItems.deleteItem(id);
