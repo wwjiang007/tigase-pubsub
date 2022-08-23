@@ -1,0 +1,1905 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2004-2022, Tigase, Inc
+# This file is distributed under the same license as the TigaseDoc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TigaseDoc \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-08-18 15:53-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.0\n"
+
+#: ../../Limitations.rst:2
+msgid "Limitations"
+msgstr ""
+
+#: ../../Limitations.rst:5
+msgid "Addressing"
+msgstr ""
+
+#: ../../Limitations.rst:7
+msgid ""
+"Within Tigase, all pubsub component address MUST be domain-based address "
+"and not a JID style address. This was made to simplify communications "
+"structure. Tigase will automatically set component names to "
+"``pubsub.domain``, however any messages send to ``pubsub@domain`` will "
+"result in a ``SERVICE_UNAVAILABLE`` error."
+msgstr ""
+
+#: ../../Configuration.inc:9 ../../Limitations.rst:9
+msgid ""
+"Pubsub nodes within Tigase can be found as a combination of JID and node "
+"where nodes will be identified akin to service discovery. For example, to"
+" address a friendly node, use the following structure:"
+msgstr ""
+
+#: ../../PubSub_component.rst:1
+msgid "Welcome to Tigase PubSub component guide"
+msgstr ""
+
+#: ../../PubSub_component.rst:4
+msgid "PubSub Component"
+msgstr ""
+
+#: ../../Overview.inc:1
+msgid ""
+"Tigase’s Publish Subscribe component is an `XEP-0060 "
+"<http://www.xmpp.org/extensions/xep-0060.html>`__ compliant plugin "
+"handling all publish and subscribe activity within Tigase server. This is"
+" enabled as default with the pubsub name, however you may include the "
+"following line if you wish to customize it’s configuration."
+msgstr ""
+
+#: ../../Overview.inc:7
+msgid ""
+"You may change the name so long as you specify the pubsub class within "
+"parenthesis."
+msgstr ""
+
+#: ../../tigase-pubsub-release-notes.inc:2
+msgid "Tigase Pubsub Release Notes"
+msgstr ""
+
+#: ../../tigase-pubsub-release-notes.inc:4
+msgid ""
+"Welcome to Tigase Pubsub 5.0.0! This is a feature release for with a "
+"number of fixes and updates."
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:2
+msgid "Tigase PubSub 5.0.0 Release Notes"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:5
+msgid "Major Changes"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:7
+msgid "Add publishing executor with rate limiting"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:9
+msgid "Optimisations and fixes"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:13
+msgid "All Changes"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:15
+msgid ""
+"`#pubsub-102 <https://projects.tigase.net/issue/pubsub-102>`__: Add "
+"publishing executor with rate limiting"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:17
+msgid ""
+"`#pubsub-103 <https://projects.tigase.net/issue/pubsub-103>`__: Empty "
+"message notification id attribute"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:19
+msgid ""
+"`#pubsub-105 <https://projects.tigase.net/issue/pubsub-105>`__: NPE in "
+"RetrieveItemsModule"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:21
+msgid ""
+"`#pubsub-106 <https://projects.tigase.net/issue/pubsub-106>`__: NPE in "
+"PubsubPublishModule?Eventbus"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:23
+msgid ""
+"`#pubsub-107 <https://projects.tigase.net/issue/pubsub-107>`__: "
+"disco#items feature returned on disco#info request for PubSub node item"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:25
+msgid ""
+"`#pubsub-108 <https://projects.tigase.net/issue/pubsub-108>`__: Fix "
+"Missing notification for published events"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:27
+msgid ""
+"`#pubsub-110 <https://projects.tigase.net/issue/pubsub-110>`__: Fix "
+"Deadlock in TigPubSubRemoveService SP on MySQL"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:29
+msgid ""
+"`#pubsub-111 <https://projects.tigase.net/issue/pubsub-111>`__: Fix "
+"SQLException: At least one parameter to the current statement is "
+"uninitialized."
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:31
+msgid ""
+"`#pubsub-113 <https://projects.tigase.net/issue/pubsub-113>`__: Fix "
+"StackOverflowError in LRUCacheWithFuture"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:33
+msgid ""
+"`#pubsub-114 <https://projects.tigase.net/issue/pubsub-114>`__: Fix "
+"pubsub#persist_items is not advertised"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:35
+msgid ""
+"`#pubsub-115 <https://projects.tigase.net/issue/pubsub-115>`__: Fix "
+"Cannot add or update a child row: a foreign key constraint fails "
+"(``tigasedb``.\\ ``tig_pubsub_items``, CONSTRAINT "
+"``tig_pubsub_items_ibfk_1`` FOREIGN KEY (``node_id``) REFERENCES "
+"``tig_pubsub_nodes`` (``node_id``))"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:37
+msgid ""
+"`#pubsub-119 <https://projects.tigase.net/issue/pubsub-119>`__: Fix NPE "
+"in DiscoveryModule"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:39
+msgid ""
+"`#pubsub-120 <https://projects.tigase.net/issue/pubsub-120>`__: Fix Empty"
+" element in POST payload is incorrectly parsed"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:41
+msgid ""
+"`#pubsub-121 <https://projects.tigase.net/issue/pubsub-121>`__: Use "
+"String.intern() for PEP CAPS nodes string"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:43
+msgid ""
+"`#pubsub-124 <https://projects.tigase.net/issue/pubsub-124>`__: Fix "
+"PubSub sends notifications about last published item on each presence "
+"received from subscriber."
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:45
+msgid ""
+"`#pubsub-125 <https://projects.tigase.net/issue/pubsub-125>`__: Reported "
+"features ``pubsub#metadata`` should be ``pubsub#meta-data``"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:47
+msgid ""
+"`#pubsub-126 <https://projects.tigase.net/issue/pubsub-126>`__: Fix "
+"Deadlocks in MySQL schema"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:49
+msgid ""
+"`#pubsub-127 <https://projects.tigase.net/issue/pubsub-127>`__: Fix NPE "
+"in UserEntry.remove"
+msgstr ""
+
+#: ../../tigase-pubsub-current.inc:51
+msgid ""
+"`#pubsub-128 <https://projects.tigase.net/issue/pubsub-128>`__: Fix "
+"PatternSyntaxException for users with emoticons in resource"
+msgstr ""
+
+#: ../../tigase-pubsub-release-notes.inc:9
+msgid "Previous Releases"
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:2
+msgid "Announcement"
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:5
+msgid "Major changes"
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:7
+msgid ""
+"Tigase pubsub component has undergone a few major changes to our code and"
+" structure. To continue to use Tigase pubsub component, a few changes may"
+" be needed to be made to your systems. Please see them below:"
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:9
+msgid "Database schema changes"
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:11
+msgid ""
+"Current version comes with changes to database schema to improve JID "
+"comparison during lookup of nodes, subscriptions, affiliations, etc."
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:13
+msgid ""
+"To continue usage of new versions of pubsub component it is required to "
+"manually load new component database schema, see `database preparation "
+"<#databasePreparation>`__ section for more information."
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:17
+msgid ""
+"Loading of new database schema is required to use new version of pubsub "
+"component."
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:19
+msgid "Changes in REST API"
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:21
+msgid ""
+"We continuously work on improving usability and making our REST API "
+"easier to use we added support for handling JSON requests in REST API for"
+" pubsub. At the same time we decided to slightly modify responses in XML "
+"sent by REST API to make responses in JSON and XML similar."
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:23
+msgid ""
+"For more informations about current REST API please look into `Rest API "
+"<#restAPI>`__ section."
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:26
+msgid "New features"
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:27
+msgid "Support for using separate database for different domains"
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:29
+msgid ""
+"Since this version it is possible to use separate pubsub nodes and items "
+"based on domains. This allows you to configure component to store "
+"informations about nodes and items for particular domain to different "
+"database."
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:31
+msgid ""
+"For more informations please look into `using multiple databases "
+"<#multidb>`__."
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:33
+msgid "Support for MAM"
+msgstr ""
+
+#: ../../tigase-pubsub-4.x.inc:35
+msgid ""
+"In this version we added support for `XEP-0313: Message Archive "
+"Management <http://xmpp.org/extensions/xep-0313.html:>`__ protocol which "
+"allows any MAM compatible XMPP client with pubsub support to retrieve "
+"items published on pubsub nodes using MAM protocol for querying."
+msgstr ""
+
+#: ../../Configuration.inc:2 ../../OfflineMessagesSink.inc:24
+msgid "Configuration"
+msgstr ""
+
+#: ../../Configuration.inc:5
+msgid "Pubsub naming"
+msgstr ""
+
+#: ../../Configuration.inc:7
+msgid ""
+"Within Tigase, all pubsub component address MUST be domain-based address "
+"and not a JID style address. This was made to simplify communications "
+"structure. Tigase will automatically set component names to "
+"pubsub.domain, however any messages send to pubsub@domain will result in "
+"a ``SERVICE_UNAVAILABLE`` error."
+msgstr ""
+
+#: ../../Configuration.inc:19
+msgid "Configure Roster Maximum size"
+msgstr ""
+
+#: ../../Configuration.inc:21
+msgid ""
+"Administrators can configure the maximum allowable roster size per user "
+"via the config.tdsl file."
+msgstr ""
+
+#: ../../Configuration.inc:31
+msgid ""
+"This sets the roster limit to 100 entries per user. It can be set to any "
+"integer, however by default no limit is set and no configuration is set "
+"in ``config.tdsl`` file."
+msgstr ""
+
+#: ../../Configuration.inc:34
+msgid "Store Full XML of Last Presence"
+msgstr ""
+
+#: ../../Configuration.inc:36
+msgid ""
+"Tigase can store a more detailed ``<unavailable/>`` presence stanza to "
+"include timestamps and other information."
+msgstr ""
+
+#: ../../Configuration.inc:39
+msgid "Requirements"
+msgstr ""
+
+#: ../../Configuration.inc:41
+msgid ""
+"Ensure that ``presence-offline`` plugin is enabled in config.tdsl. To do "
+"this, add be sure ``presence-offline`` is listed under ``sess-man``"
+msgstr ""
+
+#: ../../Configuration.inc:49
+msgid ""
+"The following two lines in ``sess-man`` configure options to broadcast "
+"probes to offline users."
+msgstr ""
+
+#: ../../Configuration.inc:58
+msgid ""
+"Without these lines, Tigase will not send presence probes to users that "
+"the server knows to be offline."
+msgstr ""
+
+#: ../../Configuration.inc:60
+msgid ""
+"The full XML presence is stored under the tig_pairs table with a pkey of "
+"``last-unavailable-presence`` will look like this:"
+msgstr ""
+
+#: ../../Configuration.inc:68
+msgid ""
+"As you can see, the plugin has added a delay stamp which indicates the "
+"last time they were seen online. This may be suppressed by using the "
+"following line in your config.tdsl file."
+msgstr ""
+
+#: ../../Configuration.inc:76
+msgid "You may also limit probe responses only to newly connected resources."
+msgstr ""
+
+#: ../../Configuration.inc:84
+msgid ""
+"When a user logs on, they will receive the same full unavailable presence"
+" statements from contacts not logged in. Also the repository entry "
+"containing their last unavailable presence will be removed."
+msgstr ""
+
+#: ../../Configuration.inc:86
+msgid ""
+"**NOTE: This will increase traffic with users with many people on their "
+"rosters.**"
+msgstr ""
+
+#: ../../Configuration.inc:89
+msgid "Using separate store"
+msgstr ""
+
+#: ../../Configuration.inc:91
+msgid ""
+"As mentioned above, by default Tigase pubsub component uses default data "
+"source configured for Tigase XMPP Server. It is possible to use separate "
+"store by pubsub component. To do so you need to configure new "
+"``DataSource`` in ``dataSource`` section. Here we will use ``pubsub-"
+"store`` as name of newly configured data source. Additionally you need to"
+" pass name of newly configured data source to ``dataSourceName`` property"
+" of default DAO of pubsub component."
+msgstr ""
+
+#: ../../Configuration.inc:109
+msgid ""
+"It is also possible to configure separate store for particular domain, "
+"ie. ``pubsub.example.com``. Here we will configure data source with name "
+"``pubsub.example.com`` and use it to store data for pubsub nodes and "
+"items at ``pubsub.example.com``:"
+msgstr ""
+
+#: ../../Configuration.inc:129
+msgid ""
+"With this configuration, data for other domains than "
+"``pubsub.example.com`` will be stored in default data source."
+msgstr ""
+
+#: ../../Configuration.inc:133
+msgid "Enabling PEP support"
+msgstr ""
+
+#: ../../Configuration.inc:135
+msgid ""
+"To enable `XEP-0163: Personal Eventing Protocol "
+"<http://xmpp.org/extensions/xep-0163.html>`__ support it is required to "
+"set ``persistent-pep`` property of pubsub component to ``true``, set "
+"``send-last-published-item-on-presence`` property of component to "
+"``true`` and enable ``pep`` SessionManager processor."
+msgstr ""
+
+#: ../../Configuration.inc:151
+msgid ""
+"If your pubsub component uses different name than ``pubsub`` then you "
+"need to set ``pubsub-jid`` property of ``pep`` processor to JID of pubsub"
+" component make it aware of a different name of a pubsub component."
+msgstr ""
+
+#: ../../Configuration.inc:153
+msgid ""
+"**Example with pubsub component named ``events`` hosted at server named "
+"``servername.com`` and enabled PEP.**"
+msgstr ""
+
+#: ../../Configuration.inc:169
+msgid "Enabling REST API"
+msgstr ""
+
+#: ../../Configuration.inc:171
+msgid "To use REST API for pubsub component it is required that:"
+msgstr ""
+
+#: ../../Configuration.inc:173
+msgid ""
+"Tigase HTTP API component is installed and configured properly. For "
+"information about HTTP API component installation please look into `HTTP "
+"component documentation <#compHTTPAPI>`__."
+msgstr ""
+
+#: ../../Configuration.inc:175
+msgid ""
+"Tigase pubsub REST scripts are copied to HTTP API REST scripts directory "
+"In installation package this is already done and scripts are in proper "
+"locations. dd\\* JID of HTTP API component needs to be added to list of "
+"trusted jids of Tigase pubsub component ``trusted`` property (if ``http``"
+" is name of HTTP API component)"
+msgstr ""
+
+#: ../../Configuration.inc:184
+msgid "Changing nodes cache size"
+msgstr ""
+
+#: ../../Configuration.inc:186
+msgid ""
+"By default Tigase pubsub component caches node configuration of 2000 last"
+" loaded nodes. If there are many requests to database to load node "
+"configuration and your installation contains many nodes it may be a good "
+"idea to increase number of cached nodes."
+msgstr ""
+
+#: ../../Configuration.inc:188
+msgid ""
+"To do this you need to set ``pubsub-repository-cache-size`` property of "
+"pubsub component to new size."
+msgstr ""
+
+#: ../../Configuration.inc:198
+msgid "Enable sending last published item on presence"
+msgstr ""
+
+#: ../../Configuration.inc:200
+msgid ""
+"By default it is not possible to use delivery of last published item when"
+" users broadcasts initial presence. To do so you need to set ``send-last-"
+"published-item-on-presence`` of pubsub component to ``true``. This will "
+"allow you to configure nodes to send last published item on presence."
+msgstr ""
+
+#: ../../Configuration.inc:209
+msgid "Throttling sending notifications"
+msgstr ""
+
+#: ../../Configuration.inc:211
+msgid ""
+"Notifications sent by PubSub component may be sent in large batches, if "
+"you have a nodes with a lot of subscribers. In those cases, it is useful "
+"to throttle publications to improve behaviour and performance of other "
+"parts of Tigase XMPP Server."
+msgstr ""
+
+#: ../../Configuration.inc:213
+msgid ""
+"To achieve that, PubSub throttles generate notifications to specified "
+"throughput. By default it is set to 5k packets for each CPU core "
+"available per second."
+msgstr ""
+
+#: ../../Configuration.inc:215
+msgid ""
+"To set it to a different value, you can set ``limit`` property of "
+"``publishExecutor`` bean to the expected number of publications per "
+"second, ie. 100000;"
+msgstr ""
+
+#: ../../Configuration.inc:219
+msgid ""
+"This value is a number of total throughput, and will not be adjusted by "
+"the number of available CPU cores."
+msgstr ""
+
+#: ../../Configuration.inc:229
+#, python-format
+msgid ""
+"Publication rate is also adjusted to current memory usage on a 4 point "
+"scale adjusted to the value of two configuration options: "
+"``highMemoryUsageLimit`` and ``criticalMemoryUsageLimit`` (with default "
+"values: 90% and 98% respectively): \\* ``normal`` - if memory usage is "
+"below ``highMemoryUsageLimit`` (i.e. below 90%) \\* ``high`` - memory "
+"usage less than halfway between ``highMemoryUsageLimit`` and ``veryHigh``"
+" (i.e. between 90% and 94%) \\* ``veryHigh`` - memory usage more than "
+"halfway between ``highMemoryUsageLimit`` and ``veryHigh`` (i.e. between "
+"94% and 98%) \\* ``critical`` - if memory usage is above "
+"``criticalMemoryUsageLimit`` (i.e. above 98%)"
+msgstr ""
+
+#: ../../Configuration.inc:231
+msgid ""
+"It’s possible to adjust values of the high and critical limits in "
+"publisher bean:"
+msgstr ""
+
+#: ../../Configuration.inc:244
+msgid "Disable automatic subscription of node creator"
+msgstr ""
+
+#: ../../Configuration.inc:246
+msgid ""
+"During creation of node pubsub component subscribes creator to pubsub "
+"node and delivers notifications to creator. If in your case you do not "
+"want this behavior, you may set ``auto-subscribe-node-creator`` property "
+"of pubsub component to ``false``."
+msgstr ""
+
+#: ../../Database.inc:2
+msgid "Database"
+msgstr ""
+
+#: ../../Database.inc:5
+msgid "Preparation of database"
+msgstr ""
+
+#: ../../Database.inc:7
+msgid ""
+"Before you will be able to use Tigase PubSub Component you need to "
+"initialize database. We provide few schemas for this component for MySQL,"
+" PostgreSQL, SQLServer and DerbyDB."
+msgstr ""
+
+#: ../../Database.inc:9
+msgid ""
+"They are placed in ``database/`` directory of installation package and "
+"named in ``dbtype-pubsub-version.sql``, where ``dbname`` in name of "
+"database type which this schema supports and ``version`` is version of a "
+"PubSub component for which this schema is designed."
+msgstr ""
+
+#: ../../Database.inc:11
+msgid ""
+"You need to manually select schema for correct database and component and"
+" load this schema to database. For more information about loading "
+"database schema look into `database preperation <#databasePreperation>`__"
+" section of this guide."
+msgstr ""
+
+#: ../../Database.inc:14
+msgid "Upgrade of database schema"
+msgstr ""
+
+#: ../../Database.inc:16
+msgid ""
+"Database schema for our components may change between versions and if so "
+"it needs to be updated before new version may be started. To upgrade "
+"schema please follow instructions from the `database preperation "
+"<#databasePreperation>`__ section."
+msgstr ""
+
+#: ../../Database.inc:20
+msgid ""
+"If you use SNAPSHOT builds then schema may change for same version as "
+"this are versions we are still working on."
+msgstr ""
+
+#: ../../Database.inc:23
+msgid "Schema description"
+msgstr ""
+
+#: ../../Database.inc:25
+msgid ""
+"Tigase PubSub component uses few tables and stored procedures. To make it"
+" easier to identify tables and stored procedures used by PubSub component"
+" they are prefixed with ``tig_pubsub_``."
+msgstr ""
+
+#: ../../Database.inc:28
+msgid "Table ``tig_pubsub_service_jids``"
+msgstr ""
+
+#: ../../Database.inc:30
+msgid "This table stores all jids for which PubSub component contains nodes."
+msgstr ""
+
+#: ../../Database.inc:33 ../../Database.inc:50 ../../Database.inc:67
+#: ../../Database.inc:102 ../../Database.inc:117 ../../Database.inc:134
+msgid "Field"
+msgstr ""
+
+#: ../../Database.inc:33 ../../Database.inc:50 ../../Database.inc:67
+#: ../../Database.inc:102 ../../Database.inc:117 ../../Database.inc:134
+msgid "Description"
+msgstr ""
+
+#: ../../Database.inc:33 ../../Database.inc:50 ../../Database.inc:67
+#: ../../Database.inc:102 ../../Database.inc:117 ../../Database.inc:134
+msgid "Comments"
+msgstr ""
+
+#: ../../Database.inc:35 ../../Database.inc:71
+msgid "service_id"
+msgstr ""
+
+#: ../../Database.inc:35
+msgid "Database ID of a service JID"
+msgstr ""
+
+#: ../../Database.inc:37
+msgid "service_jid"
+msgstr ""
+
+#: ../../Database.inc:37
+msgid "Value of a service JID"
+msgstr ""
+
+#: ../../Database.inc:39
+msgid "service_jid_sha1"
+msgstr ""
+
+#: ../../Database.inc:39
+msgid "SHA1 value of lowercased service JID"
+msgstr ""
+
+#: ../../Database.inc:39 ../../Database.inc:56
+msgid "Used for proper bare JID comparison during lookup."
+msgstr ""
+
+#: ../../Database.inc:41 ../../Database.inc:58 ../../Database.inc:77
+#: ../../Database.inc:142
+msgid "(N/A to PostgreSQL schema)"
+msgstr ""
+
+#: ../../Database.inc:45
+msgid "Table ``tig_pubsub_jids``"
+msgstr ""
+
+#: ../../Database.inc:47
+msgid ""
+"This table stores all jids related to PubSub nodes, ie. subscriber, "
+"affiliates, creators, publishers, etc."
+msgstr ""
+
+#: ../../Database.inc:52 ../../Database.inc:106 ../../Database.inc:121
+msgid "jid_id"
+msgstr ""
+
+#: ../../Database.inc:52
+msgid "Database ID of a bare JID"
+msgstr ""
+
+#: ../../Database.inc:54
+msgid "jid"
+msgstr ""
+
+#: ../../Database.inc:54
+msgid "Value of a bare JID"
+msgstr ""
+
+#: ../../Database.inc:56
+msgid "jid_sha1"
+msgstr ""
+
+#: ../../Database.inc:56
+msgid "SHA1 value of lowercased bare JID"
+msgstr ""
+
+#: ../../Database.inc:62
+msgid "Table ``tig_pubsub_nodes``"
+msgstr ""
+
+#: ../../Database.inc:64
+msgid "Table stores nodes tree structure and node configuration."
+msgstr ""
+
+#: ../../Database.inc:69 ../../Database.inc:104 ../../Database.inc:119
+#: ../../Database.inc:136
+msgid "node_id"
+msgstr ""
+
+#: ../../Database.inc:69
+msgid "Database ID of a node"
+msgstr ""
+
+#: ../../Database.inc:71
+msgid "ID of service JID"
+msgstr ""
+
+#: ../../Database.inc:71
+msgid "References ``service_id`` from ``tig_pubsub_service_jids``"
+msgstr ""
+
+#: ../../Database.inc:73
+msgid "name"
+msgstr ""
+
+#: ../../Database.inc:73
+msgid "Name of PubSub node"
+msgstr ""
+
+#: ../../Database.inc:75
+msgid "name_sha1"
+msgstr ""
+
+#: ../../Database.inc:75
+msgid "SHA1 of PubSub node name"
+msgstr ""
+
+#: ../../Database.inc:75
+msgid "Used for indexing and faster lookup."
+msgstr ""
+
+#: ../../Database.inc:79
+msgid "type"
+msgstr ""
+
+#: ../../Database.inc:79
+msgid "Type of PubSub node"
+msgstr ""
+
+#: ../../Database.inc:79
+msgid "0 - collection"
+msgstr ""
+
+#: ../../Database.inc:81
+msgid "1 - leaf"
+msgstr ""
+
+#: ../../Database.inc:83
+msgid "title"
+msgstr ""
+
+#: ../../Database.inc:83
+msgid "Title of PubSub node"
+msgstr ""
+
+#: ../../Database.inc:85
+msgid "description"
+msgstr ""
+
+#: ../../Database.inc:85
+msgid "Description of a node"
+msgstr ""
+
+#: ../../Database.inc:87
+msgid "creator_id"
+msgstr ""
+
+#: ../../Database.inc:87
+msgid "ID of JID of creator"
+msgstr ""
+
+#: ../../Database.inc:87 ../../Database.inc:106 ../../Database.inc:121
+#: ../../Database.inc:146
+msgid "References ``jid_id`` from ``tig_pubsub_jids``"
+msgstr ""
+
+#: ../../Database.inc:89 ../../Database.inc:144
+msgid "creation_date"
+msgstr ""
+
+#: ../../Database.inc:89
+msgid "Timestamp of creation time"
+msgstr ""
+
+#: ../../Database.inc:91
+msgid "configuration"
+msgstr ""
+
+#: ../../Database.inc:91
+msgid "Serialized configuration of PubSub node"
+msgstr ""
+
+#: ../../Database.inc:93
+msgid "collection_id"
+msgstr ""
+
+#: ../../Database.inc:93
+msgid "Points collection (parent node)"
+msgstr ""
+
+#: ../../Database.inc:93 ../../Database.inc:104 ../../Database.inc:119
+#: ../../Database.inc:136
+msgid "References ``node_id`` from ``tig_pubsub_nodes``"
+msgstr ""
+
+#: ../../Database.inc:97
+msgid "Table ``tig_pubsub_affiliations``"
+msgstr ""
+
+#: ../../Database.inc:99
+msgid "Table stores affiliations between PubSub nodes and jids."
+msgstr ""
+
+#: ../../Database.inc:104 ../../Database.inc:119 ../../Database.inc:136
+msgid "ID of a node"
+msgstr ""
+
+#: ../../Database.inc:106 ../../Database.inc:121
+msgid "ID of a user JID"
+msgstr ""
+
+#: ../../Database.inc:108
+msgid "affiliation"
+msgstr ""
+
+#: ../../Database.inc:108
+msgid "Affiliation value"
+msgstr ""
+
+#: ../../Database.inc:112
+msgid "Table ``tig_pubsub_subscriptions``"
+msgstr ""
+
+#: ../../Database.inc:114
+msgid "Table stores subscriptions of jids to PubSub nodes."
+msgstr ""
+
+#: ../../Database.inc:123
+msgid "subscription"
+msgstr ""
+
+#: ../../Database.inc:123
+msgid "Subscription value"
+msgstr ""
+
+#: ../../Database.inc:125
+msgid "subscription_id"
+msgstr ""
+
+#: ../../Database.inc:125
+msgid "Id of a subscription"
+msgstr ""
+
+#: ../../Database.inc:129
+msgid "Table ``tig_pubsub_items``"
+msgstr ""
+
+#: ../../Database.inc:131
+msgid "Table stores items of PubSub nodes."
+msgstr ""
+
+#: ../../Database.inc:138
+msgid "id"
+msgstr ""
+
+#: ../../Database.inc:138
+msgid "Id of an items"
+msgstr ""
+
+#: ../../Database.inc:140
+msgid "id_sha1"
+msgstr ""
+
+#: ../../Database.inc:140
+msgid "SHA1 of item id"
+msgstr ""
+
+#: ../../Database.inc:140
+msgid "Indexed and used for faster lookup"
+msgstr ""
+
+#: ../../Database.inc:144
+msgid "Creation date"
+msgstr ""
+
+#: ../../Database.inc:146
+msgid "publisher_id"
+msgstr ""
+
+#: ../../Database.inc:146
+msgid "ID of publisher JID"
+msgstr ""
+
+#: ../../Database.inc:148
+msgid "update_date"
+msgstr ""
+
+#: ../../Database.inc:148
+msgid "Timestamp of last item modification"
+msgstr ""
+
+#: ../../Database.inc:150
+msgid "data"
+msgstr ""
+
+#: ../../Database.inc:150
+msgid "Item payload"
+msgstr ""
+
+#: ../../Schema_Changes.inc:2
+msgid "PubSub Schema Changes"
+msgstr ""
+
+#: ../../Schema_Changes.inc:4
+msgid ""
+"Tigase PubSub Component is currently version 3.3.0 which is introduced in"
+" Tigase server v8.0.0."
+msgstr ""
+
+#: ../../Schema_Changes.inc:7
+msgid "PubSub 3.2.0 Changes"
+msgstr ""
+
+#: ../../Schema_Changes.inc:9
+msgid ""
+"PubSub v 3.2.0 adds a new procedure TigPubSubGetNodeMeta which supports "
+"PubSub metadata retrieval while conducting a disco#info query on nodes."
+msgstr ""
+
+#: ../../Schema_Changes.inc:11
+msgid ""
+"You will need to upgrade your database if you are not using v3.2.0 "
+"schema. Tigase will report being unable to load PubSub component if you "
+"do not have this schema version."
+msgstr ""
+
+#: ../../Schema_Changes.inc:13
+msgid ""
+"The MySQL schema can be found `Here <https://projects.tigase.org/projects"
+"/tigase-pubsub/repository/revisions/master/entry/database/mysql-pubsub-"
+"schema-3.2.0.sql>`__."
+msgstr ""
+
+#: ../../Schema_Changes.inc:15
+msgid ""
+"The Derby schema can be found `Here <https://projects.tigase.org/projects"
+"/tigase-pubsub/repository/changes/database/derby-pubsub-"
+"schema-3.2.0.sql>`__."
+msgstr ""
+
+#: ../../Schema_Changes.inc:17
+msgid ""
+"The PostGRESQL schema can be found `Here "
+"<https://projects.tigase.org/projects/tigase-"
+"pubsub/repository/changes/database/postgresql-pubsub-"
+"schema-3.2.0.sql>`__."
+msgstr ""
+
+#: ../../Schema_Changes.inc:19
+msgid ""
+"The MS SQL schema can be found `Here "
+"<https://projects.tigase.org/projects/tigase-"
+"pubsub/repository/changes/database/sqlserver-pubsub-schema-3.2.0.sql>`__."
+msgstr ""
+
+#: ../../Schema_Changes.inc:21
+msgid ""
+"The same files are also included in all distributions of v8.0.0 in "
+"``[tigaseroot]/database/`` . All changes to database schema are meant to "
+"be backward compatible."
+msgstr ""
+
+#: ../../Schema_Changes.inc:23
+msgid ""
+"For instructions how to manually upgrade the databases, please refer to "
+"`Tigase v7.1.0 Schema Updates section <#tigaseServer71>`__."
+msgstr ""
+
+#: ../../Schema_Changes.inc:26
+msgid "Upgrading older installations (pre-v3.0.0 Schema)"
+msgstr ""
+
+#: ../../Schema_Changes.inc:28
+msgid ""
+"To update older installations of Tigase to the PubSub Schema v3.0.0 "
+"follow these instructions. Note this should be done before upgrading to "
+"PubSub v3.1.0."
+msgstr ""
+
+#: ../../Schema_Changes.inc:30
+msgid "Step by Step guide."
+msgstr ""
+
+#: ../../Schema_Changes.inc:33
+msgid "Prepare Old Database for Upgrade"
+msgstr ""
+
+#: ../../Schema_Changes.inc:35
+msgid ""
+"In ``database`` directory of Tigase installation you will find SQL files "
+"which will prepare old database schema for upgrade using following this "
+"naming pattern: ``<database_type>-pubsub-schema-3.0.0-pre-upgrade.sql`` "
+"Where ``<database_type>`` can be one of the following: ``mysql``, "
+"``sqlserver``, ie. for MySQL you will find the file ``mysql-pubsub-"
+"schema-3.0.0-pre-upgrade.sql``. You need to execute statements from this "
+"file on your source database, which will drop old procedures and "
+"functions used to access database and also this statements will rename "
+"old tables by adding suffix \\_1 to each of old tables. Example:"
+msgstr ""
+
+#: ../../Schema_Changes.inc:38 ../../Schema_Changes.inc:66
+msgid "**MySQL**"
+msgstr ""
+
+#: ../../Schema_Changes.inc:38
+msgid ""
+"``mysql -u tigase -p tigase_pubsub < database/mysql-pubsub-schema-3.0.0"
+"-pre-upgrade.sql``"
+msgstr ""
+
+#: ../../Schema_Changes.inc:41 ../../Schema_Changes.inc:69
+msgid "**MS SQL**"
+msgstr ""
+
+#: ../../Schema_Changes.inc:41
+#, python-format
+msgid ""
+"``sqlcmd -S %servername% -U %root_user% -P %root_pass% -d %database% -i "
+"database\\sqlserver-pubsub-schema-3.0.0-pre-upgrade.sql``"
+msgstr ""
+
+#: ../../Schema_Changes.inc:44
+msgid "Update Tigase PubSub Component"
+msgstr ""
+
+#: ../../Schema_Changes.inc:46
+msgid ""
+"For this you need to copy the Tigase PubSub Component jar file to jars "
+"directory inside Tigase XMPP Server installation directory. It is also "
+"recommended to copy files from database directory of Tigase PubSub "
+"Component to database directory in Tigase XMPP Server installation "
+"directory."
+msgstr ""
+
+#: ../../Schema_Changes.inc:48
+msgid ""
+"If you happen to use one of the the distribution packaged (either "
+"installer or -dist-max flavored archive) then all required files are "
+"already available - both new schema files will be available in "
+"``database/`` directory as well as both versions of PubSub component will"
+" be present in ``jars/`` directory - PubSub3 as tigase-pubsub.jar and "
+"PubSub2 as tigase-pubsub-2.2.0.jar.old (provided for compatibility "
+"reasons)."
+msgstr ""
+
+#: ../../Schema_Changes.inc:51
+msgid "Load New Schema"
+msgstr ""
+
+#: ../../Schema_Changes.inc:53
+msgid ""
+"In the ``database`` directory you will find files containing new schemas "
+"for:"
+msgstr ""
+
+#: ../../Schema_Changes.inc:55
+msgid "MySQL - ``mysql-pubsub-schema-3.0.0.sql``"
+msgstr ""
+
+#: ../../Schema_Changes.inc:57
+msgid "PostgreSQL - ``postgresql-pubsub-schema-3.0.0.sql``"
+msgstr ""
+
+#: ../../Schema_Changes.inc:59
+msgid "MSSQL - ``sqlserver-pubsub-schema-3.0.0.sql``"
+msgstr ""
+
+#: ../../Schema_Changes.inc:61
+msgid ""
+"DerbyDB - ``derby-pubsub-schema-3.0.0.sql`` and ``pubsub-db-create-"
+"derby.sh``"
+msgstr ""
+
+#: ../../Schema_Changes.inc:63
+msgid ""
+"For most databases, with the exception of Derby, you only need to execute"
+" statements from the proper file. For example:"
+msgstr ""
+
+#: ../../Schema_Changes.inc:66
+msgid ""
+"``mysql -u tigase -p tigase_pubsub < database/mysql-pubsub-"
+"schema-3.0.0.sql``"
+msgstr ""
+
+#: ../../Schema_Changes.inc:69
+#, python-format
+msgid ""
+"``sqlcmd -S %servername% -U %root_user% -P %root_pass% -d %database% -i "
+"database\\sqlserver-pubsub-schema-3.0.0.sql``"
+msgstr ""
+
+#: ../../Schema_Changes.inc:72
+msgid "**PostgreSQL**"
+msgstr ""
+
+#: ../../Schema_Changes.inc:72
+msgid ""
+"``psql -h $DB_HOST -q -U ${USR_NAME} -d $DB_NAME -f database/sqlserver-"
+"pubsub-schema-3.0.0.sql``"
+msgstr ""
+
+#: ../../Schema_Changes.inc:74
+msgid ""
+"For DerbyDB you need to execute the ``pubsub-db-create-derby.sh`` script "
+"and pass proper JDBC URI to database to which you want to load schema (if"
+" database does not exist, it will be created)."
+msgstr ""
+
+#: ../../Schema_Changes.inc:80
+msgid ""
+"**NOTE:** It is possible to use same database which was used before - "
+"then after upgrade you will have new tables and old tables with \\_1 "
+"suffix."
+msgstr ""
+
+#: ../../Schema_Changes.inc:83
+msgid "Execute Migration Utility"
+msgstr ""
+
+#: ../../Schema_Changes.inc:85
+msgid ""
+"In the ``/database`` directory you will find the ``pubsub-db-migrate.sh``"
+" file which you need to execute and pass arguments with JDBC URIs needed "
+"to connect to source and destination database. If you used dedicated "
+"tables for PubSub you will also need to pass a class name used to access "
+"database (value of ``pubsub-repo-class`` variable from "
+"``etc/config.tdsl`` file)."
+msgstr ""
+
+#: ../../Schema_Changes.inc:87
+msgid "Example for dedicated table used for PubSub:"
+msgstr ""
+
+#: ../../Schema_Changes.inc:95
+msgid "Example for use without dedicated PubSub tables:"
+msgstr ""
+
+#: ../../Schema_Changes.inc:103
+msgid "Example for use with dedicated tables in a Windows environment:"
+msgstr ""
+
+#: ../../Schema_Changes.inc:111
+msgid ""
+"During execution this utility will report information about migration of "
+"PubSub data to the new schema, and the same information will be store in "
+"``pubsub_db_migration.log``."
+msgstr ""
+
+#: ../../Schema_Changes.inc:114
+msgid "Finish"
+msgstr ""
+
+#: ../../Schema_Changes.inc:116
+msgid ""
+"After successful migration you will have all data copied to new tables. "
+"Old tables will be renamed by adding suffix \\_1. After verification that"
+" everything works OK, you can delete old tables and it’s content as it "
+"want be used any more."
+msgstr ""
+
+#: ../../Features.inc:2
+msgid "Features"
+msgstr ""
+
+#: ../../AdHocCommands.inc:2
+msgid "AdHoc Commands"
+msgstr ""
+
+#: ../../AdHocCommands.inc:4
+msgid ""
+"Similar to the HTTP API, AdHoc commands based on groovy scripts can be "
+"sent to this component to do a number of tasks. All scripts for these Ad-"
+"hoc commands are found at ``sec/main/groovy/tigase/admin`` in source "
+"distributions, or at `this link <https://projects.tigase.org/projects"
+"/tigase-"
+"pubsub/repository/revisions/master/show/src/main/groovy/tigase/admin>`__."
+" To use them, the scripts need to be copied into the "
+"``scripts/admin/pubsub`` folder in the Tigase installation directory. For"
+" all examples, the component address will be ``pubsub.example.com``."
+msgstr ""
+
+#: ../../AdHocCommands.inc:7
+msgid "Create a Node"
+msgstr ""
+
+#: ../../AdHocCommands.inc:9
+msgid "Ad-hoc command node: ``create-node`` Required role: Service Administrator"
+msgstr ""
+
+#: ../../AdHocCommands.inc:11
+msgid ""
+"Command requires fields ``node`` and ``pubsub#node_type`` to be filled "
+"with proper values for execution. - ``node`` Field containing id of node "
+"to create. - ``pubsub#node_type`` Contains one of two possible values. "
+"\\* ``leaf-node`` Node that will be published. \\* ``collection`` Node "
+"that will contain other nodes."
+msgstr ""
+
+#: ../../AdHocCommands.inc:13
+msgid ""
+"Other fields are optional fields that can be set to change configuration "
+"of newly create node to different configuration than default."
+msgstr ""
+
+#: ../../AdHocCommands.inc:15 ../../AdHocCommands.inc:28
+#: ../../AdHocCommands.inc:41 ../../AdHocCommands.inc:55
+msgid "Example call using TCLMT:"
+msgstr ""
+
+#: ../../AdHocCommands.inc:22
+msgid "Delete a Node"
+msgstr ""
+
+#: ../../AdHocCommands.inc:24
+msgid "Ad-hoc command node: ``delete-node`` Required role: Service Administrator"
+msgstr ""
+
+#: ../../AdHocCommands.inc:26
+msgid ""
+"Command requires ``node`` field to be filled. - ``node`` Field containing"
+" id of node to delete."
+msgstr ""
+
+#: ../../AdHocCommands.inc:35
+msgid "Subscribe to a Node"
+msgstr ""
+
+#: ../../AdHocCommands.inc:37
+msgid ""
+"Ad-hoc command node: ``subscribe-node`` Required role: Service "
+"Administrator"
+msgstr ""
+
+#: ../../AdHocCommands.inc:39
+msgid ""
+"Command requires ``node`` and ``jids`` nodes to be filled. - ``node`` "
+"Field containing node to subscribe to. - ``jids`` Field containing list "
+"of JIDs to subscribe to the node."
+msgstr ""
+
+#: ../../AdHocCommands.inc:49
+msgid "Unsubscribe to a Node"
+msgstr ""
+
+#: ../../AdHocCommands.inc:51
+msgid ""
+"Ad-hoc command node: ``unsubscribe-node`` Required role: Service "
+"Administrator"
+msgstr ""
+
+#: ../../AdHocCommands.inc:53
+msgid ""
+"Command requires ``node`` and ``jids`` nodes to be filled. - ``node`` "
+"Field containing node to unsubscribe to. - ``jids`` Field containing list"
+" of JIDs to unsubscribe to the node."
+msgstr ""
+
+#: ../../AdHocCommands.inc:63
+msgid "Publish an item to a Node"
+msgstr ""
+
+#: ../../AdHocCommands.inc:65
+msgid "Ad-hoc command node: ``publish-item`` Required role: Service Administrator"
+msgstr ""
+
+#: ../../AdHocCommands.inc:67
+msgid ""
+"Command requires fields ``node`` and ``entry`` to be filled. - ``node`` "
+"Field containing id of node to publish to. - ``item-id`` Field may "
+"contain id of entry to publish, can be empty. - ``entry`` Field should "
+"contain multi-line entry content that should be valid XML values for "
+"items."
+msgstr ""
+
+#: ../../AdHocCommands.inc:69
+msgid ""
+"This command due to it’s complexity cannot be easily executed by TCLMT "
+"using default remote script which provides support for basic adhoc "
+"commands. Example call using TCLMT:"
+msgstr ""
+
+#: ../../AdHocCommands.inc:75
+msgid "Example Groovy script to execute create-node command using JAXMPP2"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:2
+msgid "PubSub Node Presence Protocol"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:4
+msgid "**Occupant Use Case**"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:7
+msgid "Log in to Pubsub Node"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:9
+msgid ""
+"To log in to PubSub Node user must send presence to PubSub component with"
+" additional information about node:"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:20
+msgid "Component will publish this information in node:"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:43
+msgid ""
+"And then will send notification with presences of all occupants to new "
+"occupant."
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:46
+msgid "Log out from PubSub Node"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:48
+msgid ""
+"To logout from single node, user must send presence stanza with type "
+"unavailable:"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:59
+msgid "Component will send events to all occupants as described:"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:73
+msgid ""
+"If component receives presence stanza with type unavailable without "
+"specified node, then component will log out user from all nodes he logged"
+" before and publish events."
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:76
+msgid "Retrieving list of all Node Subscribers"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:78
+msgid ""
+"To retrieve list of node subscribers, node configuration option "
+"``tigase#allow_view_subscribers`` must be set to true:"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:98
+msgid ""
+"When option is enabled, each subscriber may get list of subscribers the "
+"same way `as owner <http://xmpp.org/extensions/xep-0060.html#owner-"
+"subscriptions-retrieve>`__."
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:111
+msgid "There is extension to filter returned list:"
+msgstr ""
+
+#: ../../PubSub_Node_Presence_Protocol.inc:128
+msgid ""
+"In this example will be returned all subscriptions of users from domain "
+"\"denmark.lit\"."
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:2
+msgid "Offline Message Sink"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:4
+msgid ""
+"Messages sent to offline users is published in pubsub node, from where "
+"that message is sent to all the node subscribers as a pubsub "
+"notification."
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:26
+msgid "The pubsub node must be created and configured beforehand:"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:28
+msgid "**Create node**"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:41
+msgid "After that is done, you need to add SessionManager as a publisher:"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:43
+msgid "**Add sess-man as publisher**"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:57
+msgid ""
+"Finally, the 'msgoffline' offline messages processor must be configured "
+"as well"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:60
+msgid "**config.tdsl configuration**"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:73
+msgid "**Usage**"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:75
+msgid ""
+"Because these sinks use a standard pubsub component, administration of "
+"the sink node is identical to any other pubsub node. `XEP-0060 "
+"<http://www.xmpp.org/extensions/xep-0060>`__ defines standard pubsub "
+"usage and management."
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:78
+msgid "**Managing Subscriptions**"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:80
+msgid "Add new Subscriber"
+msgstr ""
+
+#: ../../OfflineMessagesSink.inc:95
+msgid "Remove Subscriber"
+msgstr ""
+
+#: ../../REST_API.inc:3
+msgid "REST API"
+msgstr ""
+
+#: ../../REST_API.inc:5
+msgid ""
+"All example calls to pubsub REST API are prepared for pubsub component "
+"running at ``pubsub.example.com``. It is required to replace this value "
+"with JID of pubsub component from your installation."
+msgstr ""
+
+#: ../../REST_API.inc:7
+msgid "It is possible to provide parameters to requests as:"
+msgstr ""
+
+#: ../../REST_API.inc:10
+msgid "**XML**"
+msgstr ""
+
+#: ../../REST_API.inc:10
+msgid ""
+"All parameters passed in content of HTTP request needs to be wrapped with"
+" ``<data/>`` tag as root tag of XML document, while returned parameters "
+"will be wrapped ``<result/>`` tag as root tag of XML document."
+msgstr ""
+
+#: ../../REST_API.inc:13
+msgid "**JSON**"
+msgstr ""
+
+#: ../../REST_API.inc:13
+msgid ""
+"Parameters must be passed as serialized JSON object. Additionally "
+"``Content-Type`` header of HTTP request needs to be set to "
+"``application/json``."
+msgstr ""
+
+#: ../../REST_API.inc:16
+msgid "Create a node"
+msgstr ""
+
+#: ../../REST_API.inc:18
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/create-node``"
+msgstr ""
+
+#: ../../REST_API.inc:20 ../../REST_API.inc:91 ../../REST_API.inc:155
+#: ../../REST_API.inc:228 ../../REST_API.inc:301 ../../REST_API.inc:482
+#: ../../REST_API.inc:546 ../../REST_API.inc:588 ../../REST_API.inc:663
+#: ../../REST_API.inc:755
+msgid "Available HTTP methods:"
+msgstr ""
+
+#: ../../REST_API.inc:23 ../../REST_API.inc:95 ../../REST_API.inc:158
+#: ../../REST_API.inc:231 ../../REST_API.inc:304 ../../REST_API.inc:485
+#: ../../REST_API.inc:549 ../../REST_API.inc:592 ../../REST_API.inc:666
+#: ../../REST_API.inc:758
+msgid "GET"
+msgstr ""
+
+#: ../../REST_API.inc:25
+msgid ""
+"Method returns example content which contains all required and optional "
+"parameters that may be passed to newly created node."
+msgstr ""
+
+#: ../../REST_API.inc:28 ../../REST_API.inc:101 ../../REST_API.inc:163
+#: ../../REST_API.inc:236 ../../REST_API.inc:309 ../../REST_API.inc:489
+#: ../../REST_API.inc:597 ../../REST_API.inc:671 ../../REST_API.inc:763
+msgid "POST"
+msgstr ""
+
+#: ../../REST_API.inc:30
+msgid ""
+"Command requires fields ``node`` and ``pubsub#node_type`` to be filled "
+"with proper values for execution."
+msgstr ""
+
+#: ../../REST_API.inc:32
+msgid "``node`` - field should contain id of node to create"
+msgstr ""
+
+#: ../../REST_API.inc:34
+msgid ""
+"``owner`` - field may contains jid which should be used as jid of owner "
+"of newly created node (will use jid of Tigase HTTP API Component if not "
+"passed)"
+msgstr ""
+
+#: ../../REST_API.inc:36
+msgid ""
+"``pubsub#node_type`` - should contain type of node to create (two values "
+"are possible: ``leaf`` - node to which items will be published, "
+"``collection`` - node which will contain other nodes)"
+msgstr ""
+
+#: ../../REST_API.inc:38
+msgid ""
+"Example content to create node of id ``example`` and of type ``leaf`` and"
+" with owner set to ``admin@example.com``."
+msgstr ""
+
+#: ../../REST_API.inc:41 ../../REST_API.inc:110 ../../REST_API.inc:175
+#: ../../REST_API.inc:247 ../../REST_API.inc:324 ../../REST_API.inc:500
+#: ../../REST_API.inc:606 ../../REST_API.inc:682 ../../REST_API.inc:774
+msgid "Using XML"
+msgstr ""
+
+#: ../../REST_API.inc:43 ../../REST_API.inc:112 ../../REST_API.inc:177
+#: ../../REST_API.inc:249 ../../REST_API.inc:339 ../../REST_API.inc:375
+#: ../../REST_API.inc:501 ../../REST_API.inc:608 ../../REST_API.inc:684
+#: ../../REST_API.inc:776
+msgid "**Request in XML.**"
+msgstr ""
+
+#: ../../REST_API.inc:55 ../../REST_API.inc:120 ../../REST_API.inc:189
+#: ../../REST_API.inc:261 ../../REST_API.inc:355 ../../REST_API.inc:388
+#: ../../REST_API.inc:510 ../../REST_API.inc:616 ../../REST_API.inc:693
+#: ../../REST_API.inc:785
+msgid "**Response in XML.**"
+msgstr ""
+
+#: ../../REST_API.inc:66 ../../REST_API.inc:131 ../../REST_API.inc:200
+#: ../../REST_API.inc:273 ../../REST_API.inc:400 ../../REST_API.inc:522
+#: ../../REST_API.inc:634 ../../REST_API.inc:720 ../../REST_API.inc:797
+msgid "Using JSON"
+msgstr ""
+
+#: ../../REST_API.inc:68 ../../REST_API.inc:133 ../../REST_API.inc:202
+#: ../../REST_API.inc:275 ../../REST_API.inc:415 ../../REST_API.inc:448
+#: ../../REST_API.inc:523 ../../REST_API.inc:635 ../../REST_API.inc:722
+#: ../../REST_API.inc:799
+msgid "**Request in JSON.**"
+msgstr ""
+
+#: ../../REST_API.inc:78 ../../REST_API.inc:141 ../../REST_API.inc:214
+#: ../../REST_API.inc:287 ../../REST_API.inc:429 ../../REST_API.inc:462
+#: ../../REST_API.inc:532 ../../REST_API.inc:643 ../../REST_API.inc:731
+#: ../../REST_API.inc:808
+msgid "**Response in JSON.**"
+msgstr ""
+
+#: ../../REST_API.inc:87
+msgid "Delete a node"
+msgstr ""
+
+#: ../../REST_API.inc:89
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/delete-node``"
+msgstr ""
+
+#: ../../REST_API.inc:97 ../../REST_API.inc:160 ../../REST_API.inc:233
+#: ../../REST_API.inc:306 ../../REST_API.inc:486 ../../REST_API.inc:594
+#: ../../REST_API.inc:668 ../../REST_API.inc:760
+msgid ""
+"Method returns example content which contains all required and optional "
+"parameters that may be passed."
+msgstr ""
+
+#: ../../REST_API.inc:103
+msgid "Command requires field ``node`` to be filled."
+msgstr ""
+
+#: ../../REST_API.inc:105
+msgid "``node`` - field should contain id of node to delete"
+msgstr ""
+
+#: ../../REST_API.inc:107
+msgid "Example content to delete node with id ``example``"
+msgstr ""
+
+#: ../../REST_API.inc:151
+msgid "Subscribe to a node"
+msgstr ""
+
+#: ../../REST_API.inc:153
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/subscribe-node``"
+msgstr ""
+
+#: ../../REST_API.inc:165 ../../REST_API.inc:238
+msgid "Command requires fields ``node`` and ``jids`` to be filled."
+msgstr ""
+
+#: ../../REST_API.inc:167
+msgid "``node`` - field should contain id of node to subscribe to"
+msgstr ""
+
+#: ../../REST_API.inc:169
+msgid "``jids`` - field should contain list of jids to be subscribed to node"
+msgstr ""
+
+#: ../../REST_API.inc:171
+msgid ""
+"Example content to subscribe to node with id ``example`` users with jid "
+"``test1@example.com`` and ``test2@example.com``"
+msgstr ""
+
+#: ../../REST_API.inc:224
+msgid "Unsubscribe from a node"
+msgstr ""
+
+#: ../../REST_API.inc:226
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/unsubscribe-node``"
+msgstr ""
+
+#: ../../REST_API.inc:240
+msgid "``node`` - field should contain id of node to unsubscribe from"
+msgstr ""
+
+#: ../../REST_API.inc:242
+msgid "``jids`` - field should contain list of jids to be unsubscribed from node"
+msgstr ""
+
+#: ../../REST_API.inc:244
+msgid ""
+"Example content to unsubscribe from node with id ``example`` users "
+"``test1@example.com`` and ``test2@example.com``"
+msgstr ""
+
+#: ../../REST_API.inc:297
+msgid "Publish an item to a node"
+msgstr ""
+
+#: ../../REST_API.inc:299
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/publish-item``"
+msgstr ""
+
+#: ../../REST_API.inc:311
+msgid "Command requires fields ``node`` and ``entry`` to be filled"
+msgstr ""
+
+#: ../../REST_API.inc:313
+msgid "``node`` - field should contain id of node to publish to"
+msgstr ""
+
+#: ../../REST_API.inc:315
+msgid "``item-id`` - field may contain id of entry to publish"
+msgstr ""
+
+#: ../../REST_API.inc:317
+msgid ""
+"``expire-at`` - field may contain timestamp (in `XEP-0082 "
+"<http://xmpp.org/extensions/xep-0082.html>`__ format) after which item "
+"should not be delivered to user"
+msgstr ""
+
+#: ../../REST_API.inc:319
+msgid ""
+"``entry`` - field should contain multi-line entry content which should be"
+" valid XML value for an item"
+msgstr ""
+
+#: ../../REST_API.inc:321
+msgid ""
+"Example content to publish item with id ``item-1`` to node with id "
+"``example`` and with content in example field. P"
+msgstr ""
+
+#: ../../REST_API.inc:326 ../../REST_API.inc:402
+msgid "with XML payload"
+msgstr ""
+
+#: ../../REST_API.inc:328
+msgid "In this example we will use following XML payload:"
+msgstr ""
+
+#: ../../REST_API.inc:330 ../../REST_API.inc:369 ../../REST_API.inc:406
+#: ../../REST_API.inc:442
+msgid "**Payload.**"
+msgstr ""
+
+#: ../../REST_API.inc:365 ../../REST_API.inc:438
+msgid "with JSON payload"
+msgstr ""
+
+#: ../../REST_API.inc:367
+msgid ""
+"It is possible to publish JSON payload as value of published XML element."
+" In example below we are publishing following JSON object:"
+msgstr ""
+
+#: ../../REST_API.inc:404
+msgid ""
+"To publish XML using JSON you need to set serialized XML payload as value"
+" for ``entry`` key. In this example we will use following XML payload:"
+msgstr ""
+
+#: ../../REST_API.inc:440
+msgid ""
+"As JSON needs to be set as a value of an XML element it will be wrapped "
+"on server side as a value for ``<payload/>`` element."
+msgstr ""
+
+#: ../../REST_API.inc:470
+msgid "**Published item.**"
+msgstr ""
+
+#: ../../REST_API.inc:478
+msgid "Delete an item from a node"
+msgstr ""
+
+#: ../../REST_API.inc:480
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/delete-item``"
+msgstr ""
+
+#: ../../REST_API.inc:491 ../../REST_API.inc:673
+msgid "Command requires fields ``node`` and ``item-id`` to be filled"
+msgstr ""
+
+#: ../../REST_API.inc:493
+msgid "``node`` - field contains id of node to publish to"
+msgstr ""
+
+#: ../../REST_API.inc:495
+msgid "``item-id`` - field contains id of entry to publish"
+msgstr ""
+
+#: ../../REST_API.inc:497
+msgid ""
+"Example content to delete an item with id ``item-1`` from node with id "
+"``example``."
+msgstr ""
+
+#: ../../REST_API.inc:542
+msgid "List available nodes"
+msgstr ""
+
+#: ../../REST_API.inc:544
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/list-nodes``"
+msgstr ""
+
+#: ../../REST_API.inc:551
+msgid ""
+"Method returns list of available pubsub nodes for domain passed as part "
+"of URI (``pubsub.example.com``)."
+msgstr ""
+
+#: ../../REST_API.inc:553
+msgid "**Example response in XML.**"
+msgstr ""
+
+#: ../../REST_API.inc:566 ../../REST_API.inc:581
+msgid ""
+"in which we see nodes: ``test``, ``node_54idf40037`` and "
+"``node_3ws5lz0037``."
+msgstr ""
+
+#: ../../REST_API.inc:568
+msgid "**Example response in JSON.**"
+msgstr ""
+
+#: ../../REST_API.inc:584
+msgid "List published items on node"
+msgstr ""
+
+#: ../../REST_API.inc:586
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/list-items``"
+msgstr ""
+
+#: ../../REST_API.inc:599
+msgid "Command requires field ``node`` to be filled"
+msgstr ""
+
+#: ../../REST_API.inc:601 ../../REST_API.inc:675
+msgid "``node`` - field contains id of node which items we want to list"
+msgstr ""
+
+#: ../../REST_API.inc:603 ../../REST_API.inc:679
+msgid "Example content to list of items published on node with id ``example``."
+msgstr ""
+
+#: ../../REST_API.inc:631 ../../REST_API.inc:656
+msgid ""
+"where ``item-1`` and ``item-2`` are identifiers of published items for "
+"node ``example``."
+msgstr ""
+
+#: ../../REST_API.inc:659
+msgid "Retrieve item published on node"
+msgstr ""
+
+#: ../../REST_API.inc:661
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/retrieve-item``"
+msgstr ""
+
+#: ../../REST_API.inc:677
+msgid "``item-id`` - field contains id of item to retrieve"
+msgstr ""
+
+#: ../../REST_API.inc:717
+msgid ""
+"inside item element there is XML encoded element which is published on "
+"node ``example`` with id ``item-1``."
+msgstr ""
+
+#: ../../REST_API.inc:751
+msgid "Retrieve user subscriptions"
+msgstr ""
+
+#: ../../REST_API.inc:753
+msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/retrieve-user-subscriptions``"
+msgstr ""
+
+#: ../../REST_API.inc:765
+msgid "Command requires field ``jid`` to be filled."
+msgstr ""
+
+#: ../../REST_API.inc:767
+msgid ""
+"``jid`` - field contains JID of a user for which we want to retrieve "
+"subscriptions"
+msgstr ""
+
+#: ../../REST_API.inc:769
+msgid ""
+"``node-pattern`` - field contains regex pattern to match. When field is "
+"not empty, request will return only subscribed nodes which match this "
+"pattern. If field should be empty it may be omitted in a request."
+msgstr ""
+
+#: ../../REST_API.inc:771
+msgid ""
+"Example content to retrieve list of nodes to which user "
+"``test@example.com`` is subscribed at ``pubsub.example.com`` which starts"
+" with ``test-`` (pattern ``test-.*``)"
+msgstr ""
+
+#: ../../index.rst:4
+msgid "Tigase PubSub Component - Version 5.1.0"
+msgstr ""
+
