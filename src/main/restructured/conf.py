@@ -95,7 +95,7 @@ language = "zh_CN"
 locale_dirs = ["locale/"]
 
 
-gettext_compact = "http_api_translation"
+gettext_compact = "pubsub_translation"
 language = "pl"
 locale_dirs = ["locale/"]
 
