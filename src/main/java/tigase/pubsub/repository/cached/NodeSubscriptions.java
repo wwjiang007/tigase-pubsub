@@ -24,10 +24,13 @@ import tigase.xmpp.jid.BareJID;
 
 import java.util.*;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public class NodeSubscriptions
 		extends tigase.pubsub.repository.NodeSubscriptions implements ISubscriptionsCached {
+
+	protected final static Logger log = Logger.getLogger(NodeSubscriptions.class.getName());
 
 	protected final ThreadLocal<Map<BareJID, UsersSubscription>> changedSubs = new ThreadLocal<Map<BareJID, UsersSubscription>>();
 

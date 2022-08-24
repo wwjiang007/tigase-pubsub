@@ -72,7 +72,7 @@ public class CachedPubSubRepository<T>
 	protected IPubSubConfig config;
 	@Inject
 	protected IPubSubDAO<T, DataSource, PubSubQuery> dao;
-	protected Logger log = Logger.getLogger(this.getClass().getName());
+	protected static Logger log = Logger.getLogger(CachedPubSubRepository.class.getName());
 	@Inject
 	protected PubSubLogic pubSubLogic;
 	protected Cache<NodeKey, Node> nodes;

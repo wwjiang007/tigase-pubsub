@@ -39,7 +39,7 @@ public abstract class NodeSubscriptions
 		implements ISubscriptions {
 
 	protected final static String DELIMITER = ";";
-	protected final Logger log = Logger.getLogger(this.getClass().getName());
+	protected final static Logger log = Logger.getLogger(NodeSubscriptions.class.getName());
 	// protected final FragmentedMap<BareJID, UsersSubscription> subs = new
 	// FragmentedMap<BareJID, UsersSubscription>(
 	// MAX_FRAGMENT_SIZE);
