@@ -52,6 +52,7 @@ import tigase.xmpp.jid.JID;
 import java.text.ParseException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -89,6 +90,7 @@ public class PublishItemModule
 	private IPubSubRepository repository;
 	@Inject(bean = "publishExecutor")
 	private Executor publishExecutor;
+	private java.util.concurrent.ExecutorService eventExecutor;
 
 	private static Collection<String> extractCDataItems(Element event, String[] path) {
 		ArrayList<String> result = new ArrayList<>();
@@ -269,6 +271,7 @@ public class PublishItemModule
 		} else {
 			log.warning("EventBus is not injected!");
 		}
+		eventExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
 	}
 
 	public boolean isPEPNodeName(String nodeName) {
@@ -481,6 +484,9 @@ public class PublishItemModule
 
 	@Override
 	public void beforeUnregister() {
+		if (eventExecutor != null) {
+			eventExecutor.shutdown();
+		}
 		if (eventBus != null) {
 			eventBus.unregisterAll(this);
 		}
@@ -522,24 +528,29 @@ public class PublishItemModule
 			if (!feature.endsWith("+notify")) {
 				continue;
 			}
-			String nodeName = feature.substring(0, feature.length() - "+notify".length());
 
+			String nodeName = feature.substring(0, feature.length() - "+notify".length());
+			capsSendLastPublishedItem(event.serviceJid, nodeName, event.buddyJid);
+		}
+	}
+
+	private void capsSendLastPublishedItem(BareJID serviceJid, String nodeName, JID buddyJid) {
+		eventExecutor.execute(() -> {
 			try {
-				ISubscriptions subscriptions = getRepository().getNodeSubscriptions(event.serviceJid, nodeName);
+				ISubscriptions subscriptions = getRepository().getNodeSubscriptions(serviceJid, nodeName);
 				if (subscriptions != null) {
-					if (subscriptions.getSubscription(event.buddyJid.getBareJID()) == Subscription.subscribed) {
+					if (subscriptions.getSubscription(buddyJid.getBareJID()) == Subscription.subscribed) {
 						// user is already subcribed to this node and will receive notifications event without CAPS change based delivery
-						continue;
+						return;
 					}
 				}
-				publishLastItem(event.serviceJid, nodeName, event.buddyJid);
+				publishLastItem(serviceJid, nodeName, buddyJid);
 			} catch (RepositoryException ex) {
 				log.log(Level.WARNING,
 						"Exception while sending last published item on on_sub_and_presence for service jid " +
-								event.serviceJid + " and node " + nodeName);
+								serviceJid + " and node " + nodeName);
 			}
-		}
-
+		});
 	}
 
 	protected void publishLastItem(BareJID serviceJid, String nodeName, JID buddyJid) throws RepositoryException {
@@ -586,8 +597,13 @@ public class PublishItemModule
 			return;
 		}
 		if (packet.getType() == null || packet.getType() == StanzaType.available) {
-			BareJID serviceJid = packet.getStanzaTo().getBareJID();
-			JID userJid = packet.getStanzaFrom();
+			sendLastPublishedItemFromSubscribedNodes(packet.getStanzaTo().getBareJID(), packet.getStanzaFrom());
+		}
+
+	}
+
+	private void sendLastPublishedItemFromSubscribedNodes(BareJID serviceJid, JID userJid) {
+		eventExecutor.execute(() -> {
 			try {
 				// sending last published items for subscribed nodes
 				Map<String, UsersSubscription> subscrs = repository.getUserSubscriptions(serviceJid,
@@ -607,9 +623,7 @@ public class PublishItemModule
 			} catch (RepositoryException ex) {
 				Logger.getLogger(PublishItemModule.class.getName()).log(Level.SEVERE, null, ex);
 			}
-
-		}
-
+		});
 	}
 
 	private AbstractNodeConfig createPepNode(BareJID toJid, String nodeName, BareJID ownerJid, Element publishOptions) throws PubSubException {

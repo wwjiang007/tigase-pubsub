@@ -330,7 +330,10 @@ public class PepPlugin
 		boolean forward = false;
 		if (packet.getType() == null || packet.getType() == StanzaType.available) {
 			// forward only available packets with CAPS as without there is no point in doing this
-			forward = packet.getElement().getXMLNSStaticStr(PRESENCE_C_PATH) == CAPS_XMLNS;
+			if (packet.getElement().getXMLNSStaticStr(PRESENCE_C_PATH) == CAPS_XMLNS) {
+				// do not forward packets from MUC
+				forward = packet.getElement().getChild("x", "http://jabber.org/protocol/muc#user") == null;
+			}
 		} else if (packet.getType() == StanzaType.unavailable) {
 			forward = true;
 		}
