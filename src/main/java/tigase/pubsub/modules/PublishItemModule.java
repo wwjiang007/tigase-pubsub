@@ -621,7 +621,7 @@ public class PublishItemModule
 					publishLastItem(serviceJid, nodeConfig, userJid);
 				}
 			} catch (RepositoryException ex) {
-				Logger.getLogger(PublishItemModule.class.getName()).log(Level.SEVERE, null, ex);
+				log.log(Level.SEVERE, "Problem retrieving data from repository", ex);
 			}
 		});
 	}

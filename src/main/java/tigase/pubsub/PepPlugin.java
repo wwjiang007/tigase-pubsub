@@ -328,11 +328,11 @@ public class PepPlugin
 	protected void processPresence(Packet packet, XMPPResourceConnection session, Queue<Packet> results)
 			throws NotAuthorizedException {
 		boolean forward = false;
-		if (packet.getType() == null || packet.getType() == StanzaType.available) {
+		if (isAvailablePresence(packet)) {
 			// forward only available packets with CAPS as without there is no point in doing this
-			if (packet.getElement().getXMLNSStaticStr(PRESENCE_C_PATH) == CAPS_XMLNS) {
+			if (isCapsPacket(packet)) {
 				// do not forward packets from MUC
-				forward = packet.getElement().getChild("x", "http://jabber.org/protocol/muc#user") == null;
+				forward = isNotMucPacket(packet);
 			}
 		} else if (packet.getType() == StanzaType.unavailable) {
 			forward = true;
@@ -362,6 +362,18 @@ public class PepPlugin
 			result.setPacketTo(getPubsubJid(session, packet.getStanzaTo()));
 			results.offer(result);
 		}
+	}
+
+	private static boolean isNotMucPacket(Packet packet) {
+		return packet.getElement().getChild("x", "http://jabber.org/protocol/muc#user") == null;
+	}
+
+	private static boolean isAvailablePresence(Packet packet) {
+		return packet.getType() == null || packet.getType() == StanzaType.available;
+	}
+
+	private static boolean isCapsPacket(Packet packet) {
+		return packet.getElement().getXMLNSStaticStr(PRESENCE_C_PATH) == CAPS_XMLNS;
 	}
 
 	protected void processJabberIqPrivateToPubSubConversion(Packet packet, Element queryEl, XMPPResourceConnection session, Consumer<Packet> writer)
