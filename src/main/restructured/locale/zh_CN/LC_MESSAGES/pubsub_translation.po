@@ -3,27 +3,30 @@
 # This file is distributed under the same license as the TigaseDoc package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TigaseDoc \n"
+"Project-Id-Version: TigaseDoc\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-08-23 00:02-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2022-08-30 18:41+0000\n"
+"Last-Translator: Qian Luo <qian.luo@tigase.net>\n"
+"Language-Team: Chinese (Simplified) <http://translate.tigase.net/projects/"
+"tigase-pubsub-documentation/tigase-pubsub-documentation/zh_Hans/>\n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.11.2\n"
 "Generated-By: Babel 2.8.0\n"
 
 #: ../../Limitations.rst:2
 msgid "Limitations"
-msgstr ""
+msgstr "限制"
 
 #: ../../Limitations.rst:5
 msgid "Addressing"
-msgstr ""
+msgstr "寻址"
 
 #: ../../Limitations.rst:7
 msgid ""
@@ -33,6 +36,10 @@ msgid ""
 "``pubsub.domain``, however any messages send to ``pubsub@domain`` will "
 "result in a ``SERVICE_UNAVAILABLE`` error."
 msgstr ""
+"在 Tigase 中，所有 pubsub 组件地址必须是基于域的地址，而不是 JID "
+"样式的地址。这是为了简化通信结构。 Tigase 会自动将组件名称设置为 ``pubsub."
+"domain``，但是任何发送到 ``pubsub@domain`` 的消息都会导致 "
+"``SERVICE_UNAVAILABLE`` 错误。"
 
 #: ../../Configuration.inc:9 ../../Limitations.rst:9
 msgid ""
@@ -40,14 +47,16 @@ msgid ""
 "where nodes will be identified akin to service discovery. For example, to"
 " address a friendly node, use the following structure:"
 msgstr ""
+"Tigase 中的 Pubsub 节点可以作为 JID 和节点的组合找到，其中节点将被识别，类似"
+"于服务发现。例如，要寻址友好节点，请使用以下结构："
 
 #: ../../PubSub_component.rst:1
 msgid "Welcome to Tigase PubSub component guide"
-msgstr ""
+msgstr "欢迎使用 Tigase PubSub 组件指南"
 
 #: ../../PubSub_component.rst:4
 msgid "PubSub Component"
-msgstr ""
+msgstr "PubSub组件"
 
 #: ../../Overview.inc:1
 msgid ""
@@ -57,84 +66,102 @@ msgid ""
 " enabled as default with the pubsub name, however you may include the "
 "following line if you wish to customize it’s configuration."
 msgstr ""
+"Tigase 的发布订阅组件是一个 `XEP-0060 <http://www.xmpp.org/extensions/"
+"xep-0060.html>`__ 兼容插件，用于处理 Tigase 服务器中的所有发布和订阅活动。"
+"这在默认情况下使用 pubsub "
+"名称启用，但是如果您希望自定义它的配置，可以包含以下行。"
 
 #: ../../Overview.inc:7
 msgid ""
 "You may change the name so long as you specify the pubsub class within "
 "parenthesis."
-msgstr ""
+msgstr "只要在括号内指定 pubsub 类，就可以更改名称。"
 
 #: ../../tigase-pubsub-release-notes.inc:2
 msgid "Tigase Pubsub Release Notes"
-msgstr ""
+msgstr "Tigase Pubsub 发行说明"
 
 #: ../../tigase-pubsub-release-notes.inc:4
 msgid ""
 "Welcome to Tigase Pubsub 5.0.0! This is a feature release for with a "
 "number of fixes and updates."
-msgstr ""
+msgstr "欢迎来到 Tigase Pubsub 5.0.0！这是一个包含许多修复和更新的功能版本。"
 
 #: ../../tigase-pubsub-current.inc:2
 msgid "Tigase PubSub 5.0.0 Release Notes"
-msgstr ""
+msgstr "Tigase PubSub 5.0.0 发行说明"
 
 #: ../../tigase-pubsub-current.inc:5
 msgid "Major Changes"
-msgstr ""
+msgstr "主要变化"
 
 #: ../../tigase-pubsub-current.inc:7
 msgid "Add publishing executor with rate limiting"
-msgstr ""
+msgstr "添加具有速率限制的发布执行器"
 
 #: ../../tigase-pubsub-current.inc:9
 msgid "Optimisations and fixes"
-msgstr ""
+msgstr "优化和修复"
 
 #: ../../tigase-pubsub-current.inc:13
 msgid "All Changes"
-msgstr ""
+msgstr "所有更改"
 
 #: ../../tigase-pubsub-current.inc:15
 msgid ""
 "`#pubsub-102 <https://projects.tigase.net/issue/pubsub-102>`__: Add "
 "publishing executor with rate limiting"
 msgstr ""
+"`#pubsub-102 <https://projects.tigase.net/issue/pubsub-102>`__: "
+"添加具有速率限制的发布执行器"
 
 #: ../../tigase-pubsub-current.inc:17
 msgid ""
 "`#pubsub-103 <https://projects.tigase.net/issue/pubsub-103>`__: Empty "
 "message notification id attribute"
 msgstr ""
+"`#pubsub-103 <https://projects.tigase.net/issue/pubsub-103>`__: 空消息通知 "
+"id 属性"
 
 #: ../../tigase-pubsub-current.inc:19
 msgid ""
 "`#pubsub-105 <https://projects.tigase.net/issue/pubsub-105>`__: NPE in "
 "RetrieveItemsModule"
 msgstr ""
+"`#pubsub-105 <https://projects.tigase.net/issue/pubsub-105>`__: "
+"RetrieveItemsModule 中的 NPE"
 
 #: ../../tigase-pubsub-current.inc:21
 msgid ""
 "`#pubsub-106 <https://projects.tigase.net/issue/pubsub-106>`__: NPE in "
 "PubsubPublishModule?Eventbus"
 msgstr ""
+"`#pubsub-106 <https://projects.tigase.net/issue/pubsub-106>`__:"
+"PubsubPublishModule?Eventbus 中的NPE"
 
 #: ../../tigase-pubsub-current.inc:23
 msgid ""
 "`#pubsub-107 <https://projects.tigase.net/issue/pubsub-107>`__: "
 "disco#items feature returned on disco#info request for PubSub node item"
 msgstr ""
+"`#pubsub-107 <https://projects.tigase.net/issue/pubsub-107>`__: 对 PubSub "
+"节点项目的 disco#info 请求返回的 disco#items 功能"
 
 #: ../../tigase-pubsub-current.inc:25
 msgid ""
 "`#pubsub-108 <https://projects.tigase.net/issue/pubsub-108>`__: Fix "
 "Missing notification for published events"
 msgstr ""
+"`#pubsub-108 <https://projects.tigase.net/issue/"
+"pubsub-108>`__:修复已发布事件的缺少通知"
 
 #: ../../tigase-pubsub-current.inc:27
 msgid ""
 "`#pubsub-110 <https://projects.tigase.net/issue/pubsub-110>`__: Fix "
 "Deadlock in TigPubSubRemoveService SP on MySQL"
 msgstr ""
+"`#pubsub-110 <https://projects.tigase.net/issue/pubsub-110>`__: 修复 MySQL "
+"上 TigPubSubRemoveService SP 中的死锁"
 
 #: ../../tigase-pubsub-current.inc:29
 msgid ""
@@ -142,18 +169,24 @@ msgid ""
 "SQLException: At least one parameter to the current statement is "
 "uninitialized."
 msgstr ""
+"`#pubsub-111 <https://projects.tigase.net/issue/pubsub-111>`__: 修复 "
+"SQLException：当前语句的至少一个参数未初始化。"
 
 #: ../../tigase-pubsub-current.inc:31
 msgid ""
 "`#pubsub-113 <https://projects.tigase.net/issue/pubsub-113>`__: Fix "
 "StackOverflowError in LRUCacheWithFuture"
 msgstr ""
+"`#pubsub-113 <https://projects.tigase.net/issue/pubsub-113>`__: 修复 "
+"LRUCacheWithFuture 中的 StackOverflowError"
 
 #: ../../tigase-pubsub-current.inc:33
 msgid ""
 "`#pubsub-114 <https://projects.tigase.net/issue/pubsub-114>`__: Fix "
 "pubsub#persist_items is not advertised"
 msgstr ""
+"`#pubsub-114 <https://projects.tigase.net/issue/pubsub-114>`__: 修复 pubsub#"
+"persist_items 没有公布"
 
 #: ../../tigase-pubsub-current.inc:35
 msgid ""
@@ -163,24 +196,34 @@ msgid ""
 "``tig_pubsub_items_ibfk_1`` FOREIGN KEY (``node_id``) REFERENCES "
 "``tig_pubsub_nodes`` (``node_id``))"
 msgstr ""
+"`#pubsub-115 <https://projects.tigase.net/issue/"
+"pubsub-115>`__：修复无法添加或更新子行：外键约束失败（ ``tigasedb``.\\ "
+"``tig_pubsub_items``，约束 ``tig_pubsub_items_ibfk_1`` 外键（``node_id``）"
+"参考 ``tig_pubsub_nodes`` （``node_id``））"
 
 #: ../../tigase-pubsub-current.inc:37
 msgid ""
 "`#pubsub-119 <https://projects.tigase.net/issue/pubsub-119>`__: Fix NPE "
 "in DiscoveryModule"
 msgstr ""
+"`#pubsub-119 <https://projects.tigase.net/issue/pubsub-119>`__: 修复 "
+"DiscoveryModule 中的 NPE"
 
 #: ../../tigase-pubsub-current.inc:39
 msgid ""
 "`#pubsub-120 <https://projects.tigase.net/issue/pubsub-120>`__: Fix Empty"
 " element in POST payload is incorrectly parsed"
 msgstr ""
+"`#pubsub-120 <https://projects.tigase.net/issue/pubsub-120>`__: 修复 POST "
+"有效负载中的空元素被错误解析"
 
 #: ../../tigase-pubsub-current.inc:41
 msgid ""
 "`#pubsub-121 <https://projects.tigase.net/issue/pubsub-121>`__: Use "
 "String.intern() for PEP CAPS nodes string"
 msgstr ""
+"`#pubsub-121 <https://projects.tigase.net/issue/pubsub-121>`__: 对 PEP CAPS "
+"节点字符串使用 String.intern()"
 
 #: ../../tigase-pubsub-current.inc:43
 msgid ""
@@ -188,42 +231,52 @@ msgid ""
 "PubSub sends notifications about last published item on each presence "
 "received from subscriber."
 msgstr ""
+"`#pubsub-124 <https://projects.tigase.net/issue/pubsub-124>`__: 修复 PubSub "
+"发送关于从订阅者收到的每个存在的最后发布项目的通知。"
 
 #: ../../tigase-pubsub-current.inc:45
 msgid ""
 "`#pubsub-125 <https://projects.tigase.net/issue/pubsub-125>`__: Reported "
 "features ``pubsub#metadata`` should be ``pubsub#meta-data``"
 msgstr ""
+"`#pubsub-125 <https://projects.tigase.net/issue/pubsub-125>`__: 报告的特性 "
+"``pubsub#metadata`` 应该是 ``pubsub#meta-data``"
 
 #: ../../tigase-pubsub-current.inc:47
 msgid ""
 "`#pubsub-126 <https://projects.tigase.net/issue/pubsub-126>`__: Fix "
 "Deadlocks in MySQL schema"
 msgstr ""
+"`#pubsub-126 <https://projects.tigase.net/issue/pubsub-126>`__: 修复 MySQL "
+"模式中的死锁"
 
 #: ../../tigase-pubsub-current.inc:49
 msgid ""
 "`#pubsub-127 <https://projects.tigase.net/issue/pubsub-127>`__: Fix NPE "
 "in UserEntry.remove"
 msgstr ""
+"`#pubsub-127 <https://projects.tigase.net/issue/pubsub-127>`__: 修复 "
+"UserEntry.remove 中的 NPE"
 
 #: ../../tigase-pubsub-current.inc:51
 msgid ""
 "`#pubsub-128 <https://projects.tigase.net/issue/pubsub-128>`__: Fix "
 "PatternSyntaxException for users with emoticons in resource"
 msgstr ""
+"`#pubsub-128 <https://projects.tigase.net/issue/pubsub-128>`__: "
+"修复资源中带有表情符号的用户的 PatternSyntaxException"
 
 #: ../../tigase-pubsub-release-notes.inc:9
 msgid "Previous Releases"
-msgstr ""
+msgstr "以前的版本"
 
 #: ../../tigase-pubsub-4.x.inc:2
 msgid "Announcement"
-msgstr ""
+msgstr "公告"
 
 #: ../../tigase-pubsub-4.x.inc:5
 msgid "Major changes"
-msgstr ""
+msgstr "主要变化"
 
 #: ../../tigase-pubsub-4.x.inc:7
 msgid ""
@@ -231,16 +284,19 @@ msgid ""
 " structure. To continue to use Tigase pubsub component, a few changes may"
 " be needed to be made to your systems. Please see them below:"
 msgstr ""
+"Tigase pubsub 组件对我们的代码和结构进行了一些重大更改。要继续使用 Tigase "
+"pubsub 组件，可能需要对您的系统进行一些更改。请在下面查看它们："
 
 #: ../../tigase-pubsub-4.x.inc:9
 msgid "Database schema changes"
-msgstr ""
+msgstr "数据库架构更改"
 
 #: ../../tigase-pubsub-4.x.inc:11
 msgid ""
 "Current version comes with changes to database schema to improve JID "
 "comparison during lookup of nodes, subscriptions, affiliations, etc."
-msgstr ""
+msgstr "当前版本对数据库模式进行了更改，以改进在查找节点、订阅、隶属关系等期间的 JID "
+"比较。"
 
 #: ../../tigase-pubsub-4.x.inc:13
 msgid ""
@@ -248,16 +304,18 @@ msgid ""
 "manually load new component database schema, see `database preparation "
 "<#databasePreparation>`__ section for more information."
 msgstr ""
+"要继续使用新版本的 pubsub 组件，需要手动加载新的组件数据库架构，请参阅 `"
+"数据库准备 <#databasePreparation>`__ 部分了解更多信息。"
 
 #: ../../tigase-pubsub-4.x.inc:17
 msgid ""
 "Loading of new database schema is required to use new version of pubsub "
 "component."
-msgstr ""
+msgstr "需要加载新的数据库架构才能使用新版本的 pubsub 组件。"
 
 #: ../../tigase-pubsub-4.x.inc:19
 msgid "Changes in REST API"
-msgstr ""
+msgstr "REST API 的变化"
 
 #: ../../tigase-pubsub-4.x.inc:21
 msgid ""
@@ -266,20 +324,23 @@ msgid ""
 " pubsub. At the same time we decided to slightly modify responses in XML "
 "sent by REST API to make responses in JSON and XML similar."
 msgstr ""
+"我们不断致力于提高可用性并使我们的 REST API 更易于使用，我们在 REST API for "
+"pubsub 中添加了对处理 JSON 请求的支持。同时，我们决定稍微修改 REST API "
+"发送的 XML 响应，以使 JSON 和 XML 响应类似。"
 
 #: ../../tigase-pubsub-4.x.inc:23
 msgid ""
 "For more informations about current REST API please look into `Rest API "
 "<#restAPI>`__ section."
-msgstr ""
+msgstr "有关当前 REST API 的更多信息，请查看 `Rest API <#restAPI>`__ 部分。"
 
 #: ../../tigase-pubsub-4.x.inc:26
 msgid "New features"
-msgstr ""
+msgstr "新功能"
 
 #: ../../tigase-pubsub-4.x.inc:27
 msgid "Support for using separate database for different domains"
-msgstr ""
+msgstr "支持对不同域使用单独的数据库"
 
 #: ../../tigase-pubsub-4.x.inc:29
 msgid ""
@@ -287,17 +348,18 @@ msgid ""
 "based on domains. This allows you to configure component to store "
 "informations about nodes and items for particular domain to different "
 "database."
-msgstr ""
+msgstr "从这个版本开始，可以基于域使用单独的 pubsub 节点和项目。这允许您配置组件以将"
+"有关特定域的节点和项目的信息存储到不同的数据库。"
 
 #: ../../tigase-pubsub-4.x.inc:31
 msgid ""
 "For more informations please look into `using multiple databases "
 "<#multidb>`__."
-msgstr ""
+msgstr "有关更多信息，请查看 `使用多个数据库 <#multidb>`__。"
 
 #: ../../tigase-pubsub-4.x.inc:33
 msgid "Support for MAM"
-msgstr ""
+msgstr "支持 MAM"
 
 #: ../../tigase-pubsub-4.x.inc:35
 msgid ""
@@ -306,14 +368,17 @@ msgid ""
 "allows any MAM compatible XMPP client with pubsub support to retrieve "
 "items published on pubsub nodes using MAM protocol for querying."
 msgstr ""
+"在这个版本中，我们添加了对 `XEP-0313: 邮件归档管理 <http://xmpp.org/"
+"extensions/xep-0313.html:>`__ 协议的支持，该协议允许任何支持 pubsub 的 MAM "
+"兼容 XMPP 客户端检索已发布的项目在使用 MAM 协议进行查询的 pubsub 节点上。"
 
 #: ../../Configuration.inc:2 ../../OfflineMessagesSink.inc:24
 msgid "Configuration"
-msgstr ""
+msgstr "配置"
 
 #: ../../Configuration.inc:5
 msgid "Pubsub naming"
-msgstr ""
+msgstr "Pubsub 命名"
 
 #: ../../Configuration.inc:7
 msgid ""
@@ -323,16 +388,20 @@ msgid ""
 "pubsub.domain, however any messages send to pubsub@domain will result in "
 "a ``SERVICE_UNAVAILABLE`` error."
 msgstr ""
+"在 Tigase 中，所有 pubsub 组件地址必须是基于域的地址，而不是 JID "
+"样式的地址。这是为了简化通信结构。 Tigase 会自动将组件名称设置为 pubsub."
+"domain，但是任何发送到 pubsub@domain 的消息都会导致 ``SERVICE_UNAVAILABLE`` "
+"错误。"
 
 #: ../../Configuration.inc:19
 msgid "Configure Roster Maximum size"
-msgstr ""
+msgstr "配置名册最大容量"
 
 #: ../../Configuration.inc:21
 msgid ""
 "Administrators can configure the maximum allowable roster size per user "
 "via the config.tdsl file."
-msgstr ""
+msgstr "管理员可以通过 config.tdsl 文件配置每个用户允许的最大名册容量。"
 
 #: ../../Configuration.inc:31
 msgid ""
@@ -340,72 +409,80 @@ msgid ""
 "integer, however by default no limit is set and no configuration is set "
 "in ``config.tdsl`` file."
 msgstr ""
+"这将名册限制设置为每个用户 100 "
+"个条目。它可以设置为任何整数，但默认情况下没有设置限制，也没有在 ``config."
+"tdsl`` 文件中进行配置。"
 
 #: ../../Configuration.inc:34
 msgid "Store Full XML of Last Presence"
-msgstr ""
+msgstr "存储最后呈现的完整 XML"
 
 #: ../../Configuration.inc:36
 msgid ""
 "Tigase can store a more detailed ``<unavailable/>`` presence stanza to "
 "include timestamps and other information."
-msgstr ""
+msgstr "Tigase 可以存储更详细的 ``<unavailable/>`` 存在节以包括时间戳和其他信息。"
 
 #: ../../Configuration.inc:39
 msgid "Requirements"
-msgstr ""
+msgstr "要求"
 
 #: ../../Configuration.inc:41
 msgid ""
 "Ensure that ``presence-offline`` plugin is enabled in config.tdsl. To do "
 "this, add be sure ``presence-offline`` is listed under ``sess-man``"
 msgstr ""
+"确保在 ``config.tdsl`` 中启用了 ``presence-offline`` 插件。为此，请确保 "
+"``presence-offline`` 列在 ``sess-man`` 下"
 
 #: ../../Configuration.inc:49
 msgid ""
 "The following two lines in ``sess-man`` configure options to broadcast "
 "probes to offline users."
-msgstr ""
+msgstr "``sess-man`` 中的以下两行配置选项以向离线用户广播探测。"
 
 #: ../../Configuration.inc:58
 msgid ""
 "Without these lines, Tigase will not send presence probes to users that "
 "the server knows to be offline."
-msgstr ""
+msgstr "如果没有这些行，Tigase 将不会向服务器知道离线的用户发送存在探测。"
 
 #: ../../Configuration.inc:60
 msgid ""
 "The full XML presence is stored under the tig_pairs table with a pkey of "
 "``last-unavailable-presence`` will look like this:"
-msgstr ""
+msgstr "完整的 XML 存在存储在 tig_pairs 表下，其 pkey 为 ``last-unavailable-"
+"presence``，如下所示："
 
 #: ../../Configuration.inc:68
 msgid ""
 "As you can see, the plugin has added a delay stamp which indicates the "
 "last time they were seen online. This may be suppressed by using the "
 "following line in your config.tdsl file."
-msgstr ""
+msgstr "如您所见，该插件添加了一个延迟标记，表明他们最后一次在线看到。这可以通过在 "
+"config.tdsl 文件中使用以下行来压制。"
 
 #: ../../Configuration.inc:76
 msgid "You may also limit probe responses only to newly connected resources."
-msgstr ""
+msgstr "您还可以将探测响应限制为仅对新连接的资源。"
 
 #: ../../Configuration.inc:84
 msgid ""
 "When a user logs on, they will receive the same full unavailable presence"
 " statements from contacts not logged in. Also the repository entry "
 "containing their last unavailable presence will be removed."
-msgstr ""
+msgstr "当用户登录时，他们将从未登录的联系人那里收到相同的完整的不可用状态语句。此外"
+"，包含他们最后一个不可用状态的存储库条目也将被删除。"
 
 #: ../../Configuration.inc:86
 msgid ""
 "**NOTE: This will increase traffic with users with many people on their "
 "rosters.**"
-msgstr ""
+msgstr "**注意：这将增加名册上那些拥有很多人的用户的流量。**"
 
 #: ../../Configuration.inc:89
 msgid "Using separate store"
-msgstr ""
+msgstr "使用单独的存储"
 
 #: ../../Configuration.inc:91
 msgid ""
@@ -417,6 +494,11 @@ msgid ""
 " pass name of newly configured data source to ``dataSourceName`` property"
 " of default DAO of pubsub component."
 msgstr ""
+"如上所述，默认情况下 Tigase pubsub 组件使用为 Tigase XMPP Server "
+"配置的默认数据源。可以通过 pubsub 组件使用单独的存储。为此，您需要在 "
+"``dataSource`` 部分配置新的 ``DataSource``。在这里，我们将使用 ``pubsub-"
+"store`` 作为新配置的数据源的名称。此外，您需要将新配置的数据源的名称传递给 "
+"pubsub 组件的默认 DAO 的 ``dataSourceName`` 属性。"
 
 #: ../../Configuration.inc:109
 msgid ""
@@ -425,16 +507,19 @@ msgid ""
 "``pubsub.example.com`` and use it to store data for pubsub nodes and "
 "items at ``pubsub.example.com``:"
 msgstr ""
+"也可以为特定域配置单独的存储，即 ``pubsub.example.com``。在这里，"
+"我们将配置名为 ``pubsub.example.com`` 的数据源，并使用它来存储 pubsub "
+"节点和项目在 ``pubsub.example.com`` 的数据："
 
 #: ../../Configuration.inc:129
 msgid ""
 "With this configuration, data for other domains than "
 "``pubsub.example.com`` will be stored in default data source."
-msgstr ""
+msgstr "使用此配置，``pubsub.example.com`` 以外的其他域的数据将存储在默认数据源中。"
 
 #: ../../Configuration.inc:133
 msgid "Enabling PEP support"
-msgstr ""
+msgstr "启用 PEP 支持"
 
 #: ../../Configuration.inc:135
 msgid ""
@@ -444,6 +529,10 @@ msgid ""
 "``send-last-published-item-on-presence`` property of component to "
 "``true`` and enable ``pep`` SessionManager processor."
 msgstr ""
+"要启用 `XEP-0163: Personal Eventing Protocol <http://xmpp.org/extensions/"
+"xep-0163.html>`__ 支持，需要将 pubsub 组件的 ``persistent-pep`` 属性设置为 "
+"``true``，将组件的 ``send-last-published-item-on-presence`` 属性设置为 "
+"``true`` 并启用 ``pep`` SessionManager处理器。"
 
 #: ../../Configuration.inc:151
 msgid ""
@@ -451,20 +540,25 @@ msgid ""
 "need to set ``pubsub-jid`` property of ``pep`` processor to JID of pubsub"
 " component make it aware of a different name of a pubsub component."
 msgstr ""
+"如果您的 pubsub 组件使用与 ``pubsub`` 不同的名称，那么您需要将 ``pep`` "
+"处理器的 ``pubsub-jid`` 属性设置为 pubsub 组件的 JID，使其知道 pubsub "
+"组件的不同名称。"
 
 #: ../../Configuration.inc:153
 msgid ""
 "**Example with pubsub component named ``events`` hosted at server named "
 "``servername.com`` and enabled PEP.**"
 msgstr ""
+"**示例名为** ``events`` **的 pubsub 组件托管在名为** ``servername.com`` **"
+"的服务器上并启用了 PEP。**"
 
 #: ../../Configuration.inc:169
 msgid "Enabling REST API"
-msgstr ""
+msgstr "启用 REST API"
 
 #: ../../Configuration.inc:171
 msgid "To use REST API for pubsub component it is required that:"
-msgstr ""
+msgstr "要将 REST API 用于 pubsub 组件，需要："
 
 #: ../../Configuration.inc:173
 msgid ""
@@ -472,6 +566,8 @@ msgid ""
 "information about HTTP API component installation please look into `HTTP "
 "component documentation <#compHTTPAPI>`__."
 msgstr ""
+"Tigase HTTP API 组件已正确安装和配置。有关 HTTP API 组件安装的信息，请查看 `"
+"HTTP 组件文档 <#compHTTPAPI>`__。"
 
 #: ../../Configuration.inc:175
 msgid ""
@@ -481,10 +577,14 @@ msgid ""
 "trusted jids of Tigase pubsub component ``trusted`` property (if ``http``"
 " is name of HTTP API component)"
 msgstr ""
+"Tigase pubsub REST 脚本被复制到 HTTP API REST 脚本目录 "
+"在安装包中，这已经完成并且脚本位于适当的位置。 dd\\* HTTP API 组件的 JID "
+"需要添加到 Tigase pubsub 组件 ``trusted`` 属性的可信 jid 列表中（如果 "
+"``http`` 是 HTTP API 组件的名称）"
 
 #: ../../Configuration.inc:184
 msgid "Changing nodes cache size"
-msgstr ""
+msgstr "更改节点缓存容量"
 
 #: ../../Configuration.inc:186
 msgid ""
@@ -493,16 +593,20 @@ msgid ""
 "configuration and your installation contains many nodes it may be a good "
 "idea to increase number of cached nodes."
 msgstr ""
+"默认情况下，Tigase pubsub 组件缓存 2000 个最后所加载的节点的节点配置。如果对"
+"数据库有很多请求来加载节点配置，并且您的安装包含许多节点，那么增加缓存节点的"
+"数量可能是个好主意。"
 
 #: ../../Configuration.inc:188
 msgid ""
 "To do this you need to set ``pubsub-repository-cache-size`` property of "
 "pubsub component to new size."
-msgstr ""
+msgstr "为此，您需要将 pubsub 组件的 ``pubsub-repository-cache-size`` "
+"属性设置为新容量。"
 
 #: ../../Configuration.inc:198
 msgid "Enable sending last published item on presence"
-msgstr ""
+msgstr "启用在存在时发送最后发布的项目"
 
 #: ../../Configuration.inc:200
 msgid ""
@@ -511,10 +615,13 @@ msgid ""
 "published-item-on-presence`` of pubsub component to ``true``. This will "
 "allow you to configure nodes to send last published item on presence."
 msgstr ""
+"默认情况下，当用户广播初始状态时，不可能使用最后发布的项目的传递。为此，"
+"您需要将 pubsub 组件的 ``send-last-published-item-on-presence`` 设置为 "
+"``true``。这将允许您配置节点以在存在时发送最后发布的项目。"
 
 #: ../../Configuration.inc:209
 msgid "Throttling sending notifications"
-msgstr ""
+msgstr "限制发送通知"
 
 #: ../../Configuration.inc:211
 msgid ""
@@ -523,13 +630,17 @@ msgid ""
 "to throttle publications to improve behaviour and performance of other "
 "parts of Tigase XMPP Server."
 msgstr ""
+"如果您有一个拥有大量订阅者的节点，则 PubSub "
+"组件发送的通知可能会大批量发送。在这些情况下，限制发布以改进 Tigase XMPP "
+"服务器其他部分的行为和性能很有用。"
 
 #: ../../Configuration.inc:213
 msgid ""
 "To achieve that, PubSub throttles generate notifications to specified "
 "throughput. By default it is set to 5k packets for each CPU core "
 "available per second."
-msgstr ""
+msgstr "为了实现这一点，PubSub 节流阀会生成指定吞吐量的通知。默认情况下，每个 CPU "
+"内核每秒可用的数据包设置为 5k。"
 
 #: ../../Configuration.inc:215
 msgid ""
@@ -537,12 +648,14 @@ msgid ""
 "``publishExecutor`` bean to the expected number of publications per "
 "second, ie. 100000;"
 msgstr ""
+"要将其设置为不同的值，您可以将 ``publishExecutor`` bean 的 ``limit`` "
+"属性设置为预期的每秒发布数，即 100000；"
 
 #: ../../Configuration.inc:219
 msgid ""
 "This value is a number of total throughput, and will not be adjusted by "
 "the number of available CPU cores."
-msgstr ""
+msgstr "该值是总吞吐量的数量，不会根据可用 CPU 内核的数量进行调整。"
 
 #: ../../Configuration.inc:229
 #, python-format
@@ -558,16 +671,24 @@ msgid ""
 "94% and 98%) \\* ``critical`` - if memory usage is above "
 "``criticalMemoryUsageLimit`` (i.e. above 98%)"
 msgstr ""
+"发布率也调整为 4 "
+"点规模的当前内存使用情况，调整为两个配置选项的值：``highMemoryUsageLimit`` "
+"和 ``criticalMemoryUsageLimit`` （默认值分别为 90% 和 98%）：\\* ``normal`` -"
+" 如果内存使用量低于 ``highMemoryUsageLimit`` （即低于 90%） \\* ``high`` - "
+"内存使用量低于 ``highMemoryUsageLimit`` 和 ``veryHigh`` 之间的一半（即介于 "
+"90 % 和 94%) \\* ``veryHigh`` - 内存使用量超过 ``highMemoryUsageLimit`` 和 "
+"``veryHigh`` 之间的一半（即在 94% 和 98% 之间） \\* ``critical`` - "
+"如果内存使用情况高于 ``criticalMemoryUsageLimit`` （即高于 98%）"
 
 #: ../../Configuration.inc:231
 msgid ""
 "It’s possible to adjust values of the high and critical limits in "
 "publisher bean:"
-msgstr ""
+msgstr "可以调整发布者 bean 中的上限和严重限制的值："
 
 #: ../../Configuration.inc:244
 msgid "Disable automatic subscription of node creator"
-msgstr ""
+msgstr "禁用节点创建者的自动订阅"
 
 #: ../../Configuration.inc:246
 msgid ""
@@ -576,14 +697,17 @@ msgid ""
 "want this behavior, you may set ``auto-subscribe-node-creator`` property "
 "of pubsub component to ``false``."
 msgstr ""
+"在节点创建过程中，pubsub 组件将创建者订阅到 pubsub "
+"节点并将通知传递给创建者。如果在您的情况下您不希望这种行为，您可以将 pubsub "
+"组件的 ``auto-subscribe-node-creator`` 属性设置为 ``false``。"
 
 #: ../../Database.inc:2
 msgid "Database"
-msgstr ""
+msgstr "数据库"
 
 #: ../../Database.inc:5
 msgid "Preparation of database"
-msgstr ""
+msgstr "准备数据库"
 
 #: ../../Database.inc:7
 msgid ""
@@ -591,6 +715,8 @@ msgid ""
 "initialize database. We provide few schemas for this component for MySQL,"
 " PostgreSQL, SQLServer and DerbyDB."
 msgstr ""
+"在您能够使用 Tigase PubSub 组件之前，您需要初始化数据库。我们为 "
+"MySQL、PostgreSQL、SQLServer 和 DerbyDB 的这个组件提供了一些架构。"
 
 #: ../../Database.inc:9
 msgid ""
@@ -599,6 +725,9 @@ msgid ""
 "database type which this schema supports and ``version`` is version of a "
 "PubSub component for which this schema is designed."
 msgstr ""
+"它们被放置在安装包的 ``database/`` 目录中，并在 ``dbtype-pubsub-version.sql``"
+" 中命名，其中 ``dbname`` 是该架构支持的数据库类型的名称和 ``version`` "
+"是为此架构设计的 PubSub 组件的版本。"
 
 #: ../../Database.inc:11
 msgid ""
@@ -607,10 +736,13 @@ msgid ""
 "database schema look into `database preperation <#databasePreperation>`__"
 " section of this guide."
 msgstr ""
+"您需要为正确的数据库和组件手动选择架构并将此架构加载到数据库。有关加载数据库"
+"模式的更多信息，请查看本指南的 `databasepreperation <#databasePreperation>`"
+"__ 部分。"
 
 #: ../../Database.inc:14
 msgid "Upgrade of database schema"
-msgstr ""
+msgstr "升级数据库架构"
 
 #: ../../Database.inc:16
 msgid ""
@@ -619,16 +751,20 @@ msgid ""
 "schema please follow instructions from the `database preperation "
 "<#databasePreperation>`__ section."
 msgstr ""
+"我们组件的数据库架构可能会在版本之间发生变化，如果是这样，则需要在新版本启动"
+"之前对其进行更新。要升级架构，请按照 `databasepreperation "
+"<#databasePreperation>`__ 部分的说明进行操作。"
 
 #: ../../Database.inc:20
 msgid ""
 "If you use SNAPSHOT builds then schema may change for same version as "
 "this are versions we are still working on."
-msgstr ""
+msgstr "如果您使用 SNAPSHOT "
+"构建，则架构可能会更改为相同版本，因为这是我们仍在处理的版本。"
 
 #: ../../Database.inc:23
 msgid "Schema description"
-msgstr ""
+msgstr "架构描述"
 
 #: ../../Database.inc:25
 msgid ""
@@ -636,346 +772,351 @@ msgid ""
 " easier to identify tables and stored procedures used by PubSub component"
 " they are prefixed with ``tig_pubsub_``."
 msgstr ""
+"Tigase PubSub 组件使用很少的表和存储过程。为了更容易识别 PubSub "
+"组件使用的表和存储过程，它们以 ``tig_pubsub_`` 为前缀。"
 
 #: ../../Database.inc:28
 msgid "Table ``tig_pubsub_service_jids``"
-msgstr ""
+msgstr "表 ``tig_pubsub_service_jids``"
 
 #: ../../Database.inc:30
 msgid "This table stores all jids for which PubSub component contains nodes."
-msgstr ""
+msgstr "此表存储 PubSub 组件包含节点的所有 jid。"
 
 #: ../../Database.inc:33 ../../Database.inc:50 ../../Database.inc:67
 #: ../../Database.inc:102 ../../Database.inc:117 ../../Database.inc:134
 msgid "Field"
-msgstr ""
+msgstr "字段"
 
 #: ../../Database.inc:33 ../../Database.inc:50 ../../Database.inc:67
 #: ../../Database.inc:102 ../../Database.inc:117 ../../Database.inc:134
 msgid "Description"
-msgstr ""
+msgstr "描述"
 
 #: ../../Database.inc:33 ../../Database.inc:50 ../../Database.inc:67
 #: ../../Database.inc:102 ../../Database.inc:117 ../../Database.inc:134
 msgid "Comments"
-msgstr ""
+msgstr "补充说明"
 
 #: ../../Database.inc:35 ../../Database.inc:71
 msgid "service_id"
-msgstr ""
+msgstr "service_id"
 
 #: ../../Database.inc:35
 msgid "Database ID of a service JID"
-msgstr ""
+msgstr "服务 JID 的数据库 ID"
 
 #: ../../Database.inc:37
 msgid "service_jid"
-msgstr ""
+msgstr "service_jid"
 
 #: ../../Database.inc:37
 msgid "Value of a service JID"
-msgstr ""
+msgstr "服务 JID 的值"
 
 #: ../../Database.inc:39
 msgid "service_jid_sha1"
-msgstr ""
+msgstr "service_jid_sha1"
 
 #: ../../Database.inc:39
 msgid "SHA1 value of lowercased service JID"
-msgstr ""
+msgstr "小写服务 JID 的 SHA1 值"
 
 #: ../../Database.inc:39 ../../Database.inc:56
 msgid "Used for proper bare JID comparison during lookup."
-msgstr ""
+msgstr "用于在查找期间进行正确的裸 JID 比较。"
 
 #: ../../Database.inc:41 ../../Database.inc:58 ../../Database.inc:77
 #: ../../Database.inc:142
 msgid "(N/A to PostgreSQL schema)"
-msgstr ""
+msgstr "（对 PostgreSQL 模式不适用）"
 
 #: ../../Database.inc:45
 msgid "Table ``tig_pubsub_jids``"
-msgstr ""
+msgstr "表 ``tig_pubsub_jids``"
 
 #: ../../Database.inc:47
 msgid ""
 "This table stores all jids related to PubSub nodes, ie. subscriber, "
 "affiliates, creators, publishers, etc."
-msgstr ""
+msgstr "该表存储所有与 PubSub 节点相关的 jid，即订阅者、附属机构、创作者、发布者等。"
 
 #: ../../Database.inc:52 ../../Database.inc:106 ../../Database.inc:121
 msgid "jid_id"
-msgstr ""
+msgstr "jid_id"
 
 #: ../../Database.inc:52
 msgid "Database ID of a bare JID"
-msgstr ""
+msgstr "裸 JID 的数据库 ID"
 
 #: ../../Database.inc:54
 msgid "jid"
-msgstr ""
+msgstr "jid"
 
 #: ../../Database.inc:54
 msgid "Value of a bare JID"
-msgstr ""
+msgstr "裸 JID 的值"
 
 #: ../../Database.inc:56
 msgid "jid_sha1"
-msgstr ""
+msgstr "jid_sha1"
 
 #: ../../Database.inc:56
 msgid "SHA1 value of lowercased bare JID"
-msgstr ""
+msgstr "小写裸 JID 的 SHA1 值"
 
 #: ../../Database.inc:62
 msgid "Table ``tig_pubsub_nodes``"
-msgstr ""
+msgstr "表 ``tig_pubsub_nodes``"
 
 #: ../../Database.inc:64
 msgid "Table stores nodes tree structure and node configuration."
-msgstr ""
+msgstr "表存储节点树结构和节点配置。"
 
 #: ../../Database.inc:69 ../../Database.inc:104 ../../Database.inc:119
 #: ../../Database.inc:136
 msgid "node_id"
-msgstr ""
+msgstr "node_id"
 
 #: ../../Database.inc:69
 msgid "Database ID of a node"
-msgstr ""
+msgstr "节点的数据库ID"
 
 #: ../../Database.inc:71
 msgid "ID of service JID"
-msgstr ""
+msgstr "服务 JID 的 ID"
 
 #: ../../Database.inc:71
 msgid "References ``service_id`` from ``tig_pubsub_service_jids``"
-msgstr ""
+msgstr "从 ``tig_pubsub_service_jids`` 参考 ``service_id``"
 
 #: ../../Database.inc:73
 msgid "name"
-msgstr ""
+msgstr "名称"
 
 #: ../../Database.inc:73
 msgid "Name of PubSub node"
-msgstr ""
+msgstr "PubSub 节点的名称"
 
 #: ../../Database.inc:75
 msgid "name_sha1"
-msgstr ""
+msgstr "name_sha1"
 
 #: ../../Database.inc:75
 msgid "SHA1 of PubSub node name"
-msgstr ""
+msgstr "PubSub 节点名称的 SHA1"
 
 #: ../../Database.inc:75
 msgid "Used for indexing and faster lookup."
-msgstr ""
+msgstr "用于索引和更快的查找。"
 
 #: ../../Database.inc:79
 msgid "type"
-msgstr ""
+msgstr "类型"
 
 #: ../../Database.inc:79
 msgid "Type of PubSub node"
-msgstr ""
+msgstr "PubSub 节点的类型"
 
 #: ../../Database.inc:79
 msgid "0 - collection"
-msgstr ""
+msgstr "0 - collection"
 
 #: ../../Database.inc:81
 msgid "1 - leaf"
-msgstr ""
+msgstr "1 - leaf"
 
 #: ../../Database.inc:83
 msgid "title"
-msgstr ""
+msgstr "标题"
 
 #: ../../Database.inc:83
 msgid "Title of PubSub node"
-msgstr ""
+msgstr "PubSub 节点的标题"
 
 #: ../../Database.inc:85
 msgid "description"
-msgstr ""
+msgstr "描述"
 
 #: ../../Database.inc:85
 msgid "Description of a node"
-msgstr ""
+msgstr "节点描述"
 
 #: ../../Database.inc:87
 msgid "creator_id"
-msgstr ""
+msgstr "creator_id"
 
 #: ../../Database.inc:87
 msgid "ID of JID of creator"
-msgstr ""
+msgstr "创建者的JID 的ID"
 
 #: ../../Database.inc:87 ../../Database.inc:106 ../../Database.inc:121
 #: ../../Database.inc:146
 msgid "References ``jid_id`` from ``tig_pubsub_jids``"
-msgstr ""
+msgstr "从 ``tig_pubsub_jids`` 参考 ``jid_id``"
 
 #: ../../Database.inc:89 ../../Database.inc:144
 msgid "creation_date"
-msgstr ""
+msgstr "creation_date"
 
 #: ../../Database.inc:89
 msgid "Timestamp of creation time"
-msgstr ""
+msgstr "创建时间的时间戳"
 
 #: ../../Database.inc:91
 msgid "configuration"
-msgstr ""
+msgstr "配置"
 
 #: ../../Database.inc:91
 msgid "Serialized configuration of PubSub node"
-msgstr ""
+msgstr "PubSub 节点的序列化配置"
 
 #: ../../Database.inc:93
 msgid "collection_id"
-msgstr ""
+msgstr "collection_id"
 
 #: ../../Database.inc:93
 msgid "Points collection (parent node)"
-msgstr ""
+msgstr "点集合（父节点）"
 
 #: ../../Database.inc:93 ../../Database.inc:104 ../../Database.inc:119
 #: ../../Database.inc:136
 msgid "References ``node_id`` from ``tig_pubsub_nodes``"
-msgstr ""
+msgstr "从 ``tig_pubsub_nodes`` 参考 ``node_id``"
 
 #: ../../Database.inc:97
 msgid "Table ``tig_pubsub_affiliations``"
-msgstr ""
+msgstr "表 ``tig_pubsub_affiliations``"
 
 #: ../../Database.inc:99
 msgid "Table stores affiliations between PubSub nodes and jids."
-msgstr ""
+msgstr "表存储 PubSub 节点和 jid 之间的从属关系。"
 
 #: ../../Database.inc:104 ../../Database.inc:119 ../../Database.inc:136
 msgid "ID of a node"
-msgstr ""
+msgstr "节点的ID"
 
 #: ../../Database.inc:106 ../../Database.inc:121
 msgid "ID of a user JID"
-msgstr ""
+msgstr "用户JID的ID"
 
 #: ../../Database.inc:108
 msgid "affiliation"
-msgstr ""
+msgstr "联系"
 
 #: ../../Database.inc:108
 msgid "Affiliation value"
-msgstr ""
+msgstr "联系值"
 
 #: ../../Database.inc:112
 msgid "Table ``tig_pubsub_subscriptions``"
-msgstr ""
+msgstr "表 ``tig_pubsub_subscriptions``"
 
 #: ../../Database.inc:114
 msgid "Table stores subscriptions of jids to PubSub nodes."
-msgstr ""
+msgstr "表存储 jid 对 PubSub 节点的订阅。"
 
 #: ../../Database.inc:123
 msgid "subscription"
-msgstr ""
+msgstr "订阅"
 
 #: ../../Database.inc:123
 msgid "Subscription value"
-msgstr ""
+msgstr "订阅值"
 
 #: ../../Database.inc:125
 msgid "subscription_id"
-msgstr ""
+msgstr "subscription_id"
 
 #: ../../Database.inc:125
 msgid "Id of a subscription"
-msgstr ""
+msgstr "订阅 ID"
 
 #: ../../Database.inc:129
 msgid "Table ``tig_pubsub_items``"
-msgstr ""
+msgstr "表 ``tig_pubsub_items``"
 
 #: ../../Database.inc:131
 msgid "Table stores items of PubSub nodes."
-msgstr ""
+msgstr "表存储 PubSub 节点的项目。"
 
 #: ../../Database.inc:138
 msgid "id"
-msgstr ""
+msgstr "id"
 
 #: ../../Database.inc:138
 msgid "Id of an items"
-msgstr ""
+msgstr "一项的ID"
 
 #: ../../Database.inc:140
 msgid "id_sha1"
-msgstr ""
+msgstr "id_sha1"
 
 #: ../../Database.inc:140
 msgid "SHA1 of item id"
-msgstr ""
+msgstr "项目 ID 的 SHA1"
 
 #: ../../Database.inc:140
 msgid "Indexed and used for faster lookup"
-msgstr ""
+msgstr "索引并用于更快的查找"
 
 #: ../../Database.inc:144
 msgid "Creation date"
-msgstr ""
+msgstr "创建日期"
 
 #: ../../Database.inc:146
 msgid "publisher_id"
-msgstr ""
+msgstr "publisher_id"
 
 #: ../../Database.inc:146
 msgid "ID of publisher JID"
-msgstr ""
+msgstr "发布者 JID 的 ID"
 
 #: ../../Database.inc:148
 msgid "update_date"
-msgstr ""
+msgstr "update_date"
 
 #: ../../Database.inc:148
 msgid "Timestamp of last item modification"
-msgstr ""
+msgstr "最后一项修改的时间戳"
 
 #: ../../Database.inc:150
 msgid "data"
-msgstr ""
+msgstr "数据"
 
 #: ../../Database.inc:150
 msgid "Item payload"
-msgstr ""
+msgstr "项目有效载荷"
 
 #: ../../Schema_Changes.inc:2
 msgid "PubSub Schema Changes"
-msgstr ""
+msgstr "PubSub 架构更改"
 
 #: ../../Schema_Changes.inc:4
 msgid ""
 "Tigase PubSub Component is currently version 3.3.0 which is introduced in"
 " Tigase server v8.0.0."
-msgstr ""
+msgstr "Tigase PubSub 组件当前是 3.3.0 版，它是在 Tigase 服务器 v8.0.0 中引入的。"
 
 #: ../../Schema_Changes.inc:7
 msgid "PubSub 3.2.0 Changes"
-msgstr ""
+msgstr "PubSub 3.2.0 更改"
 
 #: ../../Schema_Changes.inc:9
 msgid ""
 "PubSub v 3.2.0 adds a new procedure TigPubSubGetNodeMeta which supports "
 "PubSub metadata retrieval while conducting a disco#info query on nodes."
 msgstr ""
+"PubSub v 3.2.0 添加了一个新过程 TigPubSubGetNodeMeta，它支持 PubSub "
+"元数据检索，同时在节点上执行 disco#info 查询。"
 
 #: ../../Schema_Changes.inc:11
 msgid ""
 "You will need to upgrade your database if you are not using v3.2.0 "
 "schema. Tigase will report being unable to load PubSub component if you "
 "do not have this schema version."
-msgstr ""
+msgstr "如果您不使用 v3.2.0 架构，则需要升级数据库。如果您没有此架构版本，Tigase "
+"将报告无法加载 PubSub 组件。"
 
 #: ../../Schema_Changes.inc:13
 msgid ""
@@ -983,6 +1124,9 @@ msgid ""
 "/tigase-pubsub/repository/revisions/master/entry/database/mysql-pubsub-"
 "schema-3.2.0.sql>`__."
 msgstr ""
+"MySQL 模式可以在 `这里 <https://projects.tigase.org/projects/tigase-pubsub/"
+"repository/revisions/master/entry/database/mysql-pubsub-schema-3.2.0.sql>`__ "
+"找到。"
 
 #: ../../Schema_Changes.inc:15
 msgid ""
@@ -990,6 +1134,8 @@ msgid ""
 "/tigase-pubsub/repository/changes/database/derby-pubsub-"
 "schema-3.2.0.sql>`__."
 msgstr ""
+"Derby 模式可以在 `这里 <https://projects.tigase.org/projects/tigase-pubsub/"
+"repository/changes/database/derby-pubsub-schema-3.2.0.sql>`__ 找到。"
 
 #: ../../Schema_Changes.inc:17
 msgid ""
@@ -998,6 +1144,9 @@ msgid ""
 "pubsub/repository/changes/database/postgresql-pubsub-"
 "schema-3.2.0.sql>`__."
 msgstr ""
+"PostGRESQL 架构可以在 `这里 <https://projects.tigase.org/projects/"
+"tigase-pubsub/repository/changes/database/postgresql-pubsub-schema-3.2.0."
+"sql>`__ 找到。"
 
 #: ../../Schema_Changes.inc:19
 msgid ""
@@ -1005,6 +1154,8 @@ msgid ""
 "<https://projects.tigase.org/projects/tigase-"
 "pubsub/repository/changes/database/sqlserver-pubsub-schema-3.2.0.sql>`__."
 msgstr ""
+"MS SQL 模式可以在 `这里 <https://projects.tigase.org/projects/tigase-pubsub/"
+"repository/changes/database/sqlserver-pubsub-schema-3.2.0.sql>`__ 找到。"
 
 #: ../../Schema_Changes.inc:21
 msgid ""
@@ -1012,16 +1163,20 @@ msgid ""
 "``[tigaseroot]/database/`` . All changes to database schema are meant to "
 "be backward compatible."
 msgstr ""
+"在 ``[tigaseroot]/database/`` 的所有 v8.0.0 "
+"发行版中也包含相同的文件。对数据库模式的所有更改都是为了向后兼容。"
 
 #: ../../Schema_Changes.inc:23
 msgid ""
 "For instructions how to manually upgrade the databases, please refer to "
 "`Tigase v7.1.0 Schema Updates section <#tigaseServer71>`__."
 msgstr ""
+"有关如何手动升级数据库的说明，请参阅 `Tigase v7.1.0 Schema Updates section "
+"<#tigaseServer71>`__。"
 
 #: ../../Schema_Changes.inc:26
 msgid "Upgrading older installations (pre-v3.0.0 Schema)"
-msgstr ""
+msgstr "升级旧安装（v3.0.0 之前的架构）"
 
 #: ../../Schema_Changes.inc:28
 msgid ""
@@ -1029,14 +1184,16 @@ msgid ""
 "follow these instructions. Note this should be done before upgrading to "
 "PubSub v3.1.0."
 msgstr ""
+"要将较旧的 Tigase 安装更新到 PubSub Schema v3.0."
+"0，请按照这些说明进行操作。请注意，这应该在升级到 PubSub v3.1.0 之前完成。"
 
 #: ../../Schema_Changes.inc:30
 msgid "Step by Step guide."
-msgstr ""
+msgstr "分步指南。"
 
 #: ../../Schema_Changes.inc:33
 msgid "Prepare Old Database for Upgrade"
-msgstr ""
+msgstr "准备旧数据库以进行升级"
 
 #: ../../Schema_Changes.inc:35
 msgid ""
@@ -1050,20 +1207,29 @@ msgid ""
 "functions used to access database and also this statements will rename "
 "old tables by adding suffix \\_1 to each of old tables. Example:"
 msgstr ""
+"在 Tigase 安装的 ``database`` 目录中，您将找到 SQL "
+"文件，这些文件将使用以下命名模式为升级准备旧数据库架构：``<database_type"
+">-pubsub-schema-3.0.0-pre-upgrade.sql``， 其中 ``<database_type>`` "
+"可以是以下之一：``mysql``，``sqlserver``，也就是是说，对于 MySQL，"
+"您将找到文件 ``mysql-pubsub-schema-3.0.0-pre-upgrade.sql``。您需要在源数据库"
+"上执行此文件中的语句，这将删除用于访问数据库的旧过程和函数，"
+"并且此语句将通过为每个旧表添加后缀 \\_1 来重命名旧表。例如："
 
 #: ../../Schema_Changes.inc:38 ../../Schema_Changes.inc:66
 msgid "**MySQL**"
-msgstr ""
+msgstr "**MySQL**"
 
 #: ../../Schema_Changes.inc:38
 msgid ""
 "``mysql -u tigase -p tigase_pubsub < database/mysql-pubsub-schema-3.0.0"
 "-pre-upgrade.sql``"
 msgstr ""
+"``mysql -u tigase -p tigase_pubsub < database/mysql-pubsub-schema-3.0.0-pre-"
+"upgrade.sql``"
 
 #: ../../Schema_Changes.inc:41 ../../Schema_Changes.inc:69
 msgid "**MS SQL**"
-msgstr ""
+msgstr "**MS SQL**"
 
 #: ../../Schema_Changes.inc:41
 #, python-format
@@ -1071,10 +1237,12 @@ msgid ""
 "``sqlcmd -S %servername% -U %root_user% -P %root_pass% -d %database% -i "
 "database\\sqlserver-pubsub-schema-3.0.0-pre-upgrade.sql``"
 msgstr ""
+"``sqlcmd -S %servername% -U %root_user% -P %root_pass% -d %database% -i "
+"database\\sqlserver-pubsub-schema-3.0.0-pre-upgrade.sql``"
 
 #: ../../Schema_Changes.inc:44
 msgid "Update Tigase PubSub Component"
-msgstr ""
+msgstr "更新 Tigase PubSub 组件"
 
 #: ../../Schema_Changes.inc:46
 msgid ""
@@ -1084,6 +1252,9 @@ msgid ""
 "Component to database directory in Tigase XMPP Server installation "
 "directory."
 msgstr ""
+"为此，您需要将 Tigase PubSub 组件 jar 文件复制到 Tigase XMPP Server "
+"安装目录中的 jars 目录。还建议将文件从 Tigase PubSub 组件的数据库目录复制到 "
+"Tigase XMPP Server 安装目录中的数据库目录。"
 
 #: ../../Schema_Changes.inc:48
 msgid ""
@@ -1095,46 +1266,53 @@ msgid ""
 "PubSub2 as tigase-pubsub-2.2.0.jar.old (provided for compatibility "
 "reasons)."
 msgstr ""
+"如果您碰巧使用其中一个打包发行版（安装程序或 -dist-max 风格的存档），"
+"那么所有必需的文件都已经可用 - 两个新模式文件都将在 ``database/`` "
+"目录以及两个版本中可用的 PubSub 组件将出现在 ``jars/`` 目录中 - PubSub3 "
+"组件为 tigase-pubsub.jar 和 PubSub2 组件为 tigase-pubsub-2.2.0.jar."
+"old（出于兼容性原因提供）。"
 
 #: ../../Schema_Changes.inc:51
 msgid "Load New Schema"
-msgstr ""
+msgstr "加载新架构"
 
 #: ../../Schema_Changes.inc:53
 msgid ""
 "In the ``database`` directory you will find files containing new schemas "
 "for:"
-msgstr ""
+msgstr "在 ``database`` 目录中，您将找到包含以下新架构的文件："
 
 #: ../../Schema_Changes.inc:55
 msgid "MySQL - ``mysql-pubsub-schema-3.0.0.sql``"
-msgstr ""
+msgstr "MySQL - ``mysql-pubsub-schema-3.0.0.sql``"
 
 #: ../../Schema_Changes.inc:57
 msgid "PostgreSQL - ``postgresql-pubsub-schema-3.0.0.sql``"
-msgstr ""
+msgstr "PostgreSQL - ``postgresql-pubsub-schema-3.0.0.sql``"
 
 #: ../../Schema_Changes.inc:59
 msgid "MSSQL - ``sqlserver-pubsub-schema-3.0.0.sql``"
-msgstr ""
+msgstr "MSSQL - ``sqlserver-pubsub-schema-3.0.0.sql``"
 
 #: ../../Schema_Changes.inc:61
 msgid ""
 "DerbyDB - ``derby-pubsub-schema-3.0.0.sql`` and ``pubsub-db-create-"
 "derby.sh``"
 msgstr ""
+"DerbyDB - ``derby-pubsub-schema-3.0.0.sql`` 和 ``pubsub-db-create-derby.sh``"
 
 #: ../../Schema_Changes.inc:63
 msgid ""
 "For most databases, with the exception of Derby, you only need to execute"
 " statements from the proper file. For example:"
-msgstr ""
+msgstr "对于大多数数据库，除了 Derby，您只需要从正确的文件中执行语句。例如："
 
 #: ../../Schema_Changes.inc:66
 msgid ""
 "``mysql -u tigase -p tigase_pubsub < database/mysql-pubsub-"
 "schema-3.0.0.sql``"
 msgstr ""
+"``mysql -u tigase -p tigase_pubsub < database/mysql-pubsub-schema-3.0.0.sql``"
 
 #: ../../Schema_Changes.inc:69
 #, python-format
@@ -1142,16 +1320,20 @@ msgid ""
 "``sqlcmd -S %servername% -U %root_user% -P %root_pass% -d %database% -i "
 "database\\sqlserver-pubsub-schema-3.0.0.sql``"
 msgstr ""
+"``sqlcmd -S %servername% -U %root_user% -P %root_pass% -d %database% -i "
+"database\\sqlserver-pubsub-schema-3.0.0.sql``"
 
 #: ../../Schema_Changes.inc:72
 msgid "**PostgreSQL**"
-msgstr ""
+msgstr "**PostgreSQL**"
 
 #: ../../Schema_Changes.inc:72
 msgid ""
 "``psql -h $DB_HOST -q -U ${USR_NAME} -d $DB_NAME -f database/sqlserver-"
 "pubsub-schema-3.0.0.sql``"
 msgstr ""
+"``psql -h $DB_HOST -q -U ${USR_NAME} -d $DB_NAME -f database/sqlserver-"
+"pubsub-schema-3.0.0.sql``"
 
 #: ../../Schema_Changes.inc:74
 msgid ""
@@ -1159,17 +1341,20 @@ msgid ""
 "and pass proper JDBC URI to database to which you want to load schema (if"
 " database does not exist, it will be created)."
 msgstr ""
+"对于 DerbyDB，您需要执行 ``pubsub-db-create-derby.sh`` 脚本并将正确的 JDBC "
+"URI 传递给要加载架构的数据库（如果数据库不存在，则会创建它）。"
 
 #: ../../Schema_Changes.inc:80
 msgid ""
 "**NOTE:** It is possible to use same database which was used before - "
 "then after upgrade you will have new tables and old tables with \\_1 "
 "suffix."
-msgstr ""
+msgstr "**注意：** 可以使用以前使用的相同数据库 - 然后升级后您将拥有新表和带有 \\_1 "
+"后缀的旧表。"
 
 #: ../../Schema_Changes.inc:83
 msgid "Execute Migration Utility"
-msgstr ""
+msgstr "执行迁移实用程序"
 
 #: ../../Schema_Changes.inc:85
 msgid ""
@@ -1180,18 +1365,22 @@ msgid ""
 "database (value of ``pubsub-repo-class`` variable from "
 "``etc/config.tdsl`` file)."
 msgstr ""
+"在 ``/database`` 目录中，您将找到 ``pubsub-db-migrate.sh`` 文件，"
+"您需要执行该文件并使用连接到源和目标数据库所需的 JDBC URI 传递参数。如果您为 "
+"PubSub 使用专门的表，您还需要传递用于访问数据库的类名（来自 ``etc/config."
+"tdsl`` 文件的 ``pubsub-repo-class`` 变量的值）。"
 
 #: ../../Schema_Changes.inc:87
 msgid "Example for dedicated table used for PubSub:"
-msgstr ""
+msgstr "用于 PubSub 的专门表的示例："
 
 #: ../../Schema_Changes.inc:95
 msgid "Example for use without dedicated PubSub tables:"
-msgstr ""
+msgstr "不使用专门 PubSub 表的示例："
 
 #: ../../Schema_Changes.inc:103
 msgid "Example for use with dedicated tables in a Windows environment:"
-msgstr ""
+msgstr "在 Windows 环境中与专门表一起使用的示例："
 
 #: ../../Schema_Changes.inc:111
 msgid ""
@@ -1199,10 +1388,12 @@ msgid ""
 "PubSub data to the new schema, and the same information will be store in "
 "``pubsub_db_migration.log``."
 msgstr ""
+"在执行期间，该实用程序将报告有关 PubSub 数据迁移到新模式的信息，"
+"并且相同的信息将存储在 ``pubsub_db_migration.log`` 中。"
 
 #: ../../Schema_Changes.inc:114
 msgid "Finish"
-msgstr ""
+msgstr "结束"
 
 #: ../../Schema_Changes.inc:116
 msgid ""
@@ -1210,15 +1401,16 @@ msgid ""
 "Old tables will be renamed by adding suffix \\_1. After verification that"
 " everything works OK, you can delete old tables and it’s content as it "
 "want be used any more."
-msgstr ""
+msgstr "成功迁移后，您会将所有数据复制到新表中。旧表将通过添加后缀 \\_1 "
+"来重命名。在验证一切正常后，您可以删除旧表及其内容，因为它想继续使用。"
 
 #: ../../Features.inc:2
 msgid "Features"
-msgstr ""
+msgstr "特性"
 
 #: ../../AdHocCommands.inc:2
 msgid "AdHoc Commands"
-msgstr ""
+msgstr "临时命令"
 
 #: ../../AdHocCommands.inc:4
 msgid ""
@@ -1232,14 +1424,21 @@ msgid ""
 "``scripts/admin/pubsub`` folder in the Tigase installation directory. For"
 " all examples, the component address will be ``pubsub.example.com``."
 msgstr ""
+"与 HTTP API 类似，可以将基于 groovy 脚本的 AdHoc "
+"命令发送到该组件以执行许多任务。这些 Ad-hoc "
+"命令的所有脚本都可以在源代码发行版中的 ``sec/main/groovy/tigase/admin`` 或 `"
+"这个链接 <https://projects.tigase.org/projects/tigase-pubsub/ "
+"中找到存储库/修订/master/show/src/main/groovy/tigase/admin>`__。要使用它们，"
+"需要将脚本复制到 Tigase 安装目录中的 ``scripts/admin/pubsub`` "
+"文件夹中。对于所有示例，组件地址都是 ``pubsub.example.com``。"
 
 #: ../../AdHocCommands.inc:7
 msgid "Create a Node"
-msgstr ""
+msgstr "创建节点"
 
 #: ../../AdHocCommands.inc:9
 msgid "Ad-hoc command node: ``create-node`` Required role: Service Administrator"
-msgstr ""
+msgstr "Ad-hoc 命令节点：``create-node`` 所需角色：服务管理员"
 
 #: ../../AdHocCommands.inc:11
 msgid ""
@@ -1249,41 +1448,44 @@ msgid ""
 "\\* ``leaf-node`` Node that will be published. \\* ``collection`` Node "
 "that will contain other nodes."
 msgstr ""
+"命令需要字段 ``node`` 和 ``pubsub#node_type`` 填充正确的值以执行。 - ``node``"
+" 包含要创建的节点 ID 的字段。 - ``pubsub#node_type`` 包含两个可能值之一。 \\*"
+" ``leaf-node`` 是将被发布的节点。 \\* ``collection`` 是将包含其他节点的节点。"
 
 #: ../../AdHocCommands.inc:13
 msgid ""
 "Other fields are optional fields that can be set to change configuration "
 "of newly create node to different configuration than default."
-msgstr ""
+msgstr "其他字段是可选字段，可以设置将新创建节点的配置更改为与默认配置不同的配置。"
 
 #: ../../AdHocCommands.inc:15 ../../AdHocCommands.inc:28
 #: ../../AdHocCommands.inc:41 ../../AdHocCommands.inc:55
 msgid "Example call using TCLMT:"
-msgstr ""
+msgstr "使用 TCLMT 的示例调用："
 
 #: ../../AdHocCommands.inc:22
 msgid "Delete a Node"
-msgstr ""
+msgstr "删除节点"
 
 #: ../../AdHocCommands.inc:24
 msgid "Ad-hoc command node: ``delete-node`` Required role: Service Administrator"
-msgstr ""
+msgstr "Ad-hoc 命令节点：``delete-node`` 所需角色：服务管理员"
 
 #: ../../AdHocCommands.inc:26
 msgid ""
 "Command requires ``node`` field to be filled. - ``node`` Field containing"
 " id of node to delete."
-msgstr ""
+msgstr "命令需要填写 ``node`` 字段。 - ``node`` 包含要删除的节点 id 的字段。"
 
 #: ../../AdHocCommands.inc:35
 msgid "Subscribe to a Node"
-msgstr ""
+msgstr "订阅节点"
 
 #: ../../AdHocCommands.inc:37
 msgid ""
 "Ad-hoc command node: ``subscribe-node`` Required role: Service "
 "Administrator"
-msgstr ""
+msgstr "Ad-hoc 命令节点：``subscribe-node`` 所需角色：服务管理员"
 
 #: ../../AdHocCommands.inc:39
 msgid ""
@@ -1291,16 +1493,18 @@ msgid ""
 "Field containing node to subscribe to. - ``jids`` Field containing list "
 "of JIDs to subscribe to the node."
 msgstr ""
+"命令需要填充 ``node`` 和 ``jids`` 节点。 - ``node`` 包含要订阅的节点的字段。 "
+"- ``jids`` 包含要订阅节点的 JID 列表的字段。"
 
 #: ../../AdHocCommands.inc:49
 msgid "Unsubscribe to a Node"
-msgstr ""
+msgstr "取消订阅节点"
 
 #: ../../AdHocCommands.inc:51
 msgid ""
 "Ad-hoc command node: ``unsubscribe-node`` Required role: Service "
 "Administrator"
-msgstr ""
+msgstr "Ad-hoc 命令节点：``unsubscribe-node`` 所需角色：服务管理员"
 
 #: ../../AdHocCommands.inc:53
 msgid ""
@@ -1308,14 +1512,16 @@ msgid ""
 "Field containing node to unsubscribe to. - ``jids`` Field containing list"
 " of JIDs to unsubscribe to the node."
 msgstr ""
+"命令需要填充 ``node`` 和 ``jids`` 节点。 - ``node`` "
+"包含要取消订阅的节点的字段。 - ``jids`` 包含要取消订阅节点的 JID 列表的字段。"
 
 #: ../../AdHocCommands.inc:63
 msgid "Publish an item to a Node"
-msgstr ""
+msgstr "将项目发布到节点"
 
 #: ../../AdHocCommands.inc:65
 msgid "Ad-hoc command node: ``publish-item`` Required role: Service Administrator"
-msgstr ""
+msgstr "Ad-hoc 命令节点：``publish-item`` 所需角色：服务管理员"
 
 #: ../../AdHocCommands.inc:67
 msgid ""
@@ -1325,76 +1531,85 @@ msgid ""
 "contain multi-line entry content that should be valid XML values for "
 "items."
 msgstr ""
+"命令需要填写 ``node`` 和 ``entry`` 字段。 "
+"-``node``字段包含要发布到的节点的ID。 - ``item-id`` "
+"字段可能包含要发布的条目的 id，可以为空。 - ``entry`` "
+"字段应该包含多行条目内容，这些条目内容应该是项目的有效 XML 值。"
 
 #: ../../AdHocCommands.inc:69
 msgid ""
 "This command due to it’s complexity cannot be easily executed by TCLMT "
 "using default remote script which provides support for basic adhoc "
 "commands. Example call using TCLMT:"
-msgstr ""
+msgstr "由于此命令的复杂性，TCLMT "
+"无法使用默认远程脚本轻松执行此命令，该脚本为基本的即席命令提供支持。使用 "
+"TCLMT 的示例调用："
 
 #: ../../AdHocCommands.inc:75
 msgid "Example Groovy script to execute create-node command using JAXMPP2"
-msgstr ""
+msgstr "使用 JAXMPP2 执行 create-node 命令的示例 Groovy 脚本"
 
 #: ../../PubSub_Node_Presence_Protocol.inc:2
 msgid "PubSub Node Presence Protocol"
-msgstr ""
+msgstr "PubSub 节点存在协议"
 
 #: ../../PubSub_Node_Presence_Protocol.inc:4
 msgid "**Occupant Use Case**"
-msgstr ""
+msgstr "**占用者使用示例**"
 
 #: ../../PubSub_Node_Presence_Protocol.inc:7
 msgid "Log in to Pubsub Node"
-msgstr ""
+msgstr "登录到 Pubsub 节点"
 
 #: ../../PubSub_Node_Presence_Protocol.inc:9
 msgid ""
 "To log in to PubSub Node user must send presence to PubSub component with"
 " additional information about node:"
-msgstr ""
+msgstr "要登录 PubSub 节点，用户必须向 PubSub "
+"组件发送出席信息以及有关节点的其他信息："
 
 #: ../../PubSub_Node_Presence_Protocol.inc:20
 msgid "Component will publish this information in node:"
-msgstr ""
+msgstr "组件将在节点中发布此信息："
 
 #: ../../PubSub_Node_Presence_Protocol.inc:43
 msgid ""
 "And then will send notification with presences of all occupants to new "
 "occupant."
-msgstr ""
+msgstr "然后将所有居住者的存在发送通知给新居住者。"
 
 #: ../../PubSub_Node_Presence_Protocol.inc:46
 msgid "Log out from PubSub Node"
-msgstr ""
+msgstr "从 PubSub 节点注销"
 
 #: ../../PubSub_Node_Presence_Protocol.inc:48
 msgid ""
 "To logout from single node, user must send presence stanza with type "
 "unavailable:"
-msgstr ""
+msgstr "要从单个节点注销，用户必须发送类型为不可用的存在节："
 
 #: ../../PubSub_Node_Presence_Protocol.inc:59
 msgid "Component will send events to all occupants as described:"
-msgstr ""
+msgstr "组件将向所有居住者发送事件，如下所述："
 
 #: ../../PubSub_Node_Presence_Protocol.inc:73
 msgid ""
 "If component receives presence stanza with type unavailable without "
 "specified node, then component will log out user from all nodes he logged"
 " before and publish events."
-msgstr ""
+msgstr "如果组件在没有指定节点的情况下接收到类型为不可用的存在节，则组件将从他之前登"
+"录的所有节点中注销用户并发布事件。"
 
 #: ../../PubSub_Node_Presence_Protocol.inc:76
 msgid "Retrieving list of all Node Subscribers"
-msgstr ""
+msgstr "检索所有节点订阅者的列表"
 
 #: ../../PubSub_Node_Presence_Protocol.inc:78
 msgid ""
 "To retrieve list of node subscribers, node configuration option "
 "``tigase#allow_view_subscribers`` must be set to true:"
-msgstr ""
+msgstr "要检索节点订阅者列表，节点配置选项 ``tigase#allow_view_subscribers`` "
+"必须设置为 true："
 
 #: ../../PubSub_Node_Presence_Protocol.inc:98
 msgid ""
@@ -1402,57 +1617,60 @@ msgid ""
 "same way `as owner <http://xmpp.org/extensions/xep-0060.html#owner-"
 "subscriptions-retrieve>`__."
 msgstr ""
+"启用选项后，每个订阅者都可以像 `所有者 <http://xmpp.org/extensions/xep-0060."
+"html#owner-subscriptions-retrieve>`__ 一样获得订阅者列表。"
 
 #: ../../PubSub_Node_Presence_Protocol.inc:111
 msgid "There is extension to filter returned list:"
-msgstr ""
+msgstr "有过滤返回列表的扩展："
 
 #: ../../PubSub_Node_Presence_Protocol.inc:128
 msgid ""
 "In this example will be returned all subscriptions of users from domain "
 "\"denmark.lit\"."
-msgstr ""
+msgstr "在此示例中，将返回来自域 \"denmark.lit\" 的用户的所有订阅。"
 
 #: ../../OfflineMessagesSink.inc:2
 msgid "Offline Message Sink"
-msgstr ""
+msgstr "离线消息接收器"
 
 #: ../../OfflineMessagesSink.inc:4
 msgid ""
 "Messages sent to offline users is published in pubsub node, from where "
 "that message is sent to all the node subscribers as a pubsub "
 "notification."
-msgstr ""
+msgstr "发送给离线用户的消息在 pubsub 节点中发布，该消息从该节点作为 pubsub "
+"通知发送给所有节点订阅者。"
 
 #: ../../OfflineMessagesSink.inc:26
 msgid "The pubsub node must be created and configured beforehand:"
-msgstr ""
+msgstr "必须事先创建和配置 pubsub 节点："
 
 #: ../../OfflineMessagesSink.inc:28
 msgid "**Create node**"
-msgstr ""
+msgstr "**创建节点**"
 
 #: ../../OfflineMessagesSink.inc:41
 msgid "After that is done, you need to add SessionManager as a publisher:"
-msgstr ""
+msgstr "完成后，您需要将 SessionManager 添加为发布者："
 
 #: ../../OfflineMessagesSink.inc:43
 msgid "**Add sess-man as publisher**"
-msgstr ""
+msgstr "**添加 sess-man 作为发布者**"
 
 #: ../../OfflineMessagesSink.inc:57
 msgid ""
 "Finally, the 'msgoffline' offline messages processor must be configured "
 "as well"
-msgstr ""
+msgstr "最后，还必须配置 'msgoffline' 离线消息处理器"
 
 #: ../../OfflineMessagesSink.inc:60
 msgid "**config.tdsl configuration**"
-msgstr ""
+msgstr "**config.tdsl 配置**"
 
 #: ../../OfflineMessagesSink.inc:73
 msgid "**Usage**"
-msgstr ""
+msgstr "**用法**"
 
 #: ../../OfflineMessagesSink.inc:75
 msgid ""
@@ -1461,22 +1679,25 @@ msgid ""
 "<http://www.xmpp.org/extensions/xep-0060>`__ defines standard pubsub "
 "usage and management."
 msgstr ""
+"因为这些接收器使用标准的 pubsub 组件，所以接收器节点的管理与任何其他 pubsub "
+"节点相同。 `XEP-0060 <http://www.xmpp.org/extensions/xep-0060>`__ "
+"定义了标准的 pubsub 使用和管理。"
 
 #: ../../OfflineMessagesSink.inc:78
 msgid "**Managing Subscriptions**"
-msgstr ""
+msgstr "**管理订阅**"
 
 #: ../../OfflineMessagesSink.inc:80
 msgid "Add new Subscriber"
-msgstr ""
+msgstr "添加新订阅者"
 
 #: ../../OfflineMessagesSink.inc:95
 msgid "Remove Subscriber"
-msgstr ""
+msgstr "移除订阅者"
 
 #: ../../REST_API.inc:3
 msgid "REST API"
-msgstr ""
+msgstr "REST API"
 
 #: ../../REST_API.inc:5
 msgid ""
@@ -1484,14 +1705,16 @@ msgid ""
 "running at ``pubsub.example.com``. It is required to replace this value "
 "with JID of pubsub component from your installation."
 msgstr ""
+"所有对 pubsub REST API 的示例调用都是为在 ``pubsub.example.com`` 上运行的 "
+"pubsub 组件准备的。需要将此值替换为您安装的 pubsub 组件的 JID。"
 
 #: ../../REST_API.inc:7
 msgid "It is possible to provide parameters to requests as:"
-msgstr ""
+msgstr "可以为请求提供参数："
 
 #: ../../REST_API.inc:10
 msgid "**XML**"
-msgstr ""
+msgstr "**XML**"
 
 #: ../../REST_API.inc:10
 msgid ""
@@ -1499,10 +1722,12 @@ msgid ""
 " ``<data/>`` tag as root tag of XML document, while returned parameters "
 "will be wrapped ``<result/>`` tag as root tag of XML document."
 msgstr ""
+"HTTP请求内容中传入的所有参数都需要用 ``<data/>`` 标签作为XML文档的根标签，"
+"而返回的参数将用 ``<result/>`` 标签作为XML文档的根标签。"
 
 #: ../../REST_API.inc:13
 msgid "**JSON**"
-msgstr ""
+msgstr "**JSON**"
 
 #: ../../REST_API.inc:13
 msgid ""
@@ -1510,50 +1735,52 @@ msgid ""
 "``Content-Type`` header of HTTP request needs to be set to "
 "``application/json``."
 msgstr ""
+"参数必须作为序列化 JSON 对象传递。此外，HTTP 请求的 ``Content-Type`` "
+"标头需要设置为 ``application/json``。"
 
 #: ../../REST_API.inc:16
 msgid "Create a node"
-msgstr ""
+msgstr "创建节点"
 
 #: ../../REST_API.inc:18
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/create-node``"
-msgstr ""
+msgstr "HTTP URI: ``/rest/pubsub/pubsub.example.com/create-node``"
 
 #: ../../REST_API.inc:20 ../../REST_API.inc:91 ../../REST_API.inc:155
 #: ../../REST_API.inc:228 ../../REST_API.inc:301 ../../REST_API.inc:482
 #: ../../REST_API.inc:546 ../../REST_API.inc:588 ../../REST_API.inc:663
 #: ../../REST_API.inc:755
 msgid "Available HTTP methods:"
-msgstr ""
+msgstr "可用的 HTTP 方法："
 
 #: ../../REST_API.inc:23 ../../REST_API.inc:95 ../../REST_API.inc:158
 #: ../../REST_API.inc:231 ../../REST_API.inc:304 ../../REST_API.inc:485
 #: ../../REST_API.inc:549 ../../REST_API.inc:592 ../../REST_API.inc:666
 #: ../../REST_API.inc:758
 msgid "GET"
-msgstr ""
+msgstr "GET"
 
 #: ../../REST_API.inc:25
 msgid ""
 "Method returns example content which contains all required and optional "
 "parameters that may be passed to newly created node."
-msgstr ""
+msgstr "方法返回示例内容，其中包含可能传递给新创建节点的所有必需和可选参数。"
 
 #: ../../REST_API.inc:28 ../../REST_API.inc:101 ../../REST_API.inc:163
 #: ../../REST_API.inc:236 ../../REST_API.inc:309 ../../REST_API.inc:489
 #: ../../REST_API.inc:597 ../../REST_API.inc:671 ../../REST_API.inc:763
 msgid "POST"
-msgstr ""
+msgstr "POST"
 
 #: ../../REST_API.inc:30
 msgid ""
 "Command requires fields ``node`` and ``pubsub#node_type`` to be filled "
 "with proper values for execution."
-msgstr ""
+msgstr "命令需要字段 ``node`` 和 ``pubsub#node_type`` 填充正确的值以执行。"
 
 #: ../../REST_API.inc:32
 msgid "``node`` - field should contain id of node to create"
-msgstr ""
+msgstr "``node`` - 字段应包含要创建的节点的 ID"
 
 #: ../../REST_API.inc:34
 msgid ""
@@ -1561,6 +1788,8 @@ msgid ""
 "of newly created node (will use jid of Tigase HTTP API Component if not "
 "passed)"
 msgstr ""
+"``owner`` - 字段可能包含 jid，它应该用作新创建节点的所有者的 "
+"jid（如果未通过，将使用 Tigase HTTP API 组件的 jid）"
 
 #: ../../REST_API.inc:36
 msgid ""
@@ -1568,60 +1797,64 @@ msgid ""
 "are possible: ``leaf`` - node to which items will be published, "
 "``collection`` - node which will contain other nodes)"
 msgstr ""
+"``pubsub#node_type`` - 应该包含要创建的节点类型（可能有两个值：``leaf`` - "
+"将发布项目的节点，``collection`` - 将包含其他节点的节点）"
 
 #: ../../REST_API.inc:38
 msgid ""
 "Example content to create node of id ``example`` and of type ``leaf`` and"
 " with owner set to ``admin@example.com``."
 msgstr ""
+"创建 id 为 ``example``、类型为 ``leaf`` 且所有者设置为 ``admin@example.com`` "
+"的节点的示例内容。"
 
 #: ../../REST_API.inc:41 ../../REST_API.inc:110 ../../REST_API.inc:175
 #: ../../REST_API.inc:247 ../../REST_API.inc:324 ../../REST_API.inc:500
 #: ../../REST_API.inc:606 ../../REST_API.inc:682 ../../REST_API.inc:774
 msgid "Using XML"
-msgstr ""
+msgstr "使用 XML"
 
 #: ../../REST_API.inc:43 ../../REST_API.inc:112 ../../REST_API.inc:177
 #: ../../REST_API.inc:249 ../../REST_API.inc:339 ../../REST_API.inc:375
 #: ../../REST_API.inc:501 ../../REST_API.inc:608 ../../REST_API.inc:684
 #: ../../REST_API.inc:776
 msgid "**Request in XML.**"
-msgstr ""
+msgstr "**XML 格式的请求。**"
 
 #: ../../REST_API.inc:55 ../../REST_API.inc:120 ../../REST_API.inc:189
 #: ../../REST_API.inc:261 ../../REST_API.inc:355 ../../REST_API.inc:388
 #: ../../REST_API.inc:510 ../../REST_API.inc:616 ../../REST_API.inc:693
 #: ../../REST_API.inc:785
 msgid "**Response in XML.**"
-msgstr ""
+msgstr "**XML 格式的响应。**"
 
 #: ../../REST_API.inc:66 ../../REST_API.inc:131 ../../REST_API.inc:200
 #: ../../REST_API.inc:273 ../../REST_API.inc:400 ../../REST_API.inc:522
 #: ../../REST_API.inc:634 ../../REST_API.inc:720 ../../REST_API.inc:797
 msgid "Using JSON"
-msgstr ""
+msgstr "使用 JSON"
 
 #: ../../REST_API.inc:68 ../../REST_API.inc:133 ../../REST_API.inc:202
 #: ../../REST_API.inc:275 ../../REST_API.inc:415 ../../REST_API.inc:448
 #: ../../REST_API.inc:523 ../../REST_API.inc:635 ../../REST_API.inc:722
 #: ../../REST_API.inc:799
 msgid "**Request in JSON.**"
-msgstr ""
+msgstr "**JSON 格式的请求。**"
 
 #: ../../REST_API.inc:78 ../../REST_API.inc:141 ../../REST_API.inc:214
 #: ../../REST_API.inc:287 ../../REST_API.inc:429 ../../REST_API.inc:462
 #: ../../REST_API.inc:532 ../../REST_API.inc:643 ../../REST_API.inc:731
 #: ../../REST_API.inc:808
 msgid "**Response in JSON.**"
-msgstr ""
+msgstr "**JSON 格式的响应。**"
 
 #: ../../REST_API.inc:87
 msgid "Delete a node"
-msgstr ""
+msgstr "删除节点"
 
 #: ../../REST_API.inc:89
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/delete-node``"
-msgstr ""
+msgstr "HTTP URI: ``/rest/pubsub/pubsub.example.com/delete-node``"
 
 #: ../../REST_API.inc:97 ../../REST_API.inc:160 ../../REST_API.inc:233
 #: ../../REST_API.inc:306 ../../REST_API.inc:486 ../../REST_API.inc:594
@@ -1629,87 +1862,91 @@ msgstr ""
 msgid ""
 "Method returns example content which contains all required and optional "
 "parameters that may be passed."
-msgstr ""
+msgstr "方法返回示例内容，其中包含可能传递的所有必需参数和可选参数。"
 
 #: ../../REST_API.inc:103
 msgid "Command requires field ``node`` to be filled."
-msgstr ""
+msgstr "命令需要填写 ``node`` 字段。"
 
 #: ../../REST_API.inc:105
 msgid "``node`` - field should contain id of node to delete"
-msgstr ""
+msgstr "``node`` - 字段应包含要删除的节点的 id"
 
 #: ../../REST_API.inc:107
 msgid "Example content to delete node with id ``example``"
-msgstr ""
+msgstr "删除 id 为 ``example`` 的节点的示例内容"
 
 #: ../../REST_API.inc:151
 msgid "Subscribe to a node"
-msgstr ""
+msgstr "订阅节点"
 
 #: ../../REST_API.inc:153
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/subscribe-node``"
-msgstr ""
+msgstr "HTTP URI: ``/rest/pubsub/pubsub.example.com/subscribe-node``"
 
 #: ../../REST_API.inc:165 ../../REST_API.inc:238
 msgid "Command requires fields ``node`` and ``jids`` to be filled."
-msgstr ""
+msgstr "命令需要填写 ``node`` 和 ``jids`` 字段。"
 
 #: ../../REST_API.inc:167
 msgid "``node`` - field should contain id of node to subscribe to"
-msgstr ""
+msgstr "``node`` - 字段应包含要订阅的节点的 id"
 
 #: ../../REST_API.inc:169
 msgid "``jids`` - field should contain list of jids to be subscribed to node"
-msgstr ""
+msgstr "``jids`` - 字段应包含要订阅节点的 jid 列表"
 
 #: ../../REST_API.inc:171
 msgid ""
 "Example content to subscribe to node with id ``example`` users with jid "
 "``test1@example.com`` and ``test2@example.com``"
 msgstr ""
+"使用 jid为 ``test1@example.com`` 和 ``test2@example.com`` 订阅具有 id为 "
+"``example`` 用户的示例内容"
 
 #: ../../REST_API.inc:224
 msgid "Unsubscribe from a node"
-msgstr ""
+msgstr "取消订阅节点"
 
 #: ../../REST_API.inc:226
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/unsubscribe-node``"
-msgstr ""
+msgstr "HTTP URI: ``/rest/pubsub/pubsub.example.com/unsubscribe-node``"
 
 #: ../../REST_API.inc:240
 msgid "``node`` - field should contain id of node to unsubscribe from"
-msgstr ""
+msgstr "``node`` - 字段应包含要取消订阅的节点的 id"
 
 #: ../../REST_API.inc:242
 msgid "``jids`` - field should contain list of jids to be unsubscribed from node"
-msgstr ""
+msgstr "``jids`` - 字段应包含要从节点退订的 jid 列表"
 
 #: ../../REST_API.inc:244
 msgid ""
 "Example content to unsubscribe from node with id ``example`` users "
 "``test1@example.com`` and ``test2@example.com``"
 msgstr ""
+"从 id 为 ``example`` 用户为 ``test1@example.com`` 和 ``test2@example.com`` "
+"的节点取消订阅的示例内容"
 
 #: ../../REST_API.inc:297
 msgid "Publish an item to a node"
-msgstr ""
+msgstr "将项目发布到节点"
 
 #: ../../REST_API.inc:299
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/publish-item``"
-msgstr ""
+msgstr "HTTP URI: ``/rest/pubsub/pubsub.example.com/publish-item``"
 
 #: ../../REST_API.inc:311
 msgid "Command requires fields ``node`` and ``entry`` to be filled"
-msgstr ""
+msgstr "命令需要填写 ``node`` 和 ``entry`` 字段"
 
 #: ../../REST_API.inc:313
 msgid "``node`` - field should contain id of node to publish to"
-msgstr ""
+msgstr "``node`` - 字段应包含要发布到的节点的 ID"
 
 #: ../../REST_API.inc:315
 msgid "``item-id`` - field may contain id of entry to publish"
-msgstr ""
+msgstr "``item-id`` - 字段可能包含要发布的条目 id"
 
 #: ../../REST_API.inc:317
 msgid ""
@@ -1717,173 +1954,182 @@ msgid ""
 "<http://xmpp.org/extensions/xep-0082.html>`__ format) after which item "
 "should not be delivered to user"
 msgstr ""
+"``expire-at`` - 字段可能包含时间戳（在 `XEP-0082 <http://xmpp.org/extensions/"
+"xep-0082.html>`__ 格式），在此之后项目不应交付给用户"
 
 #: ../../REST_API.inc:319
 msgid ""
 "``entry`` - field should contain multi-line entry content which should be"
 " valid XML value for an item"
-msgstr ""
+msgstr "``entry`` - 字段应该包含多行条目内容，这应该是项目的有效 XML 值"
 
 #: ../../REST_API.inc:321
 msgid ""
 "Example content to publish item with id ``item-1`` to node with id "
 "``example`` and with content in example field. P"
-msgstr ""
+msgstr "示例内容以将 id 为 ``item-1`` 的项目发布到 id 为 ``example`` 的节点，"
+"并包含示例field. P中的内容"
 
 #: ../../REST_API.inc:326 ../../REST_API.inc:402
 msgid "with XML payload"
-msgstr ""
+msgstr "使用 XML 负载"
 
 #: ../../REST_API.inc:328
 msgid "In this example we will use following XML payload:"
-msgstr ""
+msgstr "在此示例中，我们将使用以下 XML 负载："
 
 #: ../../REST_API.inc:330 ../../REST_API.inc:369 ../../REST_API.inc:406
 #: ../../REST_API.inc:442
 msgid "**Payload.**"
-msgstr ""
+msgstr "**负载。*"
 
 #: ../../REST_API.inc:365 ../../REST_API.inc:438
 msgid "with JSON payload"
-msgstr ""
+msgstr "使用 JSON 负载"
 
 #: ../../REST_API.inc:367
 msgid ""
 "It is possible to publish JSON payload as value of published XML element."
 " In example below we are publishing following JSON object:"
-msgstr ""
+msgstr "可以将 JSON 负载作为已发布 XML 元素的值发布。在下面的示例中，我们发布以下 "
+"JSON 对象："
 
 #: ../../REST_API.inc:404
 msgid ""
 "To publish XML using JSON you need to set serialized XML payload as value"
 " for ``entry`` key. In this example we will use following XML payload:"
-msgstr ""
+msgstr "要使用 JSON 发布 XML，您需要将序列化的 XML 负载设置为 ``entry`` "
+"键的值。在此示例中，我们将使用以下 XML 负载："
 
 #: ../../REST_API.inc:440
 msgid ""
 "As JSON needs to be set as a value of an XML element it will be wrapped "
 "on server side as a value for ``<payload/>`` element."
-msgstr ""
+msgstr "由于 JSON 需要设置为 XML 元素的值，它将在服务器端包装为 ``<payload/>`` "
+"元素的值。"
 
 #: ../../REST_API.inc:470
 msgid "**Published item.**"
-msgstr ""
+msgstr "**已发布项目。**"
 
 #: ../../REST_API.inc:478
 msgid "Delete an item from a node"
-msgstr ""
+msgstr "从节点中删除项目"
 
 #: ../../REST_API.inc:480
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/delete-item``"
-msgstr ""
+msgstr "HTTP URI: ``/rest/pubsub/pubsub.example.com/delete-item``"
 
 #: ../../REST_API.inc:491 ../../REST_API.inc:673
 msgid "Command requires fields ``node`` and ``item-id`` to be filled"
-msgstr ""
+msgstr "命令需要填写 ``node`` 和 ``item-id`` 字段"
 
 #: ../../REST_API.inc:493
 msgid "``node`` - field contains id of node to publish to"
-msgstr ""
+msgstr "``node`` - 字段包含要发布到的节点的 ID"
 
 #: ../../REST_API.inc:495
 msgid "``item-id`` - field contains id of entry to publish"
-msgstr ""
+msgstr "``item-id`` - 字段包含要发布的条目的 ID"
 
 #: ../../REST_API.inc:497
 msgid ""
 "Example content to delete an item with id ``item-1`` from node with id "
 "``example``."
-msgstr ""
+msgstr "从 ID 为 ``example`` 的节点中删除 ID 为 ``item-1`` 的项目的示例内容。"
 
 #: ../../REST_API.inc:542
 msgid "List available nodes"
-msgstr ""
+msgstr "列出可用节点"
 
 #: ../../REST_API.inc:544
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/list-nodes``"
-msgstr ""
+msgstr "HTTP URI: ``/rest/pubsub/pubsub.example.com/list-nodes``"
 
 #: ../../REST_API.inc:551
 msgid ""
 "Method returns list of available pubsub nodes for domain passed as part "
 "of URI (``pubsub.example.com``)."
-msgstr ""
+msgstr "方法返回作为 URI (``pubsub.example.com``) 的一部分传递的域的可用 pubsub "
+"节点列表。"
 
 #: ../../REST_API.inc:553
 msgid "**Example response in XML.**"
-msgstr ""
+msgstr "**XML 中的示例响应。**"
 
 #: ../../REST_API.inc:566 ../../REST_API.inc:581
 msgid ""
 "in which we see nodes: ``test``, ``node_54idf40037`` and "
 "``node_3ws5lz0037``."
-msgstr ""
+msgstr "我们在其中看到节点：``test``, ``node_54idf40037`` 和 ``node_3ws5lz0037``。"
 
 #: ../../REST_API.inc:568
 msgid "**Example response in JSON.**"
-msgstr ""
+msgstr "**JSON 格式的示例响应。**"
 
 #: ../../REST_API.inc:584
 msgid "List published items on node"
-msgstr ""
+msgstr "列出节点上已发布的项目"
 
 #: ../../REST_API.inc:586
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/list-items``"
-msgstr ""
+msgstr "HTTP URI: ``/rest/pubsub/pubsub.example.com/list-items``"
 
 #: ../../REST_API.inc:599
 msgid "Command requires field ``node`` to be filled"
-msgstr ""
+msgstr "命令需要填写字段 ``node``"
 
 #: ../../REST_API.inc:601 ../../REST_API.inc:675
 msgid "``node`` - field contains id of node which items we want to list"
-msgstr ""
+msgstr "``node`` - 字段包含节点的 id 以及我们要列出哪些项目"
 
 #: ../../REST_API.inc:603 ../../REST_API.inc:679
 msgid "Example content to list of items published on node with id ``example``."
-msgstr ""
+msgstr "示例内容到在 ID 为 ``example`` 的节点上发布的项目列表。"
 
 #: ../../REST_API.inc:631 ../../REST_API.inc:656
 msgid ""
 "where ``item-1`` and ``item-2`` are identifiers of published items for "
 "node ``example``."
-msgstr ""
+msgstr "其中 ``item-1`` 和 ``item-2`` 是节点 ``example`` 的已发布项目的标识符。"
 
 #: ../../REST_API.inc:659
 msgid "Retrieve item published on node"
-msgstr ""
+msgstr "检索节点上发布的项目"
 
 #: ../../REST_API.inc:661
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/retrieve-item``"
-msgstr ""
+msgstr "HTTP URI: ``/rest/pubsub/pubsub.example.com/retrieve-item``"
 
 #: ../../REST_API.inc:677
 msgid "``item-id`` - field contains id of item to retrieve"
-msgstr ""
+msgstr "``item-id`` - 字段包含要检索的项目的 ID"
 
 #: ../../REST_API.inc:717
 msgid ""
 "inside item element there is XML encoded element which is published on "
 "node ``example`` with id ``item-1``."
-msgstr ""
+msgstr "在 item 元素内有一个 XML 编码元素，它发布在节点 ``example`` 上，id 为 "
+"``item-1``。"
 
 #: ../../REST_API.inc:751
 msgid "Retrieve user subscriptions"
-msgstr ""
+msgstr "检索用户订阅"
 
 #: ../../REST_API.inc:753
 msgid "HTTP URI: ``/rest/pubsub/pubsub.example.com/retrieve-user-subscriptions``"
 msgstr ""
+"HTTP URI: ``/rest/pubsub/pubsub.example.com/retrieve-user-subscriptions``"
 
 #: ../../REST_API.inc:765
 msgid "Command requires field ``jid`` to be filled."
-msgstr ""
+msgstr "命令需要填写字段 ``jid``。"
 
 #: ../../REST_API.inc:767
 msgid ""
 "``jid`` - field contains JID of a user for which we want to retrieve "
 "subscriptions"
-msgstr ""
+msgstr "``jid`` - 字段包含我们要检索其订阅的用户的 JID"
 
 #: ../../REST_API.inc:769
 msgid ""
@@ -1891,6 +2137,8 @@ msgid ""
 "not empty, request will return only subscribed nodes which match this "
 "pattern. If field should be empty it may be omitted in a request."
 msgstr ""
+"``node-pattern`` - 字段包含要匹配的正则表达式模式。当字段不为空时，请求将仅返"
+"回与此模式匹配的订阅节点。如果字段应为空，则可以在请求中省略它。"
 
 #: ../../REST_API.inc:771
 msgid ""
@@ -1898,8 +2146,9 @@ msgid ""
 "``test@example.com`` is subscribed at ``pubsub.example.com`` which starts"
 " with ``test-`` (pattern ``test-.*``)"
 msgstr ""
+"检索用户 ``test@example.com`` 在以 ``test-`` 开头的 ``pubsub.example.com`` "
+"订阅的节点列表的示例内容（模式 ``test-.*`` )"
 
 #: ../../index.rst:4
 msgid "Tigase PubSub Component - Version 5.1.0"
-msgstr ""
-
+msgstr "Tigase PubSub 组件 - 版本 5.1.0"
