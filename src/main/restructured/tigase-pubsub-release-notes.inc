@@ -8,4 +8,5 @@ Welcome to Tigase Pubsub 5.0.0! This is a feature release for with a number of f
 Previous Releases
 ^^^^^^^^^^^^^^^^^^^^
 
+.. include:: tigase-pubsub-5.0.inc
 .. include:: tigase-pubsub-4.x.inc
