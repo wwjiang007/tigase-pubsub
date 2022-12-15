@@ -69,7 +69,8 @@ begin
 
 	set @_service_jid_sha1 = HASHBYTES('SHA1', LOWER(@_service_jid));
 
-	begin transaction;
+-- 	    temporarily disable transaction as they don't work with MS SQL JDBC driver
+-- 	begin transaction;
     select @_service_id=service_id from tig_pubsub_service_jids
 		where service_jid_sha1 = @_service_jid_sha1;
 
@@ -80,7 +81,7 @@ begin
 			set @_service_id = @@IDENTITY
 		end
 
-	commit transaction;
+-- 	commit transaction;
 end
 -- QUERY END:
 GO
@@ -109,7 +110,8 @@ begin
 
 	exec TigPubSubEnsureJid @_jid=@_node_creator, @_jid_id=@_node_creator_id output;
 
-    begin transaction;
+	    -- temporarily disable transaction as they don't work with MS SQL JDBC driver
+--     begin transaction;
 	exec TigPubSubEnsureServiceJid @_service_jid=@_service_jid, @_domain=@_domain, @_autocreateService=@_autocreateService, @_service_id=@_service_id output;
 
 	insert into dbo.tig_pubsub_nodes (service_id, name, name_sha1, type, creator_id, creation_date, configuration, collection_id)
@@ -117,7 +119,7 @@ begin
 
 	select @@IDENTITY as node_id;
 
-    commit transaction;
+--     commit transaction;
 end
 -- QUERY END:
 GO
