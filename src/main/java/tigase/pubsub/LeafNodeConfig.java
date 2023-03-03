@@ -17,6 +17,8 @@
  */
 package tigase.pubsub;
 
+import tigase.pubsub.utils.IntegerOrMax;
+
 public class LeafNodeConfig
 		extends AbstractNodeConfig {
 
@@ -29,9 +31,12 @@ public class LeafNodeConfig
 		super(nodeName, config);
 	}
 
-	public Integer getMaxItems() {
-		Integer x = form.getAsInteger("pubsub#max_items");
-		return x;
+	public IntegerOrMax getMaxItems() {
+		IntegerOrMax value = IntegerOrMax.valueOf(form.getAsString(PUBSUB + "max_items"));
+		if (value == null) {
+			return IntegerOrMax.MAX;
+		}
+		return value;
 	}
 
 	public boolean isPersistItem() {

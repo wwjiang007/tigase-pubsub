@@ -132,6 +132,8 @@ public class DiscoveryModule
 			}
 			resultQuery.addChild(
 					new Element("feature", new String[]{"var"}, new String[]{"http://jabber.org/protocol/pubsub"}));
+			resultQuery.addChild(new Element("feature", new String[]{"var"},
+											 new String[]{"http://jabber.org/protocol/pubsub#config-node-max"}));
 
 			Form form = nodeConfigClone.getForm();
 

@@ -142,8 +142,9 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 
 					nodeItems.writeItem(id, p.getAttributeStaticStr("from"), item, null);
 
-					if (leafNodeConfig.getMaxItems() != null) {
-						publishNodeModule.trimItems(toJid, node, leafNodeConfig.getMaxItems(), leafNodeConfig.getCollectionItemsOrdering());
+					def maxItems = leafNodeConfig.getMaxItems().getOrNull();
+					if (maxItems != null) {
+						publishNodeModule.trimItems(toJid, node, maxItems, leafNodeConfig.getCollectionItemsOrdering());
 					}
 				}
 

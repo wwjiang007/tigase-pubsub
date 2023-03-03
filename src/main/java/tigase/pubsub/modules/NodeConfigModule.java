@@ -27,6 +27,7 @@ import tigase.kernel.beans.Inject;
 import tigase.pubsub.*;
 import tigase.pubsub.exceptions.PubSubErrorCondition;
 import tigase.pubsub.exceptions.PubSubException;
+import tigase.pubsub.utils.IntegerOrMax;
 import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.xml.Element;
@@ -84,6 +85,15 @@ public class NodeConfigModule
 						}
 					}
 
+					if ((AbstractNodeConfig.PUBSUB + "max_items").equals(var)) {
+						try {
+							if (IntegerOrMax.valueOf(cf.getValue()) == null) {
+								throw new PubSubException(Authorization.BAD_REQUEST, "Value for field " + var + " needs to be set if field is specified.");
+							}
+						} catch (IllegalArgumentException ex) {
+							throw new PubSubException(Authorization.BAD_REQUEST, "Value for field " + var + " needs to be an integer or `max`");
+						}
+					}
 					field.setValues(cf.getValues());
 				}
 			}
@@ -92,7 +102,7 @@ public class NodeConfigModule
 
 	@Override
 	public String[] getFeatures() {
-		return new String[]{"http://jabber.org/protocol/pubsub#config-node"};
+		return new String[]{"http://jabber.org/protocol/pubsub#config-node","http://jabber.org/protocol/pubsub#config-node-max"};
 	}
 
 	@Override

@@ -23,6 +23,7 @@ import tigase.db.UserRepository;
 import tigase.form.Field;
 import tigase.form.Field.FieldType;
 import tigase.form.Form;
+import tigase.pubsub.utils.IntegerOrMax;
 import tigase.xml.Element;
 import tigase.xmpp.StanzaType;
 
@@ -70,6 +71,9 @@ public abstract class AbstractNodeConfig {
 
 	public void copyFrom(AbstractNodeConfig c) {
 		form.copyValuesFrom(c.form);
+		if (form.getAsString(PUBSUB + "max_items") == null) {
+			setValue(PUBSUB + "max_items", IntegerOrMax.MAX);
+		}
 	}
 
 	public void copyFromForm(Form f) {
@@ -270,7 +274,7 @@ public abstract class AbstractNodeConfig {
 	}
 
 	public void setValue(String var, boolean data) {
-		setValue(var, new Boolean(data));
+		setValue(var, data ? Boolean.TRUE : Boolean.FALSE);
 	}
 
 	public void setValue(String var, Object data) {
@@ -282,7 +286,11 @@ public abstract class AbstractNodeConfig {
 			if (data == null) {
 				f.setValues(new String[]{});
 			} else {
-				if (data instanceof String) {
+				if (data instanceof IntegerOrMax) {
+					setValue(var, data.toString());
+				} else if (data instanceof Integer) {
+					setValue(var, String.valueOf(data));
+				} else if (data instanceof String) {
 					String str = (String) data;
 
 					if ((f.getType() == FieldType.bool) && !"0".equals(str) && !"1".equals(str) &&

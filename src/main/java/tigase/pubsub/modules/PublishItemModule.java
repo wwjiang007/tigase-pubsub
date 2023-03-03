@@ -54,7 +54,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Implementation of the PubSub component module responsible for publication of new entries on the pubsub nodes.
@@ -150,8 +149,9 @@ public class PublishItemModule
 					}
 				}
 			}
-			if (leafNodeConfig.getMaxItems() != null) {
-				trimItems(serviceJID, nodeName, leafNodeConfig.getMaxItems(), leafNodeConfig.getCollectionItemsOrdering());
+			Integer maxItems = leafNodeConfig.getMaxItems().getOrNull();
+			if (maxItems != null) {
+				trimItems(serviceJID, nodeName, maxItems, leafNodeConfig.getCollectionItemsOrdering());
 			}
 		}
 
