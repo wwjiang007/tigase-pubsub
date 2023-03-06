@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
  */
 @Bean(name = "repository", parent = PubSubComponent.class, active = true)
 public class CachedPubSubRepository<T>
-		implements IPubSubRepository, StatisticHolder, Initializable, IItems.IListnener {
+		implements IPubSubRepository, IExtenedMAMPubSubRepository, StatisticHolder, Initializable, IItems.IListnener {
 	
 	private final ConcurrentHashMap<BareJID, RootCollectionSet> rootCollection = new ConcurrentHashMap<>();
 	@Inject
@@ -100,7 +100,7 @@ public class CachedPubSubRepository<T>
 	public CachedPubSubRepository() {
 
 	}
-
+	
 	protected boolean isServiceAutoCreated() {
 		return pubSubLogic.isServiceAutoCreated();
 	}
@@ -612,6 +612,32 @@ public class CachedPubSubRepository<T>
 		Node<T> node = getNode(serviceJid, nodeName);
 		if (node != null) {
 			dao.addMAMItem(serviceJid, node.getNodeId(), uuid, message, itemId);
+		}
+	}
+
+	@Override
+	public Item getMAMItem(BareJID serviceJid, String nodeName, String stableId) throws RepositoryException {
+		if (dao instanceof IExtendedPubSubDAO) {
+			Node<T> node = getNode(serviceJid, nodeName);
+			if (node != null) {
+				return ((IExtendedPubSubDAO) dao).getMAMItem(serviceJid, node.getNodeId(), stableId);
+			}
+			return null;
+		} else {
+			throw new RepositoryException("Feature not implemented!");
+		}
+	}
+
+	@Override
+	public void updateMAMItem(BareJID serviceJid, String nodeName, String stableId, Element message)
+			throws RepositoryException {
+		if (dao instanceof IExtendedPubSubDAO) {
+			Node<T> node = getNode(serviceJid, nodeName);
+			if (node != null) {
+				((IExtendedPubSubDAO) dao).updateMAMItem(serviceJid, node.getNodeId(), stableId, message);
+			}
+		} else {
+			throw new RepositoryException("Feature not implemented!");
 		}
 	}
 

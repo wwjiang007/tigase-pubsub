@@ -49,7 +49,7 @@ import java.util.logging.Logger;
 @Bean(name = "dao", parent = PubSubComponent.class, active = true)
 public class PubSubDAOPool<T, S extends DataSource, Q extends PubSubQuery>
 		extends MDRepositoryBeanWithStatistics<IPubSubDAO<T, S, Q>>
-		implements IPubSubDAO<T, S, Q> {
+		implements IExtendedPubSubDAO<T, S, Q> {
 
 	private static final Logger log = Logger.getLogger(PubSubDAOPool.class.getName());
 
@@ -63,7 +63,7 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends PubSubQuery>
 	private boolean mapComponentToBareDomain = false;
 
 	public PubSubDAOPool() {
-		super(IPubSubDAO.class);
+		super(IExtendedPubSubDAO.class);
 	}
 
 	@Override
@@ -93,6 +93,35 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends PubSubQuery>
 		if (dao != null) {
 			try {
 				dao.createService(serviceJID, isPublic);
+			} finally {
+				offerDao(serviceJID, dao);
+			}
+		} else {
+			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJID));
+		}
+	}
+
+	@Override
+	public MAMRepository.Item getMAMItem(BareJID serviceJID, T nodeId, String stableId) throws RepositoryException {
+		IExtendedPubSubDAO<T, DataSource, Q> dao = (IExtendedPubSubDAO<T, DataSource, Q>) takeDao(serviceJID);
+		if (dao != null) {
+			try {
+				return dao.getMAMItem(serviceJID, nodeId, stableId);
+			} finally {
+				offerDao(serviceJID, dao);
+			}
+		} else {
+			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJID));
+			return null;
+		}
+	}
+
+	@Override
+	public void updateMAMItem(BareJID serviceJID, T nodeId, String stableId, Element message) throws RepositoryException {
+		IExtendedPubSubDAO<T, DataSource, Q> dao = (IExtendedPubSubDAO<T, DataSource, Q>) takeDao(serviceJID);
+		if (dao != null) {
+			try {
+				dao.updateMAMItem(serviceJID, nodeId, stableId, message);
 			} finally {
 				offerDao(serviceJID, dao);
 			}

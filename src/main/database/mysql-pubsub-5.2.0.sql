@@ -16,3 +16,40 @@
 -- If not, see http://www.gnu.org/licenses/.
 --
 
+delimiter ;
+
+-- QUERY START:
+alter table tig_pubsub_mam modify ts datetime(6) not null;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigPubSubMamQueryItem;
+-- QUERY END:
+
+-- QUERY START:
+drop procedure if exists TigPubSubMamUpdateItem;
+-- QUERY END:
+
+delimiter //
+
+-- QUERY START:
+create procedure TigPubSubMamQueryItem(_node_id bigint, _uuid varchar(36))
+begin
+select TigPubSubOrderedToUuid(pm.uuid), pm.ts, pm.data
+from tig_pubsub_mam pm
+where
+        pm.node_id = _node_id and pm.uuid = TigPubSubUuidToOrdered(_uuid);
+end //
+-- QUERY END:
+
+-- QUERY START:
+create procedure TigPubSubMamUpdateItem(_node_id bigint, _uuid varchar(36), _item_data mediumtext charset utf8mb4)
+begin
+	update tig_pubsub_mam
+        set data = _item_data
+    where
+        node_id = _node_id
+        and uuid = TigPubSubUuidToOrdered(_uuid);
+end //
+-- QUERY END:
+

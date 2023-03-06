@@ -49,7 +49,7 @@ import java.util.logging.Level;
 @Repository.SchemaId(id = Schema.PUBSUB_SCHEMA_ID, name = Schema.PUBSUB_SCHEMA_NAME)
 public class PubSubDAOJDBC
 		extends PubSubDAO<Long, DataRepository, ExtendedQueryImpl>
-		implements RepositoryVersionAware {
+		implements RepositoryVersionAware, IExtendedPubSubDAO<Long, DataRepository, ExtendedQueryImpl> {
 
 	private static final String CREATE_NODE_QUERY = "{ call TigPubSubCreateNode(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 	private static final String REMOVE_NODE_QUERY = "{ call TigPubSubRemoveNode(?) }";
@@ -92,6 +92,8 @@ public class PubSubDAOJDBC
 	private String mamQueryItems = "{ call TigPubSubMamQueryItems(?,?,?,?,?) }";
 	@ConfigField(desc = "Count number of items from repository", alias = "mam-query-items-count-query")
 	private String mamQueryItemsCount = "{ call TigPubSubMamQueryItemsCount(?,?,?) }";
+	@ConfigField(desc = "Update entry in MAM repository", alias = "mam-update-item-query")
+	private String mamUpdateItem = "{ call TigPubSubMamUpdateItem(?,?,?) }";
 	private LinkedBlockingDeque<HashCode> pool_hashCodes = new LinkedBlockingDeque<>();
 
 	public PubSubDAOJDBC() {
@@ -184,6 +186,52 @@ public class PubSubDAOJDBC
 			}
 		}
 
+	}
+
+	@Override
+	public MAMRepository.Item getMAMItem(BareJID ownerJid, Long nodeId, String stableId) throws RepositoryException {
+		try {
+			PreparedStatement st = data_repo.getPreparedStatement(ownerJid, mamQueryItem);
+			synchronized (st) {
+				ResultSet rs = null;
+				try {
+					st.setLong(1, nodeId);
+					st.setString(2, stableId);
+
+					rs = st.executeQuery();
+
+					if (rs.next()) {
+						String itemUuid = rs.getString(1);
+						Timestamp ts = data_repo.getTimestamp(rs, 2);
+						Element itemEl = itemDataToElement(rs.getString(3));
+
+						return new MAMItem(itemUuid, ts, itemEl);
+					}
+					return null;
+				} finally {
+					data_repo.release(null, rs);
+				}
+			}
+		} catch (SQLException ex) {
+			throw new RepositoryException("Failed to get item from MAM", ex);
+		}
+	}
+
+	@Override
+	public void updateMAMItem(BareJID ownerJid, Long nodeId, String stableId, Element message)
+			throws RepositoryException {
+		try {
+			PreparedStatement st = data_repo.getPreparedStatement(ownerJid, mamUpdateItem);
+			synchronized (st) {
+				st.setLong(1, nodeId);
+				st.setString(2, stableId);
+				st.setString(3, message.toString());
+
+				st.executeUpdate();
+			}
+		} catch (SQLException ex) {
+			throw new RepositoryException("Failed to update item in MAM", ex);
+		}
 	}
 
 	@Override
@@ -1353,6 +1401,8 @@ public class PubSubDAOJDBC
 		data_repo.initPreparedStatement(GET_NODES_ITEMS_POSITION_QUERY, GET_NODES_ITEMS_POSITION_QUERY);
 
 		data_repo.initPreparedStatement(mamAddItem, mamAddItem);
+		data_repo.initPreparedStatement(mamUpdateItem,mamUpdateItem);
+		data_repo.initPreparedStatement(mamQueryItem, mamQueryItem);
 		data_repo.initPreparedStatement(mamQueryItems, mamQueryItems);
 		data_repo.initPreparedStatement(mamQueryItemPosition, mamQueryItemPosition);
 		data_repo.initPreparedStatement(mamQueryItemsCount, mamQueryItemsCount);

@@ -16,3 +16,25 @@
 -- If not, see http://www.gnu.org/licenses/.
 --
 
+-- QUERY START:
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'TigPubSubMamUpdateItem')
+	DROP PROCEDURE TigPubSubMamUpdateItem
+-- QUERY END:
+GO
+
+-- QUERY START:
+create procedure dbo.TigPubSubMamUpdateItem
+	@_node_id bigint,
+	@_uuid nvarchar(36),
+	@_item_data ntext
+AS
+begin
+    SET NOCOUNT ON;
+    update tig_pubsub_mam
+        set data = @_item_data
+    where
+        node_id = @_node_id
+        and uuid = CONVERT(uniqueidentifier,@_uuid);
+end
+-- QUERY END:
+GO

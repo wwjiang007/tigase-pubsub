@@ -17,10 +17,10 @@
 --
 
 -- QUERY START:
-create procedure TigPubSubQueryItem(nodes_ids varchar(32672), itemId varchar(36))
+create procedure TigPubSubMamQueryItem(node_id bigint, itemId varchar(36))
     PARAMETER STYLE JAVA
 	LANGUAGE JAVA
-	MODIFIES SQL DATA
+	READS SQL DATA
 	DYNAMIC RESULT SETS 1
-	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubQueryItem';
+	EXTERNAL NAME 'tigase.pubsub.repository.derby.StoredProcedures.tigPubSubMamQueryItem';
 -- QUERY END:

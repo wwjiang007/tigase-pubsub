@@ -16,3 +16,19 @@
 -- If not, see http://www.gnu.org/licenses/.
 --
 
+
+-- QUERY START:
+create or replace function TigPubSubMamUpdateItem(bigint, varchar(36), text) returns void as $$
+declare
+	_node_id alias for $1;
+	_uuid alias for $2;
+	_item_data alias for $3;
+begin
+	update tig_pubsub_mam
+        set data = _item_data
+    where
+        node_id = _node_id
+        and uuid = uuid(_uuid);
+end;
+$$ LANGUAGE 'plpgsql';
+-- QUERY END:

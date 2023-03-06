@@ -612,6 +612,29 @@ public class StoredProcedures {
 		}
 	}
 
+	public static void tigPubSubMamUpdateItem(Long nodeId, String uuid, String itemData,
+										   ResultSet[] data) throws SQLException {
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			synchronized (StoredProcedures.class) {
+				PreparedStatement ps = conn.prepareStatement(
+						"update tig_pubsub_mam set data = ? where node_id = ? and uuid = ?");
+				ps.setString(1, itemData);
+				ps.setLong(2, nodeId);
+				ps.setString(3, uuid);
+				ps.executeUpdate();
+			}
+		} catch (SQLException e) {
+			// log.log(Level.SEVERE, "SP error", e);
+			throw e;
+		} finally {
+			conn.close();
+		}
+	}
+
 	public static void tigPubSubMamQueryItemPosition(Long nodeId, Timestamp since, Timestamp to, String uuid, ResultSet[] data)
 			throws SQLException {
 		String query = "select pm.uuid, row_number() over () as position" + " from tig_pubsub_mam pm" +
@@ -646,6 +669,27 @@ public class StoredProcedures {
 		}
 	}
 
+	public static void tigPubSubMamQueryItem(Long nodeId, String stableId,
+											  ResultSet[] data)
+			throws SQLException {
+		String query = "select pm.uuid, pm.ts, pm.data from tig_pubsub_mam pm" +
+				" where pm.node_id = ? and pm.uuid = ?";
+
+		Connection conn = DriverManager.getConnection("jdbc:default:connection");
+
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+
+		try {
+			PreparedStatement st = conn.prepareStatement(query);
+			st.setLong(1, nodeId);
+			st.setString(2, stableId);
+
+			data[0] = st.executeQuery();
+		} finally {
+			conn.close();
+		}
+	}
+	
 	public static void tigPubSubMamQueryItems(Long nodeId, Timestamp since, Timestamp to, Integer limit, Integer offset,
 											  ResultSet[] data)
 			throws SQLException {
