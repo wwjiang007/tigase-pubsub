@@ -26,6 +26,24 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Stream;
 
+/**
+ * This class is implementation of <code>Cache</code> interface. The main difference between <code>LRUCache</code> and
+ * <code>LRUCacheWithFuture</code> is <code>LRUCache</code> implementation of
+ * <code>computeIfAbsent(K key, CacheSupplier)</code>.
+ *
+ * In case when there is no value, <code>LRUCache</code> executes provided instance of <code>CacheSupplier</code> in
+ * a synchronized block resulting in blocking of all access to the cache while result to "put" in being generated.
+ *
+ * On the other hand, <code>LRUCacheWithFuture</code>, when there is no result, puts instance of
+ * a <code>CompletableFuture</code> in the cache (instance of <code>LRUCache</code>) as a value and then waits for
+ * the completion of the <code>CacheSupplier</code> to return the value. In this implementation, long process of
+ * generating value by <code>CacheSupplier</code> is not blocking access to the cache for other "keys". Parallel
+ * requests to get value for the same key will be "lock" and <code>CacheSupplier</code> will be called only once
+ * if the value is not in the cache.
+ *
+ * @param <K>
+ * @param <V>
+ */
 public class LRUCacheWithFuture<K,V> implements Cache<K,V> {
 
 	private final LRUCache<K,CompletableFuture<V>> cache;
