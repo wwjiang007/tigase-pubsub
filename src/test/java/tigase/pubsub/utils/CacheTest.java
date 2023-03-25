@@ -17,9 +17,7 @@
  */
 package tigase.pubsub.utils;
 
-import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import tigase.pubsub.repository.cached.CachedPubSubRepository;
 import tigase.stats.StatisticsList;
@@ -34,7 +32,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-@Ignore
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 public class CacheTest {
 
 	private static String[][] nodes = {};
@@ -52,23 +52,48 @@ public class CacheTest {
 	}
 
 	@Test
-	public void testLRUCache() throws TigaseStringprepException, InterruptedException {
-		long avgTime = 0;
+	public void testLRUCache() throws Cache.CacheException {
+		testCache(new LRUCache<>(2000));
+	}
+
+	@Test
+	public void testLRUCacheWithFuture() throws Cache.CacheException {
+		testCache(new LRUCacheWithFuture<>(2000));
+	}
+
+	private void testCache(Cache<CachedPubSubRepository.NodeKey,String> cache) throws Cache.CacheException {
+		CachedPubSubRepository.NodeKey nodeKey = newNodeKey("test-1");
+		assertNull(cache.get(nodeKey));
+		assertEquals("test-2", cache.computeIfAbsent(nodeKey, () -> "test-2"));
+		assertEquals("test-2", cache.put(nodeKey, "test-3"));
+		assertEquals("test-3", cache.get(nodeKey));
+		cache.remove(nodeKey);
+		assertNull(cache.get(nodeKey));
+	}
+
+	private CachedPubSubRepository.NodeKey newNodeKey(String node) {
+		BareJID serviceJid = BareJID.bareJIDInstanceNS("test@test.com");
+		return new CachedPubSubRepository.NodeKey(serviceJid, node);
+	}
+
+	@Test
+	public void testLRUCacheCompute() throws TigaseStringprepException, InterruptedException {
 		for (int y = 0; y < 1; y++) {
-			System.gc();
 			LRUCache<CachedPubSubRepository.NodeKey, String> cache = new LRUCache<>(2000);
 
 			BareJID serviceJid = BareJID.bareJIDInstance("test@test.com");
-			long start = System.currentTimeMillis();
 			ExecutorService service = Executors.newFixedThreadPool(10);
-			for (int j = 0; j < 10; j++) {
+			for (int j = 0; j < 5; j++) {
 				String[] nodes = CacheTest.nodes[j];
 				service.submit(() -> {
-					for (int i = 0; i < 100000; i++) {
+					for (int i = 0; i < 5; i++) {
 						try {
+							int x = i;
 							CachedPubSubRepository.NodeKey key = new CachedPubSubRepository.NodeKey(serviceJid, nodes[i]);
-							sleep();
-							cache.putIfAbsent(key, String.valueOf(i));
+							cache.computeIfAbsent(key, () -> {
+								sleep();
+								return String.valueOf(x);
+							});
 							cache.get(key);
 						} catch (Throwable ex) {
 							ex.printStackTrace();
@@ -78,35 +103,26 @@ public class CacheTest {
 			}
 			service.shutdown();
 			while (!service.isTerminated()) {
-				service.awaitTermination(10, TimeUnit.MILLISECONDS);
+				service.awaitTermination(20, TimeUnit.MILLISECONDS);
 			}
-
-			long end = System.currentTimeMillis();
-			System.out.println("lru done in:" + (end - start) + "ms, size:" + cache.size());
 
 			cache.everyMinute();
 			StatisticsList list = new StatisticsList(Level.FINEST);
 			cache.getStatistics("tmp", list);
-			System.out.println(list.toString());
-			avgTime += (end - start);
 		}
-		System.out.println("avg lru done in:" + (avgTime / 3) + "ms");
 	}
 
 	@Test
-	public void testLRUCacheWithFuture() throws TigaseStringprepException, InterruptedException {
-		long avgTime = 0;
+	public void testLRUCacheWithFutureCompute() throws TigaseStringprepException, InterruptedException {
 		for (int y = 0; y < 1; y++) {
-			System.gc();
 			LRUCacheWithFuture<CachedPubSubRepository.NodeKey, String> cache = new LRUCacheWithFuture<>(2000);
 
 			BareJID serviceJid = BareJID.bareJIDInstance("test@test.com");
-			long start = System.currentTimeMillis();
 			ExecutorService service = Executors.newFixedThreadPool(10);
-			for (int j = 0; j < 10; j++) {
+			for (int j = 0; j < 5; j++) {
 				String[] nodes = CacheTest.nodes[j];
 				service.submit(() -> {
-					for (int i = 0; i < 100000; i++) {
+					for (int i = 0; i < 5; i++) {
 						int x = i;
 						CachedPubSubRepository.NodeKey key = new CachedPubSubRepository.NodeKey(serviceJid,
 																								nodes[i]);
@@ -118,43 +134,34 @@ public class CacheTest {
 							cache.get(key);
 						} catch (Throwable e) {
 							e.printStackTrace();
-							Assert.assertNull("Got exception:", e);
+							assertNull("Got exception:", e);
 						}
 					}
 				});
 			}
 			service.shutdown();
 			while (!service.isTerminated()) {
-				service.awaitTermination(10, TimeUnit.MILLISECONDS);
+				service.awaitTermination(20, TimeUnit.MILLISECONDS);
 			}
-
-			long end = System.currentTimeMillis();
-			System.out.println("lru future done in:" + (end - start) + "ms, size:" + cache.size());
-
+			
 			cache.everyMinute();
 			StatisticsList list = new StatisticsList(Level.FINEST);
 			cache.getStatistics("tmp", list);
-			System.out.println(list.toString());
-			avgTime += (end - start);
 		}
-		System.out.println("avg lru future done in:" + (avgTime / 3) + "ms");
 	}
 
 	@Test
 	public void testSizedCache() throws TigaseStringprepException, InterruptedException {
-		long avgTime = 0;
 		for (int y = 0; y < 1; y++) {
-			System.gc();
 			CachedPubSubRepository.SizedCache<String> cache = new CachedPubSubRepository.SizedCache<>(2000);
 			Map<CachedPubSubRepository.NodeKey,String> map = Collections.synchronizedMap(cache);
 
 			BareJID serviceJid = BareJID.bareJIDInstance("test@test.com");
 			ExecutorService service = Executors.newFixedThreadPool(10);
-			long start = System.currentTimeMillis();
-			for (int j = 0; j < 10; j++) {
+			for (int j = 0; j < 5; j++) {
 				String[] nodes = CacheTest.nodes[j];
 				service.submit(() -> {
-					for (int i = 0; i < 100000; i++) {
+					for (int i = 0; i < 5; i++) {
 						CachedPubSubRepository.NodeKey key = new CachedPubSubRepository.NodeKey(serviceJid,
 																								nodes[i]);
 						sleep();
@@ -165,19 +172,14 @@ public class CacheTest {
 			}
 			service.shutdown();
 			while (!service.isTerminated()) {
-				service.awaitTermination(10, TimeUnit.MILLISECONDS);
+				service.awaitTermination(20, TimeUnit.MILLISECONDS);
 			}
 
-			long end = System.currentTimeMillis();
-			System.out.println("sized done in:" + (end - start) + "ms, size:" + cache.size());
 
 			cache.everyMinute();
 			StatisticsList list = new StatisticsList(Level.FINEST);
 			cache.getStatistics("tmp", list);
-			System.out.println(list.toString());
-			avgTime += (end - start);
 		}
-		System.out.println("avg sized done in:" + (avgTime / 3) + "ms");
 	}
 
 	private void sleep() {
