@@ -190,6 +190,13 @@ create procedure TigPubSubWriteItem(_node_id bigint, _item_id varchar(1024) char
 	 _item_data mediumtext charset utf8mb4, _ts timestamp(6), _uuid varchar(36))
 begin
 	declare _publisher_id bigint;
+	-- DO NOT REMOVE, required for properly handle exceptions within transactions!
+    DECLARE exit handler for sqlexception
+    BEGIN
+        -- ERROR
+        ROLLBACK;
+        RESIGNAL;
+    END;
 
 	START TRANSACTION;
 	call TigPubSubEnsureJid(_publisher, _publisher_id);
