@@ -103,11 +103,9 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 					nodeSubscriptions.changeSubscription(jid, Subscription.subscribed);
 					nodeAffiliations.changeAffiliation(jid, affiliation);
 				}
-
-				pubsubRepository.update(toJid, node, nodeSubscriptions);
-				pubsubRepository.update(toJid, node, nodeAffiliations);
-
 			}
+			pubsubRepository.update(toJid, node, nodeSubscriptions);
+			pubsubRepository.update(toJid, node, nodeAffiliations);
 
 			Command.addTextField(result, "Note", "Operation successful");
 		} else {

@@ -99,8 +99,8 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 
 				nodeSubscriptions.changeSubscription(jid, Subscription.none);
 
-				pubsubRepository.update(toJid, node, nodeSubscriptions);
 			}
+			pubsubRepository.update(toJid, node, nodeSubscriptions);
 
 			Command.addTextField(result, "Note", "Operation successful");
 		} else {
