@@ -32,6 +32,7 @@ import tigase.pubsub.repository.INodeMeta;
 import tigase.pubsub.repository.IPubSubRepository;
 import tigase.pubsub.repository.cached.CachedPubSubRepository;
 import tigase.pubsub.repository.stateless.UsersAffiliation;
+import tigase.pubsub.utils.PubSubLogic;
 import tigase.server.Packet;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
@@ -55,6 +56,8 @@ public class DiscoveryModule
 
 	@Inject
 	private IPubSubConfig config;
+	@Inject
+	protected PubSubLogic pubSubLogic;
 	@Inject
 	private IPubSubRepository repository;
 	@Inject(nullAllowed = true)
@@ -278,6 +281,8 @@ public class DiscoveryModule
 				return Collections.emptyList();
 			}
 		} else {
+			pubSubLogic.checkPermission(toJid.getBareJID(), nodeName, senderJid, PubSubLogic.Action.retrieveItems);
+			
 			boolean allowed = ((senderJid == null) || (nodeConfig == null))
 							  ? true
 							  : Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains());
