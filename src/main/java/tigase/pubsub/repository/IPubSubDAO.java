@@ -95,7 +95,13 @@ public interface IPubSubDAO<T, S extends DataSource, Q extends PubSubQuery>
 
 	AbstractNodeConfig parseConfig(String nodeName, String cfgData) throws RepositoryException;
 
-	void addMAMItem(BareJID serviceJid, T nodeId, String uuid, Element message, String itemId) throws RepositoryException;
+	@TigaseDeprecated(since = "5.2.0", note = "Use method with `timestamp` paramater")
+	@Deprecated
+	default void addMAMItem(BareJID serviceJid, T nodeId, String uuid, Element message, String itemId) throws RepositoryException {
+		addMAMItem(serviceJid, nodeId, uuid, message, new Date(), itemId);
+	}
+
+	void addMAMItem(BareJID serviceJid, T nodeId, String uuid, Element message, Date timestamp, String itemId) throws RepositoryException;
 
 	@TigaseDeprecated(since = "5.1.0", note = "Use method with `serviceJid` paramater")
 	@Deprecated

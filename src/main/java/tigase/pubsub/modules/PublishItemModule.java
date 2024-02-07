@@ -156,7 +156,7 @@ public class PublishItemModule
 		}
 
 		eventBus.fire(new ItemPublishedEvent(config.getComponentName(), serviceJID, nodeName, publisher, uuid, itemsToSend));
-		generateItemsNotifications(serviceJID, nodeName, itemsToSend, uuid, true);
+		generateItemsNotifications(serviceJID, nodeName, itemsToSend, uuid, pubSubLogic.isMAMEnabled(serviceJID, nodeName));
 	}
 
 	public void generateItemsNotifications(BareJID serviceJID, String nodeName, List<Element> itemsToSend, String uuid, boolean persistInMAM)

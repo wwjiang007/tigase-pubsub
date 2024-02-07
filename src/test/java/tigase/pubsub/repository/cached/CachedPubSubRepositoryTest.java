@@ -382,6 +382,12 @@ public class CachedPubSubRepositoryTest {
 		}
 
 		@Override
+		public void addMAMItem(BareJID serviceJid, Object nodeId, String uuid, Element message, Date timestamp,
+							   String itemId) throws RepositoryException {
+			
+		}
+
+		@Override
 		public void queryItems(PubSubQuery query, Object nodeId, MAMRepository.ItemHandler itemHandler)
 				throws RepositoryException, ComponentException {
 

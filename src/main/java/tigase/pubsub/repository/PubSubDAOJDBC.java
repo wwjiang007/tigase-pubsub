@@ -954,7 +954,7 @@ public class PubSubDAOJDBC
 	}
 
 	@Override
-	public void addMAMItem(BareJID serviceJid, Long nodeId, String uuid, Element message, String itemId) throws RepositoryException {
+	public void addMAMItem(BareJID serviceJid, Long nodeId, String uuid, Element message, Date timestamp, String itemId) throws RepositoryException {
 		HashCode hash = null;
 		try {
 			hash = takeDao();
@@ -964,7 +964,7 @@ public class PubSubDAOJDBC
 				try {
 					write_item_sp.setLong(1, nodeId);
 					write_item_sp.setString(2, uuid);
-					data_repo.setTimestamp(write_item_sp, 3, new Timestamp(System.currentTimeMillis()));
+					data_repo.setTimestamp(write_item_sp, 3, new Timestamp(timestamp.getTime()));
 					write_item_sp.setString(4, message.toString());
 					write_item_sp.setString(5, itemId);
 					write_item_sp.execute();
@@ -1253,7 +1253,7 @@ public class PubSubDAOJDBC
 					write_item_sp.setString(2, id);
 					write_item_sp.setString(3, publisherValue);
 					write_item_sp.setString(4, item.toString());
-					data_repo.setTimestamp(write_item_sp, 5, new Timestamp(System.currentTimeMillis()));
+					data_repo.setTimestamp(write_item_sp, 5, new Timestamp(timeInMilis));
 					write_item_sp.setString(6, uuid);
 					write_item_sp.execute();
 				} finally {

@@ -416,10 +416,10 @@ public class PubSubDAOPool<T, S extends DataSource, Q extends PubSubQuery>
 	}
 
 	@Override
-	public void addMAMItem(BareJID serviceJid, T nodeId, String uuid, Element message, String itemId) throws RepositoryException {
+	public void addMAMItem(BareJID serviceJid, T nodeId, String uuid, Element message, Date timestamp, String itemId) throws RepositoryException {
 		IPubSubDAO dao = takeDao(serviceJid);
 		if (dao != null) {
-			dao.addMAMItem(serviceJid, nodeId, uuid, message, itemId);
+			dao.addMAMItem(serviceJid, nodeId, uuid, message, timestamp, itemId);
 		} else {
 			log.warning("dao is NULL, pool empty? - " + getPoolDetails(serviceJid));
 		}
