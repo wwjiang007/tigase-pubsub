@@ -36,6 +36,7 @@ import tigase.xml.Element;
 import tigase.xml.XMLUtils;
 import tigase.xmpp.jid.BareJID;
 import tigase.xmpp.jid.JID;
+import tigase.xmpp.mam.ExtendedQuery;
 import tigase.xmpp.mam.MAMItemHandler;
 import tigase.xmpp.mam.MAMRepository;
 import tigase.xmpp.mam.Query;
@@ -44,11 +45,12 @@ import tigase.xmpp.mam.util.MAMRepositoryManagerExtensionHelper;
 import java.io.Writer;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static tigase.db.util.importexport.Exporter.EXPORT_MAM_SINCE;
+import static tigase.db.util.importexport.Exporter.*;
 import static tigase.db.util.importexport.RepositoryManager.isSet;
 
 public class PubSubRepositoryManagerExtension extends RepositoryManagerExtensionBase {
@@ -74,7 +76,7 @@ public class PubSubRepositoryManagerExtension extends RepositoryManagerExtension
 
 	@Override
 	public Stream<CommandlineParameter> getExportParameters() {
-		return Stream.concat(super.getExportParameters(), Stream.of(INCLUDE_PUBSUB, EXCLUDE_PEP, EXPORT_MAM_SINCE));
+		return Stream.concat(super.getExportParameters(), Stream.of(INCLUDE_PUBSUB, EXCLUDE_PEP, EXPORT_MAM_SINCE, EXPORT_MAM_BATCH_SIZE));
 	}
 
 	@Override
@@ -186,21 +188,50 @@ public class PubSubRepositoryManagerExtension extends RepositoryManagerExtension
 		query.setPubsubNode(nodeName);
 		query.setXMLNS("urn:xmpp:mam:2");
 		Exporter.getExportMAMSinceValue().ifPresent(query::setStart);
-		query.getRsm().setMax(Integer.MAX_VALUE);
-		mamRepository.queryItems(query, nodeMeta.getNodeId(), new MAMItemHandler() {
-			@Override
-			public void itemFound(Query query, MAMRepository.Item item) {
-				Element result = this.prepareResult(query, item);
+		query.getRsm().setMax(Exporter.getExportMAMBatchSize());
 
-				if (result != null) {
-					try {
-						writer.append(result.toString());
-					} catch (Throwable ex) {
-						log.log(Level.SEVERE, ex.getMessage(), ex);
+		AtomicReference<MAMRepository.Item> lastItem = new AtomicReference<>();
+		int batchNo = 0;
+		Integer itemsToExport = null;
+		while (true) {
+			mamRepository.queryItems(query, nodeMeta.getNodeId(), new MAMItemHandler() {
+				@Override
+				public void itemFound(Query query, MAMRepository.Item item) {
+					lastItem.set(item);
+					Element result = this.prepareResult(query, item);
+
+					if (result != null) {
+						try {
+							writer.append(result.toString());
+						} catch (Throwable ex) {
+							log.log(Level.SEVERE, ex.getMessage(), ex);
+						}
 					}
 				}
+			});
+			if (lastItem.get() == null) {
+				break;
+			} else {
+				if (itemsToExport == null) {
+					itemsToExport = query.getRsm().getCount();
+				}
+				if (itemsToExport != null) {
+					++batchNo;
+					int completed = Math.min(batchNo * Exporter.getExportMAMBatchSize(), itemsToExport);
+					int percent = (completed * 100) / itemsToExport;
+					if (batchNo > 1 || percent < 100) {
+						log.info("MAM archive of node " + nodeName + ", exported batch no. " + batchNo + ", " +
+										 (percent) + "%...");
+					}
+				}
+				if (query instanceof ExtendedQuery extendedQuery) {
+					extendedQuery.setAfterId(lastItem.get().getId());
+				} else {
+					query.getRsm().setAfter(lastItem.get().getId());
+				}
+				lastItem.set(null);
 			}
-		});
+		}
 		writer.append("</archive>");
 	}
 
