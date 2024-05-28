@@ -54,9 +54,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:${scm_repo_base}/tigase-pubsub.git</connection>
-        <developerConnection>scm:git:${scm_repo_base}/tigase-pubsub.git</developerConnection>
-        <url>https://projects.tigase.org/projects/tigase-pubsub/repository</url>
+        <connection>scm:git:${scm_repo_server_base}/${project.artifactId}.git</connection>
+        <developerConnection>scm:git:${scm_repo_server_base}/${project.artifactId}.git</developerConnection>
+        <url>${scm_repo_server_base}/${project.artifactId}</url>
         <tag>HEAD</tag>
     </scm>
 
