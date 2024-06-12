@@ -212,7 +212,7 @@ public class PepPlugin
 			if (pubsubEl != null &&
 					(pubsubEl.getXMLNS() == PUBSUB_XMLNS || pubsubEl.getXMLNS() == PUBSUB_XMLNS_OWNER)) {
 				Packet result = null;
-				if (session != null) {
+				if (session != null && session.getParentSession() != null) {
 					XMPPResourceConnection con = session.getParentSession()
 							.getResourceForResource(packet.getStanzaTo().getResource());
 
