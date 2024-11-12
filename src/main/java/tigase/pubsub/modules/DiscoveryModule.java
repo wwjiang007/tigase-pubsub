@@ -247,7 +247,7 @@ public class DiscoveryModule
 					if (childNodeConfig != null) {
 						boolean allowed = ((senderJid == null) || (childNodeConfig == null))
 										  ? true
-										  : Utils.isAllowedDomain(senderJid.getBareJID(), childNodeConfig.getDomains());
+										  : isNodeDiscoverable(toJid.getBareJID(), childNodeConfig, senderJid);
 
 						if (allowed) {
 							String name = childNodeConfig.getTitle();
@@ -305,6 +305,10 @@ public class DiscoveryModule
 			
 			return Collections.emptyList();
 		}
+	}
+
+	protected boolean isNodeDiscoverable(BareJID serviceJid, AbstractNodeConfig nodeConfig, JID senderJid) throws ComponentException, RepositoryException {
+		return Utils.isAllowedDomain(senderJid.getBareJID(), nodeConfig.getDomains());
 	}
 	
 	protected String[] prefilterNodesWithRSM(String[] nodes, RSM rsm) throws PubSubException {
