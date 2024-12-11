@@ -152,7 +152,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 				itemsToSend += item;
 
 				eventBus.fire(
-						new PublishItemModule.ItemPublishedEvent(component.getName(), p.getStanzaTo().getBareJID(), node, p.getAttributeStaticStr("from"), null, itemsToSend));
+						new PublishItemModule.ItemPublishedEvent(component.getName(), p.getStanzaTo().getBareJID(), node, p.getAttributeStaticStr("from"), (String) null, itemsToSend));
 
 				Command.addTextField(result, "Note", "Operation successful");
 				Command.addFieldValue(result, "item-id", "" + id, "fixed", "Item ID")
