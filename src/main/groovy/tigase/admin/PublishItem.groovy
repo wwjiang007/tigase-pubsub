@@ -148,7 +148,7 @@ Packet process(Kernel kernel, PubSubComponent component, Iq p, EventBus eventBus
 					}
 				}
 
-				def itemsToSend = [ ];
+				List<Element> itemsToSend = [ ];
 				itemsToSend += item;
 
 				eventBus.fire(
